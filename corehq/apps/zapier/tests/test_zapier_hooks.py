@@ -14,7 +14,7 @@ from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
-TEST_DOMAIN = 'test-domain'
+TEST_DOMAIN = 'zapier-hooks-test'
 FORM_XMLNS = "https://www.commcarehq.org/test/zapier/"
 CASE_TYPE = "lemon-meringue-pie"
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>

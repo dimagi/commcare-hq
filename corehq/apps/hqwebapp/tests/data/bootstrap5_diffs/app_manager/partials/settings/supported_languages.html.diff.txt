@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,55 +2,66 @@
+@@ -2,58 +2,66 @@
  <div data-bind="saveButton: saveButton"></div>
  <table class="table table-languages">
    <tbody data-bind="sortable: languages">
@@ -61,7 +61,10 @@
 -    <br/>
 -    <input type="checkbox" data-bind="checked: smartLangDisplay"/>
 -    {% trans "Smart language display in forms" %}.
--    <a href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms" target="_blank">Learn more</a>
+-    <a
+-      href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3161751555/Setting+Up+Translations+for+CommCare+Mobile+App#Smart-Language-Display-in-Forms"
+-      target="_blank"
+-    >Learn more</a>
 +  <div class="form-check mt-2" data-bind="visible: showSmartLangDisplayOption">
 +    <input
 +      type="checkbox"
@@ -72,7 +75,7 @@
 +    <label class="form-check-label" for="smart-lang-checkbox">
 +      {% trans "Smart language display in forms" %}.
 +      <a
-+        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143958174/Language+Configuration+in+CommCareHQ#Smart-Language-Display-in-Forms"
++        href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/3161751555/Setting+Up+Translations+for+CommCare+Mobile+App#Smart-Language-Display-in-Forms"
 +        target="_blank"
 +      >Learn more</a>
 +    </label>

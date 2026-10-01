@@ -1,12 +1,19 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from time_machine import travel
 from two_factor.forms import totp
 
-from ..forms import HQApiKeyForm, HQTOTPDeviceForm, HQTwoFactorMethodForm
+from corehq.apps.users.models import CouchUser, WebUser
+
+from ..forms import (
+    HQApiKeyForm,
+    HQPasswordChangeForm,
+    HQTOTPDeviceForm,
+    HQTwoFactorMethodForm,
+)
 
 
 @override_settings(TWO_FACTOR_CALL_GATEWAY=True, TWO_FACTOR_SMS_GATEWAY=True)
@@ -174,3 +181,41 @@ class HQApiKeyTests(SimpleTestCase):
             data['expiration_date'] = expiration_date
 
         return data
+
+
+class TestHQPasswordChangeForm(TestCase):
+    username = 'locked@example.com'
+    old_password = 'old-password-1234'
+    new_password = 'new-password-5678'
+
+    def setUp(self):
+        super().setUp()
+        self.couch_user = WebUser.create(None, self.username, self.old_password, None, None)
+        self.addCleanup(self.couch_user.delete, None, deleted_by=None)
+
+    def _change_password(self):
+        form = HQPasswordChangeForm(user=self.couch_user.get_django_user(), data={
+            'old_password': self.old_password,
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+        assert form.is_valid(), form.errors
+        form.save()
+
+    def test_save_clears_login_lockout(self):
+        self.couch_user.login_attempts = 5
+        self.couch_user.save()
+        assert self.couch_user.is_locked_out()
+
+        self._change_password()
+
+        couch_user = CouchUser.get_by_username(self.username)
+        assert couch_user.login_attempts == 0
+        assert not couch_user.is_locked_out()
+
+    def test_save_records_last_password_set(self):
+        self._change_password()
+
+        couch_user = CouchUser.get_by_username(self.username)
+        assert couch_user.last_password_set is not None
+        assert couch_user.get_django_user().check_password(self.new_password)

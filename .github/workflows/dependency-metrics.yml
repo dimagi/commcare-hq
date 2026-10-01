@@ -6,6 +6,8 @@ on:
 
 jobs:
   collect-metrics:
+    # Only run on the canonical repo, not on forks or mirrors
+    if: github.repository == 'dimagi/commcare-hq'
     runs-on: ubuntu-latest
     env:
       REPO: commcare-hq

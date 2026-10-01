@@ -4,6 +4,8 @@ from collections import Counter, defaultdict
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial, wraps
+from xml.sax.saxutils import escape, quoteattr
+
 from lxml import etree
 
 from django.contrib import messages
@@ -23,7 +25,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     wrap_app,
 )
-from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
     AppLinkError,
@@ -40,6 +42,7 @@ from corehq.apps.app_manager.models import (
     ShadowModule,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
+from corehq.apps.case_search.models import CaseSearchEndpoint
 from corehq.apps.es import FormES
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.exceptions import (
@@ -52,6 +55,7 @@ from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
 from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
+from corehq.util.xml_utils import safe_fromstring
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -61,7 +65,7 @@ CASE_TYPE_CONFLICT_MSG = (
 )
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def back_to_main(request, domain, app_id, module_id=None, form_id=None,
                  form_unique_id=None, module_unique_id=None):
     """
@@ -201,6 +205,8 @@ def overwrite_app(app, master_build, report_map=None):
             except KeyError:
                 raise AppEditingError(config.report_id)
 
+    _update_case_search_endpoint_ids(wrapped_app)
+
     # Legacy linked apps have different form unique ids than their master app(s). These mappings
     # are stored as ResourceOverride objects. Look up to see if this app has any.
     from corehq.apps.app_manager.suite_xml.post_process.resources import get_xform_resource_overrides
@@ -212,6 +218,33 @@ def overwrite_app(app, master_build, report_map=None):
     wrapped_app.set_media_versions()
 
     return wrapped_app
+
+
+def _update_case_search_endpoint_ids(app):
+    configs_by_module = [
+        (module.default_name(), module.search_config) for module in app.get_modules()
+        if getattr(module, 'search_config', None) and module.search_config.case_search_endpoint_id
+    ]
+    if not configs_by_module:
+        return
+
+    endpoint_map = _get_endpoints_by_upstream_id(app.domain)
+    for module_name, search_config in configs_by_module:
+        upstream_id = search_config.case_search_endpoint_id
+        if upstream_id not in endpoint_map:
+            raise AppLinkError(_(
+                "Endpoint for module '{}' not found. Try pushing endpoints first"
+            ).format(module_name))
+        search_config.case_search_endpoint_id = endpoint_map[upstream_id]
+
+
+def _get_endpoints_by_upstream_id(downstream_domain):
+    return dict(
+        CaseSearchEndpoint.objects
+        .filter(domain=downstream_domain)
+        .exclude(upstream_id=None)
+        .values_list('upstream_id', 'id')
+    )
 
 
 def _update_multimedia_map(old_map, new_map):
@@ -731,9 +764,10 @@ def validate_custom_assertions(custom_assertions_string, existing_assertions, la
                 raise AppMisconfigurationError(_("Custom assertions must not be blank."))
             if (len(assertion['text']) == 0):
                 raise AppMisconfigurationError(_("Please add a message for assertion."))
-            etree.fromstring(
-                '<assertion test="{test}"><text><locale id="abc.def"/>{text}</text></assertion>'.format(
-                    **assertion
+            safe_fromstring(
+                '<assertion test={test}><text><locale id="abc.def"/>{text}</text></assertion>'.format(
+                    test=quoteattr(assertion['test']),
+                    text=escape(assertion['text']),
                 )
             )
     except etree.XMLSyntaxError as error:

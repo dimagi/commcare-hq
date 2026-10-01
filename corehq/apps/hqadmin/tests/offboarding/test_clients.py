@@ -1,0 +1,128 @@
+import pytest
+import requests
+import requests_mock
+from django.test import override_settings
+from unmagic import fixture
+
+from corehq.apps.hqadmin.offboarding.clients import (
+    CLIENTS_BY_SLUG,
+    HubspotOffboardingClient,
+    OFFBOARDING_CLIENTS,
+    OffboardingClientError,
+    PlatformOffboardingClient,
+    get_client,
+    normalize_email,
+)
+
+STUB_USERS = 'https://stub.example.com/users'
+
+
+class StubClient(PlatformOffboardingClient):
+    slug = 'stub'
+    name = 'Stub'
+    default_config = {'region': 'us'}
+    required_config = ('token', 'secret')
+
+    def find_account(self, email):
+        return self._request('GET', STUB_USERS, params={'email': email})
+
+
+STUB_CONFIGURED = {'stub': {'token': 't', 'secret': 's'}}
+
+
+@fixture
+def stub_http():
+    with override_settings(OFFBOARDING_PLATFORMS=STUB_CONFIGURED), requests_mock.Mocker() as m:
+        yield m
+
+
+def test_normalize_email():
+    assert normalize_email('  Jane@Dimagi.COM ') == 'jane@dimagi.com'
+    assert normalize_email(None) == ''
+
+
+def test_registry_matches_clients():
+    assert set(CLIENTS_BY_SLUG) == {client.slug for client in OFFBOARDING_CLIENTS}
+    assert all(get_client(client.slug) is client for client in OFFBOARDING_CLIENTS)
+    assert get_client('nope') is None
+
+
+def test_config_merges_deployment_values_over_defaults():
+    with override_settings(OFFBOARDING_PLATFORMS={'stub': {'token': 't', 'secret': 's', 'region': 'eu'}}):
+        assert StubClient().config == {'region': 'eu', 'token': 't', 'secret': 's'}
+
+
+def test_none_values_do_not_mask_defaults():
+    with override_settings(OFFBOARDING_PLATFORMS={'stub': {'token': 't', 'secret': 's', 'region': None}}):
+        assert StubClient().config['region'] == 'us'
+
+
+def test_missing_platform_entry_leaves_defaults_only():
+    with override_settings(OFFBOARDING_PLATFORMS={}):
+        client = StubClient()
+        assert client.config == StubClient.default_config
+        assert not client.is_configured
+
+
+@pytest.mark.parametrize('missing_key', ['token', 'secret'])
+def test_is_configured_requires_every_required_key(missing_key):
+    with override_settings(OFFBOARDING_PLATFORMS=STUB_CONFIGURED):
+        assert StubClient().is_configured
+    partial = {'stub': {k: v for k, v in STUB_CONFIGURED['stub'].items() if k != missing_key}}
+    with override_settings(OFFBOARDING_PLATFORMS=partial):
+        assert not StubClient().is_configured
+
+
+@stub_http
+def test_transport_error_is_wrapped_and_chained():
+    stub_http().get(STUB_USERS, exc=requests.ConnectTimeout)
+    with pytest.raises(OffboardingClientError, match='Stub: could not reach the API') as excinfo:
+        StubClient().find_account('jane@dimagi.com')
+    assert isinstance(excinfo.value.__cause__, requests.ConnectTimeout)
+
+
+@stub_http
+def test_unexpected_status_is_wrapped_and_truncated():
+    stub_http().get(STUB_USERS, status_code=403, text='{"errors": ["' + 'x' * 500 + '"]}')
+    with pytest.raises(OffboardingClientError) as excinfo:
+        StubClient().find_account('jane@dimagi.com')
+    message = str(excinfo.value)
+    assert message.startswith('Stub returned HTTP 403: ')
+    assert message.endswith('…')
+    assert len(message) < 260
+
+
+@stub_http
+def test_expected_status_is_returned():
+    stub_http().get(STUB_USERS, json={'data': []})
+    response = StubClient().find_account('jane@dimagi.com')
+    assert response.status_code == 200
+
+
+@stub_http
+def test_requests_carry_a_timeout():
+    m = stub_http()
+    m.get(STUB_USERS, json={'data': []})
+    StubClient().find_account('jane@dimagi.com')
+    assert m.last_request.timeout == 15
+
+
+@fixture
+def hubspot_http():
+    with override_settings(OFFBOARDING_PLATFORMS={'hubspot': {'access_token': 't'}}), requests_mock.Mocker() as m:
+        yield m
+
+
+@hubspot_http
+def test_hubspot_find_account_encodes_email_in_path():
+    m = hubspot_http()
+    m.get(requests_mock.ANY, json={'id': 7, 'email': 'jane#ops@dimagi.com'})
+    account = HubspotOffboardingClient().find_account('Jane#ops@dimagi.com')
+    assert m.last_request.url == 'https://api.hubapi.com/settings/v3/users/jane%23ops%40dimagi.com?idProperty=EMAIL'
+    assert (account.account_id, account.label) == ('7', 'jane#ops@dimagi.com')
+
+
+@hubspot_http
+def test_hubspot_find_account_treats_404_as_absent():
+    hubspot_http().get(requests_mock.ANY, status_code=404, json={'message': 'not found'})
+    assert HubspotOffboardingClient().find_account('jane@dimagi.com') is None

@@ -75,6 +75,7 @@ from corehq.apps.domain.utils import (
     domain_restricts_superusers,
     guess_domain_language,
 )
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.mobile_auth.utils import generate_aes_key
 from corehq.apps.reports.const import TABLEAU_ROLES
@@ -1639,7 +1640,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                     domains_to_sync_usercase = getattr(self, 'domains', [])
                 # We need to sync to domains the user is leaving so that usercase is closed
                 for domain in domains_to_sync_usercase + getattr(self, '_leaving_domains', []):
-                    sync_usercases_if_applicable(domain, self, spawn_task)
+                    if not any_migrations_in_progress(domain):
+                        sync_usercases_if_applicable(domain, self, spawn_task)
         self._leaving_domains = []
 
     def fire_signals(self):

@@ -103,6 +103,15 @@ class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView,
                     'url': tile.get_url(self.request),
                     'help_text': tile.help_text,
                 }
+                quick_action_url = tile.get_quick_action_url(self.request)
+                if quick_action_url:
+                    tile_context.update({
+                        'quick_action': {
+                            'icon': tile.quick_action_icon,
+                            'url': quick_action_url,
+                            'label': tile.quick_action_label,
+                        },
+                    })
                 if tile.paginator_class:
                     tile_context.update({
                         'has_item_list': True,
@@ -131,6 +140,12 @@ def _get_default_tiles(request):
     def can_view_apps(req):
         return (
             req.couch_user.can_view_apps()
+            and has_privilege(req, privileges.PROJECT_ACCESS)
+        )
+
+    def can_edit_apps(req):
+        return (
+            req.couch_user.can_edit_apps()
             and has_privilege(req, privileges.PROJECT_ACCESS)
         )
 
@@ -207,6 +222,10 @@ def _get_default_tiles(request):
             urlname='default_new_app',
             url_generator=apps_link,
             help_text=_('Build, update, and deploy applications'),
+            quick_action_icon='fa fa-plus',
+            quick_action_urlname='default_new_app',
+            quick_action_label=_('New Application'),
+            quick_action_visibility_check=can_edit_apps,
         ),
         Tile(
             request,

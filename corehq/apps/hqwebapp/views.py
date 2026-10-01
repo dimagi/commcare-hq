@@ -10,7 +10,6 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
@@ -68,6 +67,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
+    login_required,
     require_superuser,
     track_domain_request,
     two_factor_exempt,
@@ -86,6 +86,8 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
+from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
+from corehq.apps.hqwebapp.chat_usage import ChatUsageUnavailable, get_chat_usage
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
@@ -204,6 +206,23 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
+@login_required
+@require_GET
+def chat_quota(request):
+    couch_user = getattr(request, 'couch_user')
+
+    limit = get_chatbot_message_quota(couch_user)
+    if limit == UNLIMITED or limit == 0:
+        return JsonResponse({'limit': limit, 'used': None})
+
+    refresh = request.GET.get('refresh', 'false') == 'true'
+    try:
+        used = get_chat_usage(couch_user.user_id, refresh=refresh)
+    except ChatUsageUnavailable:
+        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    return JsonResponse({'limit': limit, 'used': used})
+
+
 @require_GET
 @location_safe
 @always_allow_project_access
@@ -282,7 +301,7 @@ def _two_factor_needed(domain_name, request):
         )
 
 
-@login_required()
+@login_required
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
     if req.method == 'POST':

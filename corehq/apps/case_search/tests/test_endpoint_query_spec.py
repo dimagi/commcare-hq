@@ -54,6 +54,20 @@ def sample_capability():
     }
 
 
+def _component_spec(field, operator, input_value):
+    return {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'component',
+                'field': field,
+                'operator': operator,
+                'inputs': {'value': input_value},
+            }
+        ],
+    }
+
+
 @use(sample_capability)
 def test_valid_simple_spec():
     spec = {
@@ -80,6 +94,7 @@ def test_valid_simple_spec():
             )
         ],
     )
+    assert root.to_json() == spec
 
 
 @use(sample_capability)
@@ -114,73 +129,46 @@ def _within_distance_spec(unit_input):
     }
 
 
+@pytest.mark.parametrize("unit_input,parameters,error_fragment", [
+    ({'type': 'constant', 'value': 'parsecs'}, [], 'parsecs'),
+    (
+        {'type': 'parameter', 'value': 'my_unit'},
+        [Parameter(name='my_unit', type=FIELD_TYPE_TEXT)],
+        'must be a fixed value',
+    ),
+])
 @use(sample_capability)
-def test_choice_input_rejects_invalid_option():
-    spec = _within_distance_spec({'type': 'constant', 'value': 'parsecs'})
-    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert root is None
-    assert any('parsecs' in e for e in errors)
-
-
-@use(sample_capability)
-def test_choice_input_rejects_parameter():
-    spec = _within_distance_spec({'type': 'parameter', 'value': 'my_unit'})
-    parameters = [Parameter(name='my_unit', type=FIELD_TYPE_TEXT)]
+def test_choice_input_rejected(unit_input, parameters, error_fragment):
+    spec = _within_distance_spec(unit_input)
     root, errors = parse_query_spec(spec, parameters, 'patient', sample_capability())
     assert root is None
-    assert any('must be a fixed value' in e for e in errors)
+    assert any(error_fragment in e for e in errors)
 
 
+@pytest.mark.parametrize("spec", [
+    {'type': 'invalid'},
+    {'type': 'all', 'children': ['not_a_dict']},
+    _component_spec('province', 'equals', {'type': 'auto_value', 'ref': 'some_ref'}),
+    _component_spec('province', 'equals', 'not_an_object'),
+])
 @use(sample_capability)
-def test_ast_round_trips_through_json():
-    spec = {
-        'type': 'all',
-        'children': [
-            {
-                'type': 'component',
-                'field': 'province',
-                'operator': 'equals',
-                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
-            }
-        ],
-    }
+def test_unreadable_query_rejected(spec):
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert errors == []
-    assert root.to_json() == spec
-
-
-@use(sample_capability)
-def test_invalid_root_type():
-    root, errors = parse_query_spec(
-        {'type': 'invalid'}, [], 'patient', sample_capability()
-    )
     assert root is None
     assert errors == ['Invalid query']
 
 
+@pytest.mark.parametrize('field,value,operator', (
+    [('province', 'ON', op) for op in ['fuzzy', 'phonetic']]
+    + [('dob', '2020-01-01', op) for op in ['lt', 'gt', 'lte', 'gte', 'fuzzy_date']]
+))
 @use(sample_capability)
-@pytest.mark.parametrize('operator', ['fuzzy', 'phonetic'])
-def test_text_field_accepts_fuzzy_and_phonetic(operator):
+def test_field_accepts_operator(field, value, operator):
     spec = {
         'type': 'component',
         'operator': operator,
-        'field': 'province',
-        'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
-    }
-    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert errors == []
-    assert isinstance(root, ComponentNode)
-    assert root.operator == operator
-
-
-@use(sample_capability)
-@pytest.mark.parametrize('operator', ['lt', 'gt', 'lte', 'gte', 'fuzzy_date'])
-def test_date_field_accepts_range_and_fuzzy_operators(operator):
-    spec = {
-        'type': 'component',
-        'operator': operator,
-        'field': 'dob',
-        'inputs': {'value': {'type': 'constant', 'value': '2020-01-01'}},
+        'field': field,
+        'inputs': {'value': {'type': 'constant', 'value': value}},
     }
     root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
     assert errors == []
@@ -231,22 +219,6 @@ def test_missing_required_input_slot():
     }
     _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
     assert any('distance' in e for e in errors)
-
-
-@pytest.mark.parametrize("input_value", [
-    {'type': 'auto_value', 'ref': 'some_ref'},
-    'not_an_object',
-])
-@use(sample_capability)
-def test_invalid_input_rejected(input_value):
-    spec = {
-        'type': 'component',
-        'operator': 'equals',
-        'field': 'province',
-        'inputs': {'value': input_value},
-    }
-    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert errors == ['Invalid query']
 
 
 @use(sample_capability)
@@ -305,13 +277,6 @@ def test_empty_children_allowed():
     assert root == GroupNode(type='all', children=[])
 
 
-@use(sample_capability)
-def test_non_dict_child_node_returns_error():
-    spec = {'type': 'all', 'children': ['not_a_dict']}
-    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert errors == ['Invalid query']
-
-
 @pytest.mark.parametrize("group_type", ["all", "none"])
 @use(sample_capability)
 def test_deeply_nested_group_returns_error(group_type):
@@ -325,24 +290,18 @@ def test_deeply_nested_group_returns_error(group_type):
     assert any('nested too deeply' in e for e in errors)
 
 
+@pytest.mark.parametrize("width,expect_error", [
+    (MAX_GROUP_WIDTH, False),
+    (MAX_GROUP_WIDTH + 1, True),
+])
 @use(sample_capability)
-def test_group_exceeding_max_width_returns_error():
+def test_group_width_limit(width, expect_error):
     spec = {
         'type': 'all',
-        'children': [{'type': 'all', 'children': []}] * (MAX_GROUP_WIDTH + 1),
+        'children': [{'type': 'all', 'children': []}] * width,
     }
     _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert any('too many conditions' in e for e in errors)
-
-
-@use(sample_capability)
-def test_group_at_max_width_is_valid():
-    spec = {
-        'type': 'all',
-        'children': [{'type': 'all', 'children': []}] * MAX_GROUP_WIDTH,
-    }
-    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
-    assert not any('too many conditions' in e for e in errors)
+    assert any('too many conditions' in e for e in errors) is expect_error
 
 
 @use(sample_capability)
@@ -371,12 +330,6 @@ def test_parse_parameter_spec_empty_list():
     params, errors = parse_parameter_spec([])
     assert errors == []
     assert params == []
-
-
-def test_parse_parameter_spec_valid_single():
-    params, errors = parse_parameter_spec([{'name': 'region', 'type': FIELD_TYPE_TEXT}])
-    assert errors == []
-    assert params == [Parameter(name='region', type=FIELD_TYPE_TEXT)]
 
 
 def test_parse_parameter_spec_multiple():
@@ -421,20 +374,6 @@ def test_parse_parameter_spec_all_valid_types(type_val):
 
 
 # ── parameter input validation in parse_query_spec ───────────────────────────
-
-def _component_spec(field, operator, input_value):
-    return {
-        'type': 'all',
-        'children': [
-            {
-                'type': 'component',
-                'field': field,
-                'operator': operator,
-                'inputs': {'value': input_value},
-            }
-        ],
-    }
-
 
 @pytest.mark.parametrize("field,param_name,param_type", [
     ('province', 'region', FIELD_TYPE_TEXT),

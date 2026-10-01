@@ -1,13 +1,12 @@
 import datetime
 from decimal import Decimal
+from unittest import mock
 
+import pytest
+from dimagi.utils.dates import add_months_to_date
 from django.core import mail
 from django.db import models
 from django.test import SimpleTestCase
-
-from unittest import mock
-
-from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks
 from corehq.apps.accounting.const import SMALL_INVOICE_THRESHOLD
@@ -28,7 +27,10 @@ from corehq.apps.accounting.tests.generator import (
     FakeStripeCardManager,
     FakeStripeCustomerManager,
 )
-from corehq.apps.accounting.tests.utils import clear_subscription_caches_on_commit
+from corehq.apps.accounting.tests.utils import (
+    clear_subscription_caches_on_commit,
+    mocked_stripe_api,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.smsbillables.models import (
     SmsBillable,
@@ -38,7 +40,6 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFeeCriteria,
 )
 from corehq.util.dates import get_previous_month_date_range
-from corehq.apps.accounting.tests.utils import mocked_stripe_api
 
 
 class TestBillingAccount(BaseAccountingTest):
@@ -51,26 +52,27 @@ class TestBillingAccount(BaseAccountingTest):
         self.billing_account = generator.billing_account(self.dimagi_user, self.billing_contact)
 
     def test_creation(self):
-        self.assertIsNotNone(self.billing_account)
+        assert self.billing_account is not None
 
     def test_deletions(self):
-        self.assertRaises(models.ProtectedError, self.currency.delete)
+        with pytest.raises(models.ProtectedError):
+            self.currency.delete()
 
     def test_autopay_user(self):
-        self.assertFalse(self.billing_account.auto_pay_enabled)
+        assert not self.billing_account.auto_pay_enabled
 
         mail.outbox = []
         autopay_user = generator.create_arbitrary_web_user_name()
         self.billing_account.update_autopay_user(autopay_user, None)
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertTrue(self.billing_account.auto_pay_enabled)
-        self.assertEqual(self.billing_account.auto_pay_user, autopay_user)
+        assert len(mail.outbox) == 1
+        assert self.billing_account.auto_pay_enabled
+        assert self.billing_account.auto_pay_user == autopay_user
 
         mail.outbox = []
         other_autopay_user = generator.create_arbitrary_web_user_name()
         self.billing_account.update_autopay_user(other_autopay_user, None)
-        self.assertEqual(len(mail.outbox), 2)
-        self.assertEqual(self.billing_account.auto_pay_user, other_autopay_user)
+        assert len(mail.outbox) == 2
+        assert self.billing_account.auto_pay_user == other_autopay_user
 
     def tearDown(self):
         SmsBillable.objects.all().delete()
@@ -105,56 +107,122 @@ class TestSubscription(BaseAccountingTest):
         )
 
     def test_creation(self):
-        self.assertIsNotNone(self.subscription)
+        assert self.subscription is not None
+
+    def test_update_subscription_leaves_skip_auto_downgrade_until_unchanged_by_default(self):
+        expiration = datetime.date(2016, 3, 1)
+        self.subscription.skip_auto_downgrade_until = expiration
+        self.subscription.save()
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until == expiration
+
+    def test_update_subscription_clears_skip_auto_downgrade_until_when_explicitly_none(self):
+        self.subscription.skip_auto_downgrade_until = datetime.date(2016, 3, 1)
+        self.subscription.save()
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            skip_auto_downgrade_until=None,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until is None
+
+    def test_update_subscription_sets_skip_auto_downgrade_until(self):
+        new_expiration = datetime.date(2016, 4, 1)
+
+        self.subscription.update_subscription(
+            date_start=self.subscription.date_start,
+            date_end=self.subscription.date_end,
+            skip_auto_downgrade_until=new_expiration,
+        )
+
+        self.subscription.refresh_from_db()
+        assert self.subscription.skip_auto_downgrade_until == new_expiration
+
+    def test_should_skip_downgrade_is_false_when_skip_auto_downgrade_is_false(self):
+        self.subscription.skip_auto_downgrade = False
+        self.subscription.skip_auto_downgrade_until = None
+        assert not self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_true_when_skip_active_with_no_expiration_set(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = None
+        assert self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_true_when_skip_active_for_future_expiration(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=1)
+        assert self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_false_when_expiration_is_today(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today()
+        assert not self.subscription.should_skip_downgrade
+
+    def test_should_skip_downgrade_is_false_when_expiration_is_in_the_past(self):
+        self.subscription.skip_auto_downgrade = True
+        self.subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=1)
+        assert not self.subscription.should_skip_downgrade
 
     def test_no_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start - datetime.timedelta(30))
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertFalse(subscription.is_active)
+        assert not subscription.is_active
 
     def test_no_activation_date_start_equals_date_end(self):
         self.subscription.date_end = self.subscription.date_start
         self.subscription.save()
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertFalse(subscription.is_active)
+        assert not subscription.is_active
 
     def test_no_activation_after_date_end(self):
         with mock.patch('corehq.apps.accounting.tasks.date') as mock_date:
             mock_date.today.return_value = self.subscription.date_end
             tasks.activate_subscriptions()
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertFalse(subscription.is_active)
+        assert not subscription.is_active
 
     def test_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertTrue(subscription.is_active)
+        assert subscription.is_active
 
     def test_no_deactivation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         tasks.deactivate_subscriptions(based_on_date=self.subscription.date_end - datetime.timedelta(30))
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertTrue(subscription.is_active)
+        assert subscription.is_active
 
     def test_deactivation(self):
         tasks.deactivate_subscriptions(based_on_date=self.subscription.date_end)
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
-        self.assertFalse(subscription.is_active)
+        assert not subscription.is_active
 
     def test_deletions(self):
-        self.assertRaises(models.ProtectedError, self.account.delete)
-        self.assertRaises(models.ProtectedError, self.subscription.plan_version.delete)
-        self.assertRaises(models.ProtectedError, self.subscription.subscriber.delete)
+        with pytest.raises(models.ProtectedError):
+            self.account.delete()
+        with pytest.raises(models.ProtectedError):
+            self.subscription.plan_version.delete()
+        with pytest.raises(models.ProtectedError):
+            self.subscription.subscriber.delete()
 
     def test_is_hidden_to_ops(self):
         self.subscription.is_hidden_to_ops = True
         self.subscription.save()
-        self.assertEqual(0, len(Subscription.visible_objects.filter(id=self.subscription.id)))
+        assert len(Subscription.visible_objects.filter(id=self.subscription.id)) == 0
 
         self.subscription.is_hidden_to_ops = False
         self.subscription.save()
-        self.assertEqual(1, len(Subscription.visible_objects.filter(id=self.subscription.id)))
+        assert len(Subscription.visible_objects.filter(id=self.subscription.id)) == 1
 
     def test_next_subscription(self):
         this_subscription_date_end = self.subscription.date_end
@@ -170,13 +238,13 @@ class TestSubscription(BaseAccountingTest):
             date_start=this_subscription_date_end,
             date_end=add_months_to_date(this_subscription_date_end, 1),
         )
-        self.assertEqual(self.subscription.next_subscription, next_future_subscription)
+        assert self.subscription.next_subscription == next_future_subscription
 
     def test_get_active_domains_for_account(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         test_domains = ['test']
         domains = Subscription.get_active_domains_for_account(self.account)
-        self.assertEqual(list(domains), test_domains)
+        assert list(domains) == test_domains
 
     # Subscription.clear_caches is overridden to avoid transaction.on_commit in
     # tests. We are testing on_commit behavior here, so temporarily set it back.
@@ -223,11 +291,12 @@ class TestSubscription(BaseAccountingTest):
 class TestBillingRecord(BaseAccountingTest):
 
     def setUp(self):
-        super(TestBillingRecord, self).setUp()
+        super().setUp()
         self.billing_contact = generator.create_arbitrary_web_user_name()
         self.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
         self.domain = Domain(name='test')
         self.domain.save()
+        self.addCleanup(self.domain.delete)
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
         self.currency = generator.init_default_currency()
         self.account = generator.billing_account(self.dimagi_user, self.billing_contact)
@@ -249,35 +318,41 @@ class TestBillingRecord(BaseAccountingTest):
         )
         self.billing_record = BillingRecord(invoice=self.invoice)
 
-    def tearDown(self):
-        self.domain.delete()
-        super(TestBillingRecord, self).tearDown()
-
     def test_should_send_email(self):
-        self.assertTrue(self.billing_record.should_send_email)
+        assert self.billing_record.should_send_email
 
     def test_should_send_email_contracted(self):
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
-        self.assertFalse(self.billing_record.should_send_email)
+        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD)
+        assert not self.billing_record.should_send_email
 
         self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD - 1)
-        self.assertFalse(self.billing_record.should_send_email)
+        assert not self.billing_record.should_send_email
 
-        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
-        self.assertTrue(self.billing_record.should_send_email)
+        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 0.01)
+        assert self.billing_record.should_send_email
 
     def test_should_send_email_autogenerate_credits(self):
         self.subscription.auto_generate_credits = True
-        self.assertFalse(self.billing_record.should_send_email)
+        assert self.invoice.balance == 0
+        assert not self.billing_record.should_send_email
 
-        self.invoice.balance = Decimal(SMALL_INVOICE_THRESHOLD + 1)
-        self.assertTrue(self.billing_record.should_send_email)
+        self.invoice.balance = Decimal(0.01)
+        assert self.billing_record.should_send_email
+
+    def test_should_send_email_pay_annually(self):
+        self.subscription.plan_version.plan.is_annual_plan = True
+        assert self.invoice.balance == 0
+        assert not self.billing_record.should_send_email
+
+        self.invoice.balance = Decimal(0.01)
+        assert self.billing_record.should_send_email
 
     def test_should_send_email_hidden(self):
-        self.assertTrue(self.billing_record.should_send_email)
+        assert self.billing_record.should_send_email
 
         self.invoice.is_hidden = True
-        self.assertFalse(self.billing_record.should_send_email)
+        assert not self.billing_record.should_send_email
 
 
 class TestCustomerBillingRecord(BaseAccountingTest):
@@ -316,13 +391,13 @@ class TestCustomerBillingRecord(BaseAccountingTest):
         super(TestCustomerBillingRecord, self).tearDown()
 
     def test_should_send_email(self):
-        self.assertTrue(self.customer_billing_record.should_send_email)
+        assert self.customer_billing_record.should_send_email
 
     def test_should_send_email_hidden(self):
-        self.assertTrue(self.customer_billing_record.should_send_email)
+        assert self.customer_billing_record.should_send_email
 
         self.invoice.is_hidden = True
-        self.assertFalse(self.customer_billing_record.should_send_email)
+        assert not self.customer_billing_record.should_send_email
 
 
 @mock.patch.object(StripePaymentMethod, 'customer')
@@ -349,41 +424,41 @@ class TestStripePaymentMethod(BaseAccountingTest):
     @mocked_stripe_api()
     def test_set_autopay(self, mock_send_email, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
-        self.assertEqual(self.billing_account.auto_pay_user, None)
-        self.assertFalse(self.billing_account.auto_pay_enabled)
+        assert self.billing_account.auto_pay_user is None
+        assert not self.billing_account.auto_pay_enabled
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
-        self.assertEqual(self.billing_account.auto_pay_user, self.web_user)
-        self.assertTrue(self.billing_account.auto_pay_enabled)
+        assert self.fake_card.metadata == {"auto_pay_{}".format(self.billing_account.id): 'True'}
+        assert self.billing_account.auto_pay_user == self.web_user
+        assert self.billing_account.auto_pay_enabled
 
         self.payment_method.set_autopay(self.fake_card, self.billing_account_2, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True',
-                                                   "auto_pay_{}".format(self.billing_account_2.id): 'True'})
+        assert self.fake_card.metadata == {"auto_pay_{}".format(self.billing_account.id): 'True',
+                                           "auto_pay_{}".format(self.billing_account_2.id): 'True'}
 
         other_web_user = generator.create_arbitrary_web_user_name()
         other_payment_method = StripePaymentMethod(web_user=other_web_user)
         different_fake_card = FakeStripeCardManager.create_card()
 
         other_payment_method.set_autopay(different_fake_card, self.billing_account, None)
-        self.assertEqual(self.billing_account.auto_pay_user, other_web_user)
-        self.assertTrue(different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)])
-        self.assertFalse(self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] == 'True')
+        assert self.billing_account.auto_pay_user == other_web_user
+        assert different_fake_card.metadata["auto_pay_{}".format(self.billing_account.id)]
+        assert self.fake_card.metadata["auto_pay_{}".format(self.billing_account.id)] != 'True'
 
     @mocked_stripe_api()
     def test_unset_autopay(self, fake_customer):
         fake_customer.__get__ = mock.Mock(return_value=self.fake_stripe_customer)
         self.payment_method.set_autopay(self.fake_card, self.billing_account, None)
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'True'})
+        assert self.fake_card.metadata == {"auto_pay_{}".format(self.billing_account.id): 'True'}
 
         self.payment_method.unset_autopay(self.fake_card, self.billing_account)
 
-        self.assertEqual(self.fake_card.metadata, {"auto_pay_{}".format(self.billing_account.id): 'False'})
-        self.assertIsNone(self.billing_account.auto_pay_user)
-        self.assertFalse(self.billing_account.auto_pay_enabled)
+        assert self.fake_card.metadata == {"auto_pay_{}".format(self.billing_account.id): 'False'}
+        assert self.billing_account.auto_pay_user is None
+        assert not self.billing_account.auto_pay_enabled
 
 
 class SimpleBillingAccountTest(SimpleTestCase):
     def test_has_enterprise_admin_does_case_insensitive_match(self):
         account = BillingAccount(is_customer_billing_account=True, enterprise_admin_emails=['TEST@dimagi.com'])
-        self.assertTrue(account.has_enterprise_admin('test@DIMAGI.com'))
+        assert account.has_enterprise_admin('test@DIMAGI.com')

@@ -52,7 +52,8 @@ def get_timezone_for_domain(domain):
 
 def get_timezone_for_user(couch_user_or_id, domain):
     if couch_user_or_id:
-        if isinstance(couch_user_or_id, CouchUser):
+        if hasattr(couch_user_or_id, 'get_domain_membership'):
+            # any user-like object, including proxies that are not CouchUsers
             requesting_user = couch_user_or_id
         else:
             assert isinstance(couch_user_or_id, str), type(couch_user_or_id)

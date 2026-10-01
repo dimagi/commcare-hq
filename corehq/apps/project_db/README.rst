@@ -27,19 +27,46 @@ Definitions are built with `SQLAlchemy Core
 for the ``project_db`` engine (the default database unless
 ``REPORTING_DATABASES`` maps it elsewhere).
 
+Querying
+--------
+
+``user_sql.py`` translates user-written SQL into SQLAlchemy Core, accepting only
+a strict subset of ``SELECT`` and binding every literal. ``describe.py``
+documents that subset.
+
 Evolution
 ---------
 
-Provisioning is **append-only** and idempotent: a domain's schema and tables are
+Tables are created and synced automatically as the data dictionary is modified.
+Provisioning is append-only and idempotent: a domain's schema and tables are
 created if absent, and new columns and indexes are added, but existing ones are
-never dropped or rewritten. A new case property becomes a new column; a new case
-type becomes a new table.
+never dropped or rewritten. A new case property becomes a new column; a new
+case type becomes a new table.
+
+Access control
+--------------
+
+Each domain gets a read-only Postgres role named after its schema with access
+to only that schema. Queries connect as that role, so Postgres refuses to read
+another domain's tables however the query is written. This is a
+belt-and-suspenders backstop for the query layer, which shouldn't allow that
+sort of access anyways. Table definition and population connect as the owner
+instead, since the domain role cannot write.
+
+HQ's database user cannot create roles, so provisioning goes through
+``projectdb_provision_role`` and ``projectdb_drop_role``, ``SECURITY DEFINER``
+functions that run as their owner. commcare-cloud installs these in production;
+``project_db_setup.sql`` mirrors that template for dev and CI, where
+``setup_project_db`` applies it.
 
 Status
 ------
 
-This module currently defines and provisions the table structure only.
-Populating the tables with case data and querying them are not yet implemented.
+Turning on the ``PROJECT_DB`` feature flag sets up the tables for the domain,
+and thereafter they stay in sync automatically when the data dictionary is
+modified.  New cases are sychronously sent to the ProjectDB during form
+submission.  Pre-existing cases must be manually back-populated using
+``manage_project_db --populate``
 
 TODOs
 ----
@@ -48,7 +75,7 @@ TODOs
   is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
   Postgres schema rather than a Django model, the standard model-based
   registration won't catch it; deleting a domain would orphan its
-  ``projectdb_<domain>`` schema and data.
+  ``projectdb_<domain>`` schema, data, and role.
 - Use the stored property-name comments when populating. Each property column
   stores its raw case property name as a Postgres comment, which lets the
   source property be recovered by inspecting the table. ``case_to_row`` could
@@ -58,6 +85,6 @@ TODOs
   support both?
 - Index external ID.
 - Put limit on number of property columns
-- Add a SQL user per domain with only access to that domain's schema
 - Set up automatic update call on data dictionary change, and auto population
   on case update
+- Add a SQL user per domain with only access to that domain's schema

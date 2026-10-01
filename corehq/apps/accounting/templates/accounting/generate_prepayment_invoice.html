@@ -1,0 +1,40 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry_b3 "accounting/js/generate_prepayment_invoice" %}
+
+{% block page_content %}
+  {% initial_page_data "payment_error_messages" payment_error_messages %}
+  {% initial_page_data "wire_email" user_email %}
+  {% registerurl "accounting_generate_prepayment_invoice" %}
+  {% crispy prepayment_form %}
+
+  <div id="prepaymentInvoice" class="form form-horizontal">
+    <div data-bind="with: prepayments">
+      <div class="form-actions">
+        <div class="controls col-sm-9 col-md-8 col-lg-6">
+          <button
+            type="button"
+            id="generate-prepayment-invoice"
+            class="btn btn-primary"
+            disabled="disabled"
+            data-toggle="modal"
+            data-target="#paymentModal"
+            data-bind="
+              enable: $root.paymentHandler.domain,
+              click: function() { triggerPayment($root.paymentHandler.WIRE) },
+            "
+          >
+            {% trans "Generate Invoice" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  {% include 'domain/partials/bootstrap3/payment_modal.html' with payment_modal_id="paymentModal" title_template="payment-method-modal-title" cost_item_template="cost-item-template" payment_complete_template="payment-complete-template" %}
+{% endblock %}

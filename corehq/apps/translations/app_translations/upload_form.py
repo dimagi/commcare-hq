@@ -19,6 +19,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_unicode_dicts,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.util.xml_utils import safe_fromstring
 
 
 class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
@@ -412,7 +413,7 @@ class BulkAppTranslationFormUpdater(BulkAppTranslationUpdater):
     @classmethod
     def escape_output_value(cls, value):
         try:
-            return etree.fromstring("<value>{}</value>".format(
+            return safe_fromstring("<value>{}</value>".format(
                 re.sub(r"(?<!/)>", "&gt;", re.sub(r"<(\s*)(?!output)", "&lt;\\1", value))
             ))
         except XMLSyntaxError:

@@ -21,6 +21,14 @@ msgstr ""
 "100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
 "(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr ""
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr ""
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Мій проєкт завершився"
@@ -59,6 +67,19 @@ msgstr "Мені потрібні додаткові/індивідуальні 
 #: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
 msgid "Other"
 msgstr "Інше"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Generate Invoice"
+msgstr "Запланувати розсилку"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+#, fuzzy
+#| msgid "Schedule Broadcast"
+msgid "Schedule Invoice"
+msgstr "Запланувати розсилку"
 
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."

@@ -6,6 +6,8 @@ on:
 name: Update transifex translations
 jobs:
   update_translations:
+    # Only run on the canonical repo, not on forks or mirrors
+    if: github.repository == 'dimagi/commcare-hq'
     name: Update transifex translations
     runs-on: ubuntu-latest
     env:

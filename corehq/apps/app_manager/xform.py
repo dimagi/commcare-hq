@@ -33,6 +33,7 @@ from corehq.apps.app_manager.xpath import XPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE, NAMESPACE_DOMAIN, SAVE_ONLY_EDITED_FORM_FIELDS
 from corehq.util.view_utils import get_request
+from corehq.util.xml_utils import get_safe_xml_parser, safe_fromstring
 
 from .exceptions import (
     BindNotFound,
@@ -48,14 +49,8 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
-    # Work around: ValueError: Unicode strings with encoding
-    # declaration are not supported.
-    if isinstance(string, str):
-        string = string.encode("utf-8")
-
-    parser = ET.XMLParser(encoding="utf-8", remove_comments=True, resolve_entities=False)
     try:
-        parsed = ET.fromstring(string, parser=parser)
+        parsed = safe_fromstring(string, encoding="utf-8", remove_comments=True)
     except ET.ParseError as e:
         raise XFormException(_("Error parsing XML: {}").format(e))
 
@@ -775,7 +770,8 @@ class XForm(WrappedNode):
         parts = set()
 
         # Remove leading and trailing whitespace in XML elements; it's not relevant here
-        parser = ET.XMLParser(remove_blank_text=True)
+        parser = get_safe_xml_parser(remove_blank_text=True)
+
         def reparse_to_string(xml):
             return ET.tostring(ET.XML(ET.tostring(xml), parser))
 

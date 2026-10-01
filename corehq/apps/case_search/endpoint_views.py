@@ -1,12 +1,17 @@
 import json
+from datetime import datetime
 
 from django import forms
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+
+from sqlalchemy.exc import SQLAlchemyError
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
@@ -23,17 +28,34 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import not_found
+from corehq.apps.project_db.user_sql import (
+    UnsupportedSQL,
+    UserSQL,
+    UserSQLValidationError,
+)
 from corehq.apps.settings.views import BaseProjectDataView
 
 from dimagi.utils.logging import notify_exception
 
-_ENDPOINT_DECORATORS = [
+_ADMIN_ENDPOINT_DECORATORS = [
     use_bootstrap5,
     toggles.CASE_SEARCH_ENDPOINTS.required_decorator(),
+    domain_admin_required,
 ]
+
+PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
+
+
+def _bind_parameters(parameters, values):
+    """Take from ``values`` what the query's ``parameters`` need.
+    A missing or blank value binds as NULL
+    """
+    return {name: values.get(name) or None for name in parameters}
+
 
 def empty_query():
     return {'type': 'all', 'children': []}
@@ -47,8 +69,8 @@ def _get_endpoint(domain, endpoint_id):
     )
 
 
-def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameters=None,
-                          extra_update_fields=()):
+def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query=None,
+                          parameters=None, dangerous_sql='', extra_update_fields=()):
     """Create the next version for ``endpoint`` and make it the current version.
 
     Must be called within a transaction. ``extra_update_fields`` are saved on the
@@ -59,8 +81,10 @@ def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameter
     version = CaseSearchEndpointVersion.objects.create(
         endpoint=endpoint,
         version_number=next_num,
+        case_type=case_type,
         query=query,
         parameters=parameters,
+        dangerous_sql=dangerous_sql,
         created_by=created_by,
         action=action,
     )
@@ -69,18 +93,26 @@ def _add_endpoint_version(endpoint, *, action, created_by, query=None, parameter
     return version
 
 
+class TargetTypeMixin:
+    @cached_property
+    def allowed_target_types(self):
+        target_types = [CaseSearchEndpoint.TargetType.ELASTICSEARCH]
+        if toggles.PROJECT_DB.enabled(self.domain):
+            target_types.append(CaseSearchEndpoint.TargetType.PROJECT_DB)
+        return target_types
+
+
 class CaseSearchEndpointForm(forms.Form):
     name = forms.CharField()
-    target_type = forms.ChoiceField(
-        choices=CaseSearchEndpoint.TargetType.choices
-    )
     case_type = forms.CharField(required=False)
     query = forms.JSONField(required=False)
     parameters = forms.JSONField(required=False)
+    sql = forms.CharField(required=False, widget=forms.Textarea)
 
-    def __init__(self, *args, domain, exclude_pk=None, capability=None, **kwargs):
+    def __init__(self, *args, domain, target_type, exclude_pk=None, capability=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = domain
+        self.target_type = target_type
         self.exclude_pk = exclude_pk
         self.capability = capability
 
@@ -113,23 +145,56 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        parameters = self._clean_parameters(cleaned)
+        # An endpoint is configured one way or the other, so the fields
+        # belonging to the other kind are dropped rather than saved unchecked.
+        if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
+            cleaned['sql'] = ''
+            self._clean_query(cleaned, parameters)
+        elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            cleaned['case_type'] = None
+            cleaned['query'] = None
+            self._clean_sql(cleaned)
+
+        return cleaned
+
+    def _clean_parameters(self, cleaned):
+        parameter_spec = cleaned.get('parameters')
+        if parameter_spec is None:
+            return None
+        parameters, errors = parse_parameter_spec(parameter_spec)
+        for error in errors:
+            self.add_error('parameters', error)
+        return parameters
+
+    def _clean_query(self, cleaned, parameters):
         query = cleaned.get('query')
-        parameters = cleaned.get('parameters')
         # Only run semantic validation when both fields parsed cleanly.
         if query is not None and parameters is not None:
             capability = self.capability or get_capability(self.domain)
-            parameters, errors = parse_parameter_spec(parameters)
-            if not errors:
-                _, errors = parse_query_spec(
-                    query, parameters, cleaned.get('case_type') or '', capability
-                )
+            _, errors = parse_query_spec(
+                query, parameters, cleaned.get('case_type') or '', capability
+            )
             for error in errors:
-                self.add_error(None, error)
-        return cleaned
+                self.add_error('query', error)
+
+    def _clean_sql(self, cleaned):
+        sql = (cleaned.get('sql') or '').strip()
+        try:
+            UserSQL(self.domain, sql, max_rows=None).validate()
+        except UnsupportedSQL as error:
+            self.add_error('sql', str(error.msg))
+        except (ImproperlyConfigured, SQLAlchemyError) as error:
+            # Not the author's fault, so report it against the form rather
+            # than the field, and let them keep what they wrote.
+            notify_exception(
+                None, f'project_db unavailable for {self.domain}: {error}'
+            )
+            self.add_error(None, PROJECT_DB_UNAVAILABLE)
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointsView(BaseProjectDataView):
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointsView(TargetTypeMixin, BaseProjectDataView):
     urlname = 'case_search_endpoints'
     page_title = gettext_lazy('Case Search Endpoints')
     template_name = 'case_search/endpoint_list.html'
@@ -144,9 +209,11 @@ class CaseSearchEndpointsView(BaseProjectDataView):
             'endpoints': CaseSearchEndpoint.objects.filter(
                 domain=self.domain,
                 is_active=True,
+                target_type__in=self.allowed_target_types,
             )
             .select_related('current_version')
             .order_by('name'),
+            'target_types': self.allowed_target_types,
         }
 
 
@@ -155,6 +222,7 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
 
     template_name = 'case_search/endpoint_edit.html'
     mode = None
+    target_type = None
 
     @property
     def parent_pages(self):
@@ -179,6 +247,8 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return {
             'capability': self.capability,
             'endpoint_mode': self.mode,
+            'target_type': self.target_type,
+            'target_type_display': CaseSearchEndpoint.TargetType(self.target_type).label,
             'max_group_depth': MAX_QUERY_DEPTH - 1,
             'post_url': self.page_url,
             'form': self._form,
@@ -189,23 +259,30 @@ class CaseSearchEndpointEditBaseView(BaseProjectDataView):
         return self.render_to_response(self.get_context_data())
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointNewView(TargetTypeMixin, CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_new'
     page_title = gettext_lazy('New Case Search Endpoint')
     mode = 'new'
 
+    @cached_property
+    def target_type(self):
+        value = self.request.GET.get('target_type')
+        if value not in self.allowed_target_types:
+            raise Http404(f"Unknown target_type: {value!r}")
+        return value
+
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain])
+        return reverse(self.urlname, args=[self.domain], query={'target_type': self.target_type})
 
     def _make_form(self, data=None):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             capability=self.capability,
             initial={
-                'target_type': CaseSearchEndpoint.TargetType.PROJECT_DB,
                 'query': empty_query,
                 'parameters': list,
             },
@@ -220,13 +297,14 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
             endpoint = CaseSearchEndpoint.objects.create(
                 domain=self.domain,
                 name=cd['name'],
-                target_type=cd['target_type'],
-                case_type=cd['case_type'],
+                target_type=self.target_type,
             )
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.CREATE,
                 created_by=request.couch_user.username,
+                case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
             )
@@ -238,7 +316,7 @@ class CaseSearchEndpointNewView(CaseSearchEndpointEditBaseView):
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
     urlname = 'case_search_endpoint_edit'
     page_title = gettext_lazy('Edit Case Search Endpoint')
@@ -248,7 +326,13 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if self._endpoint is None:
             return not_found(request)
+        if self._endpoint.upstream_id:
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def target_type(self):
+        return self._endpoint.target_type
 
     @property
     def page_url(self):
@@ -259,12 +343,13 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         return CaseSearchEndpointForm(
             data,
             domain=self.domain,
+            target_type=self.target_type,
             exclude_pk=self._endpoint.pk,
             capability=self.capability,
             initial={
                 'name': self._endpoint.name,
-                'target_type': self._endpoint.target_type,
-                'case_type': self._endpoint.case_type,
+                'case_type': current.case_type if current else None,
+                'sql': current.dangerous_sql if current else '',
                 'query': current.query if current else empty_query,
                 'parameters': current.parameters if current else list,
             },
@@ -284,22 +369,22 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         endpoint = self._endpoint
         with transaction.atomic():
             endpoint.name = cd['name']
-            endpoint.target_type = cd['target_type']
-            endpoint.case_type = cd['case_type']
             _add_endpoint_version(
                 endpoint,
                 action=CaseSearchEndpointVersion.Action.UPDATE,
                 created_by=request.couch_user.username,
+                case_type=cd['case_type'],
+                dangerous_sql=cd['sql'],
                 query=cd['query'],
                 parameters=cd['parameters'],
-                extra_update_fields=['name', 'target_type', 'case_type'],
+                extra_update_fields=['name'],
             )
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
 class CaseSearchEndpointDeactivateView(BaseDomainView):
     urlname = 'case_search_endpoint_deactivate'
     http_method_names = ['post']
@@ -314,23 +399,19 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if endpoint is None:
             return not_found(request)
-        with transaction.atomic():
-            endpoint.is_active = False
-            _add_endpoint_version(
-                endpoint,
-                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
-                created_by=request.couch_user.username,
-                extra_update_fields=['is_active'],
-            )
+        endpoint.is_active = False
+        endpoint.deactivated_on = datetime.utcnow()
+        endpoint.deactivated_by = request.couch_user.username
+        endpoint.save(update_fields=['is_active', 'deactivated_on', 'deactivated_by'])
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
 
 
-@method_decorator(_ENDPOINT_DECORATORS, name='dispatch')
-class CaseSearchEndpointTestView(BaseDomainView):
-    """Runs a query builder spec against the project's cases and returns an
-    HTMX partial with the matching results (or validation errors).
+@method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
+class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
+    """Runs an unsaved endpoint against the project and returns an HTMX
+    partial with the results (or validation errors).
 
     Domain-scoped rather than endpoint-scoped so it works for unsaved
     queries on the new-endpoint page too.
@@ -339,15 +420,23 @@ class CaseSearchEndpointTestView(BaseDomainView):
     urlname = 'case_search_endpoint_test'
     http_method_names = ['post']
     _results_template = 'case_search/partials/test_results.html'
+    _row_limit = 20
+
+    #: Containers on the edit page holding each card's validation errors
+    PARAMETER_ERRORS = 'parameter-errors'
+    QUERY_ERRORS = 'query-errors'
+    SQL_ERRORS = 'sql-errors'
 
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
 
     def post(self, request, *args, **kwargs):
-        case_type = request.POST.get('case_type', '')
+        if request.POST.get('target_type') not in self.allowed_target_types:
+            return self._render_results(request, errors=['Invalid target type'])
+
         try:
-            parameters = json.loads(request.POST.get('parameters', '[]'))
+            spec = json.loads(request.POST.get('parameters', '[]'))
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid parameters JSON.'])
 
@@ -356,37 +445,61 @@ class CaseSearchEndpointTestView(BaseDomainView):
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid test parameter values.'])
 
+        parameters, errors = parse_parameter_spec(spec)
+        if errors:
+            return self._render_results(
+                request, validation={self.PARAMETER_ERRORS: errors})
+        validation = {self.PARAMETER_ERRORS: [], self.QUERY_ERRORS: [],
+                      self.SQL_ERRORS: []}
+
+        if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            return self._run_sql(request, test_param_values, validation)
+        return self._run_es_query(request, parameters, test_param_values, validation)
+
+    def _run_es_query(self, request, parameters, test_param_values, validation):
+        """Run the query builder's spec and render the cases it matched."""
+        case_type = request.POST.get('case_type', '')
         try:
             query = json.loads(request.POST.get('query') or '{}')
         except (json.JSONDecodeError, ValueError):
             return self._render_results(request, errors=['Invalid query JSON.'])
 
-        parameters, errors = parse_parameter_spec(parameters)
-        if errors:
-            return self._render_results(request, errors=errors)
-
         capability = get_capability(domain=self.domain)
-        if case_type not in capability['case_types']:
-            return self._render_results(request, errors=[f"Unknown case type: '{case_type}'"])
-        fields = capability['case_types'][case_type]
         query_root, errors = parse_query_spec(query, parameters, case_type, capability)
         if errors:
-            return self._render_results(request, errors=errors)
+            validation[self.QUERY_ERRORS] = errors
+            return self._render_results(request, validation=validation)
+        fields = capability['case_types'][case_type]
         try:
-            results = self._run_query(case_type, query_root, test_param_values)
+            criteria = criteria_dict_to_criteria_list(test_param_values)
+            results = get_primary_case_search_endpoint_results(
+                QueryHelper(self.domain), [case_type], criteria, query_root,
+                self._row_limit)
         except Exception as e:
             notify_exception(request, str(e))
-            return self._render_results(request, errors=['Query Execution Failed'])
-        return self._render_results(request, fields=fields, results=results)
+            return self._render_results(request, errors=['Query Execution Failed'],
+                                        validation=validation)
+        columns, rows = self._es_results_to_columns_and_rows(fields, results)
+        return self._render_results(request, columns, rows, validation=validation)
 
-    def _run_query(self, case_type, query, test_param_values):
-        helper = QueryHelper(self.domain)
-        criteria = criteria_dict_to_criteria_list(test_param_values)
-        return get_primary_case_search_endpoint_results(helper, [case_type], criteria, query, 20)
+    def _run_sql(self, request, test_param_values, validation):
+        sql = request.POST.get('sql', '').strip()
+        user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
+        try:
+            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
+        except UserSQLValidationError as error:
+            validation[self.SQL_ERRORS] = [error.msg]
+            return self._render_results(request, validation=validation)
+        except (ImproperlyConfigured, SQLAlchemyError) as error:
+            notify_exception(
+                request, f'project_db unavailable for {self.domain}: {error}')
+            return self._render_results(
+                request, errors=[PROJECT_DB_UNAVAILABLE])
+        return self._render_results(request, result.columns, result.rows, validation=validation)
 
-    def _render_results(self, request, *, errors=None, fields=None, results=None):
-        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
+    def _es_results_to_columns_and_rows(self, fields, results):
         field_names = (fields or {}).keys()
+        columns = ['Case Name'] + [k for k in field_names]
         if results:
             rows = [
                 [case.name] +
@@ -395,8 +508,13 @@ class CaseSearchEndpointTestView(BaseDomainView):
             ]
         else:
             rows = []
+        return columns, rows
+
+    def _render_results(self, request, columns=None, rows=None, errors=None, validation=None):
+        # Always 200 so HTMX swaps the partial in (it ignores error statuses).
         return render(request, self._results_template, {
             'errors': errors or [],
-            'columns': (['Case Name'] + [k for k in field_names]),
+            'columns': columns,
             'rows': rows or [],
+            'validation': validation or {},
         })

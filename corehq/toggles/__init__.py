@@ -1025,6 +1025,22 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+def _sync_project_db_schema(domain, is_enabled):
+    from corehq.apps.project_db.tasks import schedule_project_db_sync
+    if is_enabled:
+        schedule_project_db_sync(domain)
+
+
+PROJECT_DB = StaticToggle(
+    'project_db',
+    'ProjectDB: Auto-managed SQL database of project case data',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="Note that this is in testing and will not work without a dev helping.",
+    save_fn=_sync_project_db_schema,
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1063,18 +1079,6 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     "USH: Allow customizing the text displayed when case list contains no cases in web apps",
     TAG_GA_PATH,
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-ENUM_CALC_VARIABLES = StaticToggle(
-    'enum_calc_variables',
-    'Switch Enum Fields to Variables',
-    TAG_INTERNAL,
-    description="""
-    Switch enum field types to reference the calculated_property variable
-    rather than repeat the expression for each mapping.  This is a performance
-    optimization for when the expression is expensive to compute.
-    """,
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 HIDE_SYNC_BUTTON = StaticToggle(
@@ -2204,7 +2208,21 @@ COMMCARE_CONNECT = StaticToggle(
     'Enable CommCare Connect features',
     tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
-    description='More details to come',
+    description='Enables CommCare Connect features, along with the other '
+                'feature flags that Connect projects require.',
+    parent_toggles=[SESSION_ENDPOINTS, CUSTOM_PROPERTIES],
+)
+
+OCS_CONNECT_INTEGRATION = StaticToggle(
+    'ocs_connect_integration',
+    'Enable feature flags required for Open Chat Studio (OCS) and Connect integration',
+    tag=TAG_CONNECT_DIVISION,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='A bundle flag that does not add any functionality itself. '
+                'Enabling it through this page also enables the feature flags '
+                'listed below. Disabling it does not disable them, they'
+                'will need to be disabled individually',
+    parent_toggles=[UCR_EXPRESSION_REGISTRY, EXPRESSION_REPEATER],
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
@@ -2551,4 +2569,12 @@ CHUNKED_LIVEQUERY = FeatureRelease(
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Daniel Miller',
+)
+
+AI_APP_TRANSLATION = FeatureRelease(
+    slug='ai_app_translation',
+    label='Translate app content with AI from the Languages page',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Amit Phulera',
 )

@@ -18,15 +18,11 @@ from corehq.apps.data_dictionary.models import (
 )
 
 
-def test_operator_input_schemas_all_values_are_lists():
+def test_operator_input_schemas_shape():
     for op, schema in OPERATOR_INPUT_SCHEMAS.items():
         assert isinstance(schema, list), (
             f'{op}: expected list, got {type(schema)}'
         )
-
-
-def test_operator_input_schemas_all_items_have_name_and_type_strings():
-    for op, schema in OPERATOR_INPUT_SCHEMAS.items():
         for item in schema:
             assert isinstance(item.get('name'), str), (
                 f"{op}: item 'name' must be str"
@@ -68,20 +64,14 @@ def patient_case_type():
 
 
 @use(patient_case_type)
-def test_returns_case_types_with_fields():
+def test_capability_for_domain():
     cap = get_capability('test-domain')
     assert cap['case_types'].keys() == {'patient'}
-    field_names = cap['case_types']['patient'].keys()
-    assert 'first_name' in field_names
-    assert 'dob' in field_names
-
-
-@use(patient_case_type)
-def test_field_has_operations():
-    cap = get_capability('test-domain')
-    name_field = cap['case_types']['patient']['first_name']
-    op_names = [op['name'] for op in name_field['operations']]
-    assert 'equals' in op_names
+    patient = cap['case_types']['patient']
+    assert {'first_name', 'dob', 'status'} <= patient.keys()
+    assert 'equals' in [op['name'] for op in patient['first_name']['operations']]
+    assert set(patient['status']['options']) == {'active', 'closed'}
+    assert cap['operator_input_schemas']
 
 
 def test_operations_have_name_and_label():
@@ -94,37 +84,20 @@ def test_operations_have_name_and_label():
 
 
 def test_date_operations_use_operator_names_not_before_after():
-    op_names = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
-    assert op_names == {'equals', 'lt', 'gt', 'lte', 'gte', 'fuzzy_date'}
-    assert 'before' not in op_names
-    assert 'after' not in op_names
-
-
-def test_fuzzy_date_is_date_only():
-    date_ops = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
-    datetime_ops = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATETIME)}
-    assert 'fuzzy_date' in date_ops
-    assert 'fuzzy_date' not in datetime_ops
-
-
-@pytest.mark.parametrize("op_name,expected_label", [
-    ('lt', 'before'),
-    ('gt', 'after'),
-    ('equals', 'on'),
-    ('lte', 'on or before'),
-    ('gte', 'on or after'),
-    ('fuzzy_date', 'is approximately'),
-])
-def test_date_op_labels(op_name, expected_label):
     labels = {op['name']: str(op['label']) for op in get_operations_for_field_type(FIELD_TYPE_DATE)}
-    assert labels[op_name] == expected_label
+    assert labels == {
+        'equals': 'on',
+        'lt': 'before',
+        'gt': 'after',
+        'lte': 'on or before',
+        'gte': 'on or after',
+        'fuzzy_date': 'is approximately',
+    }
 
 
-@use(patient_case_type)
-def test_select_field_has_options():
-    cap = get_capability('test-domain')
-    status_field = cap['case_types']['patient']['status']
-    assert set(status_field['options']) == {'active', 'closed'}
+def test_fuzzy_date_is_not_offered_for_datetime():
+    datetime_ops = {op['name'] for op in get_operations_for_field_type(FIELD_TYPE_DATETIME)}
+    assert 'fuzzy_date' not in datetime_ops
 
 
 @use(patient_case_type)
@@ -158,10 +131,3 @@ def test_excludes_property(prop_name, prop_kwargs):
 def test_get_field_type_raises_for_unmapped_data_type():
     with pytest.raises(ValueError, match="Unmapped"):
         get_field_type('totally_unknown_type')
-
-
-@use(patient_case_type)
-def test_operator_input_schemas_present():
-    cap = get_capability('test-domain')
-    assert 'operator_input_schemas' in cap
-    assert cap['operator_input_schemas']

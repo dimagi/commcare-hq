@@ -1096,6 +1096,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             'resource_uri': '/a/user-repeater/api/user/v1/{}/'.format(user._id),
             'locations': [],
             'primary_location': None,
+            'language': None,
+            'role': 'Mobile Worker Default',
         }
 
 

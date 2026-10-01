@@ -5,7 +5,6 @@ from eulxml.xmlmap import (
     SimpleBooleanField,
     StringField,
     XmlObject,
-    load_xmlobject_from_string,
 )
 from lxml import etree
 
@@ -1003,8 +1002,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node, encoding='utf-8')
-                template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                template = GraphTemplate(field.template.node)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
                     result.add(series.nodeset)

@@ -142,6 +142,9 @@ accounting
  0120_billingaccountdomainhistory
  0121_invoicing_plan_monthly
  0122_stop_declaring_invoicing_plan
+ 0123_subscription_skip_auto_downgrade_until
+ 0124_scheduled_prepayment_invoice
+ 0125_ai_app_translation_priv
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -191,6 +194,7 @@ app_manager
  0030_credentialapplication
  0031_delete_latestenabledbuildprofiles
  0032_publicwebform_publicformsession
+ 0033_delete_publicformsession_delete_publicwebform
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -230,6 +234,7 @@ blobs
  0015_rename_blobmeta_parent_id_type_code_name_blobs_blobm_parent__73d7c2_idx
 builds
  0001_initial
+ 0002_populate_commcaremobilebuild
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
@@ -272,6 +277,11 @@ case_search
  0017_add_case_search_endpoint_models
  0018_add_endpoint_version_audit_fields
  0019_rename_target_name_casesearchendpoint_case_type
+ 0020_remove_casesearchendpoint_case_type_and_more
+ 0021_casesearchendpointversion_dangerous_sql
+ 0022_casesearchendpoint_deactivated
+ 0023_delete_inactive_endpoints
+ 0024_casesearchendpoint_upstream_id
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -693,6 +703,7 @@ hqadmin
  0018_back_populate_deploy_commit
  0019_celery_taskmeta_sequence
  0020_celery_results_sequence
+ 0021_platformdeactivationlog
 hqmedia
  0001_initial
 hqwebapp
@@ -758,6 +769,7 @@ linked_domain
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
  0025_alter_domainlinkhistory_model_choices
+ 0026_domainlinkhistory_case_search_endpoint
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -825,6 +837,19 @@ oauth2_provider
  0005_auto_20211222_2352
  0006_alter_application_client_secret
  0007_application_post_logout_redirect_uris
+ 0008_alter_accesstoken_token
+ 0009_add_hash_client_secret
+ 0010_application_allowed_origins
+ 0011_refreshtoken_token_family
+ 0012_add_token_checksum
+ 0013_alter_application_authorization_grant_type_device
+ 0014_alter_help_text
+ 0015_refreshtoken_token_checksum
+ 0016_alter_devicegrant_scope
+ 0017_application_dcr_created
+ 0018_resource_indicators
+ 0019_application_registration_source
+ 0020_cimd_application_fields
 ota
  0001_initial
  0002_alter_db_index
@@ -911,6 +936,7 @@ project_limits
  0005_systemlimit_owneriddefault
 public_webforms
  0001_initial
+ 0002_publicformsession_contact_info
 registration
  0001_initial
  0002_alter_request_ip
@@ -1019,6 +1045,8 @@ scheduling_partitioned
  0008_track_attempts
  0009_rename_alertscheduleinstance_active_next_event_due_scheduling__active_c8422f_idx_and_more
 sessions
+ 0001_initial
+short_links
  0001_initial
 sites
  0001_initial
@@ -1298,6 +1326,10 @@ translations
  0009_auto_20200924_1753
  0010_transifex_organization_api_token_encryption
  0011_delete_transifexblacklist_and_more
+ 0012_aitranslation_aitranslationconfig_aitranslationusage
+ 0013_rename_aitranslationusage_counts
+ 0014_alter_aitranslation_status
+ 0015_aitranslationusage_run_counts
 two_factor
  (no migrations)
 user_importer

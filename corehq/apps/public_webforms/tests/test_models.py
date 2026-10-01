@@ -2,11 +2,16 @@ import datetime
 from uuid import uuid4
 
 import pytest
+from unmagic import use
 
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.utils import timezone
 
 from casexml.apps.phone.xml import get_registration_element_data
+from dimagi.utils.web import get_url_base
+
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
 from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_COOKIE_NAME,
     PUBLIC_FORM_SESSION_HEADER,
@@ -17,8 +22,112 @@ from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicFormUser,
     PublicWebform,
+    PublicWebformStatus,
 )
+from corehq.apps.public_webforms.tests.utils import create_session, create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
+
+
+def test_public_url_is_absolute_and_keyed_on_the_public_id():
+    webform = PublicWebform(public_id=uuid4())
+    # absolute because it is shared over email, SMS, and QR code
+    assert webform.public_url.startswith(get_url_base())
+    assert webform.public_id.hex in webform.public_url
+
+
+@pytest.mark.parametrize('offset, expected', [
+    (datetime.timedelta(minutes=-1), True),
+    (datetime.timedelta(minutes=1), False),
+], ids=['past', 'future'])
+def test_is_expired(offset, expected):
+    assert PublicWebform(expires_at=timezone.now() + offset).is_expired is expected
+
+
+@pytest.mark.parametrize('offset, is_disabled, expected', [
+    (datetime.timedelta(minutes=1), False, True),
+    (datetime.timedelta(minutes=1), True, False),
+    (datetime.timedelta(minutes=-1), False, False),
+    (datetime.timedelta(minutes=-1), True, False),
+], ids=['open', 'closed', 'expired', 'expired-and-closed'])
+def test_is_open(offset, is_disabled, expected):
+    webform = PublicWebform(
+        expires_at=timezone.now() + offset, is_disabled=is_disabled)
+
+    assert webform.is_open is expected
+
+
+@use('db')
+@pytest.mark.parametrize('expires_in, is_disabled, expected', [
+    (datetime.timedelta(days=1), False, PublicWebformStatus.OPEN),
+    (datetime.timedelta(days=1), True, PublicWebformStatus.CLOSED),
+    (datetime.timedelta(days=-1), False, PublicWebformStatus.EXPIRED),
+    (datetime.timedelta(days=-1), True, PublicWebformStatus.EXPIRED),
+], ids=['open', 'closed', 'expired', 'expired-and-closed'])
+def test_with_status_derives_status_from_expiry_and_the_open_setting(
+    expires_in, is_disabled, expected
+):
+    webform = create_webform(
+        expires_at=timezone.now() + expires_in, is_disabled=is_disabled)
+
+    annotated = PublicWebform.objects.with_status().get(pk=webform.pk)
+
+    assert annotated.status == expected
+
+
+@use('db')
+@pytest.mark.parametrize('submitted_at, expected_submissions', [
+    (None, 0),
+    (timezone.now(), 1),
+], ids=['no-submissions', 'one-submission'])
+def test_with_submissions_count(submitted_at, expected_submissions):
+    webform = create_webform()
+    create_session(webform, submitted_at=submitted_at)
+
+    annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
+    assert annotated.submissions == expected_submissions
+
+
+@use('db')
+def test_get_active_session_for_contact():
+    webform = create_webform()
+    session = create_session(webform, email='respondent@example.com')
+
+    found = PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='')
+
+    assert found == session
+
+
+@use('db')
+def test_get_active_session_for_contact_ignores_another_contact():
+    webform = create_webform()
+    create_session(webform, email='someone-else@example.com')
+
+    assert PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='') is None
+
+
+@use('db')
+@pytest.mark.parametrize('session_kwargs', [
+    {'expires_at': timezone.now() - datetime.timedelta(minutes=1)},
+    {'submitted_at': timezone.now()},
+], ids=['expired', 'already-submitted'])
+def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs):
+    webform = create_webform()
+    create_session(webform, email='respondent@example.com', **session_kwargs)
+
+    assert PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='') is None
+
+
+@pytest.mark.parametrize('email, phone_number', [
+    ('respondent@example.com', '15551234567'),
+    ('', ''),
+], ids=['both', 'neither'])
+def test_get_active_session_for_contact_requires_exactly_one_channel(email, phone_number):
+    with pytest.raises(AssertionError):
+        PublicFormSession.get_active_session_for_contact(
+            PublicWebform(), email=email, phone_number=phone_number)
 
 
 def test_public_form_session_username():
@@ -29,12 +138,29 @@ def test_public_form_session_username():
     )
 
 
+def test_public_form_session_restore_device_id_is_per_session():
+    webform = PublicWebform(domain='public-forms-domain')
+    one = PublicFormSession(public_webform=webform)
+    two = PublicFormSession(public_webform=webform)
+    # HQ recognizes a Web Apps sync, and skips device rate limiting, by prefix
+    assert one.restore_device_id.startswith('WebAppsLogin')
+    assert one.restore_device_id != two.restore_device_id
+
+
+def test_public_form_session_one_time_link():
+    webform = PublicWebform(domain='public-forms-domain')
+    session = PublicFormSession(public_webform=webform)
+    # absolute because it is shared over email and SMS
+    assert session.one_time_link.startswith(get_url_base())
+    assert session.id.hex in session.one_time_link
+
+
 class PublicFormUserTests(SimpleTestCase):
 
     def setUp(self):
         super().setUp()
         self.domain = 'public-forms-domain'
-        webform = PublicWebform(domain=self.domain)
+        webform = PublicWebform(domain=self.domain, app_id='the-app')
         self.session = PublicFormSession(public_webform=webform)
 
     def test_user_id_is_shared_public_user_id(self):
@@ -74,6 +200,43 @@ class PublicFormUserTests(SimpleTestCase):
         user = PublicFormUser(self.session)
         assert user.has_permission(self.domain, 'edit_data') is False
 
+    def test_can_access_only_the_app_the_link_is_bound_to(self):
+        # a form's report fixtures only restore for an app the user can reach
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps(self.domain) is True
+        assert user.can_access_web_app(self.domain, 'the-app') is True
+        assert user.can_access_web_app(self.domain, 'another-app') is False
+
+    def test_cannot_access_web_apps_in_other_domain(self):
+        user = PublicFormUser(self.session)
+        assert user.can_access_any_web_apps('other-domain') is False
+        assert user.can_access_web_app('other-domain', 'the-app') is False
+
+    def test_denies_an_unlisted_permission_check(self):
+        user = PublicFormUser(self.session)
+        assert user.can_edit_data(self.domain) is False
+
+    def test_raises_on_an_attribute_that_is_not_a_permission(self):
+        user = PublicFormUser(self.session)
+        with pytest.raises(AttributeError):
+            user.some_other_attribute
+
+    def test_has_no_domain_membership(self):
+        user = PublicFormUser(self.session)
+        assert user.get_domain_membership(self.domain) is None
+
+    def test_has_no_role(self):
+        user = PublicFormUser(self.session)
+        assert user.get_role(self.domain, allow_enterprise=True) is None
+
+    def test_has_no_user_data(self):
+        user = PublicFormUser(self.session)
+        assert user.get_user_data(self.domain) == {}
+
+    def test_is_not_a_new_user(self):
+        user = PublicFormUser(self.session)
+        assert is_new_user(user) is False
+
     def test_to_ota_restore_user(self):
         restore_user = PublicFormUser(self.session).to_ota_restore_user(self.domain)
         assert isinstance(restore_user, OTARestorePublicFormUser)
@@ -112,8 +275,10 @@ class OTARestorePublicFormUserTests(SimpleTestCase):
         assert self.restore_user.user_session_data == {}
         assert self.restore_user.date_joined == self.session.created_at
 
-    def test_no_owner_ids(self):
-        assert self.restore_user.get_owner_ids() == []
+    def test_owns_only_itself(self):
+        # never empty: a restore drops an empty owner filter and syncs the
+        # whole project, so this has to be an id nothing can be owned by
+        assert self.restore_user.get_owner_ids() == [self.session.session_username]
 
     def test_no_locations(self):
         assert self.restore_user.get_location_ids(self.domain) == []
@@ -153,10 +318,7 @@ class AllowPublicFormSessionTests(TestCase):
             allow_email=True,
             expires_at=future_expiration,
         )
-        self.session = PublicFormSession.objects.create(
-            public_webform=self.webform,
-            expires_at=future_expiration,
-        )
+        self.session = create_session(self.webform, expires_at=future_expiration)
         self.factory = RequestFactory()
 
     def _request(self, with_header=True, cookie_value=None):
@@ -170,47 +332,52 @@ class AllowPublicFormSessionTests(TestCase):
     @staticmethod
     def _decorated_view():
         @allow_public_form_session
-        def view(request):
+        def view(request, domain):
             return HttpResponse('ok')
         return view
 
     def test_valid_header_and_cookie_sets_public_form_user(self):
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert isinstance(request.couch_user, PublicFormUser)
         assert request.couch_user.user_id == PUBLIC_USER_ID
 
     def test_no_header_leaves_couch_user_untouched(self):
         request = self._request(
             with_header=False, cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_no_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=None)
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_invalid_cookie_leaves_couch_user_untouched(self):
         request = self._request(cookie_value='not-a-uuid')
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_unknown_key_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=str(uuid4()))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_expired_session_leaves_couch_user_untouched(self):
         self.session.expires_at = datetime.datetime(2000, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_submitted_session_leaves_couch_user_untouched(self):
         self.session.submitted_at = datetime.datetime(2020, 1, 1)
         self.session.save()
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request)
+        self._decorated_view()(request, self.webform.domain)
+        assert request.couch_user is self.existing_user
+
+    def test_a_different_domain_leaves_couch_user_untouched(self):
+        request = self._request(cookie_value=str(self.session.session_key))
+        self._decorated_view()(request, f'not-{self.webform.domain}')
         assert request.couch_user is self.existing_user

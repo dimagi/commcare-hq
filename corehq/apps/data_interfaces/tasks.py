@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
+from celery.signals import task_failure
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
@@ -28,10 +29,12 @@ from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.log import send_HTML_email
 
+from .bulk_form_actions import mark_job_failed, run_bulk_form_action
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDuplicate,
     CaseDuplicateNew,
     CaseRuleSubmission,
@@ -96,6 +99,17 @@ def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
         progress_tracker=_get_upload_progress_tracker(upload_id)
     )
     cache.set(upload_id, results, ONE_HOUR)
+
+
+@serial_task('{domain}', default_retry_delay=300, max_retries=48, timeout=60 * 60)
+def bulk_form_action_async(job_id, domain):
+    run_bulk_form_action(BulkAsyncJob.objects.get(id=job_id))
+
+
+@task_failure.connect(sender=bulk_form_action_async)
+def _mark_bulk_form_action_job_failed(sender=None, args=None, **kwargs):
+    if job_id := (args[0] if args else None):
+        mark_job_failed(job_id)
 
 
 @task(serializer='pickle')

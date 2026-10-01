@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from lxml import etree
 from lxml import etree as ElementTree
 
+from corehq.util.xml_utils import safe_fromstring
+
 RESPONSE_XMLNS = 'http://openrosa.org/http/response'
 
 
@@ -87,7 +89,7 @@ def parse_openrosa_response(response):
     """Parse an OpenRosaResponse from the response XML.
     :returns: OpenRosaResponse object or None"""
     try:
-        root = etree.fromstring(response)
+        root = safe_fromstring(response)
     except etree.XMLSyntaxError:
         return
 

@@ -1,0 +1,13 @@
+{% load i18n %}
+
+<div class="fw-semibold">{{ label }}</div>
+<div>
+  {% if path.app_url %}
+    <a href="{{ path.app_url }}">{{ path.app_name }}</a>
+  {% else %}
+    <span class="text-body-secondary">{{ path.app_name }}</span>
+  {% endif %}
+  <span class="text-body-secondary">v{{ path.app_version }}</span>
+  <span class="text-body-tertiary mx-1">·</span>
+  <span class="text-body-secondary">{{ path.form_name }}</span>
+</div>

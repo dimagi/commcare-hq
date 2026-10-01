@@ -46,7 +46,7 @@ from corehq.apps.app_manager.decorators import (
     avoid_parallel_build_request,
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
@@ -113,7 +113,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 
 
 @cache_control(no_cache=True, no_store=True)
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
@@ -554,7 +554,7 @@ def short_odk_url(request, domain, app_id, with_media=False):
     return HttpResponse(short_url)
 
 
-@require_deploy_apps
+@require_can_edit_apps
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
     try:
@@ -712,7 +712,7 @@ class LanguageProfilesView(View):
         return HttpResponse()
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def paginate_release_logs(request, domain, app_id):
     limit = request.GET.get('limit')
     page = int(request.GET.get('page', 1))

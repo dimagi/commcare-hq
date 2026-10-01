@@ -12,7 +12,7 @@ from soil.util import get_download_context
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import AppEditingError
-from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models import import_app_from_doc as import_app_util
 from corehq.apps.app_manager.models import overwrite_app_from_source
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache

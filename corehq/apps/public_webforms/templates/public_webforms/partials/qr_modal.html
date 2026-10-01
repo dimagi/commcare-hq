@@ -1,0 +1,55 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div
+  id="qr-code-{{ webform.id }}"
+  class="modal fade"
+  tabindex="-1"
+  aria-labelledby="qr-code-{{ webform.id }}-title"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="qr-code-{{ webform.id }}-title" class="modal-title">
+          {% trans "Public URL QR Code" %}
+        </h4>
+        <button
+          class="btn-close"
+          type="button"
+          aria-label="{% trans_html_attr "Close" %}"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="fw-semibold">{{ webform.label }}</p>
+        <p>
+          {# lazily, so a page of webforms isn't a page of QR code requests #}
+          <img
+            src="{% url 'public_webform_qr_code' domain webform.id %}"
+            width="250"
+            height="250"
+            loading="lazy"
+            alt="{% trans_html_attr "QR code for this webform's public URL" %}"
+          />
+        </p>
+        <p class="text-body-secondary">
+          {% blocktrans %}
+            Respondents who scan this code open the same page as the public URL,
+            where they can request a one-time link.
+          {% endblocktrans %}
+        </p>
+        <p class="text-break"><code>{{ webform.public_url }}</code></p>
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          data-bs-dismiss="modal"
+        >
+          {% trans "Close" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

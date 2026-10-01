@@ -6,7 +6,7 @@ from django.urls import reverse
 import requests
 from requests.auth import HTTPDigestAuth
 
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models import import_app_from_doc
 
 
 class Command(BaseCommand):
@@ -90,5 +90,5 @@ class Command(BaseCommand):
         app_source = resp.json()
         if not name:
             name = app_source['name']
-        app = import_app(app_source, target_domain, {'name': name})
+        app = import_app_from_doc(app_source, target_domain, {'name': name})
         return "Created app '{}' at /a/{}/apps/view/{}/".format(app.name, app.domain, app.id)

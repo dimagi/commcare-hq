@@ -141,7 +141,7 @@ $(function () {
         if (!appName.val().trim()) {
             appNameDiv.addClass('has-error');
             errorMessage = gettext('Application name is required');
-            appName.after($("<span class=\"help-block\"></span>").text(errorMessage));
+            appName.after($("<span class=\"help-block text-danger\"></span>").text(errorMessage));
         }
 
         // If project/domain is not selected or invalid domain is selected
@@ -155,7 +155,7 @@ $(function () {
 
             if (errorMessage) {
                 domainDiv.addClass('has-error');
-                domain.after($("<span class=\"help-block\"></span>").text(errorMessage));
+                domain.after($("<span class=\"help-block text-danger\"></span>").text(errorMessage));
             }
         }
 

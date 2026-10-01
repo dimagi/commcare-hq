@@ -261,6 +261,18 @@ class FormManagementMode(object):
     def is_archive_mode(self):
         return self.mode_name == self.ARCHIVE_MODE
 
+    @classmethod
+    def bulk_action(cls, mode):
+        """Map a mode name to the corresponding ``BulkAsyncJob.Action``."""
+        from corehq.apps.data_interfaces.models import BulkAsyncJob
+        match mode:
+            case cls.ARCHIVE_MODE:
+                return BulkAsyncJob.Action.ARCHIVE
+            case cls.RESTORE_MODE:
+                return BulkAsyncJob.Action.UNARCHIVE
+            case _:
+                raise ValueError(f"unknown form management mode: {mode!r}")
+
 
 class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
     slug = 'archive_or_restore'

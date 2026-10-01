@@ -255,10 +255,19 @@ def _delete_data_files(domain_name):
 
 def _delete_bulk_async_jobs(domain_name):
     from corehq.apps.data_interfaces.models import BulkAsyncJob
-    get_blob_db().bulk_delete(metas=list(BlobMeta.objects.partitioned_query(domain_name).filter(
-        parent_id=domain_name,
-        type_code=CODES.bulk_async_job,
-    )))
+
+    blob_db = get_blob_db()
+    query = BulkAsyncJob.objects.filter(domain=domain_name)
+    for job_id in query.values_list('id', flat=True):
+        parent_id = job_id.hex
+        blob_db.bulk_delete(
+            metas=list(
+                BlobMeta.objects.partitioned_query(parent_id).filter(
+                    parent_id=parent_id,
+                    type_code=CODES.bulk_async_job,
+                )
+            )
+        )
     BulkAsyncJob.objects.filter(domain=domain_name).delete()
 
 
@@ -361,7 +370,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('app_manager', 'CredentialApplication', 'domain'),
-    ModelDeletion('app_manager', 'PublicWebform', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -464,9 +472,13 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
     ModelDeletion('reports', 'TableauUser', 'server__domain'),
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
+    ModelDeletion('short_links', 'ShortLink', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
+    ModelDeletion('translations', 'AITranslation', 'domain'),
+    ModelDeletion('translations', 'AITranslationUsage', 'domain'),
+    ModelDeletion('translations', 'AITranslationConfig', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
         extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],

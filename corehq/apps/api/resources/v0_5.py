@@ -10,7 +10,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.http import (
@@ -68,6 +68,7 @@ from corehq.apps.api.util import (
     django_date_filter,
     get_obj,
     make_date_filter,
+    not_found,
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
@@ -151,7 +152,12 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import (
+    DoesNothingPaginator,
+    NoCountingPaginator,
+    PreSlicedPaginator,
+    response_for_cursor_based_pagination,
+)
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -197,6 +203,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         object_class = object
         resource_name = 'bulk-user'
+        paginator_class = PreSlicedPaginator
 
     def dehydrate(self, bundle):
         fields = bundle.request.GET.getlist('fields')
@@ -222,13 +229,19 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
+        # The paginator resolves (and validates) 'limit' and 'offset' the same
+        # way it will when building the response meta, so the page reported
+        # there always matches the page fetched from Elasticsearch.
+        paginator = self._meta.paginator_class(
+            params, [], limit=self._meta.limit, max_limit=self._meta.max_limit,
+        )
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
             domain=kwargs['domain'],
             q=param('q'),
             fields=fields,
-            size=param('limit'),
-            start_at=param('offset'),
+            size=paginator.get_limit(),
+            start_at=paginator.get_offset(),
         )
         return list(map(self.to_obj, users))
 
@@ -243,6 +256,32 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     locations = fields.ListField()
     require_account_confirmation = fields.BooleanField(default=False)
     send_confirmation_email_now = fields.BooleanField(default=False)
+    password = fields.CharField(
+        null=True,
+        help_text="Sets the user's password. Required on create unless "
+                  "`connect_username` is given.",
+    )
+    connect_username = fields.CharField(
+        null=True,
+        help_text="Links the user to a ConnectID account. Requires the "
+                  "COMMCARE_CONNECT feature flag.",
+    )
+    language = fields.CharField(
+        attribute='language',
+        null=True,
+        help_text="The user's preferred language code, e.g. `en`.",
+    )
+    role = fields.CharField(
+        null=True,
+        help_text="Name of an existing user role in the project space.",
+    )
+
+    WRITE_ONLY_FIELDS = (
+        'require_account_confirmation',
+        'send_confirmation_email_now',
+        'password',
+        'connect_username',
+    )
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -387,9 +426,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
 
+    def dehydrate_role(self, bundle):
+        role = bundle.obj.get_role(bundle.obj.domain)
+        return role.name if role else ''
+
     def dehydrate(self, bundle):
-        bundle.data.pop('require_account_confirmation', None)
-        bundle.data.pop('send_confirmation_email_now', None)
+        for field_name in self.WRITE_ONLY_FIELDS:
+            bundle.data.pop(field_name, None)
         return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
@@ -760,8 +803,10 @@ class GroupResource(v0_4.GroupResource):
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Group.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        try:
+            bundle.obj = self.obj_get(bundle, **kwargs)
+        except ObjectDoesNotExist:
+            raise not_found('Group not found')
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()

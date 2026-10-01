@@ -1,6 +1,7 @@
+import json
 from dataclasses import dataclass
 
-from corehq.apps.app_manager.views.utils import get_langs
+from corehq.apps.app_manager.views.utils import get_langs, validate_custom_assertions
 
 
 @dataclass
@@ -114,3 +115,30 @@ class TestGetLangsLangs:
         app = MockApp(langs=['ido', 'epo', 'tlh'])
         __, langs = get_langs(request, app)
         assert langs == ['tlh', 'ido', 'epo', 'tlh']
+
+
+class TestValidateCustomAssertions:
+
+    def test_accepts_test_expression_containing_double_quote(self):
+        # A double-quote is a completely ordinary thing to find in an
+        # XPath test expression (e.g. a string comparison), but broke the
+        # old naive `test="{test}"` interpolation.
+        test_expr = 'name = "bob"'
+        result = validate_custom_assertions(_assertions_json(test_expr, 'hi'), [], 'en')
+        assert result[0].test == test_expr
+
+    def test_accepts_text_containing_xml_metacharacters(self):
+        text = '5 < 10 & valid'
+        result = validate_custom_assertions(_assertions_json('1 = 1', text), [], 'en')
+        assert result[0].text['en'] == text
+
+    def test_does_not_parse_injected_markup_as_xml_structure(self):
+        # A value crafted to break out of its attribute/text position must
+        # be treated as inert data, not parsed as XML structure
+        breakout = '"><!DOCTYPE x [<!ENTITY xxe SYSTEM "file:///etc/hostname">]>&xxe;'
+        result = validate_custom_assertions(_assertions_json(breakout, 'hi'), [], 'en')
+        assert result[0].test == breakout
+
+
+def _assertions_json(test, text):
+    return json.dumps([{'test': test, 'text': text}])

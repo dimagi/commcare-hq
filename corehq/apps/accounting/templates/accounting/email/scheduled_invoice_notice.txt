@@ -1,0 +1,16 @@
+{% load i18n %}A prepayment invoice is scheduled to be generated and emailed on {{ send_date|date:"Y-m-d" }}.
+
+Project Space: {{ domain }}
+Billing Account: {{ billing_account.name }}
+Software Plan: {{ plan_version }}
+
+Description: {{ credit_label }}
+Amount: {{ amount }} ({{ quantity }} x {{ unit_cost }})
+Prepayment Term: {{ date_start|date:"Y-m-d" }} to {{ date_end|date:"Y-m-d" }}
+Scheduled By: {{ created_by }}
+
+Recipients: {{ contact_emails }}
+
+If the amount or the dates are no longer right, cancel this scheduled invoice
+and schedule a replacement before {{ send_date|date:"Y-m-d" }}:
+{{ report_url }}

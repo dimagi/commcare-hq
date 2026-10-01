@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase
 
-import lxml
 from memoized import memoized
 
 from corehq.apps.app_manager.app_schemas.session_schema import (
@@ -34,6 +33,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
+from corehq.util.xml_utils import XML
 
 from .util import patch_validate_xform
 
@@ -378,7 +378,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         )
         form.actions.update_case.condition.type = 'always'
 
-        xml = lxml.etree.XML(form.render_xform())
+        xml = XML(form.render_xform())
         model_children = xml.getchildren()[0].getchildren()[1].getchildren()
         calculate_expr = [child.attrib['calculate'] for child in model_children
                           if child.attrib.get('nodeset') == '/data/case/@case_id'][0]

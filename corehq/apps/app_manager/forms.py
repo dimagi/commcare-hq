@@ -76,7 +76,11 @@ class CopyApplicationForm(forms.Form):
             ),
             crispy.Hidden('app', app.get_id),
             crispy.Div(
-                StrictButton(_('Copy'), type='button', css_class='btn-primary'),
+                StrictButton(
+                    _('Copy'),
+                    type='button',
+                    css_class='btn-primary disable-on-submit',
+                ),
                 css_class="card-footer py-3",
             ),
         )

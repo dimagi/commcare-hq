@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
     SolutionsFeatureRequestView,
+    chat_quota,
     check_sso_login_status,
     create_alert,
     debug_notify,
@@ -67,6 +68,7 @@ PASSWORD_RESET_KWARGS = {
 }
 
 urlpatterns = [
+    url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
     url(r'^serverup.txt$', server_up),

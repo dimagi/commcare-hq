@@ -110,9 +110,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
                           'commcare_location_id': self.loc2.location_id,
                           'commcare_primary_case_sharing_id': self.loc2.location_id,
@@ -143,9 +145,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty',
                           PROFILE_SLUG: '',
                           'imaginary': '',
@@ -1085,12 +1089,20 @@ class TestBulkUserAPI(APIResourceTest):
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['robb_stark', 'jon_snow', 'brandon_stark'],
+        )
 
-        result = self.query(start_at=limit, limit=limit)
+        # 'offset' is applied by the Elasticsearch query, so the paginator must
+        # not slice the results a second time and skip the whole page.
+        result = self.query(offset=limit, limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['eddard_stark', 'catelyn_stark', 'tyrion_lannister'],
+        )
 
     def test_basic(self):
         response = self.query()

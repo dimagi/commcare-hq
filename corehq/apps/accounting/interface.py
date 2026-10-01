@@ -48,6 +48,7 @@ from .filters import (
     ProBonoStatusFilter,
     SalesforceAccountIDFilter,
     SalesforceContractIDFilter,
+    ScheduledInvoiceStatusFilter,
     SoftwarePlanEditionFilter,
     SoftwarePlanNameFilter,
     SoftwarePlanVisibilityFilter,
@@ -56,6 +57,7 @@ from .filters import (
     SubscriberFilter,
     SubscriptionTypeFilter,
     TrialStatusFilter,
+    WireInvoiceNumberFilter,
 )
 from .forms import AdjustBalanceForm
 from .models import (
@@ -68,6 +70,8 @@ from .models import (
     Invoice,
     PaymentRecord,
     PaymentType,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanVersion,
     Subscription,
@@ -499,6 +503,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all wire invoices"
     slug = "wire_invoices"
     fields = [
+        'corehq.apps.accounting.interface.WireInvoiceNumberFilter',
         'corehq.apps.accounting.interface.DomainFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
         'corehq.apps.accounting.interface.StatementPeriodFilter',
@@ -588,6 +593,10 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
     @memoized
     def _invoices(self):
         queryset = WireInvoice.objects.all()
+
+        wire_invoice_id = WireInvoiceNumberFilter.get_value(self.request, self.domain)
+        if wire_invoice_id is not None:
+            queryset = queryset.filter(id=int(wire_invoice_id))
 
         domain_name = DomainFilter.get_value(self.request, self.domain)
         if domain_name is not None:
@@ -936,6 +945,7 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     description = "List of all customer invoices"
     slug = "customer_invoices"
     fields = [
+        'corehq.apps.accounting.interface.CustomerInvoiceNumberFilter',
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.SubscriberFilter',
         'corehq.apps.accounting.interface.PaymentStatusFilter',
@@ -1076,6 +1086,10 @@ class CustomerInvoiceInterface(InvoiceInterfaceBase):
     def _invoices(self):
         queryset = CustomerInvoice.objects.all()
 
+        customer_invoice_id = CustomerInvoiceNumberFilter.get_value(self.request, self.domain)
+        if customer_invoice_id is not None:
+            queryset = queryset.filter(id=int(customer_invoice_id))
+
         if self.subscription:
             queryset = queryset.filter(subscriptions=self.subscription)
 
@@ -1202,6 +1216,98 @@ def _get_domain_from_payment_record(payment_record):
         if credit_adj.credit_line.subscription
     )
     return ', '.join(domains) if domains else None
+
+
+class ScheduledInvoiceInterface(GenericTabularReport):
+    section_name = "Accounting"
+    dispatcher = AccountingAdminInterfaceDispatcher
+    name = "Scheduled Invoices"
+    description = "Prepayment invoices queued for a future send date."
+    slug = "scheduled_invoices"
+    base_template = 'accounting/report_filter_actions.html'
+    asynchronous = True
+    exportable = True
+    is_admin_report = True
+
+    fields = [
+        'corehq.apps.accounting.interface.DomainFilter',
+        'corehq.apps.accounting.interface.ScheduledInvoiceStatusFilter',
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn("Send On", sort_type=DTSortType.DATE),
+            DataTablesColumn("Project Space"),
+            DataTablesColumn("Account"),
+            DataTablesColumn("Description"),
+            DataTablesColumn("Quantity"),
+            DataTablesColumn("Unit Cost"),
+            DataTablesColumn("Amount"),
+            DataTablesColumn("Status"),
+            DataTablesColumn("Scheduled By"),
+            DataTablesColumn("Cancelled By"),
+            DataTablesColumn("Reason"),
+            DataTablesColumn("Invoice"),
+        )
+        if not self.is_rendered_as_email:
+            header.add_column(DataTablesColumn("Action"))
+        return header
+
+    @property
+    def rows(self):
+        def _scheduled_to_row(scheduled):
+            from corehq.apps.accounting.views import (
+                CancelScheduledInvoiceView,
+                WireInvoiceSummaryView,
+            )
+            columns = [
+                format_datatables_data(
+                    text=scheduled.send_date.strftime(SERVER_DATE_FORMAT),
+                    sort_key=scheduled.send_date.isoformat(),
+                ),
+                scheduled.domain,
+                scheduled.subscription.account.name,
+                scheduled.credit_label,
+                scheduled.quantity,
+                quantize_accounting_decimal(scheduled.unit_cost),
+                quantize_accounting_decimal(scheduled.amount),
+                scheduled.get_status_display(),
+                scheduled.created_by,
+                scheduled.cancelled_by,
+                scheduled.cancelled_reason,
+                make_anchor_tag(
+                    reverse(WireInvoiceSummaryView.urlname, args=[scheduled.invoice_id]),
+                    scheduled.invoice_id,
+                ) if scheduled.invoice_id else '',
+            ]
+            if not self.is_rendered_as_email:
+                if scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING:
+                    columns.append(make_anchor_tag(
+                        reverse(CancelScheduledInvoiceView.urlname, args=[scheduled.id]),
+                        'Cancel',
+                        {'class': 'btn btn-default'},
+                    ))
+                else:
+                    columns.append('')
+            return columns
+
+        return list(map(_scheduled_to_row, self._scheduled_invoices()))
+
+    def _scheduled_invoices(self):
+        queryset = ScheduledPrepaymentInvoice.objects.select_related(
+            'subscription__account'
+        ).order_by('send_date')
+
+        domain_name = DomainFilter.get_value(self.request, self.domain)
+        if domain_name is not None:
+            queryset = queryset.filter(domain=domain_name)
+
+        status = ScheduledInvoiceStatusFilter.get_value(self.request, self.domain)
+        if status is not None:
+            queryset = queryset.filter(status=status)
+
+        return queryset
 
 
 class PaymentRecordInterface(GenericTabularReport):

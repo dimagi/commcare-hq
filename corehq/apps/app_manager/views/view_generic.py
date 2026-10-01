@@ -51,8 +51,6 @@ from corehq.apps.hqmedia.views import (
 from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
 from corehq.apps.linked_domain.dbaccessors import (
     get_accessible_downstream_domains,
-    get_upstream_domain_link,
-    is_active_downstream_domain,
 )
 from corehq.apps.linked_domain.util import can_domain_access_linked_domains
 from corehq.util.soft_assert import soft_assert
@@ -437,15 +435,7 @@ def _get_specific_media(
 
 
 def _get_domain_context(domain, request_domain, couch_user):
-    domain_names = {
-        d.name
-        for d in Domain.active_for_user(couch_user)
-        if not (
-            is_active_downstream_domain(request_domain)
-            and get_upstream_domain_link(request_domain).master_domain
-            == d.name
-        )
-    }
+    domain_names = {d.name for d in Domain.active_for_user(couch_user)}
     domain_names.add(request_domain)
     # NOTE: The CopyApplicationForm checks for access to linked domains
     #       before displaying

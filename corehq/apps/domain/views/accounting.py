@@ -43,12 +43,13 @@ from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.exceptions import (
+    InvoiceError,
     NewSubscriptionError,
     PaymentRequestError,
     SubscriptionAdjustmentError,
     SubscriptionRenewalError,
 )
-from corehq.apps.accounting.forms import PlanContactForm
+from corehq.apps.accounting.forms import PlanContactForm, WirePrepaymentForm
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.accounting.models import (
     MINIMUM_SUBSCRIPTION_LENGTH,
@@ -227,6 +228,10 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     def can_purchase_credits(self):
         return self.request.couch_user.can_edit_billing()
+
+    @property
+    def can_schedule_prepayment_invoice(self):
+        return has_privilege(self.request, privileges.ACCOUNTING_ADMIN)
 
     def can_set_auto_renew(self):
         can_access_auto_renewal = self.request.couch_user.can_edit_billing()
@@ -444,6 +449,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'plan': self.plan,
             'change_plan_url': reverse(SelectPlanView.urlname, args=[self.domain]),
             'can_purchase_credits': self.can_purchase_credits,
+            'can_schedule_prepayment_invoice': self.can_schedule_prepayment_invoice,
             'can_set_auto_renew': self.can_set_auto_renew(),
             'renewal_plan_preview': self.renewal_plan_preview,
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
@@ -854,96 +860,26 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
         return super(CreditsWireInvoiceView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            contact_email, cc_emails = self.validate_emails(request)
-            amount = self.validate_amount(request)
-            date_start, date_end = self.validate_daterange(request)
-            unit_cost = self.validate_unit_cost(request)
-            quantity = self.validate_quantity(request)
-        except ValidationError as e:
-            return json_response({'error': {'message': e.message}})
+        # Scheduling is for accounting admins, not a project's billing admins.
+        # This check goes away with this view, once prepayment invoices are
+        # generated only from the accounting admin UI.
+        if (request.POST.get('send_date')
+                and not has_privilege(request, privileges.ACCOUNTING_ADMIN)):
+            raise Http404()
 
-        credit_label = request.POST.get('credit_label', 'General Credits')
+        form = WirePrepaymentForm(request.POST)
+        if not form.is_valid():
+            return json_response({'error': {'message': form.get_error_message()}})
 
-        wire_invoice_factory = DomainWireInvoiceFactory(
-            request.domain, date_start=date_start, date_end=date_end,
-            contact_emails=[contact_email], cc_emails=cc_emails
-        )
         try:
-            wire_invoice_factory.create_wire_credits_invoice(
-                amount, credit_label, unit_cost, quantity
-            )
-        except Exception as e:
+            scheduled = form.save(request.domain, request.couch_user)
+        except InvoiceError as e:
             return json_response({'error': {'message': str(e)}})
 
-        return json_response({'success': True})
-
-    @staticmethod
-    def validate_emails(request):
-        contact_email = request.POST.get('email_to', '').strip()
-        cc_emails = [email.strip() for email in request.POST.get('email_cc', '').split(',')]
-
-        all_emails = [email for email in cc_emails if email]
-        if contact_email:
-            all_emails.append(contact_email)
-
-        invalid_emails = []
-        for email in all_emails:
-            try:
-                validate_email(email)
-            except ValidationError:
-                invalid_emails.append(email)
-        if invalid_emails:
-            message = _('The following e-mail addresses contain invalid characters, or are missing required '
-                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
-            raise ValidationError(message=message)
-        return contact_email, cc_emails
-
-    @staticmethod
-    def validate_amount(request):
-        amount = Decimal(request.POST.get('invoice_amount', 0))
-        if amount < 0:
-            message = _('There was an error processing your request. Please try again.')
-            raise ValidationError(message=message)
-        return amount
-
-    def validate_daterange(self, request):
-        date_start = self._get_date_or_today(request.POST.get('prepay_date_start'))
-        date_end = self._get_date_or_today(request.POST.get('prepay_date_end'))
-        if date_end < date_start:
-            message = _('Prepayment end date must be after start date.')
-            raise ValidationError(message=message)
-        return date_start.isoformat(), date_end.isoformat()
-
-    @staticmethod
-    def _get_date_or_today(date_string):
-        try:
-            date = datetime.date.fromisoformat(date_string)
-        except (TypeError, ValueError):
-            date = datetime.date.today()
-        return date
-
-    @staticmethod
-    def validate_unit_cost(request):
-        try:
-            unit_cost = Decimal(request.POST.get('unit_cost', 0))
-            if abs(unit_cost) != unit_cost:
-                raise ValueError
-        except ValueError:
-            message = _('Unit cost must be a decimal number greater than 0.')
-            raise ValidationError(message=message)
-        return unit_cost
-
-    @staticmethod
-    def validate_quantity(request):
-        try:
-            quantity = int(request.POST.get('quantity', 0))
-            if abs(quantity) != quantity:
-                raise ValueError
-        except ValueError:
-            message = _('Quantity must be a whole number greater than 0.')
-            raise ValidationError(message=message)
-        return quantity
+        response = {'success': True}
+        if scheduled is not None:
+            response['send_date'] = scheduled.send_date.isoformat()
+        return json_response(response)
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -1587,6 +1523,15 @@ class ConfirmSelectedPlanView(PlanViewBase):
         return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
 
     def post(self, request, *args, **kwargs):
+        if self.current_subscription.plan_version.plan.is_annual_plan and (
+            self.is_downgrade or self.is_same_edition
+        ):
+            messages.error(
+                request,
+                _("Your annual subscription only allows upgrades. "
+                  "You cannot downgrade, pause, or switch to the same edition during your annual commitment.")
+            )
+            return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         if not self.can_domain_unpause:
             return HttpResponseRedirect(reverse(SelectPlanView.urlname, args=[self.domain]))
         return super(ConfirmSelectedPlanView, self).get(request, *args, **kwargs)

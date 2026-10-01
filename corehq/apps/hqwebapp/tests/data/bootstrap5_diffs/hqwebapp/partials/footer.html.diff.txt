@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -4,53 +4,45 @@
+@@ -4,53 +4,49 @@
    <nav
      id="hq-footer"
      role="navigation"
@@ -48,18 +48,21 @@
 -            &nbsp;|&nbsp;
 -          </div>
 -          <br class="hidden-sm hidden-md hidden-lg" />
-+        <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
-+        <a href="https://dimagi.com/commcare/"
-+          >{% trans 'Learn more about CommCare' %}</a
-+        >
++        <span class="d-none d-md-inline">&nbsp;|&nbsp;</span>
++        <br class="d-md-none" />
  
 -          <a href="https://dimagi.com/commcare/"
 -            >{% trans 'Learn more about CommCare' %}</a
 -          >
--
++        <a href="https://dimagi.com/commcare/"
++          >{% trans 'Learn more about CommCare' %}</a
++        >
+ 
 -          <div class="visible-md-inline visible-lg-inline">&nbsp;|&nbsp;</div>
 -          <br class="hidden-md hidden-lg" />
--
++        <span class="d-none d-lg-inline">&nbsp;|&nbsp;</span>
++        <br class="d-lg-none" />
+ 
 -          <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
 -            {% trans "Privacy" %}
 -          </a>
@@ -73,7 +76,6 @@
 -          </a>
 -        </div>
 -      </div>
-+        <span class="d-inline-md d-inline-lg">&nbsp;|&nbsp;</span>
 +        <a href="https://dimagi.com/terms/latest/privacy/" target="_blank">
 +          {% trans "Privacy" %}
 +        </a>

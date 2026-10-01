@@ -975,7 +975,7 @@ FileEntry.prototype.onAnswerChange = function (newValue) {
     if (newValue !== constants.NO_ANSWER && newValue !== "") {
         var $input = $('#' + self.entryId);
         self.file($input[0].files[0]);
-        let badExtension = false;
+        let badExtension;
         let badMime = true;
         const ext = newValue.slice(newValue.lastIndexOf(".") + 1);
         let acceptedExts = self.extensionsMap[self.accept];
@@ -1215,8 +1215,9 @@ function GeoPointEntry(question, options) {
 
     self.updateCenter = function () {
         var center = self.map.getCenter();
+        var wrapped = center.wrap();
         self.centerMarker.setLatLng(center);
-        self.rawAnswer([center.lat, center.lng]);
+        self.rawAnswer([wrapped.lat, wrapped.lng]);
     };
 
     self.formatLat = function () {
@@ -1258,11 +1259,11 @@ function getEntry(question) {
     var hasGeocoderPrivs = initialPageData.get("has_geocoder_privs");
     var entry = null;
     var options = {};
-    var isMinimal = false;
-    var isCombobox = false;
-    var isButton = false;
-    var isChoiceLabel = false;
-    var hideLabel = false;
+    var isMinimal;
+    var isCombobox;
+    var isButton;
+    var isChoiceLabel;
+    var hideLabel;
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);

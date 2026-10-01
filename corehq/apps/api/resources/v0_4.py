@@ -265,6 +265,13 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     are correct.
     """
 
+    username = fields.CharField(
+        help_text="Username to authenticate.",
+    )
+    password = fields.CharField(
+        help_text="Password for the given username.",
+    )
+
     def post_list(self, request, **kwargs):
         domain = kwargs.get('domain')
         request.domain = domain

@@ -1,8 +1,32 @@
 from datetime import date
+from unittest.mock import patch
 
+import pytest
 from django.test import SimpleTestCase
 
-from corehq.apps.accounting.utils import is_date_range_overlapping
+from corehq.apps.accounting.models import SubscriptionAdjustmentReason
+from corehq.apps.accounting.utils import get_change_status, is_date_range_overlapping
+
+
+@pytest.mark.parametrize(
+    ("from_privileges", "to_privileges", "expected_reason"),
+    [
+        ({"a", "b"}, {"a"}, SubscriptionAdjustmentReason.DOWNGRADE),
+        ({"a"}, set(), SubscriptionAdjustmentReason.DOWNGRADE),
+        ({"a"}, {"a", "b"}, SubscriptionAdjustmentReason.UPGRADE),
+        ({"a", "b"}, {"b", "c"}, SubscriptionAdjustmentReason.SWITCH),
+    ],
+)
+def test_get_change_status_reason(from_privileges, to_privileges, expected_reason):
+    with patch(
+        "corehq.apps.accounting.utils.get_privileges",
+        side_effect=[from_privileges, to_privileges],
+    ):
+        result = get_change_status(object(), object())
+
+    assert result.adjustment_reason == expected_reason
+    assert result.downgraded_privs == from_privileges - to_privileges
+    assert result.upgraded_privs == to_privileges
 
 
 class TestIsDateRangeOverlapping(SimpleTestCase):

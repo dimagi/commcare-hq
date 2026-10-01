@@ -164,7 +164,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka:}/kafka/kafka-logs-1
 
   minio:
-    image: docker.io/minio/minio
+    image: docker.io/dimagi/minio
     command: server --address :9980 --console-address :9981 /data
     expose:
       - "9980"

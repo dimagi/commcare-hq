@@ -9,6 +9,7 @@ $(function () {
         "add-credit-form",
         {
             submitBtnText: gettext("Buy Credits"),
+            scheduleBtnText: gettext("Schedule Invoice"),
             errorMessages: initialPageData.get("payment_error_messages"),
             credit_card_url: initialPageData.reverse("domain_credits_payment"),
             wire_url: initialPageData.reverse("domain_wire_payment"),
