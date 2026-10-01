@@ -208,19 +208,14 @@ def get_export_instance_or_404(domain, export_id):
 
 def get_export_instance_in_domain(domain, export_id):
     """Request handlers should use get_export_instance_or_404 instead."""
-    export = get_properly_wrapped_export_instance(export_id)
+    from .models import ExportInstance
+    export = wrap_export_instance(ExportInstance.get_db().get(export_id))
     if export.domain != domain:
         raise ResourceNotFound(f"Export {export_id} is not in domain {domain}")
     return export
 
 
-def get_properly_wrapped_export_instance(doc_id):
-    from .models import ExportInstance
-    doc = ExportInstance.get_db().get(doc_id)
-    return _properly_wrap_export_instance(doc)
-
-
-def _properly_wrap_export_instance(doc):
+def wrap_export_instance(doc):
     from .models import CaseExportInstance, ExportInstance, FormExportInstance
     class_ = {
         "FormExportInstance": FormExportInstance,

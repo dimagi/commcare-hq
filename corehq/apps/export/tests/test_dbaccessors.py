@@ -22,7 +22,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_inferred_schema,
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_properly_wrapped_export_instance,
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -206,13 +205,6 @@ class TestExportInstanceDBAccessors(TestCase):
             set(recently_accessed_instance_ids),
             {self.form_instance_daily_saved._id}
         )
-
-    def test_get_properly_wrapped_export_instance(self):
-        instance = get_properly_wrapped_export_instance(self.form_instance_daily_saved._id)
-        self.assertEqual(type(instance), type(self.form_instance_daily_saved))
-
-        instance = get_properly_wrapped_export_instance(self.case_instance._id)
-        self.assertEqual(type(instance), type(self.case_instance))
 
     def test_get_export_instance_in_domain(self):
         instance = get_export_instance_in_domain(self.domain, self.form_instance._id)
