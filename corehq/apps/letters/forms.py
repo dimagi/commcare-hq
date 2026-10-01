@@ -18,9 +18,9 @@ class LetterTemplateForm(forms.ModelForm):
         help_texts = {
             'body': gettext_lazy('HTML with Jinja2 placeholders for case properties, '
                                  'e.g. {{ case_name }} or {{ address }}. Only a safe subset of HTML is '
-                                 'supported: scripts and event handlers are removed. In <style> blocks, '
-                                 'avoid ">" and "&" (they are escaped), and note that external url() and '
-                                 '@import are removed.'),
+                                 'supported: scripts and event handlers are removed. In style blocks, '
+                                 'avoid "&gt;" and "&amp;" (they are escaped), and note that external '
+                                 'url() and @import are removed.'),
         }
 
     def __init__(self, *args, **kwargs):

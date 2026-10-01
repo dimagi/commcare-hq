@@ -77,6 +77,15 @@ class TestLetterTemplateViews(TestCase):
         assert 'Listed' in content
         assert f'<td>{tpl.pk}</td>' in content
 
+    def test_create_page_help_text_does_not_open_style_tag(self):
+        # crispy renders help text unescaped; a literal <style> would swallow the Save button
+        self._login(self.editor)
+        resp = self.client.get(reverse('letter_template_create', args=[DOMAIN]))
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert 'id="submit-id-submit"' in content
+        assert '<style> blocks' not in content
+
 
 @privilege_enabled(privileges.OUTBOUND_SMS)
 class TestLetterTemplateToggleOff(TestCase):
