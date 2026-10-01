@@ -180,6 +180,43 @@ EXPECTED_PROD_INDICES = [
             }
         }
     },
+{
+        "index": f"test_{es_const.HQ_CASE_SEARCH_PHILLY_UBR_INDEX_NAME}",
+        "type": "case",
+        "hq_index_name": es_const.HQ_CASE_SEARCH_PHILLY_UBR_INDEX_CANONICAL_NAME,
+        "meta": {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    }
+                },
+                "number_of_replicas": 0,
+                "number_of_shards": 1,
+            }
+        }
+    },
     {
         "hq_index_name": "hqapps",
         "index": f"test_{es_const.HQ_APPS_INDEX_NAME}",
