@@ -6232,10 +6232,10 @@ once@^1.3.0, once@^1.3.1, once@^1.4.0:
   dependencies:
     wrappy "1"
 
-open-chat-studio-widget@0.12.0:
-  version "0.12.0"
-  resolved "https://registry.yarnpkg.com/open-chat-studio-widget/-/open-chat-studio-widget-0.12.0.tgz#6851c0eed67efbceec717b965c88f345461c8c0e"
-  integrity sha512-9WzaR7pe0MsW0Nr4W91UufpAWMuVPmhFIMf3FyLWQpkB5SnXT0TxqNMF4CDxoCevme8Ol0+aVv5+9JzfQGa1Fw==
+open-chat-studio-widget@0.13.0:
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/open-chat-studio-widget/-/open-chat-studio-widget-0.13.0.tgz#d6f2506f79e7117a58f62e5cd5c258dc4f9d97c3"
+  integrity sha512-jZexVf0O35L+WMdAeuuNWQwa2JFu8rFr2aaCHP7HQUd7iC2v5bx5n7OCVRa+50JWUsnYW71C6YK6DITC6Hzlgg==
   dependencies:
     "@stencil/core" "^4.44.1"
     dompurify "^3.0.5"
