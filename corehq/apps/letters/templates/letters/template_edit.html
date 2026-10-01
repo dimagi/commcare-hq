@@ -1,6 +1,27 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
-{% load i18n crispy_forms_tags %}
+{% load i18n crispy_forms_tags hq_shared_tags %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
 {% block page_content %}
+  {{ ai_context|json_script:"letter-ai-context" }}
+  <div class="mb-3" x-data="{ copied: false }">
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      @click="navigator.clipboard.writeText(JSON.parse(document.getElementById('letter-ai-context').textContent)).then(() => { copied = true; setTimeout(() => copied = false, 2000); })"
+    >
+      <i class="fa fa-clipboard"></i> {% trans "Copy AI prompt" %}
+    </button>
+    <span class="text-success ms-2" x-show="copied" x-cloak
+      >{% trans "Copied" %}</span
+    >
+    <div class="form-text">
+      {% blocktrans trimmed %}
+        Copies instructions and this project's case properties for an AI
+        assistant. Paste it into the assistant, describe your letter, and paste
+        the result into the template body below.
+      {% endblocktrans %}
+    </div>
+  </div>
   {% crispy form %}
   {% if form.instance.pk %}
     <form

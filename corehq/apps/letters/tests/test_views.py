@@ -1,9 +1,12 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.letters.models import LetterTemplate
+from corehq.apps.letters.views import ai_context
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -103,6 +106,11 @@ class TestLetterTemplateViews(TestCase):
         resp = self.client.post(reverse('letter_template_preview', args=[DOMAIN]), {'body': 'x'})
         assert resp.status_code in (302, 403)
 
+    def test_edit_page_embeds_ai_context(self):
+        self._login(self.editor)
+        resp = self.client.get(reverse('letter_template_create', args=[DOMAIN]))
+        assert 'id="letter-ai-context"' in resp.content.decode()
+
     def test_create_page_help_text_does_not_open_style_tag(self):
         # crispy renders help text unescaped; a literal <style> would swallow the Save button
         self._login(self.editor)
@@ -126,3 +134,16 @@ class TestLetterTemplateToggleOff(TestCase):
         self.client.login(username=user.username, password='pw')
         resp = self.client.get(reverse('letter_template_list', args=['letters-no-flag']))
         assert resp.status_code == 404
+
+
+def test_ai_context():
+    props = {'pet': ['name', 'parent/owner', 'species'], '': ['name']}
+    with patch('corehq.apps.letters.views.all_case_properties_by_domain', return_value=props):
+        text = ai_context('any-domain')
+    assert '- pet: name, species' in text
+    assert 'parent/owner' not in text
+    assert '{{ case_name }}' in text  # literal Jinja example, not rendered by Django
+    assert '&lt;' not in text and '&quot;' not in text  # not HTML-escaped
+    assert '<!DOCTYPE>' in text  # body-only instruction
+    assert 'break-before: page' in text
+    assert text.rstrip().endswith('What I would like in my letter:')

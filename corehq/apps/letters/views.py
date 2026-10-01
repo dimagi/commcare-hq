@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -8,6 +9,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from corehq import toggles
+from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.letters.forms import LetterTemplateForm
 from corehq.apps.letters.models import LetterTemplate
@@ -59,7 +61,7 @@ class LetterTemplateEditView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        return {'form': self.form}
+        return {'form': self.form, 'ai_context': ai_context(self.domain)}
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -106,3 +108,12 @@ class LetterTemplatePreviewView(BaseMessagingSectionView):
         except LetterRenderError as e:
             context = {'error': str(e)}
         return render(request, 'letters/preview.html', context)
+
+
+def ai_context(domain):
+    properties_by_case_type = sorted(
+        (case_type, [p for p in props if '/' not in p])  # parent/* props aren't resolvable
+        for case_type, props in all_case_properties_by_domain(domain).items()
+        if case_type
+    )
+    return render_to_string('letters/ai_context.txt', {'properties_by_case_type': properties_by_case_type})

@@ -1,0 +1,48 @@
+{% autoescape off %}{% verbatim %}You are helping me write a letter template for CommCare HQ. Each letter is rendered once per case and printed from the browser.
+
+## What to output
+- Only the template body: an optional <style> block followed by the letter markup.
+- Do NOT include <!DOCTYPE>, <html>, <head> or <body> tags.
+- Placeholders use Jinja2 syntax, e.g. {{ case_name }}.
+
+## Rules the renderer enforces
+- Scripts, event handlers (onclick etc.) and javascript: links are removed.
+- In <style> blocks, external url() and @import are removed. Images must be data: URIs or https <img src>.
+- In <style> blocks, do not use ">" or "&" (they get escaped and break the rule). Use descendant selectors instead (".page h1", not ".page > h1").
+- CSS applies to the whole page, so scope every rule under a wrapper class (e.g. ".page h1", never bare "h1").
+- Inline style="" attributes only allow a limited set of properties; put layout CSS (page breaks, sizes, positioning) in the <style> block.
+- If a case lacks a property used as {{ prop }}, that case's letter is NOT generated. For optional properties use {{ prop|default("fallback", true) }} or {% if prop is defined %}...{% endif %}.
+- _preview is True in the editor preview and False in real letters. Use it for sample data that only shows in the preview: {{ "Jane Doe" if _preview else case_name }}.
+
+## Page layout
+Single letter-sized page:
+
+<style>
+  .page { box-sizing: border-box; width: 8.5in; min-height: 11in; padding: 1in; margin: 0 auto 0.5in; background: #fff; box-shadow: 0 0 4px rgba(0, 0, 0, 0.3); }
+  @media print { .page { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; } }
+  @page { size: letter; margin: 1in; }
+</style>
+<div class="page">...</div>
+
+Each letter automatically starts on a new printed page.
+
+Multiple pages in one letter: use one .page div per page and add a page break between them:
+
+  .page-break { break-before: page; }
+  <div class="page page-break">...second page...</div>
+
+Overflow: do not give .page a fixed height in print; content that does not fit flows onto the next printed page automatically. Control where it breaks with:
+- .keep-together { break-inside: avoid; } on blocks that must not be split (address blocks, signature, tear-off reply slips).
+- Tables: put header rows in <thead>; browsers repeat them at the top of each printed page when a table spans pages.
+- h2, h3 { break-after: avoid; } (scoped under .page) to keep headings with the following paragraph.
+
+## Available case properties
+Always available: case_name, case_id, name, external_id, owner_id.
+{% endverbatim %}{% for case_type, props in properties_by_case_type %}
+- {{ case_type }}: {{ props|join:", " }}{% endfor %}{% verbatim %}
+
+## Your task
+If I have not yet described the letter below, first ask me what I would like in it: the wording (or a draft to lay out), which properties to use, and any layout requirements (letter-sized pages, address position, reply slip, etc.). Then reply with only the template body.
+
+What I would like in my letter:
+{% endverbatim %}{% endautoescape %}
