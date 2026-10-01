@@ -3,6 +3,7 @@ Renders LetterTemplate bodies against case properties and arranges the
 results into printable sections for the Letters report.
 """
 import html
+import re
 from collections import defaultdict, namedtuple
 
 from django.utils.translation import gettext as _
@@ -35,8 +36,31 @@ def _allow_attribute(tag, name, value):
         return value.startswith(('data:image/', 'http://', 'https://'))
     if name == 'href' and ''.join(html.unescape(value).split()).lower().startswith('data:'):
         return False  # 'data' is an allowed protocol (for img src), so gate it here
+    if name == 'style':
+        css = html.unescape(value)
+        if '\\' in css or _CSS_FETCH_RE.search(css):
+            return False  # e.g. cursor: url(http://...) would make viewers' browsers fetch it
     allowed = list(ALLOWED_HTML_ATTRIBUTES.get(tag, [])) + list(ALLOWED_HTML_ATTRIBUTES.get('*', []))
     return name in allowed
+
+
+_SCRIPT_RE = re.compile(r'<script\b.*?(?:</script\s*>|$)', re.IGNORECASE | re.DOTALL)
+_STYLE_RE = re.compile(r'(<style\b[^>]*>)(.*?)(</style\s*>|$)', re.IGNORECASE | re.DOTALL)
+_CSS_ESCAPE_RE = re.compile(r'\\(?:[0-9a-fA-F]{1,6}\s?|.)', re.DOTALL)
+_CSS_FETCH_RE = re.compile(
+    r'@import|(?:-[a-z]+-)?image-set\(|\bsrc\(|url\(\s*(?![\'"]?\s*data:)', re.IGNORECASE
+)
+
+
+def _neutralize_css(match):
+    """
+    Defang CSS constructs that make the viewer's browser request a URL
+    (CSS exfiltration/tracking). Escapes are removed first so ``u\\72l(``
+    cannot hide a ``url(``; anything fetch-like is renamed into an invalid
+    token, which browsers ignore.
+    """
+    css = _CSS_ESCAPE_RE.sub('', match.group(2))
+    return match.group(1) + _CSS_FETCH_RE.sub('blocked(', css) + match.group(3)
 
 
 class LetterRenderError(Exception):
@@ -54,7 +78,8 @@ def render_letter(body, context):
         raise LetterRenderError(str(e))
     except Exception as e:  # user-authored template: any runtime error skips just this case
         raise LetterRenderError(f'{type(e).__name__}: {e}')
-    return bleach.clean(
+    html = _SCRIPT_RE.sub('', html)  # bleach strip=True would leave the script text visible
+    cleaned = bleach.clean(
         html,
         tags=_TAGS,
         attributes=_allow_attribute,
@@ -62,6 +87,7 @@ def render_letter(body, context):
         protocols=set(bleach.sanitizer.ALLOWED_PROTOCOLS) | {'data'},
         strip=True,
     )
+    return _STYLE_RE.sub(_neutralize_css, cleaned)
 
 
 def case_context(case):

