@@ -244,3 +244,10 @@ def test_render_preview_is_sanitized():
 def test_render_preview_syntax_error_raises():
     with pytest.raises(LetterRenderError):
         render_preview('{% if %}')
+
+
+def test_preview_flag_true_in_preview_false_in_letters():
+    body = '{{ "Dog" if _preview else species }}'
+    assert render_preview(body) == 'Dog'
+    sections, _ = build_sections([_case('a', tpl='1', species='Cat')], {'1': body}, 'tpl')
+    assert sections[0].letters == ['Cat']

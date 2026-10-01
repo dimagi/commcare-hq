@@ -89,8 +89,11 @@ def render_letter(body, context):
 
 
 def render_preview(body):
-    """Renders with every property as "" so a template can be checked without a case."""
-    return _render(_preview_env, body, {})
+    """
+    Renders with every property as "" so a template can be checked without a
+    case. ``_preview`` is True here and False in real letters.
+    """
+    return _render(_preview_env, body, {'_preview': True})
 
 
 def _render(env, body, context):
@@ -120,6 +123,7 @@ def case_context(case):
         'name': case.name,
         'external_id': case.external_id,
         'owner_id': case.owner_id,
+        '_preview': False,
     }
 
 
