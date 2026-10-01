@@ -5,37 +5,12 @@
 
 {% block head %}
   {{ block.super }}
-  <style id="persistent-cell-layout-style"></style>
-  <style id="persistent-cell-grid-style"></style>
-  <style id="list-cell-layout-style"></style>
-  <style id="list-cell-grid-style"></style>
-  <style id="list-cell-wrapper-style"></style>
-  <style id="list-cell-container-style"></style>
+  {% include 'cloudcare/partials/web_apps_head_styles.html' %}
 {% endblock %}
 
 {% block stylesheets %}
-  {% compress css %}
-    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}" />
-    <link
-      rel="stylesheet"
-      href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}"
-    />
-  {% endcompress %}
-  {% compress css %}
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-common.scss' %}"
-    />
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"
-    />
-  {% endcompress %}
-{% endblock stylesheets %}
+  {% include 'cloudcare/partials/web_apps_stylesheets.html' %}
+{% endblock %}
 
 {% block js %}
   {{ block.super }}
@@ -43,7 +18,8 @@
 {% endblock js %}
 
 {% block content %}
-  {% block page_data %}{% endblock page_data %}
+  {% block page_data %}
+  {% endblock page_data %}
 
   <div id="cloudcare-main" class="cloudcare-home-content">
     <div id="main-container" class="d-lg-flex flex-column">
