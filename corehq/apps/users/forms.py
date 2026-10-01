@@ -84,10 +84,7 @@ from .models import (
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
-# Must not be shorter than settings.MINIMUM_PASSWORD_LENGTH, or generated
-# passwords will be rejected by clean_password(). Kept in sync with
-# STRONG_PASSWORD_LEN in users/js/bootstrap{3,5}/mobile_workers.js.
-STRONG_PASSWORD_LEN = 14
+STRONG_PASSWORD_LEN = settings.MINIMUM_PASSWORD_LENGTH
 
 
 def get_mobile_worker_max_username_length(domain):
