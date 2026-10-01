@@ -205,6 +205,10 @@ class TestConstantValues(SimpleTestCase):
                 IndexSettingsKey.CASE_SEARCH_CC_PERF: {
                     IndexTuningKey.REPLICAS: 1,
                     IndexTuningKey.SHARDS: 2,
+                },
+                IndexSettingsKey.CASE_SEARCH_PHILLY_UBR: {
+                    IndexTuningKey.REPLICAS: 1,
+                    IndexTuningKey.SHARDS: 2,
                 }
             },
             DEFAULT_TUNING_SETTINGS,
