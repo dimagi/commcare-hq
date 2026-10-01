@@ -977,6 +977,20 @@ class TestRepeatRecordMethods(TestCase):
             record.postpone_by(3 * hour)
         assert record.next_check == now + 3 * hour
 
+    def test_fire_checks_domain_matches_repeater(self):
+        record = RepeatRecord(
+            domain="other-domain",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            registered_at=datetime.utcnow(),
+        )
+        with (
+            patch.object(Repeater, "fire_for_record") as fire_for_record,
+            pytest.raises(ValueError),
+        ):
+            record.fire()
+        fire_for_record.assert_not_called()
+
 
 class TestRepeatRecordMethodsNoDB(SimpleTestCase):
     domain = 'repeat-record-tests'
