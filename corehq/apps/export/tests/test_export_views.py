@@ -4,6 +4,7 @@ import os
 from io import BytesIO
 from unittest.mock import patch
 
+from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
@@ -435,3 +436,76 @@ class ExportListCrossDomainTest(ViewTestCase):
         ))
         assert response.status_code == 404
         assert FormExportInstance.get(self.other_export._id).last_accessed is None
+
+
+class ExportDownloadCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def _post(self, urlname):
+        return self.client.post(
+            reverse(urlname, args=[self.domain.name]),
+            {
+                'form_or_case': 'form',
+                'sms_export': 'false',
+                'exports': json.dumps([{'export_id': self.other_export._id}]),
+                'form_data': json.dumps({
+                    'date_range': '2020-01-01 to 2020-12-31', 'emw': '',
+                }),
+            },
+        )
+
+    @patch('corehq.apps.export.views.download.get_export_download')
+    def test_prepare_custom_export_rejects_other_domain(self, get_export_download):
+        assert self._post('prepare_custom_export').status_code == 404
+        assert get_export_download.call_count == 0
+
+    @patch('corehq.apps.export.views.download.build_form_multimedia_zipfile')
+    def test_prepare_form_multimedia_rejects_other_domain(self, build_form_multimedia_zipfile):
+        assert self._post('prepare_form_multimedia').status_code == 404
+        assert build_form_multimedia_zipfile.delay.call_count == 0
+
+
+class ExportSchemaAndMultimediaCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.export = FormExportInstance(domain=self.domain.name, name='mine')
+        self.export.save()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+
+    def test_has_multimedia(self):
+        def _has_multimedia(export_id):
+            return self.client.get(
+                reverse('has_multimedia', args=[self.domain.name]),
+                {'export_id': export_id, 'form_or_case': 'form'},
+            )
+        assert _has_multimedia(self.export._id).status_code == 200
+        assert _has_multimedia(self.other_export._id).status_code == 404
+
+    @patch('corehq.apps.export.views.download._render_det_download')
+    def test_download_det_schema(self, render_det):
+        render_det.return_value = HttpResponse()
+
+        my_det = self.client.get(reverse(
+            'download-det-schema', args=[self.domain.name, self.export._id]))
+        assert my_det.status_code == 200
+        assert render_det.call_count == 1
+
+        other = self.client.get(reverse(
+            'download-det-schema', args=[self.domain.name, self.other_export._id]))
+        assert other.status_code == 404
+        assert render_det.call_count == 1  # still at 1
