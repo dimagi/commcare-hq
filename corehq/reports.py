@@ -109,6 +109,10 @@ def REPORTS(project):
     if domain_has_privilege(project.name, privileges.CASE_DEDUPE):
         inspect_reports.append(DuplicateCasesExplorer)
 
+    if toggles.LETTER_TEMPLATES.enabled(project.name):
+        from corehq.apps.letters.reports import LetterReport
+        inspect_reports.append(LetterReport)
+
     deployments_reports = (
         deployments.ApplicationStatusReport,
         deployments.AggregateUserStatusReport,

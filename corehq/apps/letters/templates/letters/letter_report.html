@@ -1,0 +1,58 @@
+{% load i18n %}
+<style>
+  .letter {
+    break-after: page;
+    page-break-after: always;
+  }
+  .letter-section-title {
+    break-before: page;
+    page-break-before: always;
+  }
+  .letter-section-title:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+  @media print {
+    .letters-skipped {
+      display: none;
+    }
+  }
+</style>
+
+{% if needs_filters %}
+  <div class="alert alert-info">
+    {% trans "Choose a case type and click Apply, then choose the property that holds the letter template ID." %}
+  </div>
+{% elif too_many %}
+  <div class="alert alert-warning">
+    {% blocktrans %}More than {{ too_many }} cases match. Narrow your filters.{% endblocktrans %}
+  </div>
+{% else %}
+  {% if skipped %}
+    <div class="alert alert-warning letters-skipped">
+      <p>
+        {% blocktrans trimmed count counter=skipped|length %}
+          {{ counter }}
+          letter was not generated: {% plural %}
+          {{ counter }}
+          letters were not generated:
+        {% endblocktrans %}
+      </p>
+      <ul>
+        {% for s in skipped %}
+          <li>{{ s.case_name|default:s.case_id }}: {{ s.reason }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+  {% for section in sections %}
+    {% if section.title %}
+      <h2 class="letter-section-title">{{ section.title }}</h2>
+    {% endif %}
+    {% for letter in section.letters %}
+      <div class="letter">{{ letter|safe }}</div>
+    {% endfor %}
+    {% empty %}
+    <p>{% trans "No letters to generate." %}</p>
+  {% endfor %}
+{% endif %}
