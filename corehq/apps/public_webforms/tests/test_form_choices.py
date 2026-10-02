@@ -12,7 +12,7 @@ def _build_app():
     """An app with one of each relevant form: an eligible survey form, an
     eligible registration form, an ineligible case-requiring form, and a form
     in an advanced (non-basic) menu."""
-    factory = AppFactory(domain='pwf-test', name='Public Forms App')
+    factory = AppFactory(domain='pwf-test', name='Public Forms App', build_version='2.51.0')
     __, survey_form = factory.new_basic_module('survey', 'patient')
     __, registration_form = factory.new_basic_module('registration', 'patient')
     factory.form_opens_case(registration_form, 'patient')
