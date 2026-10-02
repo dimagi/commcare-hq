@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.data_interfaces.bulk_form_actions import create_bulk_form_job
@@ -18,8 +18,6 @@ from corehq.form_processor.models import XFormInstance
 from corehq.util.view_utils import reverse
 
 from .bulk_form_action import UserError, serialize_job, validate_payload
-
-NOT_FOUND_MESSAGE = 'Not found'
 
 
 def json_permission_errors(view):
@@ -64,7 +62,6 @@ def _privilege_error(message, status_code):
 
 @csrf_exempt
 @api_key_auth_header_only
-@toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
 @json_permission_errors
 @require_api_permission(HqPermissions.edit_data)
 @requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
@@ -97,7 +94,6 @@ def bulk_form_action(request, domain):
 
 @csrf_exempt
 @api_key_auth_header_only
-@toggles.BULK_FORM_ACTIONS_API.required_decorator(plain_message=NOT_FOUND_MESSAGE)
 @json_permission_errors
 @require_api_permission(HqPermissions.edit_data)
 @requires_privilege_json_response(privileges.API_ACCESS, get_response=_privilege_error)
