@@ -11,7 +11,8 @@
   </div>
   <p class="mt-4">
     {% blocktrans %}
-      The link expires in {{ link_lifespan }} and only works once.
+      The link expires {{ link_lifespan }} after it was created and only works
+      once.
     {% endblocktrans %}
   </p>
   {% if request_url %}
