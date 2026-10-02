@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import NoReverseMatch, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -151,7 +152,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
 
     def set_repeater_attr(self, repeater, cleaned_data):
         assert repeater.repeater_id, repeater
-        repeater.domain = self.domain
+        assert repeater.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
@@ -191,7 +192,7 @@ class AddRepeaterView(BaseRepeaterView):
         )
 
     def initialize_repeater(self):
-        return self.repeater_class()
+        return self.repeater_class(domain=self.domain)
 
     def post_save(self, request, repeater):
         messages.success(request, _("Forwarding set up to {}").format(repeater.name))
@@ -229,10 +230,7 @@ class EditRepeaterView(BaseRepeaterView):
             )
         else:
             repeater_id = self.kwargs['repeater_id']
-            try:
-                repeater = Repeater.objects.get(id=repeater_id, domain=self.domain)
-            except Repeater.DoesNotExist:
-                raise Http404()
+            repeater = _get_repeater_or_404(self.domain, repeater_id)
             data = repeater.to_json()
             data['password'] = PASSWORD_PLACEHOLDER
             return self.repeater_form_class(
@@ -249,7 +247,7 @@ class EditRepeaterView(BaseRepeaterView):
         return super(EditRepeaterView, self).dispatch(request, *args, **kwargs)
 
     def initialize_repeater(self):
-        return Repeater.objects.get(id=self.kwargs['repeater_id'])
+        return _get_repeater_or_404(self.domain, self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
         messages.success(request, _("Forwarder Successfully Updated"))
@@ -343,7 +341,7 @@ class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(id=repeater_id)
+    rep = _get_repeater_or_404(domain, repeater_id)
     rep.retire()
     messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(
@@ -355,7 +353,7 @@ def drop_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def pause_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(id=repeater_id)
+    rep = _get_repeater_or_404(domain, repeater_id)
     rep.pause()
     messages.success(request, "Forwarding paused!")
     return HttpResponseRedirect(
@@ -367,9 +365,13 @@ def pause_repeater(request, domain, repeater_id):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def resume_repeater(request, domain, repeater_id):
-    rep = Repeater.objects.get(id=repeater_id)
+    rep = _get_repeater_or_404(domain, repeater_id)
     rep.resume()
     messages.success(request, "Forwarding resumed!")
     return HttpResponseRedirect(
         reverse(DomainForwardingOptionsView.urlname, args=[domain])
     )
+
+
+def _get_repeater_or_404(domain, repeater_id):
+    return get_object_or_404(Repeater, domain=domain, id=repeater_id)

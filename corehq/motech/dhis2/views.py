@@ -377,9 +377,7 @@ def send_dataset_now(request, domain, pk):
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
-    repeater = Dhis2Repeater.objects.get(id=repeater_id)
-    assert repeater.domain == domain, f'"{repeater.domain}" != "{domain}"'
-
+    repeater = get_object_or_404(Dhis2Repeater, id=repeater_id, domain=domain)
     if request.method == 'POST':
         form = Dhis2ConfigForm(data=request.POST)
         if form.is_valid():
@@ -406,8 +404,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
-    repeater = Dhis2EntityRepeater.objects.get(id=repeater_id)
-    assert repeater.domain == domain
+    repeater = get_object_or_404(Dhis2EntityRepeater, id=repeater_id, domain=domain)
     if request.method == 'POST':
         errors = []
         case_configs = []

@@ -18,7 +18,7 @@ Iterate them, and run this command for each one::
       done
 
 """
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.models import Repeater
@@ -35,8 +35,13 @@ class Command(BaseCommand):
         parser.add_argument('case_type')
 
     def handle(self, *args, **options):
-        repeater = Repeater.objects.get(id=options['repeater_id'])
-        assert repeater.domain == options['domain'], 'Repeater not found'
+        try:
+            repeater = Repeater.objects.get(
+                id=options['repeater_id'],
+                domain=options['domain'],
+            )
+        except Repeater.DoesNotExist:
+            raise CommandError('Repeater not found')
 
         case = CommCareCase.objects.get_case_by_external_id(
             options['domain'],

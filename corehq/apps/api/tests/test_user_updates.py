@@ -64,7 +64,7 @@ class TestUpdateUserMethods(TestCase):
         self.domain_obj.strong_mobile_passwords = True
         self.domain_obj.save()
 
-        self.commcare_user_updater.update('password', 'a7d8fhjkdf8d')  # should not raise
+        self.commcare_user_updater.update('password', 'a7d8fhjkdf8d3k')  # should not raise
 
     def test_update_email_succeeds(self):
         self.user.email = 'initial@dimagi.com'
@@ -293,7 +293,7 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.commcare_user_updater = CommcareUserUpdates(self.user, self.domain, self.user_change_logger)
 
     def test_update_password_logs_change(self):
-        self.commcare_user_updater.update('password', 'a7d8fhjkdf8d')
+        self.commcare_user_updater.update('password', 'a7d8fhjkdf8d3k')
         self.assertIn(PASSWORD_FIELD, self.user_change_logger.change_messages.keys())
 
     def test_update_email_logs_change(self):

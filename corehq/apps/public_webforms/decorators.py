@@ -22,6 +22,7 @@ def allow_public_form_session(view_func):
     def _inner(request, domain, *args, **kwargs):
         session = get_public_form_session(request, domain)
         if session is not None:
+            request.public_form_session = session
             request.couch_user = PublicFormUser(session)
         return view_func(request, domain, *args, **kwargs)
 

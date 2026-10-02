@@ -1,21 +1,15 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load crispy_forms_tags %}
-{% load hq_shared_tags %}
 {% load i18n %}
 
-{% js_entry "domain/js/manage_alerts" %}
-
 {% block page_content %}
-    {% initial_page_data 'alerts' alerts %}
-    {% registerurl 'domain_edit_alert' domain '---' %}
-
     <form class="form form-horizontal" method="post">
       <fieldset>
         <legend>{% trans 'Add New Alert' %}</legend>
         {% crispy form %}
       </fieldset>
     </form>
-    <div id="ko-alert-container">
+    <div>
       <h3>
         {% trans "Available Alerts" %}
       </h3>
@@ -42,39 +36,41 @@
             </th>
           </tr>
         </thead>
-        {% if alerts %}
-        <tbody data-bind="foreach: alerts">
+        <tbody>
+          {% for alert in alerts %}
           <tr>
-            <td data-bind="text: start_time"></td>
-            <td data-bind="text: end_time"></td>
+            <td>{{ alert.start_time|default_if_none:"" }}</td>
+            <td>{{ alert.end_time|default_if_none:"" }}</td>
             <td>
-              <div class="alert alert-warning"
-                   data-bind="html: html"></div>
+              <div class="alert alert-warning">{{ alert.html }}</div>
             </td>
-            <td data-bind="text: created_by_user">
+            <td>
+              {{ alert.created_by_user|default_if_none:"" }}
             </td>
             <td>
               <form action="{% url 'update_domain_alert_status' domain %}" method="post" class="float-start me-1">
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
-                       data-bind="value: id">
-                <button type="submit"
-                        class="btn btn-primary"
-                        name="command"
-                        value="activate"
-                        data-bind="hidden: active">
-                  <span>{% trans "Activate Alert" %}</span>
-                </button>
-                <button type="submit"
-                        class="btn btn-outline-danger"
-                        name="command"
-                        value="deactivate"
-                        data-bind="visible: active">
-                  {% trans "De-activate Alert" %}
-                </button>
+                       value="{{ alert.id }}">
+                {% if alert.active %}
+                  <button type="submit"
+                          class="btn btn-outline-danger"
+                          name="command"
+                          value="deactivate">
+                    {% trans "De-activate Alert" %}
+                  </button>
+                {% else %}
+                  <button type="submit"
+                          class="btn btn-primary"
+                          name="command"
+                          value="activate">
+                    <span>{% trans "Activate Alert" %}</span>
+                  </button>
+                {% endif %}
               </form>
-              <a class="btn btn-outline-primary" data-bind="attr: {href: editUrl}" class="float-start me-1">
+              <a class="btn btn-outline-primary float-start me-1"
+                 href="{% url 'domain_edit_alert' domain alert.id %}">
                 <i class="fa fa-edit"></i>
                 {% trans "Edit" %}
               </a>
@@ -82,7 +78,7 @@
                 {% csrf_token %}
                 <input name="alert_id"
                        type="hidden"
-                       data-bind="value: id">
+                       value="{{ alert.id }}">
                 <button type="submit"
                       class="btn btn-outline-danger">
                   <i class="fa fa-trash"></i>
@@ -91,14 +87,12 @@
               </form>
             </td>
           </tr>
-        </tbody>
-        {% else %}
-        <tbody>
+          {% empty %}
           <tr>
             <td>{% trans "No alerts added yet for the project." %}</td>
           </tr>
+          {% endfor %}
         </tbody>
-        {% endif %}
       </table>
     </div>
 {% endblock %}
