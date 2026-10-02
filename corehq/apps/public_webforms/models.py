@@ -96,6 +96,7 @@ class PublicWebform(models.Model):
 class PublicFormSession(models.Model):
 
     DEFAULT_LIFESPAN = timedelta(hours=1)
+    REUSE_MARGIN = timedelta(minutes=10)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
@@ -148,7 +149,7 @@ class PublicFormSession(models.Model):
         return cls.objects.filter(
             public_webform=public_webform,
             submitted_at__isnull=True,
-            expires_at__gt=timezone.now(),
+            expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
             **contact,
         ).order_by('-created_at').first()
 

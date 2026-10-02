@@ -2,6 +2,7 @@ import datetime
 from uuid import uuid4
 
 import pytest
+from time_machine import travel
 from unmagic import use
 
 from django.http import HttpResponse
@@ -153,6 +154,20 @@ def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs)
 
     assert PublicFormSession.get_active_session_for_contact(
         webform, email='respondent@example.com', phone_number='') is None
+
+
+@use('db')
+@pytest.mark.parametrize('expires_in, expected', [
+    (PublicFormSession.REUSE_MARGIN - datetime.timedelta(minutes=1), False),
+    (PublicFormSession.REUSE_MARGIN, True),
+], ids=['before-margin', 'at-margin'])
+@travel('2026-10-02', tick=False)
+def test_get_active_session_for_contact_reuse_margin(expires_in, expected):
+    webform = create_webform()
+    create_session(webform, email='respondent@example.com', expires_at=timezone.now() + expires_in)
+
+    assert bool(PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='')) is expected
 
 
 @pytest.mark.parametrize('email, phone_number', [
