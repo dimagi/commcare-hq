@@ -172,7 +172,7 @@ def test_find_changed_ai_translations_ignores_strings_gone_from_app():
     app = _make_app()
     app._id = 'test-app-id'
     _record_ai_translation(
-        app, '["deleted_module","name",1]', 'register module', 'module inscription')
+        app, '["deleted_module","name",1]', AI_SOURCE, AI_TRANSLATION)
 
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
 
@@ -183,7 +183,7 @@ def test_find_changed_ai_translations_ignores_other_languages():
     app._id = 'test-app-id'
     app.langs = ['en', 'fra', 'hin']
     _record_ai_translation(
-        app, MODULE_NAME_KEY, 'register module', 'module inscription', lang='hin')
+        app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION, lang='hin')
     app.get_module(0).name['fra'] = 'module enregistrement'
 
     assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
