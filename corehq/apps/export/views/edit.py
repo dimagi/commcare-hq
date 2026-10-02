@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -52,13 +51,7 @@ class BaseEditNewCustomExportView(BaseExportView):
         return reverse(self.urlname, args=[self.domain, self.export_id])
 
     def get(self, request, *args, **kwargs):
-        try:
-            export_instance = self.new_export_instance
-        except ResourceNotFound:
-            raise Http404()
-
-        if export_instance.domain != self.domain:
-            raise Http404()
+        export_instance = self.new_export_instance
 
         schema = None
         if (
@@ -79,19 +72,13 @@ class BaseEditNewCustomExportView(BaseExportView):
 
     @method_decorator(login_and_domain_required)
     def post(self, request, *args, **kwargs):
-        try:
-            new_export_instance = self.new_export_instance
-            if (
-                isinstance(new_export_instance, CaseExportInstance)
-                and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
-            ):
-                trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
-        except ResourceNotFound:
-            new_export_instance = None
+        new_export_instance = self.new_export_instance
         if (
-            new_export_instance
-            and not new_export_instance.can_edit(request.couch_user)
+            isinstance(new_export_instance, CaseExportInstance)
+            and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
         ):
+            trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
+        if not new_export_instance.can_edit(request.couch_user):
             raise Http404
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 

@@ -183,6 +183,12 @@ class ExportViewTest(ViewTestCase):
         )
         self.assertEqual(resp.status_code, 404)
 
+    def test_edit_post_for_missing_export(self):
+        resp = self.client.post(
+            reverse(EditNewCustomFormExportView.urlname, args=[self.domain.name, 'missing-id']),
+        )
+        self.assertEqual(resp.status_code, 404)
+
     def test_commit_form_export(self):
         export_post_data = json.dumps({
             "doc_type": "FormExportInstance",
