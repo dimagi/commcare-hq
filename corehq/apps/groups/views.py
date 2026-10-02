@@ -9,12 +9,14 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
+from dimagi.utils.web import get_url_base
 
 from corehq.apps.groups.models import DeleteGroupRecord, Group
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.apps.users.views.utils import log_user_groups_change
 from corehq.privileges import CASE_SHARING_GROUPS
+from corehq.util.validation import is_url_or_host_banned
 from django_prbac.utils import has_privilege
 
 require_can_edit_groups = require_permission(HqPermissions.edit_groups)
@@ -29,7 +31,15 @@ def add_group(request, domain):
             "We could not create the group; "
             "please give it a name first"
         ))
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        redirection_url = request.META['HTTP_REFERER']
+        if not redirection_url.startswith(get_url_base()):
+            messages.warning(request, _(
+                "We sensed a fishy redirection URL in your Request. "
+                "Therefore, redirected you here as we care about your security."
+            ))
+            return HttpResponseRedirect(reverse("dashboard_domain", args=[domain]))
+
+        return HttpResponseRedirect(redirection_url)
     group = Group.by_name(domain, group_name)
     if group:
         messages.warning(request, _(
