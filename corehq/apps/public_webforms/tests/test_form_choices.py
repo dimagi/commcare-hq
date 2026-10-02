@@ -6,6 +6,7 @@ import pytest
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.public_webforms import form_choices
 from corehq.apps.public_webforms.models import PublicWebformType
+from corehq.util.test_utils import disable_quickcache
 
 
 def _build_app():
@@ -13,6 +14,7 @@ def _build_app():
     eligible registration form, an ineligible case-requiring form, and a form
     in an advanced (non-basic) menu."""
     factory = AppFactory(domain='pwf-test', name='Public Forms App', build_version='2.51.0')
+    factory.app.copy_of = 'app-1'
     __, survey_form = factory.new_basic_module('survey', 'patient')
     __, registration_form = factory.new_basic_module('registration', 'patient')
     factory.form_opens_case(registration_form, 'patient')
@@ -35,11 +37,12 @@ def _patch_released_build(app):
     """Serve ``app`` as the latest released build for a single app id."""
     return patch.multiple(
         form_choices,
-        get_latest_released_app_versions_by_app_id=lambda domain: {'app-1': 1},
-        get_latest_released_app=lambda domain, app_id: app,
+        get_latest_released_build_ids_by_app_id=lambda domain: {'app-1': 'build-1'},
+        iter_docs=lambda db, build_ids: [app.to_json()],
     )
 
 
+@disable_quickcache
 def test_choices_include_only_eligible_forms():
     data = _build_app()
     with _patch_released_build(data.app):
@@ -56,6 +59,7 @@ def test_choices_include_only_eligible_forms():
     assert set(forms_by_id) == {data.survey_form_id, data.registration_form_id}
 
 
+@disable_quickcache
 def test_choices_omit_app_with_no_eligible_forms():
     factory = AppFactory(domain='pwf-test', name='No Eligible Forms')
     __, followup_form = factory.new_basic_module('followup', 'patient')
