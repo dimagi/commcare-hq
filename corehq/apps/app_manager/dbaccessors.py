@@ -68,6 +68,10 @@ def get_latest_released_app_versions_by_app_id(domain):
     return {r['key'][2]: r['key'][3] for r in _get_released_build_view_results(domain)}
 
 
+def get_latest_released_build_ids_by_app_id(domain):
+    return {r['key'][2]: r['id'] for r in _get_released_build_view_results(domain)}
+
+
 def _get_released_build_view_results(domain):
     # only released builds are emitted under ^ReleasedApplications, ordered by
     # app_id, version asc, so the last row per app is its newest released build
