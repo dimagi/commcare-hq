@@ -19,7 +19,6 @@ from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
-    clean_odata_columns,
     trigger_update_case_instance_tables_task
 )
 from corehq.apps.locations.permissions import location_safe
