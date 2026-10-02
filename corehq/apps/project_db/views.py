@@ -49,12 +49,16 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
             for name, value in request.POST.items()
             if name.startswith('param:')
         }
+        explain = 'explain' in request.POST
         context = {'max_rows': MAX_ROWS}
         user_sql = UserSQL(self.domain, request.POST.get('sql', ''), MAX_ROWS)
         try:
             context['query'] = user_sql.get_info()
             if always_run or not user_sql.parameters:
-                context['result'] = user_sql.run(submitted_params)
+                if explain:
+                    context['plan'] = user_sql.explain_analyze(submitted_params)
+                else:
+                    context['result'] = user_sql.run(submitted_params)
         except UserSQLValidationError as error:
             context['error'] = error.msg
         else:
