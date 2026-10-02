@@ -183,15 +183,19 @@ class CommCareFeatureSupportMixin(object):
 
     @property
     def supports_session_endpoints(self):
-        # _force_session_endpoints lets a build emit endpoints regardless of the
-        # domain toggle (set transiently for public webform endpoint builds).
+        # _force_session_endpoints lets a build generate endpoints regardless of
+        # the domain toggle (set transiently for public webform endpoint builds).
         return (
             (
                 getattr(self, '_force_session_endpoints', False)
                 or toggles.SESSION_ENDPOINTS.enabled(self.domain)
             )
-            and self._require_minimum_version('2.51')
+            and self.can_generate_session_endpoints
         )
+
+    @property
+    def can_generate_session_endpoints(self):
+        return self._require_minimum_version('2.51')
 
     @property
     def supports_data_registry(self):
