@@ -14,7 +14,7 @@ def get_public_webform_choices(domain):
     options = []
     for app_id in get_latest_released_app_versions_by_app_id(domain):
         app = get_latest_released_app(domain, app_id)
-        if app is None:
+        if app is None or not app.can_generate_session_endpoints:
             continue
         menus = []
         for module in app.get_modules():
@@ -41,7 +41,7 @@ def get_public_webform_choices(domain):
                 'version': app.version,
                 'menus': menus,
             })
-    return options
+    return sorted(options, key=lambda x: x['name'].casefold())
 
 
 def get_public_webform_eligible_form(domain, app_id, form_unique_id):
