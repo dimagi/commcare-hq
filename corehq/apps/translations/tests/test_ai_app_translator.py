@@ -85,7 +85,7 @@ def _make_app():
     return factory.app
 
 
-# The string keys below are the ones that _make_app() produces for its total six strings.
+# Keys for the six strings that _make_app() produces.
 MODULE_NAME_KEY = '["menus_and_forms","register_module","Menu"]'  # 'register module'
 FORM_NAME_KEY = '["menus_and_forms","register_form_0","Form"]'  # 'register form 0'
 CASE_LIST_KEY = '["register_module","name","list",1]'  # 'Name'
@@ -109,8 +109,7 @@ def test_load_input_fill_missing_extracts_untranslated_source_strings():
 
 def test_all_app_strings_includes_strings_load_input_skips():
     app = _make_app()
-    # add a french translation for MODULE_NAME_KEY in app.
-    app.get_module(0).name['fra'] = 'mon module'
+    app.get_module(0).name['fra'] = 'mon module'  # for MODULE_NAME_KEY
     fmt = AppTranslationFormat(app, 'fra', manually_edited_keys={QUESTION_KEY})
 
     all_strings = fmt.all_app_strings()
