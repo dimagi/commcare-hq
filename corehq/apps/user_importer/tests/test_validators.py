@@ -174,7 +174,9 @@ TEST_CASES = [
 def test_validators(specs, validator, errors):
     for i, spec in enumerate(specs):
         if i in errors:
-            with assert_raises(UserUploadError, msg=errors[i]):
+            # str() coerces gettext_lazy proxies; testil's assert_raises does
+            # isinstance(msg, str), which a Promise fails.
+            with assert_raises(UserUploadError, msg=str(errors[i])):
                 validator(spec)
         else:
             validator(spec)
@@ -200,7 +202,7 @@ def _test_duplicates(specs, duplicates, check=None):
 )))
 def test_duplicates(validator, spec, duplicates):
     if spec.get('name') in duplicates:
-        with assert_raises(UserUploadError, msg=validator.error_message):
+        with assert_raises(UserUploadError, msg=str(validator.error_message)):
             validator(spec)
     else:
         validator(spec)
@@ -220,7 +222,7 @@ def test_duplicates(validator, spec, duplicates):
 )))
 def test_duplicates_with_check(validator, spec, duplicates):
     if spec.get('name') in duplicates:
-        with assert_raises(UserUploadError, msg=validator.error_message):
+        with assert_raises(UserUploadError, msg=str(validator.error_message)):
             validator(spec)
     else:
         validator(spec)
