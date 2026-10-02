@@ -137,11 +137,19 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 
 
 @require_openmrs_repeater_access
+@require_http_methods(['POST'])
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = OpenmrsRepeater.objects.get(domain=domain, id=repeater_id)
-    record = RepeatRecord.objects.get(domain=domain, id=record_id)
-    assert record.repeater_id == repeater.id
-
+    repeater = get_object_or_404(
+        OpenmrsRepeater,
+        domain=domain,
+        id=repeater_id,
+    )
+    record = get_object_or_404(
+        RepeatRecord,
+        domain=domain,
+        id=record_id,
+        repeater_id=repeater.id,
+    )
     repeater.fire_for_record(record)
     return JsonResponse({'status': 'OK'}, status=200)
 

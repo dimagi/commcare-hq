@@ -229,6 +229,32 @@ class TestRepeaterViewPermissions(TestCase):
         fire_for_record.assert_called_once()
 
     @flag_enabled('OPENMRS_INTEGRATION')
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_test_fire_rejects_get(self):
+        self.client.login(username=MOTECH_USERNAME, password=PASSWORD)
+        with self._side_effects_blocked():
+            response = self.client.get(self._url('openmrs_test_fire'))
+        assert response.status_code == 405
+
+    @flag_enabled('OPENMRS_INTEGRATION')
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_test_fire_rejects_record_of_other_repeater(self):
+        other_record = RepeatRecord.objects.create(
+            domain=DOMAIN,
+            repeater_id=self.dhis2_repeater.repeater_id,
+            payload_id='c0ffee',
+            registered_at=datetime.utcnow(),
+        )
+        url = reverse(
+            'openmrs_test_fire',
+            args=[DOMAIN, self.openmrs_repeater.repeater_id, other_record.id],
+        )
+        self.client.login(username=MOTECH_USERNAME, password=PASSWORD)
+        with self._side_effects_blocked():
+            response = self.client.post(url)
+        assert response.status_code == 404
+
+    @flag_enabled('OPENMRS_INTEGRATION')
     def test_import_now_allowed_with_permission(self):
         self.client.login(username=MOTECH_USERNAME, password=PASSWORD)
         with (
