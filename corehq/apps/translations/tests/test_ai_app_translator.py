@@ -710,17 +710,21 @@ class TestRecordRun(TestCase):
 
 
 class _FakeTranslator:
-    """Translates every batch by prefixing 'FR:', failing when asked."""
+    """Translates every batch by prefixing 'FR:', failing when asked.
+    ``on_translate`` runs before each batch."""
     model = 'fake-model'
 
-    def __init__(self, fmt, fail_batches=(), fail_all=False):
+    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None):
         self.fmt = fmt
         self.fail_batches = set(fail_batches)
         self.fail_all = fail_all
+        self.on_translate = on_translate
         self.calls = 0
 
     def translate(self, batch):
         self.calls += 1
+        if self.on_translate:
+            self.on_translate()
         if self.fail_all or self.calls in self.fail_batches:
             raise Exception('LLM exploded')
         return self.fmt.parse_output(json.dumps(
@@ -767,10 +771,10 @@ class TestRunAppTranslation(TestCase):
         assert summary['translated'] == 0
         assert translator2.calls == 0
 
-    def _run(self, app, fail_all=False):
+    def _run(self, app, **translator_kwargs):
         return run_app_translation(
             app, 'fra', MODE_FILL_MISSING, chunk_size=50,
-            translator_factory=lambda lang, fmt, **kw: _FakeTranslator(fmt, fail_all=fail_all))
+            translator_factory=lambda lang, fmt, **kw: _FakeTranslator(fmt, **translator_kwargs))
 
     def test_next_run_skips_edits_and_retranslates_stale_strings(self):
         app = _make_app()
@@ -801,6 +805,30 @@ class TestRunAppTranslation(TestCase):
         # and the new source, so the next run doesn't see it as stale again
         assert AITranslation.objects.get(
             app_id=app.get_id, string_key=FORM_NAME_KEY).source_value == 'enrol form'
+
+    def test_user_edit_during_run_drops_that_result(self):
+        app = _make_app()
+        app.save()
+        self.addCleanup(app.delete)
+        # an AI translation since cleared, so this run translates it again
+        _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+
+        def user_types_module_name():
+            other = get_app(app.domain, app.get_id)
+            _fill_module_name_target(other)
+            other.save()
+
+        summary = self._run(app, on_translate=user_types_module_name)
+
+        # the user's edit wins, and the other four results still land
+        assert (summary['translated'], summary['changed']) == (4, 1)
+        # usage counts only the results that were saved
+        assert AITranslationUsage.objects.get(app_id=app.get_id).strings_translated == 4
+        # the AI's result for the module name is not recorded, and the
+        # existing row now reflects the user's edit
+        row = AITranslation.objects.get(app_id=app.get_id, string_key=MODULE_NAME_KEY)
+        assert (row.translated_value, row.status) == (
+            AI_TRANSLATION, AITranslation.STATUS_MANUALLY_EDITED)
 
     def test_records_nothing_when_nothing_is_applied(self):
         app = _make_app()
