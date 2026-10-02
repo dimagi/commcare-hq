@@ -149,6 +149,9 @@ class DomainSchema:
             f'SET LOCAL search_path TO {self._quoted_name}, public'
         ))
 
+    def exists(self, conn):
+        return self.name in sqlalchemy.inspect(conn).get_schema_names()
+
     def drop(self, conn):
         conn.execute(
             sqlalchemy.text('SELECT public.projectdb_drop_role(:name)'),
@@ -303,6 +306,15 @@ def preview_drop(domain):
         return notices
     finally:
         raw.close()
+
+
+def drop_project_db(domain):
+    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
+        return
+    schema = DomainSchema(domain)
+    with get_project_db_engine().begin() as conn:
+        if schema.exists(conn):
+            schema.drop(conn)
 
 
 def _get_case_types(domain):
