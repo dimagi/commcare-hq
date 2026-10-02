@@ -820,15 +820,14 @@ class TestRunAppTranslation(TestCase):
 
         summary = self._run(app, on_translate=user_types_module_name)
 
-        # the user's edit wins, and the other four results still land
-        assert (summary['translated'], summary['changed']) == (4, 1)
-        # usage counts only the results that were saved
-        assert AITranslationUsage.objects.get(app_id=app.get_id).strings_translated == 4
-        # the AI's result for the module name is not recorded, and the
-        # existing row now reflects the user's edit
+        assert summary['changed'] == 1, "expected the user's edit to win"
+        assert summary['translated'] == 4, 'expected the other 4 results to be saved'
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
+        assert usage.strings_translated == summary['translated']
         row = AITranslation.objects.get(app_id=app.get_id, string_key=MODULE_NAME_KEY)
-        assert (row.translated_value, row.status) == (
-            AI_TRANSLATION, AITranslation.STATUS_MANUALLY_EDITED)
+        assert row.status == AITranslation.STATUS_MANUALLY_EDITED
+        # still the earlier AI translation; this run's 'FR:register module' was dropped
+        assert row.translated_value == AI_TRANSLATION
 
     def test_records_nothing_when_nothing_is_applied(self):
         app = _make_app()
