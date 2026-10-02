@@ -587,3 +587,9 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
 
         assert _edit_name(self.other_export._id, 'hacked').status_code == 404
         assert FormExportInstance.get(self.other_export._id).name == 'theirs'
+
+    @privilege_enabled(privileges.ODATA_FEED)
+    def test_copy_odata_feed(self):
+        response = self.client.get(
+            reverse('edit_odata_form_feed', args=[self.domain.name, self.other_export._id]))
+        assert response.status_code == 404
