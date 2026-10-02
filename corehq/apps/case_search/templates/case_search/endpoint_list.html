@@ -17,7 +17,7 @@
           {% endblocktrans %}
         </a>
       {% endwith %}
-    {% else %}
+    {% elif target_types|length > 1 %}
       <div class="btn-group">
         {% with primary=target_types.0 %}
           <a
