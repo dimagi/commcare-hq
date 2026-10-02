@@ -41,7 +41,7 @@ def get_public_webform_choices(domain):
                 'version': app.version,
                 'menus': menus,
             })
-    return options
+    return sorted(options, key=lambda x: x['name'].casefold())
 
 
 def get_public_webform_eligible_form(domain, app_id, form_unique_id):
