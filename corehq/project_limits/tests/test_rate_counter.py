@@ -74,3 +74,157 @@ def test_sliding_window_with_grains_rate_counter():
 
     float_eq(counter.increment_and_get('alice', timestamp=timestamp + 1 * DAYS), 4)
     float_eq(counter.get('alice', timestamp=timestamp + 2 * DAYS), 3 * 6. / 7 + 1)
+
+
+class TestSlidingWindowCountAndWait:
+
+    def test_sliding_window_over_one_grain(self):
+        timestamp = 1000 * 7 * DAYS
+        scope = "alice"
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=1)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment(scope, timestamp=timestamp)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 1)
+        testil.eq(round(wait_time / DAYS), 7)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6 * DAYS)
+        testil.eq(hits, 1)
+        # wait_time / DAYS = 0.9999999999999994
+        testil.eq(round(wait_time / DAYS), 1)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6.5 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(round(wait_time / DAYS, 2), 0.5)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 7 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(round(wait_time / DAYS, 2), 0.0)
+
+    def test_sliding_window_multiple_grains(self):
+        timestamp = 1000 * 7 * DAYS
+        scope = 'bob'
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment(scope, timestamp=timestamp)
+
+        for day_n in range(0, 7):
+            hits, wait_time = counter.get_count_and_wait_time(
+                scope, threshold=1, timestamp=timestamp + day_n * DAYS
+            )
+            testil.eq(hits, 1)
+            testil.eq(wait_time / DAYS, 7 - day_n)
+
+    def test_sliding_window_multiple_grains_basic(self):
+        timestamp = 1000 * 7 * DAYS
+        scope = 'elton'
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment(scope, timestamp=timestamp)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 7)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 0.5 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 6.5)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 0.75 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 6.25)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 1 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 6)
+
+    def test_sliding_window_multiple_grains_complex(self):
+        timestamp = 1000 * 7 * DAYS
+        scope = 'john'
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment(scope, timestamp=timestamp)
+        counter.increment(scope, timestamp=timestamp + 1 * DAYS)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 7)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 1 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 7)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 2 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 6)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 7 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 1)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 8 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 0)
+
+    def test_sliding_window_multiple_grains_more_complex(self):
+        timestamp = 1000 * 7 * DAYS
+        scope = 'jack'
+        counter = _SlidingWindowRateCounter('test-sliding-week', 7 * DAYS, grains_per_window=7)
+        counter.grain_counter.counter.shared_cache.clear()
+
+        counter.increment(scope, timestamp=timestamp - 1 * DAYS)
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 6)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 0)
+
+        # Test wait time for 2 hits
+        counter.increment(scope, timestamp=timestamp - 1 * DAYS)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=2, timestamp=timestamp)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 6)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 6.5)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6 * DAYS)
+        testil.eq(hits, 2)
+        testil.eq(wait_time / DAYS, 0.5)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp + 6.5 * DAYS)
+        testil.eq(hits, 1)
+        testil.eq(wait_time / DAYS, 0.0)
+
+        # Test wait time for 3 hits
+        counter.increment(scope, timestamp=timestamp - 1 * DAYS)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=3, timestamp=timestamp)
+        testil.eq(hits, 3)
+        testil.eq(wait_time / DAYS, 6)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=2, timestamp=timestamp)
+        testil.eq(hits, 3)
+        wait_time_days = wait_time / DAYS
+        testil.eq(round(wait_time_days, 2), 6.33)
+
+        # After 6.333 days the threshold is met exactly
+        hits, wait_time = counter.get_count_and_wait_time(
+            scope, threshold=2, timestamp=timestamp + wait_time_days * DAYS
+        )
+        testil.eq(hits, 2)
+        testil.eq(wait_time, 0.0)
+
+        hits, wait_time = counter.get_count_and_wait_time(scope, threshold=1, timestamp=timestamp)
+        testil.eq(hits, 3)
+        wait_time_days = wait_time / DAYS
+        testil.eq(round(wait_time_days, 3), 6.667)
