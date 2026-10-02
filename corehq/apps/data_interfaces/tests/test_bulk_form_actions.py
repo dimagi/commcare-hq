@@ -139,7 +139,7 @@ class TestRunBulkFormAction(TestCase):
         assert not XFormInstance.objects.get_form(normal.form_id, DOMAIN).is_deleted
         assert XFormInstance.objects.get_form(archived.form_id, DOMAIN).is_deleted
 
-    def test_delete_leaves_an_already_deleted_form_alone(self):
+    def test_an_already_deleted_form_is_not_found(self):
         form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
         XFormInstance.objects.soft_delete_forms(
             DOMAIN, [form.form_id], deletion_id='an-earlier-deletion')
@@ -149,11 +149,36 @@ class TestRunBulkFormAction(TestCase):
         run_bulk_form_action(job)
 
         job.refresh_from_db()
-        assert job.succeeded_count == 1
-        assert job.get_skipped() == {}
+        assert job.succeeded_count == 0
+        assert job.get_skipped() == {NOT_FOUND: [form.form_id]}
         unchanged = XFormInstance.objects.get_form(form.form_id, DOMAIN)
         assert unchanged.deletion_id == 'an-earlier-deletion'
         assert unchanged.deleted_on == original.deleted_on
+
+    def test_archive_does_not_resurrect_a_deleted_form(self):
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        XFormInstance.objects.soft_delete_forms(DOMAIN, [form.form_id])
+        job = self._job(BulkAsyncJob.Action.ARCHIVE, [form.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.succeeded_count == 0
+        assert job.get_skipped() == {NOT_FOUND: [form.form_id]}
+
+    def test_unarchive_does_not_resurrect_a_deleted_form(self):
+        # the form is still ARCHIVED, so without the filter this would
+        # unarchive it and rebuild its cases
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        XFormInstance.objects.soft_delete_forms(DOMAIN, [form.form_id])
+        job = self._job(BulkAsyncJob.Action.UNARCHIVE, [form.form_id])
+
+        run_bulk_form_action(job)
+
+        job.refresh_from_db()
+        assert job.succeeded_count == 0
+        assert job.get_skipped() == {NOT_FOUND: [form.form_id]}
+        assert XFormInstance.objects.get_form(form.form_id, DOMAIN).is_archived
 
     def test_persists_progress_before_completion(self):
         # A small job (interval == 1) must persist counts as it goes, not only
@@ -284,7 +309,7 @@ class TestApplyFormAction(SimpleTestCase):
         assert self._patched_apply_form_action([], []) == []
 
     def test_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         results = self._patched_apply_form_action(['f1'], [form])
         assert results == [FormActionResult('f1', SUCCEEDED)]
 
@@ -293,12 +318,28 @@ class TestApplyFormAction(SimpleTestCase):
         assert results == [FormActionResult('missing', SKIPPED, NOT_FOUND)]
 
     def test_wrong_domain_is_not_found(self):
-        form = Mock(form_id='f1', domain='other-domain')
+        form = Mock(form_id='f1', domain='other-domain', is_deleted=False)
         results = self._patched_apply_form_action(['f1'], [form])
         assert results == [FormActionResult('f1', SKIPPED, NOT_FOUND)]
 
+    def test_deleted_is_not_found(self):
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=True)
+        results = self._patched_apply_form_action(['f1'], [form])
+        assert results == [FormActionResult('f1', SKIPPED, NOT_FOUND)]
+
+    def test_deleted_is_never_handed_to_the_action(self):
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=True)
+        seen = []
+
+        def record(batch):
+            seen.extend(batch)
+            yield from _successful_action(batch)
+
+        self._patched_apply_form_action(['f1'], [form], record)
+        assert seen == []
+
     def test_mixed_results(self):
-        found = Mock(form_id='f1', domain=DOMAIN)
+        found = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         results = self._patched_apply_form_action(['f1', 'missing'], [found])
         assert results == [
             FormActionResult('f1', SUCCEEDED),
@@ -307,7 +348,7 @@ class TestApplyFormAction(SimpleTestCase):
 
     def test_forms_are_handed_to_the_action_in_batches(self):
         forms = [
-            Mock(form_id=f'f{i}', domain=DOMAIN)
+            Mock(form_id=f'f{i}', domain=DOMAIN, is_deleted=False)
             for i in range(MAX_SAVE_INTERVAL + 1)
         ]
         sizes = []
@@ -380,11 +421,6 @@ class TestDeleteForms(SimpleTestCase):
         mocked_delete.assert_not_called()
         assert results == [FormActionResult('normal', SKIPPED, NOT_ARCHIVED)]
 
-    def test_already_deleted_form_is_left_alone(self):
-        results, mocked_delete = self._delete([self._already_deleted()])
-        mocked_delete.assert_not_called()
-        assert results == [FormActionResult('deleted', SUCCEEDED)]
-
     def test_batch_is_deleted_in_a_single_query(self):
         forms = [self._archived('f1'), self._archived('f2'), self._archived('f3')]
 
@@ -399,7 +435,7 @@ class TestDeleteForms(SimpleTestCase):
         ]
 
     def test_only_eligible_forms_of_a_mixed_batch_are_deleted(self):
-        forms = [self._archived(), self._not_archived(), self._already_deleted()]
+        forms = [self._archived(), self._not_archived()]
 
         results, mocked_delete = self._delete(forms)
 
@@ -407,7 +443,6 @@ class TestDeleteForms(SimpleTestCase):
             DOMAIN, ['archived'], deletion_id=self.DELETION_ID)
         assert results == [
             FormActionResult('normal', SKIPPED, NOT_ARCHIVED),
-            FormActionResult('deleted', SUCCEEDED),
             FormActionResult('archived', SUCCEEDED),
         ]
 
@@ -438,10 +473,6 @@ class TestDeleteForms(SimpleTestCase):
     def _not_archived(self, form_id='normal'):
         return Mock(
             form_id=form_id, domain=DOMAIN, is_archived=False, is_deleted=False)
-
-    def _already_deleted(self, form_id='deleted'):
-        return Mock(
-            form_id=form_id, domain=DOMAIN, is_archived=True, is_deleted=True)
 
     def _delete(self, forms, side_effect=None):
         with patch(
