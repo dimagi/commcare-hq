@@ -12,8 +12,8 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
 from django.views.generic.edit import BaseCreateView, BaseUpdateView
 
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -35,6 +35,17 @@ from .forms import (
 from .models import SQLDataSetMap, SQLDataValueMap
 from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
+
+
+def require_dhis2_repeater_access(view_func):
+    """
+    Restricts DHIS2 repeater views to users who can edit MOTECH
+    integrations, on projects with Data Forwarding and the DHIS2
+    integration enabled.
+    """
+    view_func = toggles.DHIS2_INTEGRATION.required_decorator()(view_func)
+    view_func = requires_privilege_with_fallback(privileges.DATA_FORWARDING)(view_func)
+    return require_permission(HqPermissions.edit_motech)(view_func)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -374,7 +385,7 @@ def send_dataset_now(request, domain, pk):
 
 
 @use_bootstrap5
-@login_and_domain_required
+@require_dhis2_repeater_access
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
     repeater = get_object_or_404(Dhis2Repeater, id=repeater_id, domain=domain)
@@ -401,7 +412,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
 
 
 @use_bootstrap5
-@login_and_domain_required
+@require_dhis2_repeater_access
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
     repeater = get_object_or_404(Dhis2EntityRepeater, id=repeater_id, domain=domain)

@@ -3,12 +3,13 @@ import json
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 from corehq.motech.dhis2.tests.data.repeater import dhis2_repeater_data, dhis2_entity_repeater_data
 
 from ..views import DataSetMapUpdateView
@@ -187,6 +188,8 @@ class TestDataSetMapUpdateView(BaseViewTest):
         return super().tearDownClass()
 
 
+@flag_enabled('DHIS2_INTEGRATION')
+@privilege_enabled(privileges.DATA_FORWARDING)
 class TestConfigDhis2RepeaterView(BaseViewTest):
 
     @classmethod
@@ -250,6 +253,8 @@ class TestConfigDhis2RepeaterView(BaseViewTest):
         self.assertEqual(unchanged_repeater.dhis2_config, self.dhis2_repeater.dhis2_config)
 
 
+@flag_enabled('DHIS2_INTEGRATION')
+@privilege_enabled(privileges.DATA_FORWARDING)
 class TestConfigDhis2EntityRepeaterView(BaseViewTest):
 
     @classmethod
