@@ -37,11 +37,11 @@ from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
 
-def require_dhis2_repeater_access(view_func):
+def require_dhis2_forwarding_access(view_func):
     """
-    Restricts DHIS2 repeater views to users who can edit MOTECH
-    integrations, on projects with Data Forwarding and the DHIS2
-    integration enabled.
+    Restricts views that send data to DHIS2, or configure how it is
+    sent, to users who can edit MOTECH integrations, on projects with
+    Data Forwarding and the DHIS2 integration enabled.
     """
     view_func = toggles.DHIS2_INTEGRATION.required_decorator()(view_func)
     view_func = requires_privilege_with_fallback(privileges.DATA_FORWARDING)(view_func)
@@ -376,16 +376,16 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
 
 
 @require_POST
-@require_permission(HqPermissions.edit_motech)
+@require_dhis2_forwarding_access
 def send_dataset_now(request, domain, pk):
-    dataset_map = SQLDataSetMap.objects.get(domain=domain, pk=pk)
+    dataset_map = get_object_or_404(SQLDataSetMap, domain=domain, pk=pk)
     send_date = datetime.utcnow().date()
     result = send_dataset(dataset_map, send_date)
     return JsonResponse(result, status=result['status_code'] or 500)
 
 
 @use_bootstrap5
-@require_dhis2_repeater_access
+@require_dhis2_forwarding_access
 @require_http_methods(["GET", "POST"])
 def config_dhis2_repeater(request, domain, repeater_id):
     repeater = get_object_or_404(Dhis2Repeater, id=repeater_id, domain=domain)
@@ -412,7 +412,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
 
 
 @use_bootstrap5
-@require_dhis2_repeater_access
+@require_dhis2_forwarding_access
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
     repeater = get_object_or_404(Dhis2EntityRepeater, id=repeater_id, domain=domain)
