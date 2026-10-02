@@ -11,20 +11,28 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
+from sqlalchemy import ARRAY
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.sqltypes import NullType
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
+    placeholders_for,
+    sql_placeholders,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
+    SearchCriteria,
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
@@ -50,11 +58,13 @@ _ADMIN_ENDPOINT_DECORATORS = [
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
-def _bind_parameters(parameters, values):
-    """Take from ``values`` what the query's ``parameters`` need.
-    A missing or blank value binds as NULL
+def _tester_criteria(values):
+    """The query tester's parameter values as search criteria.
+
+    The tester has an input for every parameter, so one left blank was not
+    filled in rather than purposefully searched for, and is left out.
     """
-    return {name: values.get(name) or None for name in parameters}
+    return [SearchCriteria(name, value) for name, value in values.items() if value]
 
 
 def empty_query():
@@ -145,7 +155,7 @@ class CaseSearchEndpointForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        parameters = self._clean_parameters(cleaned)
+        parameters = self._parse_parameters(cleaned)
         # An endpoint is configured one way or the other, so the fields
         # belonging to the other kind are dropped rather than saved unchecked.
         if self.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH:
@@ -154,15 +164,15 @@ class CaseSearchEndpointForm(forms.Form):
         elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
             cleaned['case_type'] = None
             cleaned['query'] = None
-            self._clean_sql(cleaned)
+            self._clean_sql(cleaned, parameters)
 
         return cleaned
 
-    def _clean_parameters(self, cleaned):
-        parameter_spec = cleaned.get('parameters')
-        if parameter_spec is None:
+    def _parse_parameters(self, cleaned):
+        spec = cleaned.get('parameters')
+        if spec is None:
             return None
-        parameters, errors = parse_parameter_spec(parameter_spec)
+        parameters, errors = parse_parameter_spec(spec)
         for error in errors:
             self.add_error('parameters', error)
         return parameters
@@ -178,12 +188,16 @@ class CaseSearchEndpointForm(forms.Form):
             for error in errors:
                 self.add_error('query', error)
 
-    def _clean_sql(self, cleaned):
+    def _clean_sql(self, cleaned, parameters):
         sql = (cleaned.get('sql') or '').strip()
         try:
-            UserSQL(self.domain, sql, max_rows=None).validate()
+            # The query is rebuilt when the endpoint runs, since the domain's
+            # tables change over time. This is to validate what was written.
+            user_sql = UserSQL(self.domain, sql)
+            binds = user_sql.parameter_binds
         except UnsupportedSQL as error:
             self.add_error('sql', str(error.msg))
+            return
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             # Not the author's fault, so report it against the form rather
             # than the field, and let them keep what they wrote.
@@ -191,6 +205,52 @@ class CaseSearchEndpointForm(forms.Form):
                 None, f'project_db unavailable for {self.domain}: {error}'
             )
             self.add_error(None, PROJECT_DB_UNAVAILABLE)
+            return
+        if parameters is not None:
+            for error in sql_parameter_errors(binds, parameters):
+                self.add_error('sql', error)
+
+
+def sql_parameter_errors(binds, parameters):
+    """Report placeholders in the SQL that the parameter spec does not support.
+
+    Catches at save time what would otherwise fail when the endpoint runs:
+    ``UserSQL.run`` rejects a value set that does not match the query's
+    placeholders, and a list bound to the wrong construct fails inside
+    psycopg2 rather than as anything a caller can report.
+
+    :param binds: ``UserSQL.parameter_binds`` for the endpoint's SQL
+    """
+    expected = set(sql_placeholders(parameters))
+    for name in sorted(set(binds) - expected):
+        yield (f"Undefined parameter ':{name}'. Add it under Parameters, "
+               f"or remove it from the SQL.")
+    for name in sorted(expected - set(binds)):
+        yield f"Parameter ':{name}' is not used by the SQL."
+    for param in parameters:
+        for name in placeholders_for(param):
+            if name in binds:
+                yield from _bind_shape_errors(param, name, binds[name])
+
+
+def _bind_shape_errors(param, name, bind):
+    is_list_param = param.type == FIELD_TYPE_SELECT
+    if bind.expanding:
+        # `IN :name` renders nothing at all for an unsupplied parameter, so
+        # its NULL guard raises out of psycopg2 rather than matching everything
+        yield (f"':{name}' is used with IN, which is not supported. Compare a "
+               f"select_prop__ column with && (any of) or @> (all of) instead.")
+        return
+    if isinstance(bind.type, NullType):
+        # Only ever compared against another parameter or NULL, so the query
+        # says nothing about the shape this parameter should take
+        return
+    if is_list_param and not isinstance(bind.type, ARRAY):
+        yield (f"':{name}' is a select parameter, so it must be compared with a "
+               f"select_prop__ column using && (any of) or @> (all of).")
+    elif not is_list_param and isinstance(bind.type, ARRAY):
+        yield (f"':{name}' is compared with a select_prop__ column, so it must "
+               f"be declared as a select parameter.")
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
@@ -453,7 +513,7 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
                       self.SQL_ERRORS: []}
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
-            return self._run_sql(request, test_param_values, validation)
+            return self._run_sql(request, parameters, test_param_values, validation)
         return self._run_es_query(request, parameters, test_param_values, validation)
 
     def _run_es_query(self, request, parameters, test_param_values, validation):
@@ -482,11 +542,15 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
         columns, rows = self._es_results_to_columns_and_rows(fields, results)
         return self._render_results(request, columns, rows, validation=validation)
 
-    def _run_sql(self, request, test_param_values, validation):
+    def _run_sql(self, request, parameters, test_param_values, validation):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
+            query_params = bind_values(parameters, _tester_criteria(test_param_values))
+        except CaseSearchUserError as error:
+            return self._render_results(request, errors=[str(error)], validation=validation)
+        try:
+            result = user_sql.run(query_params)
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)

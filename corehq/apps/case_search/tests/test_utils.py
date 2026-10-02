@@ -8,7 +8,6 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATETIME,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
-    FIELD_TYPE_SELECT,
     FIELD_TYPE_TEXT,
 )
 from corehq.apps.es.queries import DISTANCE_UNITS
@@ -279,7 +278,6 @@ _VALUE_BY_FIELD_TYPE = {
     FIELD_TYPE_NUMBER: '5',
     FIELD_TYPE_DATE: '2020-01-01',
     FIELD_TYPE_DATETIME: '2020-01-01',
-    FIELD_TYPE_SELECT: 'a',
 }
 
 

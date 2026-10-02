@@ -26,6 +26,8 @@ Alpine.data("endpointForm", () => {
         targetCasetype: initialPageData.get("initial_case_type"),
         parameters: initialPageData.get("initial_parameters") || [],
         testParamValues: {},
+        // A daterange parameter's bounds, keyed "<name>_from"/"<name>_to"
+        testRangeValues: {},
         query: initialPageData.get("initial_query"),
         capability: initialPageData.get("capability"),
         _nextId: 1,
@@ -65,6 +67,38 @@ Alpine.data("endpointForm", () => {
             return f ? f.type : "";
         },
 
+        // Must stay in sync with placeholders_for() in endpoint_query_spec.py
+        placeholderHint(param) {
+            if (!param.name) {
+                return "";
+            }
+            return param.type === "daterange"
+                ? `:${param.name}_from  :${param.name}_to`
+                : `:${param.name}`;
+        },
+
+        // The tester's values in the shape an endpoint receives them: a date
+        // range as one "__range__<from>__<to>" value, and a select parameter's
+        // comma-separated input as a list. An input left blank is left out,
+        // as a search prompt that was not filled in would be.
+        testParamPayload() {
+            const payload = {};
+            for (const param of this.parameters) {
+                let value = this.testParamValues[param.name] || "";
+                if (param.type === "daterange") {
+                    const from = this.testRangeValues[`${param.name}_from`] || "";
+                    const to = this.testRangeValues[`${param.name}_to`] || "";
+                    value = from || to ? `__range__${from}__${to}` : "";
+                } else if (param.type === "select") {
+                    value = value.split(",").map(v => v.trim()).filter(v => v);
+                }
+                if (value.length) {
+                    payload[param.name] = value;
+                }
+            }
+            return payload;
+        },
+
         typeIconClass(type) {
             return (
                 {
@@ -72,6 +106,7 @@ Alpine.data("endpointForm", () => {
                     number: "fa-solid fa-hashtag",
                     date: "fa-solid fa-calendar-days",
                     datetime: "fa-solid fa-calendar-days",
+                    daterange: "fa-solid fa-calendar-week",
                     select: "fa-solid fa-list",
                     geopoint: "fa-solid fa-location-dot",
                 }[type] || "fa-solid fa-circle"
