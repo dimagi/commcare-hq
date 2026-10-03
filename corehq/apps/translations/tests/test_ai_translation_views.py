@@ -9,6 +9,7 @@ from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
 from corehq.apps.translations.models import AITranslationConfig
+from corehq.apps.translations.tasks import WAITED_TOO_LONG, run_message
 from corehq.apps.users.models import WebUser
 
 DOMAIN = 'ai-translation-views'
@@ -16,7 +17,7 @@ USERNAME = 'translator@example.com'
 PASSWORD = 'secret'
 
 
-class TestStartAITranslation(TestCase):
+class AITranslationViewTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -33,10 +34,16 @@ class TestStartAITranslation(TestCase):
                         return_value=True)
         self.enabled = enabled.start()
         self.addCleanup(enabled.stop)
+        self.client.login(username=USERNAME, password=PASSWORD)
+
+
+class TestStartAITranslation(AITranslationViewTestCase):
+
+    def setUp(self):
+        super().setUp()
         delay = patch('corehq.apps.translations.tasks.translate_app_task.delay')
         self.delay = delay.start()
         self.addCleanup(delay.stop)
-        self.client.login(username=USERNAME, password=PASSWORD)
 
     def test_queues_a_run(self):
         response = self._start('fra')
@@ -111,6 +118,48 @@ class TestStartAITranslation(TestCase):
     def _start(self, lang, app_id=None):
         url = reverse('start_ai_translation', args=[DOMAIN, app_id or self.app.get_id])
         return self.client.post(url, {'lang': lang} if lang else {})
+
+
+class TestAITranslationStatus(AITranslationViewTestCase):
+
+    def test_returns_the_status_of_each_language_ai_can_translate(self):
+        AITranslationStatus(self.app.get_id, 'fra').start(USERNAME)
+
+        response = self._get_status()
+
+        assert response.status_code == 200
+        statuses = response.json()
+        # not the default language 'en', or 'xyz', which isn't supported
+        assert statuses.keys() == {'fra', 'hin'}
+        assert statuses['fra']['state'] == AITranslationStatus.STATE_QUEUED
+        assert statuses['hin'] == {}
+
+    def test_message_for_a_finished_run(self):
+        status = AITranslationStatus(self.app.get_id, 'fra')
+        status.start(USERNAME)
+        status.finish(AITranslationStatus.STATE_ERROR, message_code=WAITED_TOO_LONG)
+
+        statuses = self._get_status().json()
+
+        assert statuses['fra']['message'] == run_message(WAITED_TOO_LONG)
+
+    def test_ai_translation_not_enabled(self):
+        self.enabled.return_value = False
+
+        assert self._get_status().status_code == 403
+
+    def test_app_from_another_project(self):
+        # status keys have no project, so this check keeps them private
+        other_domain = create_domain('ai-translation-views-other')
+        self.addCleanup(other_domain.delete)
+        other_app = _make_app(other_domain.name, langs=['en', 'fra'])
+        self.addCleanup(other_app.delete)
+
+        assert self._get_status(app_id=other_app.get_id).status_code == 404
+
+    def _get_status(self, app_id=None):
+        url = reverse('ai_translation_status', args=[DOMAIN, app_id or self.app.get_id])
+        return self.client.get(url)
 
 
 def _make_app(domain, langs, copy_of=None):
