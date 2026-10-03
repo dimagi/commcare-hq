@@ -103,13 +103,17 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     }
 
 
-def prepare_translation_format(app, target_lang, mode):
+def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=False):
     """A format for ``app`` that skips AI translations a user has edited
     and retranslates those whose source text has changed."""
-    fmt = AppTranslationFormat(app, target_lang, mode=mode)
+    fmt = AppTranslationFormat(
+        app, target_lang, mode=mode,
+        treat_default_copies_as_missing=treat_default_copies_as_missing)
     changed_strings = find_changed_ai_translations(fmt)
     fmt.manually_edited_keys = changed_strings.manually_edited
     fmt.stale_keys = changed_strings.stale
+    if treat_default_copies_as_missing:
+        fmt.ai_translated_keys = set(_provenance_rows(fmt).values_list('string_key', flat=True))
     return fmt
 
 
@@ -303,7 +307,7 @@ class AppTranslationFormat(TranslationFormat):
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
                  manually_edited_keys=None, stale_keys=None,
-                 treat_default_copies_as_missing=False):
+                 treat_default_copies_as_missing=False, ai_translated_keys=None):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
         self.target_lang = target_lang
@@ -311,6 +315,8 @@ class AppTranslationFormat(TranslationFormat):
         self.manually_edited_keys = manually_edited_keys or set()
         self.stale_keys = stale_keys or set()
         self.treat_default_copies_as_missing = treat_default_copies_as_missing
+        # a copy the AI wrote, e.g. a name it kept as is, is a translation
+        self.ai_translated_keys = ai_translated_keys or set()
         self.headers_by_sheet = dict(get_bulk_app_sheet_headers(app))
         self.sheets = get_bulk_app_sheets_by_name(app)
         self.sheet_unique_ids, self.screen_names = _sheet_context(app)
@@ -329,6 +335,7 @@ class AppTranslationFormat(TranslationFormat):
             manually_edited_keys=self.manually_edited_keys,
             stale_keys=self.stale_keys,
             treat_default_copies_as_missing=self.treat_default_copies_as_missing,
+            ai_translated_keys=self.ai_translated_keys,
         )
 
     def load_input(self, input_source=None):
@@ -345,7 +352,9 @@ class AppTranslationFormat(TranslationFormat):
             if unit.string_key in self.manually_edited_keys:
                 continue
             keep_existing = bool(unit.target_text)
-            if self.treat_default_copies_as_missing and unit.target_text == unit.source_text:
+            if (self.treat_default_copies_as_missing
+                    and unit.target_text == unit.source_text
+                    and unit.string_key not in self.ai_translated_keys):
                 keep_existing = False
             if unit.string_key in self.stale_keys:
                 keep_existing = False

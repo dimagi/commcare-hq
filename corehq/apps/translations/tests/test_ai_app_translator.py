@@ -244,6 +244,18 @@ def test_prepare_translation_format_finds_edited_and_stale_strings():
     assert fmt.stale_keys == {FORM_NAME_KEY}
 
 
+@use('db')
+def test_prepare_translation_format_finds_ai_translated_strings():
+    app = _make_app()
+    app._id = 'test-app-id'
+    _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
+
+    fmt = prepare_translation_format(
+        app, 'fra', MODE_FILL_MISSING, treat_default_copies_as_missing=True)
+
+    assert fmt.ai_translated_keys == {MODULE_NAME_KEY}
+
+
 def test_string_keys_use_unique_ids_not_sheet_names():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
@@ -367,6 +379,16 @@ def test_treat_default_copies_as_missing():
     assert 'register module' in {u.source_text for u in fmt2.load_input().values()}
 
 
+def test_default_copies_the_ai_wrote_are_translations():
+    # e.g. a name the AI kept as is; translating it again every run would
+    # use up the word limit for nothing
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'register module'
+    fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=True,
+                               ai_translated_keys={MODULE_NAME_KEY})
+    assert 'register module' not in {u.source_text for u in fmt.load_input().values()}
+
+
 def test_parse_output_buffers_valid_and_skips_invalid():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra')
@@ -384,7 +406,7 @@ def test_for_app_copies_settings_not_state():
     app = _make_app()
     fmt = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
-        stale_keys={'s'}, treat_default_copies_as_missing=True)
+        stale_keys={'s'}, treat_default_copies_as_missing=True, ai_translated_keys={'a'})
     fmt.load_input()
     fmt.results = {'0': 'traduction'}
     other_app = _make_app()
@@ -396,6 +418,7 @@ def test_for_app_copies_settings_not_state():
     assert copy.manually_edited_keys == {'k'}
     assert copy.stale_keys == {'s'}
     assert copy.treat_default_copies_as_missing is True
+    assert copy.ai_translated_keys == {'a'}
     assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
 
 
