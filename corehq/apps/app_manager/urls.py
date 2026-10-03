@@ -98,6 +98,7 @@ from corehq.apps.linked_domain.views import pull_missing_multimedia
 from corehq.apps.translations.views import (
     download_bulk_app_translations,
     download_bulk_ui_translations,
+    start_ai_translation,
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
 )
@@ -112,6 +113,8 @@ app_urls = [
         name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations,
         name='upload_bulk_app_translations'),
+    url(r'^languages/ai_translation/start/$', start_ai_translation,
+        name='start_ai_translation'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
