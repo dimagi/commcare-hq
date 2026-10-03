@@ -6,6 +6,7 @@
 import $ from "jquery";
 import ko from "knockout";
 import initialPageData from "hqwebapp/js/initial_page_data";
+import google from "analytix/js/google";
 
 const POLL_INTERVAL = 3000;
 const MAX_POLL_INTERVAL = 60000;
@@ -105,7 +106,19 @@ var languageModel = function (options, panel) {
         return self.supported && !self.isActive() && !self.starting() && !panel.limitReached;
     });
 
+    // counts runs this page saw fail, not ones that had failed before it loaded
+    var previousState;
+    self.status.subscribe(function (status) {
+        previousState = status.state;
+    }, null, "beforeChange");
+    self.status.subscribe(function (status) {
+        if (status.state === "error" && ACTIVE_STATES.includes(previousState)) {
+            google.track.event("AI App Translations", "Run failed", self.code);
+        }
+    });
+
     self.start = function () {
+        google.track.event("AI App Translations", "AI Translate", self.code);
         self.starting(true);
         self.startError("");
         $.post(initialPageData.reverse("start_ai_translation"), {lang: self.code})
