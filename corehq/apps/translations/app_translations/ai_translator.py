@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 
 from couchdbkit import ResourceConflict
@@ -39,7 +40,11 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
 )
-from corehq.apps.translations.models import AITranslation, AITranslationUsage
+from corehq.apps.translations.models import (
+    AITranslation,
+    AITranslationConfig,
+    AITranslationUsage,
+)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -50,6 +55,17 @@ def ai_translation_enabled(domain):
         toggles.AI_APP_TRANSLATION.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
         and domain_has_privilege(domain, privileges.AI_APP_TRANSLATION)
     )
+
+
+def monthly_word_limit_reached(domain):
+    """A guard against abuse, not a strict cap: it is checked when a run
+    is queued, so runs can take the project past it. Counts only words
+    that were saved."""
+    month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    words = AITranslationUsage.objects.filter(
+        domain=domain, created_on__gte=month_start,
+    ).aggregate(total=Sum('words_translated'))['total'] or 0
+    return words >= AITranslationConfig.get_monthly_word_limit(domain)
 
 
 def run_app_translation(app, target_lang, mode, provider=None, model=None,
