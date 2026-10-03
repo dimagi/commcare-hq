@@ -1,9 +1,10 @@
 import io
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -16,11 +17,18 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
 )
+from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.ui_translations import (
     build_ui_translation_download_file,
     process_ui_translation_upload,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.translations.app_translations.ai_translator import (
+    ai_translation_enabled,
+    langs_to_translate,
+    monthly_word_limit_reached,
+    reason_app_cant_be_translated,
+)
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -33,7 +41,9 @@ from corehq.apps.translations.app_translations.upload_app import (
 from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
 )
+from corehq.apps.translations.const import MODE_FILL_MISSING
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.apps.translations.tasks import queue_app_translation
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
@@ -148,6 +158,43 @@ def upload_bulk_app_translations(request, domain, app_id):
     return HttpResponseRedirect(
         reverse('app_settings', args=[domain, app_id])
     )
+
+
+@require_POST
+@require_can_edit_apps
+def start_ai_translation(request, domain, app_id):
+    app = _get_app(domain, app_id)
+    reason = reason_app_cant_be_translated(app)
+    if reason:
+        return _json_error(reason, 400)
+    if not ai_translation_enabled(domain):
+        return _json_error(_("AI translation isn't available for this project."), 403)
+    if monthly_word_limit_reached(domain):
+        return _json_error(_("This project has reached its monthly AI translation "
+                             "limit. Contact support to raise it."), 403)
+    lang = request.POST.get('lang')
+    if lang not in langs_to_translate(app):
+        return _json_error(_("This language can't be translated with AI."), 400)
+    queued = queue_app_translation(
+        domain, app_id, lang, MODE_FILL_MISSING, request.couch_user.username)
+    if not queued:
+        return _json_error(_("This language is already being translated."), 409)
+    return JsonResponse({'success': True})
+
+
+def _get_app(domain, app_id):
+    """The app, or 404 if it is deleted or in another project."""
+    try:
+        app = get_app(domain, app_id)
+    except AppInDifferentDomainException:
+        raise Http404()
+    if app.is_deleted():
+        raise Http404()
+    return app
+
+
+def _json_error(message, status):
+    return JsonResponse({'error': message}, status=status)
 
 
 def _add_messages_to_request(request, msgs):
