@@ -4,15 +4,16 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
+from couchdbkit import NoResultFound
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_brief_app
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
@@ -23,6 +24,9 @@ from corehq.apps.app_manager.ui_translations import (
     process_ui_translation_upload,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.translations.app_translations.ai_status import (
+    AITranslationStatus,
+)
 from corehq.apps.translations.app_translations.ai_translator import (
     ai_translation_enabled,
     langs_to_translate,
@@ -43,7 +47,7 @@ from corehq.apps.translations.app_translations.utils import (
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
-from corehq.apps.translations.tasks import queue_app_translation
+from corehq.apps.translations.tasks import queue_app_translation, run_message
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
@@ -182,6 +186,26 @@ def start_ai_translation(request, domain, app_id):
     return JsonResponse({'success': True})
 
 
+@require_GET
+@require_can_edit_apps
+def ai_translation_status(request, domain, app_id):
+    """Status of each language AI can translate the app into, so the
+    Languages page polls one URL however many languages are running."""
+    app = _get_brief_app(domain, app_id)
+    if not ai_translation_enabled(domain):
+        return _json_error(_("AI translation isn't available for this project."), 403)
+    return JsonResponse({
+        lang: _with_message(AITranslationStatus(app_id, lang).get())
+        for lang in langs_to_translate(app)
+    })
+
+
+def _with_message(status):
+    if status.get('message_code'):
+        status['message'] = run_message(status['message_code'])
+    return status
+
+
 def _get_app(domain, app_id):
     """The app, or 404 if it is deleted or in another project."""
     try:
@@ -191,6 +215,15 @@ def _get_app(domain, app_id):
     if app.is_deleted():
         raise Http404()
     return app
+
+
+def _get_brief_app(domain, app_id):
+    """The app's summary, which is enough for its languages, or 404 if it
+    is deleted, a build, or in another project."""
+    try:
+        return get_brief_app(domain, app_id)
+    except NoResultFound:
+        raise Http404()
 
 
 def _json_error(message, status):

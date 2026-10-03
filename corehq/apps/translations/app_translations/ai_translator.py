@@ -139,9 +139,15 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     # rebase carries over only its results
     skipped = len(fmt.skipped_ids)
     applied = _apply_translations(fmt)
+    app_share = {}
     if applied.translated:
-        _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
+        usage = _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
+        app_share = {
+            'total_app_strings': usage.total_app_strings,
+            'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
+        }
     return {
+        **app_share,
         'total': len(units),
         'translated': applied.translated,
         'skipped': skipped,
@@ -200,14 +206,15 @@ def find_changed_ai_translations(fmt):
 
 
 def _record_run(fmt, strings_attempted, model):
-    """Record provenance and usage for a run whose results ``fmt`` saved."""
+    """Record provenance and usage for a run whose results ``fmt`` saved,
+    and return the usage row."""
     # fmt read the app's sheets before the save; a fresh format reads the saved text
     saved_app_strings = fmt.for_app(fmt.app).all_app_strings()
     saved_units = _saved_units(fmt, saved_app_strings)
     with transaction.atomic():
         _upsert_provenance(fmt, saved_units)
         ai_translated = _refresh_provenance_statuses(fmt, saved_app_strings)
-        AITranslationUsage.objects.create(
+        return AITranslationUsage.objects.create(
             domain=fmt.app.domain,
             app_id=fmt.app.get_id,
             lang=fmt.target_lang,
