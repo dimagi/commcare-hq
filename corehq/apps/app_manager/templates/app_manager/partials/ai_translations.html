@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {# open by default only when there are languages to translate #}
 <div class="accordion-item">
@@ -53,11 +54,15 @@
       {% elif not ai_translation.languages %}
         <p class="mb-0">
           {% blocktrans trimmed %}
-            Add a language in the Language List below to translate your app with
-            AI.
+            Add a language in the Language List below, then reload the page to
+            translate your app with AI.
           {% endblocktrans %}
         </p>
       {% else %}
+        {% initial_page_data 'ai_translation_languages' ai_translation.languages %}
+        {% initial_page_data 'ai_translation_limit_reached' ai_translation.limit_reached %}
+        {% registerurl "start_ai_translation" domain app.id %}
+        {% registerurl "ai_translation_status" domain app.id %}
         {% if ai_translation.limit_reached %}
           <div class="alert alert-warning">
             {% blocktrans trimmed %}
@@ -66,6 +71,79 @@
             {% endblocktrans %}
           </div>
         {% endif %}
+        <div id="ai-translations-panel">
+          <div
+            class="alert alert-info"
+            data-bind="visible: languagesChanged"
+            style="display: none"
+          >
+            {% blocktrans trimmed %}
+              The language list changed. Reload the page to update AI
+              translation.
+            {% endblocktrans %}
+          </div>
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>{% trans "Language" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Last AI run" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: languages">
+              <tr>
+                <td data-bind="text: code"></td>
+                <td>
+                  <span
+                    class="badge"
+                    data-bind="text: display().label, css: display().labelClass"
+                  ></span>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: display().detail"
+                  ></div>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="visible: display().share, text: display().share"
+                  ></div>
+                  <!-- ko if: display().progress !== null -->
+                  <div class="progress mt-1">
+                    <div
+                      class="progress-bar"
+                      data-bind="style: {width: display().progress + '%'}"
+                    ></div>
+                  </div>
+                  <!-- /ko -->
+                  <div
+                    class="small text-warning-emphasis"
+                    data-bind="visible: display().warning, text: display().warning"
+                  ></div>
+                  <div
+                    class="small text-danger"
+                    data-bind="visible: startError, text: startError"
+                  ></div>
+                </td>
+                <td class="text-nowrap">
+                  <div data-bind="text: lastRun().date"></div>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: lastRun().version"
+                  ></div>
+                </td>
+                <td class="text-end text-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    data-bind="click: start, disable: !canStart()"
+                  >
+                    {% trans "AI Translate" %}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p class="small text-body-secondary mb-0">
           {% blocktrans trimmed %}
             Status reflects the last AI Translate run. Strings you add or change
