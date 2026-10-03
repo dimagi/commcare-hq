@@ -1,0 +1,80 @@
+{% load i18n %}
+
+{# open by default only when there are languages to translate #}
+<div class="accordion-item">
+  <h5 class="accordion-header">
+    <a
+      href="#ai-translations"
+      class="accordion-button fs-5 {% if not ai_translation.languages %}collapsed{% endif %}"
+      data-bs-toggle="collapse"
+      data-bs-target="#ai-translations"
+      >{% trans "Translate with AI" %}
+      <span class="badge text-bg-primary ms-2">{% trans "NEW" %}</span>
+    </a>
+  </h5>
+  <div
+    class="accordion-collapse collapse {% if ai_translation.languages %}show{% endif %}"
+    id="ai-translations"
+    data-bs-parent="#language-settings-options"
+  >
+    <div class="accordion-body">
+      <p class="text-body-secondary">
+        {% blocktrans trimmed %}
+          Fills in missing translations for everything in the bulk translation
+          file: menu and form names, case list and detail labels, form questions
+          and choices. Manual translations are never overwritten; AI
+          translations are redone when their source text changes.
+        {% endblocktrans %}
+      </p>
+
+      {% if not ai_translation.has_privilege %}
+        <div class="alert alert-info mb-0">
+          <p>
+            {% trans "AI translations are available on Standard plans and above." %}
+          </p>
+          <a
+            class="btn btn-outline-primary"
+            href="{% url 'domain_select_plan' domain %}"
+            >{% trans "Compare plans" %}</a
+          >
+        </div>
+      {% elif ai_translation.is_linked_app %}
+        <p class="mb-0">
+          {% blocktrans trimmed %}
+            Linked apps get their translations from their upstream app.
+            Translate the upstream app instead.
+          {% endblocktrans %}
+          {% if upstream_url %}
+            <a href="{{ upstream_url }}"
+              >{% trans "Go to the upstream app" %}</a
+            >
+          {% endif %}
+        </p>
+      {% elif not ai_translation.languages %}
+        <p class="mb-0">
+          {% blocktrans trimmed %}
+            Add a language in the Language List below to translate your app with
+            AI.
+          {% endblocktrans %}
+        </p>
+      {% else %}
+        {% if ai_translation.limit_reached %}
+          <div class="alert alert-warning">
+            {% blocktrans trimmed %}
+              This project has reached its monthly AI translation limit. Contact
+              support to raise it.
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+        <p class="small text-body-secondary mb-0">
+          {% blocktrans trimmed %}
+            Status reflects the last AI Translate run. Strings you add or change
+            afterwards are translated the next time you run AI Translate.
+            Translations are applied to the current draft; make a new version to
+            release them.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
