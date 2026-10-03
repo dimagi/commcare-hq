@@ -5,6 +5,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_latest_build_version
 from corehq.apps.app_manager.util import is_linked_app
+from corehq.apps.translations.app_translations.ai_status import AITranslationStatus
 from corehq.apps.translations.app_translations.ai_translator import (
     is_supported_language,
     monthly_word_limit_reached,
@@ -26,6 +27,7 @@ def get_ai_translation_panel_context(app):
         return context
     last_runs = get_last_ai_runs(app)
     context.update({
+        'active_states': list(AITranslationStatus.ACTIVE_STATES),
         'limit_reached': monthly_word_limit_reached(app.domain),
         'languages': [
             {

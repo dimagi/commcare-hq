@@ -32,6 +32,7 @@ class TestAITranslationPanelContext(TestCase):
             {'code': 'xyz', 'supported': False, 'last_run': None},
         ]
         assert not context['limit_reached']
+        assert context['active_states'] == ['queued', 'translating', 'applying']
 
     def test_monthly_limit_reached(self, _):
         AITranslationConfig.objects.create(domain=DOMAIN, monthly_word_limit=0)
