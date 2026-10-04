@@ -11,3 +11,35 @@ MODE_FILL_MISSING = 'fill_missing'
 MODE_RETRANSLATE = 'retranslate'
 AI_TRANSLATION_CHUNK_SIZE = 100
 AI_TRANSLATION_APPLY_ATTEMPTS = 3
+
+# Runs for one app execute one at a time. A queued run retries every
+# RETRY_DELAY until the app's lock is free, giving up after MAX_RETRIES.
+AI_TRANSLATION_RETRY_DELAY = 3 * 60
+AI_TRANSLATION_MAX_RETRIES = 100
+# Longest a run is expected to take; the app's lock expires after this
+AI_TRANSLATION_LOCK_TIMEOUT = 30 * 60
+
+# Target languages AI translation supports, by the codes the app
+# Languages page assigns them (see the langcodes submodule): ISO 639-2,
+# except the 639-1 codes langcodes keeps for English, Spanish and Swahili.
+AI_SUPPORTED_LANGUAGES = {
+    'en',  # English
+    'fra',  # French
+    'es',  # Spanish
+    'ara',  # Arabic
+    'por',  # Portuguese
+    'mya',  # Burmese
+    'hin',  # Hindi
+    'sw',  # Swahili
+    'amh',  # Amharic
+    'ben',  # Bengali
+    'ukr',  # Ukrainian
+    'tam',  # Tamil
+    'mar',  # Marathi
+    'sin',  # Sinhala
+    'ind',  # Indonesian
+    'kin',  # Kinyarwanda
+    'mlg',  # Malagasy
+    'ori',  # Odia
+    'nya',  # Chichewa
+}
