@@ -273,13 +273,6 @@ def feature_preview_enabled(request, toggle_name):
     return _toggle_enabled(corehq.feature_previews, request, toggle_name)
 
 
-@register.filter
-def has_chatbot_allowance(couch_user):
-    # Avoid circular import
-    from corehq.apps.hqwebapp.chat_quota import get_chatbot_message_quota
-    return bool(couch_user and get_chatbot_message_quota(couch_user) != 0)
-
-
 def parse_literal(value, parser, tag):
     var = parser.compile_filter(value).var
     if isinstance(var, Variable):
