@@ -27,12 +27,12 @@ def get_cached_chat_usage(user_id):
 def increment_chat_usage(user_id):
     current_month = _current_month()
     used = _get_cached_chat_usage(user_id, current_month) + 1
-    _fetch_chat_usage_from_ocs.set_cached_value(user_id, current_month).to(used)
+    _cached_chat_usage.set_cached_value(user_id, current_month).to(used)
     return used
 
 
 def _get_cached_chat_usage(user_id, current_month):
-    cached_usage = _fetch_chat_usage_from_ocs.get_cached_value(user_id, current_month)
+    cached_usage = _cached_chat_usage.get_cached_value(user_id, current_month)
     # If the cache is not set, return 0
     if cached_usage is Ellipsis:
         cached_usage = 0
@@ -40,13 +40,6 @@ def _get_cached_chat_usage(user_id, current_month):
 
 
 def fetch_chat_usage_from_ocs(user_id):
-    return _fetch_chat_usage_from_ocs(user_id, _current_month(), refresh=True)
-
-
-@quickcache(
-    ['user_id', 'current_month'], skip_arg='refresh', timeout=_CACHE_TIMEOUT
-)
-def _fetch_chat_usage_from_ocs(user_id, current_month, refresh=False):
     api_key = settings.OCS_API_KEY
     if not user_id or not api_key:
         raise ChatUsageUnavailable(
@@ -75,4 +68,11 @@ def _fetch_chat_usage_from_ocs(user_id, current_month, refresh=False):
             'Invalid or unavailable OCS usage response'
         ) from exc
 
+    _cached_chat_usage.set_cached_value(user_id, _current_month()).to(used)
     return used
+
+
+@quickcache(['user_id', 'current_month'], timeout=_CACHE_TIMEOUT)
+def _cached_chat_usage(user_id, current_month):
+    """Keyed cache for monthly usage; use get/set_cached_value instead of calling."""
+    raise AssertionError('_cached_chat_usage should not be called directly')
