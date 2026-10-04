@@ -83,8 +83,9 @@ def apply_form_action(domain, form_ids, action_fn):
     """
     unresolved_ids = set(form_ids)
     for xform in XFormInstance.objects.iter_forms(form_ids):
-        if xform.domain != domain:
-            # skip forms not belonging to the specified domain
+        if xform.domain != domain or xform.is_deleted:
+            # a form in another domain or a deleted form does not exist as
+            # far as the caller is concerned, so both are reported not_found
             continue
         unresolved_ids.discard(xform.form_id)
         try:
