@@ -39,7 +39,7 @@ from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
@@ -87,7 +87,11 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
-from corehq.apps.hqwebapp.chat_usage import ChatUsageUnavailable, get_chat_usage
+from corehq.apps.hqwebapp.chat_usage import (
+    ChatUsageUnavailable,
+    fetch_chat_usage_from_ocs,
+    get_or_increase_chat_usage,
+)
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
@@ -207,7 +211,7 @@ def not_found(request, template_name='404.html', exception=None):
 
 
 @login_required
-@require_GET
+@require_http_methods(['GET', 'POST'])
 def chat_quota(request):
     couch_user = getattr(request, 'couch_user')
 
@@ -217,7 +221,12 @@ def chat_quota(request):
 
     refresh = request.GET.get('refresh', 'false') == 'true'
     try:
-        used = get_chat_usage(couch_user.user_id, refresh=refresh)
+        if request.method == 'POST':
+            used = get_or_increase_chat_usage(couch_user.user_id, increment=True)
+        elif refresh:
+            used = fetch_chat_usage_from_ocs(couch_user.user_id)
+        else:
+            used = get_or_increase_chat_usage(couch_user.user_id)
     except ChatUsageUnavailable:
         return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
     return JsonResponse({'limit': limit, 'used': used})
