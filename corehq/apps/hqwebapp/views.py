@@ -90,7 +90,8 @@ from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import (
     ChatUsageUnavailable,
     fetch_chat_usage_from_ocs,
-    get_or_increase_chat_usage,
+    get_chat_usage,
+    increment_chat_usage,
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
@@ -222,11 +223,11 @@ def chat_quota(request):
     refresh = request.GET.get('refresh', 'false') == 'true'
     try:
         if request.method == 'POST':
-            used = get_or_increase_chat_usage(couch_user.user_id, increment=True)
+            used = increment_chat_usage(couch_user.user_id)
         elif refresh:
             used = fetch_chat_usage_from_ocs(couch_user.user_id)
         else:
-            used = get_or_increase_chat_usage(couch_user.user_id)
+            used = get_chat_usage(couch_user.user_id)
     except ChatUsageUnavailable:
         return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
     return JsonResponse({'limit': limit, 'used': used})
