@@ -16,7 +16,7 @@ class ChatUsageUnavailable(Exception):
     """OCS usage could not be obtained or validated."""
 
 
-def get_chat_usage(user_id):
+def get_cached_chat_usage(user_id):
     current_month = datetime.now(timezone.utc).strftime('%Y-%m')
     return _get_cached_chat_usage(user_id, current_month)
 
