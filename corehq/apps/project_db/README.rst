@@ -84,7 +84,6 @@ TODOs
   properties, not datetime - does it intend the latter? Should we
   support both?
 - Index external ID.
-- Add units arg to ``within_distance``
 - Put limit on number of property columns
 - Set up automatic update call on data dictionary change, and auto population
   on case update
