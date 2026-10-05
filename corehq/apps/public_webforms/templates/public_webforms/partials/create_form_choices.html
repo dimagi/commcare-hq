@@ -11,11 +11,11 @@
     <div class="field-control">
       <select
         id="id_application"
-        name="app_id"
         class="form-select"
+        name="app_id"
         required
-        x-model="appId"
-        @change="menuId = ''; formId = ''"
+        x-select2
+        @select2change="appId = $event.detail; menuId = ''; formId = ''"
       >
         <option value="">{% trans "Select Application" %}</option>
         <template x-for="app in apps" :key="app.id">
@@ -37,9 +37,9 @@
         class="form-select"
         required
         disabled
-        x-model="menuId"
+        x-select2
         :disabled="!appId"
-        @change="formId = ''"
+        @select2change="menuId = $event.detail; formId = ''"
       >
         <option value="">{% trans "Select Menu" %}</option>
         <template x-for="menu in menus" :key="menu.id">
@@ -55,12 +55,13 @@
     <div class="field-control">
       <select
         id="id_form"
-        name="form_unique_id"
         class="form-select"
+        name="form_unique_id"
         required
         disabled
-        x-model="formId"
+        x-select2
         :disabled="!menuId"
+        @select2change="formId = $event.detail"
       >
         <option value="">{% trans "Select Form" %}</option>
         <template x-for="form in forms" :key="form.id">
