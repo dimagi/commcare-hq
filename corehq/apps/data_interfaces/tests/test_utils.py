@@ -445,7 +445,7 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
             )
 
     def test_archive_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         result = self._patched_archive_or_restore_forms(
             self._archive_mode(), ['f1'], [form]
         )
@@ -459,7 +459,7 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
         assert messages['success_count_msg'] == 'Successfully archived  1 form(s)'
 
     def test_restore_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         result = self._patched_archive_or_restore_forms(
             self._restore_mode(), ['f1'], [form]
         )
@@ -479,7 +479,7 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
         assert result['messages']['success'] == []
 
     def test_wrong_domain_reports_not_found(self):
-        form = Mock(form_id='f1', domain='other-domain')
+        form = Mock(form_id='f1', domain='other-domain', is_deleted=False)
         result = self._patched_archive_or_restore_forms(
             self._archive_mode(), ['f1'], [form]
         )
@@ -487,7 +487,7 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
         assert result['messages']['errors'] == ["Could not find XForm f1"]
 
     def test_action_exception_reported(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         form.archive.side_effect = Exception('error')
         with patch('corehq.apps.data_interfaces.utils.notify_exception') as notify:
             result = self._patched_archive_or_restore_forms(
@@ -501,7 +501,7 @@ class TestArchiveOrRestoreForms(SimpleTestCase):
         assert result['messages']['success'] == []
 
     def test_from_excel_returns_raw_response(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         result = self._patched_archive_or_restore_forms(
             self._archive_mode(), ['f1'], [form], from_excel=True
         )
@@ -528,7 +528,7 @@ class TestApplyFormAction(SimpleTestCase):
         assert self._patched_apply_form_action([], []) == []
 
     def test_success(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         calls = []
         results = self._patched_apply_form_action(
             ['f1'], [form], action_fn=calls.append
@@ -541,7 +541,7 @@ class TestApplyFormAction(SimpleTestCase):
         assert results == [FormActionResult('missing', SKIPPED, 'not_found')]
 
     def test_wrong_domain_is_not_found(self):
-        form = Mock(form_id='f1', domain='other-domain')
+        form = Mock(form_id='f1', domain='other-domain', is_deleted=False)
         called = []
         results = self._patched_apply_form_action(
             ['f1'], [form], action_fn=called.append
@@ -549,8 +549,17 @@ class TestApplyFormAction(SimpleTestCase):
         assert called == []  # action not applied to out-of-domain forms
         assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
 
+    def test_deleted_is_not_found(self):
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=True)
+        called = []
+        results = self._patched_apply_form_action(
+            ['f1'], [form], action_fn=called.append
+        )
+        assert called == []  # action not applied to deleted forms
+        assert results == [FormActionResult('f1', SKIPPED, 'not_found')]
+
     def test_exception_is_unexpected_error(self):
-        form = Mock(form_id='f1', domain=DOMAIN)
+        form = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
 
         def unexpected_error(xform):
             raise Exception('error')
@@ -565,7 +574,7 @@ class TestApplyFormAction(SimpleTestCase):
         notify.assert_called_once()
 
     def test_mixed_results(self):
-        found = Mock(form_id='f1', domain=DOMAIN)
+        found = Mock(form_id='f1', domain=DOMAIN, is_deleted=False)
         results = self._patched_apply_form_action(['f1', 'missing'], [found])
         assert results == [
             FormActionResult('f1', SUCCEEDED),
