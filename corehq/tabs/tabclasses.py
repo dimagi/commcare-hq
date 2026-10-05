@@ -1271,7 +1271,9 @@ class ApplicationsTab(UITab):
     def _can_access_public_webforms(self):
         return (
             domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
-            and self.couch_user.has_permission(self.domain, HqPermissions.edit_public_webforms)
+            and self.couch_user.has_permission(
+                self.domain, get_permission_name(HqPermissions.edit_public_webforms)
+            )
             and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
         )
 
