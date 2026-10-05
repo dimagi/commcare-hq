@@ -7,15 +7,19 @@ from dataclasses import dataclass
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
+from langcodes import get_name as get_language_name
 
 from dimagi.utils.logging import notify_exception
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
 )
@@ -39,7 +43,11 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
 )
-from corehq.apps.translations.models import AITranslation, AITranslationUsage
+from corehq.apps.translations.models import (
+    AITranslation,
+    AITranslationConfig,
+    AITranslationUsage,
+)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -50,6 +58,43 @@ def ai_translation_enabled(domain):
         toggles.AI_APP_TRANSLATION.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
         and domain_has_privilege(domain, privileges.AI_APP_TRANSLATION)
     )
+
+
+def monthly_word_limit_reached(domain):
+    """A guard against abuse, not a strict cap: it is checked when a run
+    is queued, so runs can take the project past it. Counts only words
+    that were saved."""
+    month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    words = AITranslationUsage.objects.filter(
+        domain=domain, created_on__gte=month_start,
+    ).aggregate(total=Sum('words_translated'))['total'] or 0
+    return words >= AITranslationConfig.get_monthly_word_limit(domain)
+
+
+def reason_app_cant_be_translated(app):
+    if is_linked_app(app):
+        # the next update from upstream would overwrite AI translations
+        return _("Linked apps get their translations from their upstream app. "
+                 "Translate the upstream app instead.")
+    if app.is_remote_app():
+        return _("Remote apps can't be translated with AI.")
+    if app.copy_of:
+        return _("Only the current version of an app can be translated, not a build.")
+    return None
+
+
+def langs_to_translate(app):
+    return [lang for lang in non_default_langs(app) if is_supported_language(lang)]
+
+
+def is_supported_language(lang):
+    """The prompt names the target language, so a code that langcodes
+    doesn't know, e.g. one typed into the Languages page, isn't supported."""
+    return get_language_name(lang) is not None
+
+
+def non_default_langs(app):
+    return [lang for lang in app.langs if lang != app.default_language]
 
 
 def run_app_translation(app, target_lang, mode, provider=None, model=None,

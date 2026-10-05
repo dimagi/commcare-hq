@@ -95,6 +95,9 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
+from corehq.apps.translations.app_translations.ai_panel import (
+    get_ai_translation_panel_context,
+)
 from corehq.apps.translations.models import Translation
 from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
@@ -276,6 +279,7 @@ def get_app_view_context(request, app):
 
         'is_linked_app': is_linked_app(app),
         'is_remote_app': is_remote_app(app),
+        'ai_translation': get_ai_translation_panel_context(app),
 
         'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
