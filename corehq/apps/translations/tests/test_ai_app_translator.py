@@ -9,6 +9,7 @@ import pytest
 from unmagic import use
 
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.models import DetailColumn
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.translations.app_translations import ai_translator
@@ -527,9 +528,7 @@ class TestSaveOutput(TestCase):
         assert fmt.save_output() == []
 
     def test_leaves_untranslated_rows_untouched(self):
-        """Rows without buffered results are omitted from the sheet's row
-        list; the updaters must not blank or alter their existing values —
-        the same semantics as a partial user upload."""
+        """Translating a form label leaves untranslated menu and form names unchanged."""
         app = _make_app()
         app.get_module(0).name['fra'] = 'existing manual translation'
         fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
@@ -545,6 +544,127 @@ class TestSaveOutput(TestCase):
         assert 'What is the name?' not in remaining
         # ... and the row we did NOT send kept its manual value
         assert app.get_module(0).name['fra'] == 'existing manual translation'
+
+    def test_translates_part_of_the_case_list_and_detail(self):
+        app = _app_with_case_list(
+            case_list=[
+                _column('name', {'en': 'Name', 'fra': 'Nom'}),
+                _column('age', {'en': 'Age'}),
+            ],
+            case_detail=[
+                _column('name', {'en': 'Name', 'fra': 'Nom'}),
+                _column('age', {'en': 'Age'}),
+            ],
+        )
+
+        errors = _translate_to_french(app, {'Age': 'Âge'})
+
+        assert errors == []
+        assert _headers(app.get_module(0).case_details.short) == {
+            'name': {'en': 'Name', 'fra': 'Nom'},
+            'age': {'en': 'Age', 'fra': 'Âge'},
+        }
+        assert _headers(app.get_module(0).case_details.long) == {
+            'name': {'en': 'Name', 'fra': 'Nom'},
+            'age': {'en': 'Age', 'fra': 'Âge'},
+        }
+
+    def test_translates_one_id_mapping_value(self):
+        app = _app_with_case_list(case_list=[
+            _column('status', {'en': 'Status', 'fra': 'Statut'}, format='enum', enum=[
+                {'key': 'open', 'value': {'en': 'Open', 'fra': 'Ouvert'}},
+                {'key': 'closed', 'value': {'en': 'Closed'}},
+            ]),
+        ])
+
+        errors = _translate_to_french(app, {'Closed': 'Fermé'})
+
+        assert errors == []
+        [status] = app.get_module(0).case_details.short.columns
+        assert {item.key: item.value for item in status.enum} == {
+            'open': {'en': 'Open', 'fra': 'Ouvert'},
+            'closed': {'en': 'Closed', 'fra': 'Fermé'},
+        }
+
+    def test_translates_one_graph_annotation(self):
+        app = _app_with_case_list(case_list=[
+            _column('progress', {'en': 'Progress', 'fra': 'Progrès'}, format='graph',
+                    graph_configuration={'annotations': [
+                        {'display_text': {'en': 'Start', 'fra': 'Début'}},
+                        {'display_text': {'en': 'End'}},
+                    ]}),
+        ])
+
+        errors = _translate_to_french(app, {'End': 'Fin'})
+
+        assert errors == []
+        [progress] = app.get_module(0).case_details.short.columns
+        assert [a.display_text for a in progress.graph_configuration.annotations] == [
+            {'en': 'Start', 'fra': 'Début'},
+            {'en': 'End', 'fra': 'Fin'},
+        ]
+
+    def test_blank_untranslated_rows_are_not_errors(self):
+        """The module's untranslated rows are sent back as they are, so
+        a blank one isn't the run's error: here a column with no header,
+        and a string the LLM returned nothing for."""
+        app = _app_with_case_list(case_list=[
+            _column('name', {'en': 'Name'}),
+            _column('age', {'en': 'Age'}),
+            _column('dob', {}),
+        ])
+
+        errors = _translate_to_french(app, {'Name': 'Nom'})
+
+        assert errors == []
+        assert _headers(app.get_module(0).case_details.short) == {
+            'name': {'en': 'Name', 'fra': 'Nom'},
+            'age': {'en': 'Age'},
+            'dob': {},
+        }
+
+    def test_keeps_languages_the_app_no_longer_has(self):
+        app = _app_with_case_list(case_list=[
+            _column('name', {'en': 'Name'}),
+            _column('age', {'en': 'Age', 'de': 'Alter'}),  # app.langs is en, fra
+        ])
+
+        errors = _translate_to_french(app, {'Name': 'Nom'})
+
+        assert errors == []
+        assert _headers(app.get_module(0).case_details.short) == {
+            'name': {'en': 'Name', 'fra': 'Nom'},
+            'age': {'en': 'Age', 'de': 'Alter'},
+        }
+
+
+def _app_with_case_list(case_list, case_detail=()):
+    app = _make_app()
+    details = app.get_module(0).case_details
+    details.short.columns = list(case_list)
+    details.long.columns = list(case_detail)
+    return app
+
+
+def _column(field, header, **extra):
+    return DetailColumn.wrap({'field': field, 'format': 'plain', 'header': header, **extra})
+
+
+def _translate_to_french(app, translations):
+    """Run a fill_missing translation as if the LLM returned
+    ``translations`` (source text -> French) and nothing else."""
+    fmt = AppTranslationFormat(app, 'fra', mode=MODE_FILL_MISSING)
+    units = fmt.load_input()
+    fmt.parse_output(json.dumps({
+        unit_id: translations[unit.source_text]
+        for unit_id, unit in units.items()
+        if unit.source_text in translations
+    }))
+    return fmt.save_output()
+
+
+def _headers(detail):
+    return {column.field: dict(column.header) for column in detail.columns}
 
 
 class TestApplyTranslations(TestCase):
