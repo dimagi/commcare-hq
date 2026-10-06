@@ -182,30 +182,30 @@ class TestPoTranslationFormat:
 
     def test_untranslated_messages(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="", fuzzy=False)
-        mock_entry2 = MagicMock(msgid="World", msgstr="Mundo", fuzzy=False)
-        po_format.all_message_objects = [mock_entry1, mock_entry2]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="Mundo")
+        po_format.all_message_objects = [entry1, entry2]
 
         result = po_format.untranslated_messages
 
         assert len(result) == 1
-        assert result[0] == mock_entry1
+        assert result[0] == entry1
 
     def test_untranslated_messages_includes_fuzzy(self):
         po_format = PoTranslationFormat("test_file.po")
 
-        mock_empty = MagicMock(msgid="Empty message", msgstr="", fuzzy=False)
-        mock_translated = MagicMock(msgid="Translated message", msgstr="Mensaje traducido", fuzzy=False)
-        mock_fuzzy = MagicMock(msgid="Fuzzy message", msgstr="Mensaje difuso", fuzzy=True)
+        empty_entry = polib.POEntry(msgid="Empty message", msgstr="")
+        translated_entry = polib.POEntry(msgid="Translated message", msgstr="Mensaje traducido")
+        fuzzy_entry = polib.POEntry(msgid="Fuzzy message", msgstr="Mensaje difuso", flags=["fuzzy"])
 
-        po_format.all_message_objects = [mock_empty, mock_translated, mock_fuzzy]
+        po_format.all_message_objects = [empty_entry, translated_entry, fuzzy_entry]
 
         result = po_format.untranslated_messages
 
         assert len(result) == 2
-        assert mock_empty in result
-        assert mock_fuzzy in result
-        assert mock_translated not in result
+        assert empty_entry in result
+        assert fuzzy_entry in result
+        assert translated_entry not in result
 
     def test_untranslated_messages_plural(self):
         po_format = PoTranslationFormat("test_file.po")
@@ -220,37 +220,37 @@ class TestPoTranslationFormat:
 
     def test_build_translation_obj_map(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        translations = [mock_entry1, mock_entry2]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        translations = [entry1, entry2]
 
         po_format.load_input(translations)
 
-        assert po_format.translation_obj_map == {"0": mock_entry1, "1": mock_entry2}
+        assert po_format.translation_obj_map == {"0": entry1, "1": entry2}
 
     def test_fuzzy_flag_removed_after_translation(self):
         po_format = PoTranslationFormat("test_file.po")
 
-        mock_fuzzy = MagicMock()
-        mock_fuzzy.msgid = "Fuzzy message"
-        mock_fuzzy.msgstr = "Old fuzzy translation"
-        mock_fuzzy.fuzzy = True
-        mock_fuzzy.flags = ['fuzzy', 'python-format']
+        fuzzy_entry = polib.POEntry(
+            msgid="Fuzzy message",
+            msgstr="Old fuzzy translation",
+            flags=['fuzzy', 'python-format'],
+        )
 
-        po_format.translation_obj_map = {"0": mock_fuzzy}
+        po_format.translation_obj_map = {"0": fuzzy_entry}
 
         llm_output = {"0": "New AI translation"}
         po_format.fill_translations(llm_output)
 
-        assert mock_fuzzy.msgstr == "New AI translation"
-        assert 'fuzzy' not in mock_fuzzy.flags
-        assert 'python-format' in mock_fuzzy.flags
+        assert fuzzy_entry.msgstr == "New AI translation"
+        assert 'fuzzy' not in fuzzy_entry.flags
+        assert 'python-format' in fuzzy_entry.flags
 
     def test_format_input(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        msg_id_batch = {"0": mock_entry1, "1": mock_entry2}
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        msg_id_batch = {"0": entry1, "1": entry2}
 
         result = po_format.format_input(msg_id_batch)
 
@@ -258,23 +258,23 @@ class TestPoTranslationFormat:
 
     def test_create_batches(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        mock_entry3 = MagicMock(msgid="Test", msgstr="")
-        input_data = [mock_entry1, mock_entry2, mock_entry3]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        entry3 = polib.POEntry(msgid="Test", msgstr="")
+        input_data = [entry1, entry2, entry3]
 
         result = po_format.create_batches(input_data, batch_size=2)
 
         assert len(result) == 2
-        assert result[0] == {"0": mock_entry1, "1": mock_entry2}
-        assert result[1] == {"2": mock_entry3}
+        assert result[0] == {"0": entry1, "1": entry2}
+        assert result[1] == {"2": entry3}
 
     def test_parse_output_valid_json(self):
         po_format = PoTranslationFormat("test_file.po")
         output_data = json.dumps({"0": "Hola", "1": "Mundo"})
         po_format.translation_obj_map = {
-            "0": MagicMock(msgid="Hello", msgstr=""),
-            "1": MagicMock(msgid="World", msgstr="")
+            "0": polib.POEntry(msgid="Hello", msgstr=""),
+            "1": polib.POEntry(msgid="World", msgstr="")
         }
         result = po_format.parse_output(output_data)
 
@@ -290,15 +290,15 @@ class TestPoTranslationFormat:
 
     def test_fill_translations(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        po_format.translation_obj_map = {"0": mock_entry1, "1": mock_entry2}
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        po_format.translation_obj_map = {"0": entry1, "1": entry2}
 
         llm_output = {"0": "Hola", "1": "Mundo"}
         po_format.fill_translations(llm_output)
 
-        assert mock_entry1.msgstr == "Hola"
-        assert mock_entry2.msgstr == "Mundo"
+        assert entry1.msgstr == "Hola"
+        assert entry2.msgstr == "Mundo"
 
     @patch('corehq.apps.translations.management.commands.translate_po_files.polib.pofile')
     def test_save_output(self, mock_pofile):
@@ -363,10 +363,10 @@ class TestPoTranslationFormat:
 
 @patch('corehq.apps.translations.management.commands.translate_po_files.polib')
 def test_end_to_end_flow(mock_polib):
-    mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-    mock_entry2 = MagicMock(msgid="World", msgstr="")
+    entry1 = polib.POEntry(msgid="Hello", msgstr="")
+    entry2 = polib.POEntry(msgid="World", msgstr="")
     mock_po_file = MagicMock()
-    mock_po_file.__iter__.return_value = [mock_entry1, mock_entry2]
+    mock_po_file.__iter__.return_value = [entry1, entry2]
     mock_polib.pofile.return_value = mock_po_file
 
     translation_format = PoTranslationFormat("test_file.po")
