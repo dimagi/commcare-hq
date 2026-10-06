@@ -132,6 +132,13 @@ class TestCreatePublicWebformBuild:
 
         assert get_app_and_build_ids(app.domain, build_id) == (app.app_id, build_id)
 
+    def test_build_originates_from_the_app(self):
+        app = released_app()
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        assert get_app(app.domain, build_id).origin_id == app.app_id
+
     def test_canonical_is_never_written(self):
         app = released_app()
         version_before = get_app(app.domain, app.app_id).version
