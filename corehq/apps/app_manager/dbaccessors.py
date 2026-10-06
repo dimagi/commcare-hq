@@ -69,6 +69,10 @@ def get_latest_released_app_versions_by_app_id(domain):
 
 
 def get_latest_released_build_ids_by_app_id(domain):
+    """
+    Gets a dict of all apps in domain that have released at least one build
+    and the id of their most recently released build, keyed by app id.
+    """
     return {r['key'][2]: r['id'] for r in _get_released_build_view_results(domain)}
 
 
