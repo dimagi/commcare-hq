@@ -47,9 +47,6 @@ MAX_GROUP_WIDTH = 50
 # Maximum total nodes across the entire query tree.
 MAX_TOTAL_NODES = 200
 
-# How a date range criterion arrives: __range__YYYY-MM-DD__YYYY-MM-DD
-DATE_RANGE_PREFIX = '__range__'
-
 @define
 class Parameter:
     name: str = attr_field(converter=str.strip, validator=validators.min_len(1))
@@ -119,7 +116,7 @@ def placeholders_for(param):
     return [param.name]
 
 
-def bind_values(parameters, values):
+def bind_values(parameters, criteria):
     """Map values onto the parameters ``UserSQL.run`` expects.
 
     An absent value binds as ``None`` for every parameter type
@@ -129,6 +126,13 @@ def bind_values(parameters, values):
     blank means nothing was chosen, so it binds as unset the same as an
     absent criterion.
 
+    A blank among several values means "or the property is missing".
+    Endpoints can't express that, so it is rejected instead of being
+    silently ignored.
+
+    Date ranges are expected in the format ``SearchCriteria.validate``
+    enforces.
+
     Dates and numbers are parsed here rather than left to Postgres, so a bad
     value is a user error, and Postgres-only input like ``'today'`` or
     ``'NaN'`` is not accepted.
@@ -136,19 +140,23 @@ def bind_values(parameters, values):
     :raises CaseSearchUserError: when a criterion's shape does not match the
         type its parameter declares.
     """
-    by_key = {value.key: value for value in values}
+    by_key = {c.key: c for c in criteria}
     values = {}
     for param in parameters:
         values.update(_bind_parameter(param, by_key.get(param.name)))
     return values
 
 
-def _bind_parameter(param, criterion):
+def _bind_parameter(param, criteria):
+    if criteria is not None and criteria.has_multiple_terms and criteria.has_missing_filter:
+        raise CaseSearchUserError(
+            _("Searching for blank values is not supported for '{}'").format(param.name)
+        )
     if param.type == FIELD_TYPE_TEXT:
-        return {param.name: _as_scalar(param, _raw_value(criterion))}
-    value = _value_without_blanks(criterion)
+        return {param.name: _as_scalar(param, _raw_value(criteria))}
     if param.type == FIELD_TYPE_DATERANGE:
-        return dict(zip(placeholders_for(param), _as_date_range(param, value)))
+        return dict(zip(placeholders_for(param), _as_date_range(param, criteria)))
+    value = _value_or_none(criteria)
     if param.type == FIELD_TYPE_SELECT:
         return {param.name: _as_list(value)}
     value = _as_scalar(param, value)
@@ -159,18 +167,13 @@ def _bind_parameter(param, criterion):
     return {param.name: value}
 
 
-def _raw_value(value):
+def _raw_value(criteria):
     """The criterion's value as supplied, with a blank kept as a blank"""
-    return None if value is None else value.value
+    return None if criteria is None else criteria.value
 
 
-def _value_without_blanks(value):
-    if value is None:
-        return None
-    if value.has_multiple_terms:
-        # A single remaining term is flattened back to a scalar
-        return value.clone_without_blanks().value or None
-    return value.value or None
+def _value_or_none(criteria):
+    return None if criteria is None else criteria.value or None
 
 
 def _as_scalar(param, value):
@@ -208,18 +211,14 @@ def _as_number(param, value):
     return number
 
 
-def _as_date_range(param, value):
-    if value is None:
+def _as_date_range(param, criteria):
+    if criteria is None or criteria.is_empty:
         return None, None
-    if isinstance(value, list) or not str(value).startswith(DATE_RANGE_PREFIX):
+    if criteria.has_multiple_terms or not criteria.is_daterange:
         raise CaseSearchUserError(
             _("'{}' must be given as a date range").format(param.name)
         )
-    start, _sep, end = str(value).removeprefix(DATE_RANGE_PREFIX).partition('__')
-    if not start or not end:
-        raise CaseSearchUserError(
-            _("Invalid date range for '{}'").format(param.name)
-        )
+    start, end = criteria.get_date_range()
     return _as_date(param, start), _as_date(param, end)
 
 @define

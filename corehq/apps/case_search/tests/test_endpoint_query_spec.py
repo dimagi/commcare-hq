@@ -476,13 +476,8 @@ def test_derived_placeholder_may_not_collide():
     # A select parameter is always a list, however many values were searched
     ([SELECT], [('species', 'dog')], {'species': ['dog']}),
     ([SELECT], [('species', ['dog', 'cat'])], {'species': ['dog', 'cat']}),
-    ([SELECT], [('species', ['dog', ''])], {'species': ['dog']}),
-    ([SELECT], [('species', ['', ''])], {'species': None}),
     # A date range is split into its two bounds
     ([RANGE], [('dob', '__range__2026-08-03__2026-08-20')],
-     {'dob_from': date(2026, 8, 3), 'dob_to': date(2026, 8, 20)}),
-    # A blank term alongside the range is dropped
-    ([RANGE], [('dob', ['', '__range__2026-08-03__2026-08-20'])],
      {'dob_from': date(2026, 8, 3), 'dob_to': date(2026, 8, 20)}),
 ])
 def test_bind_values(parameters, criteria, expected):
@@ -494,9 +489,15 @@ def test_bind_values(parameters, criteria, expected):
     ([TEXT], [('color', ['red', 'blue'])], "Only one value may be given for 'color'"),
     ([NUMBER], [('weight', ['1', '2'])], "Only one value may be given for 'weight'"),
     ([RANGE], [('dob', '2026-08-03')], "'dob' must be given as a date range"),
-    ([RANGE], [('dob', '__range__2026-08-03')], "Invalid date range for 'dob'"),
     ([RANGE], [('dob', '__range__2026-08-03__today')], "'dob' must be a date"),
     ([DATE], [('seen', ['2026-08-03', '2026-08-04'])], "Only one value may be given for 'seen'"),
+    # A blank alongside other values asks to also match a missing property
+    ([TEXT], [('color', ['', 'red'])], "Searching for blank values is not supported for 'color'"),
+    ([NUMBER], [('weight', ['', '1'])], "Searching for blank values is not supported for 'weight'"),
+    ([SELECT], [('species', ['dog', ''])], "Searching for blank values is not supported for 'species'"),
+    ([SELECT], [('species', ['', ''])], "Searching for blank values is not supported for 'species'"),
+    ([RANGE], [('dob', ['', '__range__2026-08-03__2026-08-20'])],
+     "Searching for blank values is not supported for 'dob'"),
     # Postgres would accept these, but they are not ISO dates
     ([DATE], [('seen', 'today')], "'seen' must be a date"),
     ([DATE], [('seen', '2026-02-30')], "'seen' must be a date"),

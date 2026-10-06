@@ -572,7 +572,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
             response = self._post_sql(sql, params, opened='__range__2026-08-01__')
         content = response.content.decode()
         assert 'alert-danger' in content
-        assert escape("Invalid date range for 'opened'") in content
+        assert escape('Invalid date range format, __range__2026-08-01__') in content
         assert '<table' not in content
 
     def test_sql_errors_are_rendered(self):

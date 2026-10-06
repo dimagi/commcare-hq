@@ -23,11 +23,10 @@ from corehq.apps.case_search.endpoint_query_spec import (
     parse_parameter_spec,
     parse_query_spec,
 )
-from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.exceptions import CaseFilterError, CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
-    SearchCriteria,
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import QueryHelper, get_primary_case_search_endpoint_results
@@ -59,7 +58,9 @@ def _tester_criteria(values):
     The tester has an input for every parameter, so one left blank was not
     filled in rather than purposefully searched for, and is left out.
     """
-    return [SearchCriteria(name, value) for name, value in values.items() if value]
+    return criteria_dict_to_criteria_list(
+        {name: value for name, value in values.items() if value}
+    )
 
 
 def empty_query():
@@ -492,7 +493,7 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
             query_params = bind_values(parameters, _tester_criteria(test_param_values))
-        except CaseSearchUserError as error:
+        except (CaseSearchUserError, CaseFilterError) as error:
             return self._render_results(request, errors=[str(error)], validation=validation)
         try:
             result = user_sql.run(query_params)
