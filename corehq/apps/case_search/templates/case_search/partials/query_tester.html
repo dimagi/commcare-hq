@@ -49,7 +49,7 @@
                 :id="bound === 'from' ? 'param-value-' + idx : null"
                 :aria-label="param.name + ' ' + (bound === 'from' ? '{% trans "from" %}' : '{% trans "to" %}')"
                 :placeholder="bound === 'from' ? '{% trans "from" %}' : '{% trans "to" %}'"
-                x-model="testRangeValues[param.name + '_' + bound]"
+                x-model="testParamValues[param.name + '_' + bound]"
                 x-datepicker='{"useInputGroup": true}'
                 autocomplete="off"
               />
@@ -82,7 +82,7 @@
   class="btn btn-secondary"
   hx-post="{% url 'case_search_endpoint_test' domain %}"
   hx-include="closest form"
-  :hx-vals="JSON.stringify({test_param_values: testParamPayload(), target_type: '{{ target_type }}'})"
+  :hx-vals="JSON.stringify({test_param_values: testParamValues, target_type: '{{ target_type }}'})"
   hx-target="#test-results"
   hx-swap="innerHTML"
   hx-indicator="#test-spinner"

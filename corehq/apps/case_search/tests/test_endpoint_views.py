@@ -7,6 +7,8 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
 
+import pytest
+
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.project_db.table_ddl import (
@@ -18,13 +20,16 @@ from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
+from ..endpoint_query_spec import Parameter
 from ..endpoint_views import (
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
     CaseSearchEndpointTestView,
+    _tester_criteria,
 )
+from ..exceptions import CaseFilterError
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
 EMPTY_QUERY = {'type': 'all', 'children': []}
@@ -541,9 +546,9 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
                'WHERE (:tags IS NULL OR select_prop__tags && :tags)')
         params = [{'name': 'tags', 'type': 'select'}]
         cases = [
-            (['blue'], ['Ann']),
-            (['blue', 'green'], ['Ann', 'Bob']),
-            ([], ['Ann', 'Bob']),
+            ('blue', ['Ann']),
+            ('blue, green', ['Ann', 'Bob']),
+            ('', ['Ann', 'Bob']),
         ]
         with self._project_db_table():
             self._add_pets()
@@ -560,7 +565,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         with self._project_db_table():
             self._add_pets()
             response = self._post_sql(
-                sql, params, opened='__range__2026-08-01__2026-08-31')
+                sql, params, opened_from='2026-08-01', opened_to='2026-08-31')
         assert self._names(response) == ['Bob']
 
     def test_sql_reports_an_invalid_parameter_value(self):
@@ -569,7 +574,7 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
                'AND (:opened_to IS NULL OR opened_on <= :opened_to)')
         params = [{'name': 'opened', 'type': 'daterange'}]
         with self._project_db_table():
-            response = self._post_sql(sql, params, opened='__range__2026-08-01__')
+            response = self._post_sql(sql, params, opened_from='2026-08-01')
         content = response.content.decode()
         assert 'alert-danger' in content
         assert escape('Invalid date range format, __range__2026-08-01__') in content
@@ -671,3 +676,40 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         content = response.content.decode()
         assert 'Duplicate parameter name' in self._region(content, 'parameter-errors')
         assert self._region(content, 'sql-errors') is None
+
+
+TESTER_PARAMS = [
+    Parameter(name='who', type='text'),
+    Parameter(name='tags', type='select'),
+    Parameter(name='dob', type='daterange'),
+]
+
+
+@pytest.mark.parametrize('values, expected', [
+    ({}, {}),
+    # Blank inputs were not filled in, so are left out
+    ({'who': '', 'tags': ' , ', 'dob_from': '', 'dob_to': ''}, {}),
+    ({'who': ' Bob '}, {'who': 'Bob'}),
+    ({'who': 12}, {'who': '12'}),
+    # A select parameter's comma-separated input becomes a list
+    ({'tags': 'red'}, {'tags': 'red'}),
+    ({'tags': 'red, ,blue'}, {'tags': ['red', 'blue']}),
+    # A date range's bounds are joined the way Web Apps sends them
+    ({'dob_from': '2026-08-01', 'dob_to': '2026-08-31'},
+     {'dob': '__range__2026-08-01__2026-08-31'}),
+    # Inputs the parameters do not declare are ignored
+    ({'undeclared': 'x', 'dob': 'x'}, {}),
+])
+def test_tester_criteria(values, expected):
+    criteria = _tester_criteria(TESTER_PARAMS, values)
+    assert {c.key: c.value for c in criteria} == expected
+
+
+@pytest.mark.parametrize('values', [
+    {'dob_from': '2026-08-01'},
+    {'dob_to': '2026-08-31'},
+    {'dob_from': 'today', 'dob_to': '2026-08-31'},
+])
+def test_tester_criteria_rejects_a_partial_date_range(values):
+    with pytest.raises(CaseFilterError, match='Invalid date range format'):
+        _tester_criteria(TESTER_PARAMS, values)

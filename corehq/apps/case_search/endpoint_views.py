@@ -15,6 +15,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATERANGE,
+    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
@@ -52,15 +54,29 @@ _ADMIN_ENDPOINT_DECORATORS = [
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
-def _tester_criteria(values):
-    """The query tester's parameter values as search criteria.
+def _tester_criteria(parameters, values):
+    """The query tester's inputs as the criteria an endpoint request carries.
 
-    The tester has an input for every parameter, so one left blank was not
-    filled in rather than purposefully searched for, and is left out.
+    A date range's bounds arrive as ``<name>_from``/``<name>_to``, and a
+    select parameter as comma-separated text. The tester has an input for
+    every parameter, so one left blank was not filled in rather than
+    purposefully searched for, and is left out.
     """
-    return criteria_dict_to_criteria_list(
-        {name: value for name, value in values.items() if value}
-    )
+    def raw(key):
+        return str(values.get(key) or '').strip()
+
+    request = {}
+    for param in parameters:
+        if param.type == FIELD_TYPE_DATERANGE:
+            start, end = raw(f'{param.name}_from'), raw(f'{param.name}_to')
+            value = f'__range__{start}__{end}' if start or end else ''
+        elif param.type == FIELD_TYPE_SELECT:
+            value = [v.strip() for v in raw(param.name).split(',') if v.strip()]
+        else:
+            value = raw(param.name)
+        if value:
+            request[param.name] = value
+    return criteria_dict_to_criteria_list(request)
 
 
 def empty_query():
@@ -457,12 +473,16 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
                 request, validation={self.PARAMETER_ERRORS: errors})
         validation = {self.PARAMETER_ERRORS: [], self.QUERY_ERRORS: [],
                       self.SQL_ERRORS: []}
+        try:
+            criteria = _tester_criteria(parameters, test_param_values)
+        except CaseFilterError as error:
+            return self._render_results(request, errors=[str(error)], validation=validation)
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
-            return self._run_sql(request, parameters, test_param_values, validation)
-        return self._run_es_query(request, parameters, test_param_values, validation)
+            return self._run_sql(request, parameters, criteria, validation)
+        return self._run_es_query(request, parameters, criteria, validation)
 
-    def _run_es_query(self, request, parameters, test_param_values, validation):
+    def _run_es_query(self, request, parameters, criteria, validation):
         """Run the query builder's spec and render the cases it matched."""
         case_type = request.POST.get('case_type', '')
         try:
@@ -477,7 +497,6 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
             return self._render_results(request, validation=validation)
         fields = capability['case_types'][case_type]
         try:
-            criteria = criteria_dict_to_criteria_list(test_param_values)
             results = get_primary_case_search_endpoint_results(
                 QueryHelper(self.domain), [case_type], criteria, query_root,
                 self._row_limit)
@@ -488,12 +507,12 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
         columns, rows = self._es_results_to_columns_and_rows(fields, results)
         return self._render_results(request, columns, rows, validation=validation)
 
-    def _run_sql(self, request, parameters, test_param_values, validation):
+    def _run_sql(self, request, parameters, criteria, validation):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            query_params = bind_values(parameters, _tester_criteria(test_param_values))
-        except (CaseSearchUserError, CaseFilterError) as error:
+            query_params = bind_values(parameters, criteria)
+        except CaseSearchUserError as error:
             return self._render_results(request, errors=[str(error)], validation=validation)
         try:
             result = user_sql.run(query_params)
