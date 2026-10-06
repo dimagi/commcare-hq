@@ -468,7 +468,7 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
         retry_count = 0
 
     if request_error:
-        if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+        if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
             details = _get_notify_error_details(
                 payment_case.domain,
                 payment_case.case_id,
@@ -482,7 +482,7 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
             # TODO Consider updating status and error so user is aware of the issue
             return {PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
 
-    if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+    if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
     else:
         status_update[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT] = retry_count + 1
