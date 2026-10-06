@@ -30,6 +30,7 @@ from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.models.forms import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test, sharded
+from corehq.util.metrics.tests.utils import capture_metrics
 
 DOMAIN = 'bulk-actions-test'
 USERNAME = 'abc@example.com'
@@ -79,6 +80,19 @@ class TestRunBulkFormAction(TestCase):
         job.set_requested_ids(form_ids)
         job.save()
         return job
+
+    def test_a_completed_job_reports_what_it_did(self):
+        archived = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)
+        job = self._job(
+            BulkAsyncJob.Action.ARCHIVE, [archived.form_id, 'no-such-form'])
+
+        with capture_metrics() as metrics:
+            run_bulk_form_action(job)
+
+        tags = {'domain': DOMAIN, 'action': 'archive', 'model': 'xform'}
+        assert metrics.sum('commcare.api.bulk_actions.job_started', **tags) == 1
+        assert metrics.sum('commcare.api.bulk_actions.succeeded', **tags) == 1
+        assert metrics.sum('commcare.api.bulk_actions.skipped', **tags) == 1
 
     def test_archive_marks_complete_and_counts(self):
         form = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)

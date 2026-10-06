@@ -17,8 +17,11 @@ from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.form_processor.models import XFormInstance
+from corehq.util.metrics import metrics_counter
 
 log = logging.getLogger(__name__)
+
+METRIC_PREFIX = 'commcare.api.bulk_actions'
 
 SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'
@@ -56,6 +59,9 @@ def run_bulk_form_action(job):
     job.status = BulkAsyncJob.Status.RUNNING
     job.started_at = datetime.now(tz=UTC)
     job.save()
+    # captures when the job actually starts processing, avoiding the potential
+    # lock contention false starts that bulk_form_action_async would report
+    metrics_counter(f'{METRIC_PREFIX}.job_started', tags=_job_tags(job))
 
     form_ids = job.get_requested_ids()
     save_interval = _save_interval(job.requested_count)
@@ -83,6 +89,28 @@ def run_bulk_form_action(job):
     job.status = BulkAsyncJob.Status.COMPLETE
     job.completed_at = datetime.now(tz=UTC)
     job.save()
+
+    _record_job_finished(job, skipped)
+
+
+def _job_tags(job):
+    return {
+        'domain': job.domain,
+        'action': job.action,
+        'model': job.model_slug,
+    }
+
+
+def _record_job_finished(job, skipped):
+    tags = _job_tags(job)
+    metrics_counter(
+        f'{METRIC_PREFIX}.succeeded', job.succeeded_count, tags=tags
+    )
+    metrics_counter(
+        f'{METRIC_PREFIX}.skipped',
+        sum(len(form_ids) for form_ids in skipped.values()),
+        tags=tags,
+    )
 
 
 def create_bulk_form_job(domain, action, requested_by, form_ids, api_key=None):
