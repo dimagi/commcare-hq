@@ -13,6 +13,7 @@ from couchforms.models import DefaultAuthContext
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.public_webforms.app_builds import canonical_app_id
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
@@ -217,7 +218,7 @@ def get_app_and_build_ids(domain, build_or_app_id):
         if domain == app_json.get('domain'):
             copy_of = app_json.get('copy_of')
             if copy_of:
-                return copy_of, build_or_app_id
+                return canonical_app_id(copy_of), build_or_app_id
     return build_or_app_id, None
 
 
