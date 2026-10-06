@@ -17,6 +17,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.form_processor.models import XFormInstance
+from corehq.sql_db.fields import ModelClassField
 from corehq.util.metrics import metrics_counter
 
 log = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ def _job_tags(job):
     return {
         'domain': job.domain,
         'action': job.action,
-        'model': job.model_slug,
+        'model': ModelClassField.slug_for(job.model),
     }
 
 
