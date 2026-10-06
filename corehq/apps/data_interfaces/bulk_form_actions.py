@@ -107,11 +107,8 @@ def _record_job_finished(job):
     metrics_counter(
         f'{METRIC_PREFIX}.succeeded', job.succeeded_count, tags=tags
     )
-    metrics_counter(
-        f'{METRIC_PREFIX}.skipped',
-        job.processed_count - job.succeeded_count,
-        tags=tags,
-    )
+    if skipped := job.processed_count - job.succeeded_count:
+        metrics_counter(f'{METRIC_PREFIX}.skipped', skipped, tags=tags)
 
 
 def create_bulk_form_job(domain, action, requested_by, form_ids, api_key=None):
