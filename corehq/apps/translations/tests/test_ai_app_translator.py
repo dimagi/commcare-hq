@@ -505,7 +505,6 @@ class TestSaveOutput(TestCase):
         assert fmt.save_output() == []
 
     def test_leaves_untranslated_rows_untouched(self):
-        """Translating a form label leaves untranslated menu and form names unchanged."""
         app = _make_app()
         app.get_module(0).name['fra'] = 'existing manual translation'
         fmt = AppTranslationFormat(app, 'fra', mode=MODE_RETRANSLATE)
@@ -582,9 +581,9 @@ class TestSaveOutput(TestCase):
         ]
 
     def test_blank_untranslated_rows_are_not_errors(self):
-        """The module's untranslated rows are sent back as they are, so
-        a blank one isn't the run's error: here a column with no header,
-        and a string the LLM returned nothing for."""
+        # The module's untranslated rows are sent back as they are, so
+        # a blank one isn't the run's error: here a column with no header,
+        # and a string the LLM returned nothing for.
         app = _app_with_case_list(case_list=[
             _column('name', {'en': 'Name'}),
             _column('age', {'en': 'Age'}),
@@ -601,16 +600,17 @@ class TestSaveOutput(TestCase):
         }
 
     def test_keeps_languages_the_app_no_longer_has(self):
+        # app.langs is en, fra
         app = _app_with_case_list(case_list=[
-            _column('name', {'en': 'Name'}),
-            _column('age', {'en': 'Age', 'de': 'Alter'}),  # app.langs is en, fra
+            _column('name', {'en': 'Name', 'de': 'Name'}),
+            _column('age', {'en': 'Age', 'de': 'Alter'}),
         ])
 
         errors = _translate_to_french(app, {'Name': 'Nom'})
 
         assert errors == []
         assert _headers(app.get_module(0).case_details.short) == {
-            'name': {'en': 'Name', 'fra': 'Nom'},
+            'name': {'en': 'Name', 'de': 'Name', 'fra': 'Nom'},
             'age': {'en': 'Age', 'de': 'Alter'},
         }
 
