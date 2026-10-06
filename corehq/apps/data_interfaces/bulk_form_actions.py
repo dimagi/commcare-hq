@@ -125,9 +125,6 @@ def delete_forms(forms, domain, deletion_id):
         if not form.is_archived:
             # archiving is what ensures affected cases are rebuilt
             yield FormActionResult(form.form_id, SKIPPED, NOT_ARCHIVED)
-        elif form.is_deleted:
-            # treat as noop
-            yield FormActionResult(form.form_id, SUCCEEDED)
         else:
             to_delete.append(form.form_id)
 
@@ -169,7 +166,10 @@ def _apply_form_action(domain, form_ids, action_fn):
     for batch in chunked(all_forms, MAX_SAVE_INTERVAL):
         forms = []
         for form in batch:
-            if form.domain == domain:
+            # a form in another domain or a deleted form does not exist as
+            # far as the caller is concerned, so both fall through to
+            # NOT_FOUND below rather than being acted on
+            if form.domain == domain and not form.is_deleted:
                 forms.append(form)
                 unresolved_ids.discard(form.form_id)
         yield from action_fn(forms)
