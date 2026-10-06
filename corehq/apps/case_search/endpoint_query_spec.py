@@ -100,9 +100,8 @@ def parse_parameter_spec(spec):
 
 
 def _duplicate_placeholder_errors(parameters):
-    """A daterange derives two placeholder names, which may collide with
-    another parameter's (``dob`` as a daterange and a ``dob_from`` text
-    parameter both want ``:dob_from``)."""
+    """Check for collisions between daterange placeholder names (x_from, x_to)
+    and placeholder directly derived from parameter names"""
     seen = set()
     for name in sql_placeholders(parameters):
         if name in seen:
