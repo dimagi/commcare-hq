@@ -70,11 +70,22 @@ function bindUsageController(widget) {
     }
 }
 
+export function bindAuthController(widget, tokenUrl) {
+    widget.authTokenProvider = async function () {
+        try {
+            return await $.ajax({url: tokenUrl, method: 'POST', dataType: 'text'});
+        } catch {
+            widget.disabled = true;
+        }
+    };
+}
+
 $(function () {
     const widget = document.querySelector('open-chat-studio-widget');
     if (!widget) {
         return;
     }
+    bindAuthController(widget, initialPageData.reverse('chat_token'));
     if (toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
         bindUsageController(widget);
     } else {
