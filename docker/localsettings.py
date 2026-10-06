@@ -99,6 +99,7 @@ S3_BLOB_DB_SETTINGS = {
         # botocore rejects the checksum Garage returns for multipart
         # uploads, so blobs over 8 MB can't be read back without these.
         # https://git.deuxfleurs.fr/Deuxfleurs/garage/issues/1228
+        # Options: https://docs.aws.amazon.com/sdkref/latest/guide/feature-dataintegrity.html
         "request_checksum_calculation": "when_required",
         "response_checksum_validation": "when_required",
     },

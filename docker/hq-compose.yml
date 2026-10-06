@@ -202,10 +202,13 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-garage-data:}/var/lib/garage/data
       - ./garage/garage.toml:/etc/garage.toml:ro
     environment:
-      # Garage requires secrets in its own formats: 64 hex chars for the RPC
-      # secret, and GK + 24 hex / 64 hex for the S3 key.
+      # Garage rejects values that aren't in its own formats, so these can't be
+      # arbitrary strings like MinIO's. To make new ones: `openssl rand -hex 32`
+      # for the RPC secret and secret key; "GK" + `openssl rand -hex 12` for the
+      # access key.
       # NOTE: THESE ARE INSECURE AND MEANT FOR LOCAL DEVELOPMENT ONLY
       GARAGE_RPC_SECRET: 1799bccfd7411eddcf9ebd316bc1f5287ad12a68094e1c6ac6abde7e6feae1ec
       GARAGE_DEFAULT_ACCESS_KEY: GK31c2f218a2e44f485b94239e
       GARAGE_DEFAULT_SECRET_KEY: b892c0665f0ada8a4755dae98baa3b133590e11dae3bcc1f9d2d1d12b6c1cb2b
+      # matches DEFAULT_S3_BUCKET in corehq/blobs/s3db.py
       GARAGE_DEFAULT_BUCKET: blobdb
