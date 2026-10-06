@@ -6,31 +6,38 @@
 # compose files), a temporary MinIO is started on its old data directory.
 set -euo pipefail
 
-NETWORK=${NETWORK:-hqservice_default}
-MINIO_CONTAINER=${MINIO_CONTAINER:-hqservice-minio-1}
+PROJECT=${COMPOSE_PROJECT_NAME:-hqservice}
+NETWORK=${NETWORK:-${PROJECT}_default}
 MINIO_DATA=${MINIO_DATA:-${XDG_DATA_HOME:-$HOME/.local/share}/dockerhq/minio-data}
-GARAGE_CONTAINER=${GARAGE_CONTAINER:-hqservice-garage-1}
+# GARAGE_DEFAULT_BUCKET in docker/hq-compose.yml
 BUCKET=blobdb
 
-running() { [ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = true ]; }
+# Look up containers by compose labels rather than name, because Docker
+# Compose names them hqservice-minio-1 and podman-compose hqservice_minio_1.
+# rclone reaches them by service name on the compose network.
+running() {
+    [ -n "$(docker ps -q \
+        --filter "label=com.docker.compose.project=$PROJECT" \
+        --filter "label=com.docker.compose.service=$1")" ]
+}
 
-if ! running "$GARAGE_CONTAINER"; then
+if ! running garage; then
     echo "Garage is not running. Start it with: ./scripts/docker up -d garage" >&2
     exit 1
 fi
 
-if ! running "$MINIO_CONTAINER"; then
+if ! running minio; then
     if [ ! -d "$MINIO_DATA/$BUCKET" ]; then
         echo "MinIO is not running and there is no MinIO data at $MINIO_DATA" >&2
         exit 1
     fi
-    MINIO_CONTAINER=hq-minio-migration
+    MINIO_CONTAINER=hq_minio_migration
     echo "Starting a temporary MinIO on $MINIO_DATA"
     # left behind if an earlier run was killed before its cleanup ran
     docker rm -f "$MINIO_CONTAINER" >/dev/null 2>&1 || true
-    # the image is amd64-only; see docker/hq-compose-os-macos-m1-12.yml
-    docker run -d --rm --name "$MINIO_CONTAINER" --network "$NETWORK" \
-        --platform linux/amd64 -v "$MINIO_DATA:/data" \
+    # The alias lets rclone reach it as "minio", like the compose service.
+    docker run -d --rm --name "$MINIO_CONTAINER" \
+        --network "$NETWORK" --network-alias minio -v "$MINIO_DATA:/data" \
         -e MINIO_ROOT_USER=admin-key -e MINIO_ROOT_PASSWORD=admin-secret \
         docker.io/dimagi/minio server --address :9980 /data >/dev/null
     trap 'docker stop "$MINIO_CONTAINER" >/dev/null' EXIT
@@ -54,12 +61,12 @@ rclone() {
     docker run --rm --network "$NETWORK" \
         -e RCLONE_CONFIG_MINIO_TYPE=s3 \
         -e RCLONE_CONFIG_MINIO_PROVIDER=Minio \
-        -e RCLONE_CONFIG_MINIO_ENDPOINT="http://$MINIO_CONTAINER:9980" \
+        -e RCLONE_CONFIG_MINIO_ENDPOINT=http://minio:9980 \
         -e RCLONE_CONFIG_MINIO_ACCESS_KEY_ID=admin-key \
         -e RCLONE_CONFIG_MINIO_SECRET_ACCESS_KEY=admin-secret \
         -e RCLONE_CONFIG_GARAGE_TYPE=s3 \
         -e RCLONE_CONFIG_GARAGE_PROVIDER=Other \
-        -e RCLONE_CONFIG_GARAGE_ENDPOINT="http://$GARAGE_CONTAINER:3900" \
+        -e RCLONE_CONFIG_GARAGE_ENDPOINT=http://garage:3900 \
         -e RCLONE_CONFIG_GARAGE_REGION=us-east-1 \
         -e RCLONE_CONFIG_GARAGE_FORCE_PATH_STYLE=true \
         -e RCLONE_CONFIG_GARAGE_ACCESS_KEY_ID=GK31c2f218a2e44f485b94239e \
