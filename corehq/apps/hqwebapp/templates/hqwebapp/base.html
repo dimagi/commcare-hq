@@ -1,4 +1,4 @@
-{% load menu_tags %}{% load i18n %}{% load tz %}{% load hq_shared_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
+{% load menu_tags %}{% load i18n %}{% load tz %}{% load hq_shared_tags %}{% load chatbot_tags %}{% load cache %}{% load compress %}{% load statici18n %}<!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
 {% js_entry "hqwebapp/js/base" %}{# Do not change. See special handling of this module in webpack/generateDetails.js #}
 <!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE }}" class="lt-ie9 lt-ie8 lt-ie7"><![endif]-->
@@ -82,10 +82,13 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
-      {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" %}
+      {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" and request.couch_user|has_chatbot_allowance %}
+        {% registerurl 'chat_quota' %}
         <div class="ocs-widget-container">
           <open-chat-studio-widget
             visible="false"
+            disabled="true"
+            banner-position="bottom"
             chatbot-id="{{ CHATBOT_ID }}"
             embed-key="{{ CHATBOT_TOKEN }}"
             icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"

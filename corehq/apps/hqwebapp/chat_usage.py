@@ -4,8 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 from django.conf import settings
-
-from corehq.util.quickcache import quickcache
+from django.core.cache import cache
 
 # Longer than any calendar month
 _CACHE_TIMEOUT = 60 * 60 * 24 * 32
@@ -16,15 +15,35 @@ class ChatUsageUnavailable(Exception):
     """OCS usage could not be obtained or validated."""
 
 
-def get_chat_usage(user_id, refresh=False):
+def _cache_key(user_id):
     current_month = datetime.now(timezone.utc).strftime('%Y-%m')
-    return _get_chat_usage(user_id, current_month, refresh)
+    return f'ocs-chat-usage:{user_id}:{current_month}'
 
 
-@quickcache(
-    ['user_id', 'current_month'], skip_arg='refresh', timeout=_CACHE_TIMEOUT
-)
-def _get_chat_usage(user_id, current_month, refresh=False):
+def get_cached_chat_usage(user_id):
+    return _get_cached_chat_usage(user_id, _cache_key(user_id))
+
+
+def increment_chat_usage(user_id):
+    key = _cache_key(user_id)
+    try:
+        return cache.incr(key)
+    except ValueError:
+        # The sent event fires after OCS has the message; its count includes it.
+        return _get_cached_chat_usage(user_id, key)
+
+
+def _get_cached_chat_usage(user_id, key):
+    used = cache.get(key)
+    if used is None:
+        used = fetch_chat_usage_from_ocs(user_id)
+        cache.add(key, used, timeout=_CACHE_TIMEOUT)
+        # Preserve any count incremented by another request during the fetch.
+        used = cache.get(key, default=used)
+    return used
+
+
+def fetch_chat_usage_from_ocs(user_id):
     api_key = settings.OCS_API_KEY
     if not user_id or not api_key:
         raise ChatUsageUnavailable(
@@ -53,4 +72,5 @@ def _get_chat_usage(user_id, current_month, refresh=False):
             'Invalid or unavailable OCS usage response'
         ) from exc
 
+    cache.set(_cache_key(user_id), used, timeout=_CACHE_TIMEOUT)
     return used
