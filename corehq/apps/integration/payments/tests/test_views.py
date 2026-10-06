@@ -177,6 +177,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                 data={
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
+                    PaymentProperties.USER_OR_CASE_ID: cls.case_linked_to_payment_case.case_id,
                 }),
             _create_case(
                 cls.factory,
@@ -246,6 +247,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
                 assert row.record.case.case_json == {
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
+                    'user_or_case_id': self.case_linked_to_payment_case.case_id,
                 }
             else:
                 assert row.record.get('case_id') == self.case_list[3].case_id
@@ -255,6 +257,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verify_rows(self):
+        self._create_kyc_config()
         self.client.login(username=self.username, password=self.password)
         response = self.client.post(
             self.endpoint,
@@ -266,6 +269,46 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         assert response.status_code == 200
         assert response.context['success_count'] == 2
         assert response.context['failure_count'] == 0
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_verify_rows_rejected_without_kyc_config(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [self.case_list[1].case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+        assert response.status_code == 400
+        assert "Only payments with users that have KYC status" in str(response.content)
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_verify_rows_rejected_when_kyc_not_passed(self):
+        self._create_kyc_config()
+        failed_kyc_case = self.factory.create_case(
+            case_name='failed_kyc_case',
+            case_type='test',
+            update={'kyc_verification_status': KycVerificationStatus.FAILED},
+        )
+        self.addCleanup(failed_kyc_case.delete)
+        payment_case = _create_case(
+            self.factory,
+            name='failed_kyc_payment',
+            data={PaymentProperties.USER_OR_CASE_ID: failed_kyc_case.case_id},
+        )
+        self.addCleanup(payment_case.delete)
+        case_search_adapter.bulk_index([failed_kyc_case, payment_case], refresh=True)
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.post(
+            self.endpoint,
+            data={'selected_ids': [payment_case.case_id]},
+            headers={'HQ-HX-Action': 'verify_rows'},
+        )
+
+        assert response.status_code == 400
+        assert "Only payments with users that have KYC status" in str(response.content)
+        payment_case.refresh_from_db()
+        assert PaymentProperties.PAYMENT_VERIFIED not in payment_case.case_json
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_invalid_status(self):
@@ -342,6 +385,15 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         limit = PaymentsVerificationTableView.VERIFICATION_ROWS_LIMIT
         assert "You can only verify for up to {} cases at a time.".format(limit) in str(response.content)
 
+    def _create_kyc_config(self):
+        config = KycConfig.objects.create(
+            domain=self.domain,
+            user_data_store=UserDataStore.OTHER_CASE_TYPE,
+            api_field_to_user_data_map=[],
+            other_case_type="test",
+        )
+        self.addCleanup(config.delete)
+
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_verification_status(self):
         response = self._make_request()
@@ -349,12 +401,7 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         # no kyc config
         assert response.context_data['user_or_cases_verification_statuses'] == {}
 
-        KycConfig.objects.create(
-            domain=self.domain,
-            user_data_store=UserDataStore.OTHER_CASE_TYPE,
-            api_field_to_user_data_map=[],
-            other_case_type="test",
-        )
+        self._create_kyc_config()
         response = self._make_request()
 
         assert response.context_data['user_or_cases_verification_statuses'] == {

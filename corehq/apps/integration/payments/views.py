@@ -29,6 +29,7 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import (
+    get_kyc_verification_statuses,
     revert_payment_verification,
     verify_payment_cases,
 )
@@ -186,15 +187,7 @@ class PaymentsVerificationTableView(
         return context
 
     def _get_user_or_cases_verification_status(self, object_list):
-        if not self.kyc_config:
-            return {}
-
-        user_or_case_ids = self._get_user_or_case_ids(object_list)
-        kyc_users = self.kyc_config.get_kyc_users_by_ids(user_or_case_ids)
-        return {
-            kyc_user.user_id: kyc_user.kyc_verification_status
-            for kyc_user in kyc_users
-        }
+        return get_kyc_verification_statuses(self.kyc_config, self._get_user_or_case_ids(object_list))
 
     @cached_property
     def kyc_config(self):

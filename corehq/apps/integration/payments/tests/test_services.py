@@ -12,6 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.integration.kyc.models import KycVerificationStatus
 from corehq.apps.integration.payments.const import (
     PaymentStatusErrorCode,
     PaymentProperties,
@@ -30,6 +31,17 @@ from corehq.apps.integration.payments.services import (
 )
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
+
+
+def _patch_kyc_statuses(statuses=None):
+    """Patch the ES lookup; ``statuses`` defaults to every requested id having passed KYC."""
+    def get_statuses(kyc_config, ids):
+        return {id_: KycVerificationStatus.PASSED for id_ in ids} if statuses is None else statuses
+
+    return patch(
+        'corehq.apps.integration.payments.services.get_kyc_verification_statuses',
+        side_effect=get_statuses,
+    )
 
 
 class TestVerifyPaymentCases(TestCase):
@@ -65,6 +77,7 @@ class TestVerifyPaymentCases(TestCase):
                     'currency': 'Dollar',
                     'payee_note': 'Jan payment',
                     'payer_message': 'Thanks',
+                    PaymentProperties.USER_OR_CASE_ID: 'beneficiary-1',
                 }),
             _create_case(
                 cls.factory,
@@ -72,6 +85,7 @@ class TestVerifyPaymentCases(TestCase):
                 data={
                     'batch_number': 'B001',
                     'phone_number': '0987654322',
+                    PaymentProperties.USER_OR_CASE_ID: 'beneficiary-2',
                 }),
         ]
 
@@ -89,7 +103,8 @@ class TestVerifyPaymentCases(TestCase):
             assert PaymentProperties.PAYMENT_VERIFIED not in case.case_json
 
         case_ids = [case_.case_id for case_ in self.case_list]
-        verified_cases = verify_payment_cases(self.domain, case_ids, self.webuser)
+        with _patch_kyc_statuses():
+            verified_cases = verify_payment_cases(self.domain, case_ids, self.webuser)
 
         assert len(verified_cases) == 2
 
@@ -118,6 +133,56 @@ class TestVerifyPaymentCases(TestCase):
             )
         ):
             verify_payment_cases(self.domain, [unverified_case.case_id], self.webuser)
+
+    def test_verify_payment_cases_without_kyc_config(self):
+        case_ids = [case_.case_id for case_ in self.case_list]
+        with pytest.raises(PaymentRequestError, match="users that have KYC status 'Passed'"):
+            verify_payment_cases(self.domain, case_ids, self.webuser)
+
+
+class TestVerifyPaymentCasesKyc(TestCase):
+    domain = "test-kyc-payments"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.webuser = WebUser.create(cls.domain, 'kyc-user', '1234', None, None, is_admin=True)
+        cls.webuser.save()
+        cls.factory = CaseFactory(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.webuser.delete(None, None)
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def _payment_case(self, user_or_case_id):
+        case = _create_case(self.factory, name='p', data={PaymentProperties.USER_OR_CASE_ID: user_or_case_id})
+        self.addCleanup(case.delete)
+        return case
+
+    def _verify(self, case, kyc_statuses):
+        with _patch_kyc_statuses(kyc_statuses):
+            return verify_payment_cases(self.domain, [case.case_id], self.webuser)
+
+    def test_passed_kyc_can_be_verified(self):
+        case = self._payment_case('b1')
+        assert len(self._verify(case, {'b1': KycVerificationStatus.PASSED})) == 1
+
+    def test_non_passed_kyc_is_rejected(self):
+        case = self._payment_case('b1')
+        for statuses in [
+            {'b1': KycVerificationStatus.FAILED},
+            {'b1': KycVerificationStatus.PENDING},
+            {'b1': KycVerificationStatus.ERROR},
+            {},  # no KYC record found
+        ]:
+            with self.subTest(statuses=statuses):
+                with pytest.raises(PaymentRequestError, match="users that have KYC status 'Passed'"):
+                    self._verify(case, statuses)
+        case.refresh_from_db()
+        assert PaymentProperties.PAYMENT_VERIFIED not in case.case_json
 
 
 class TestPaymentRequest(TestCase):

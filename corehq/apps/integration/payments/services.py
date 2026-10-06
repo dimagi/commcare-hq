@@ -13,6 +13,7 @@ from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
 from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_DEVICE_ID,
     PaymentStatusErrorCode,
@@ -267,11 +268,43 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     return updated_cases
 
 
+def get_kyc_verification_statuses(kyc_config, user_or_case_ids):
+    if not kyc_config or not user_or_case_ids:
+        return {}
+    return {
+        kyc_user.user_id: kyc_user.kyc_verification_status
+        for kyc_user in kyc_config.get_kyc_users_by_ids(user_or_case_ids)
+    }
+
+
 def _validate_payment_cases_for_verification(case_ids, domain):
     valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    for case in CommCareCase.objects.iter_cases(case_ids):
-        _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
-        _validate_final_mobile_validation(case)
+    kyc_config = KycConfig.objects.filter(domain=domain).first()
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        cases = CommCareCase.objects.get_cases(list(case_ids_chunk))
+        kyc_statuses = _get_kyc_statuses_for_cases(cases, kyc_config)
+        for case in cases:
+            _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
+            _validate_final_mobile_validation(case)
+            _validate_kyc_passed(case, kyc_statuses)
+
+
+def _get_kyc_statuses_for_cases(cases, kyc_config):
+    user_or_case_ids = [
+        user_or_case_id for case in cases
+        if (user_or_case_id := case.get_case_property(PaymentProperties.USER_OR_CASE_ID))
+    ]
+    return get_kyc_verification_statuses(kyc_config, user_or_case_ids)
+
+
+def _validate_kyc_passed(case, kyc_statuses):
+    user_or_case_id = case.get_case_property(PaymentProperties.USER_OR_CASE_ID)
+    if kyc_statuses.get(user_or_case_id) != KycVerificationStatus.PASSED:
+        raise PaymentRequestError(
+            _("Only payments with users that have KYC status '{}' are eligible for verification.").format(
+                KycVerificationStatus.PASSED.label
+            )
+        )
 
 
 def _validate_payment_case_status(case, domain, valid_statuses, operation):
