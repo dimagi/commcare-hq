@@ -91,7 +91,7 @@ def run_bulk_form_action(job):
     job.completed_at = datetime.now(tz=UTC)
     job.save()
 
-    _record_job_finished(job, skipped)
+    _record_job_finished(job)
 
 
 def _job_tags(job):
@@ -102,14 +102,14 @@ def _job_tags(job):
     }
 
 
-def _record_job_finished(job, skipped):
+def _record_job_finished(job):
     tags = _job_tags(job)
     metrics_counter(
         f'{METRIC_PREFIX}.succeeded', job.succeeded_count, tags=tags
     )
     metrics_counter(
         f'{METRIC_PREFIX}.skipped',
-        sum(len(form_ids) for form_ids in skipped.values()),
+        job.processed_count - job.succeeded_count,
         tags=tags,
     )
 
