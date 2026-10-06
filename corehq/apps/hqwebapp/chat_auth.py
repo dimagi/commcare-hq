@@ -5,6 +5,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 
+from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import ChatUsageUnavailable, fetch_chat_usage_from_ocs
@@ -21,13 +22,14 @@ class ChatTokenUnavailable(Exception):
 def chat_token(request):
     couch_user = getattr(request, 'couch_user')
 
-    limit = get_chatbot_message_quota(couch_user)
-    if limit == 0:
-        return HttpResponse(status=403)
     try:
-        if limit != UNLIMITED:
-            if fetch_chat_usage_from_ocs(couch_user.user_id) >= limit:
+        if toggles.OCS_CHATBOT_PAGE_CONTEXT.enabled_for_request(request):
+            limit = get_chatbot_message_quota(couch_user)
+            if limit == 0:
                 return HttpResponse(status=403)
+            if limit != UNLIMITED:
+                if fetch_chat_usage_from_ocs(couch_user.user_id) >= limit:
+                    return HttpResponse(status=403)
         token = _mint_widget_token()
     except (ChatUsageUnavailable, ChatTokenUnavailable):
         return HttpResponse(status=503)

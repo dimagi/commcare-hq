@@ -18,9 +18,11 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqwebapp import chat_auth, chat_usage
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 @use('db')
+@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
 @override_settings(ENTERPRISE_MODE=False)
 def test_zero_quota_returns_403_without_calling_ocs():
     user = _create_web_user('test@example.com')
@@ -35,6 +37,7 @@ def test_zero_quota_returns_403_without_calling_ocs():
 
 
 @use('db')
+@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
 @pytest.mark.parametrize(
     ('used', 'status'),
     [
@@ -79,6 +82,7 @@ def test_usage_against_limit(used, status):
 
 
 @use('db')
+@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
 @override_settings(
     ENTERPRISE_MODE=False,
     OCS_OAUTH_CLIENT_ID='client-id',
