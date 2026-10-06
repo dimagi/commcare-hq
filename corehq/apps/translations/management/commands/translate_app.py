@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.translations.app_translations.ai_translator import (
-    AppTranslationFormat,
+    prepare_translation_format,
     run_app_translation,
 )
 from corehq.apps.translations.const import (
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             raise CommandError("Target language is the app's default language")
 
         if options['dry_run']:
-            fmt = AppTranslationFormat(app, lang, mode=options['mode'])
+            fmt = prepare_translation_format(app, lang, options['mode'])
             units = fmt.load_input()
             words = sum(len(u.source_text.split()) for u in units.values())
             self.stdout.write(f"Would translate {len(units)} strings ({words} words)")

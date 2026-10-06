@@ -51,6 +51,11 @@
     </button>
   {% endif %}
 
+  {% if plan %}
+    <h3 class="h6">{% trans "Query plan" %}</h3>
+    <pre class="p-3 mb-3 bg-body-tertiary border rounded" style="white-space: pre-wrap">{{ plan }}</pre>
+  {% endif %}
+
   {% if result %}
     <p class="text-body-secondary">
       {% blocktrans with duration=result.duration|floatformat:3 %}Evaluated in {{ duration }} seconds{% endblocktrans %}

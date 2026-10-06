@@ -96,7 +96,7 @@ def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query
 class TargetTypeMixin:
     @cached_property
     def allowed_target_types(self):
-        target_types = [CaseSearchEndpoint.TargetType.ELASTICSEARCH]
+        target_types = []
         if toggles.PROJECT_DB.enabled(self.domain):
             target_types.append(CaseSearchEndpoint.TargetType.PROJECT_DB)
         return target_types

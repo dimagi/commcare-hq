@@ -33,6 +33,7 @@ from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
     BadParameters,
+    ExplainAnalyze,
     UnsupportedSQL,
     UserSQL,
     UserSQLProgrammingError,
@@ -685,6 +686,31 @@ def test_max_rows_applies_limit():
         actual = _compiled(user_sql.query)
     expected = _compiled(select([CLIENT.c.name]).limit(_bind_literal('max_rows', 5)))
     assert actual == expected
+
+
+def test_compile_explain_analyze():
+    query = select([CLIENT.c.name]).where(CLIENT.c.name == _bind_literal('param', 'Alice'))
+    sql, params = _compiled(ExplainAnalyze(query))
+    assert sql == (
+        'EXPLAIN ANALYZE SELECT client.name \n'
+        'FROM client \n'
+        'WHERE client.name = %(hq_param_1)s'
+    )
+    assert params == {'hq_param_1': (str, 'Alice')}
+
+
+@use('db', project_db_table('test-explain-analyze', 'patient', {'name': 'plain'}, (
+    ['case_id', 'owner_id', 'prop__name'], [
+        ['a', 'o', 'Alice'],
+        ['b', 'o', 'Bob'],
+    ]
+)))
+def test_explain_analyze_returns_query_plan():
+    user_sql = UserSQL('test-explain-analyze',
+                       'SELECT case_id FROM patient WHERE prop__name IN :names')
+    plan = user_sql.explain_analyze({'names': ['Alice', 'Bob']}).splitlines()
+    assert plan[-1].startswith('Execution Time:')
+    assert any('Alice' in line and 'Bob' in line for line in plan)
 
 
 DATE_DOMAIN = 'test-dates'

@@ -38,6 +38,17 @@
         placeholder="SELECT * FROM my_case_type"
       ></textarea>
     </div>
+    <div class="form-check mb-3">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="explain-analyze"
+        name="explain"
+      >
+      <label class="form-check-label" for="explain-analyze">
+        {% trans "Show query plan (EXPLAIN ANALYZE)" %}
+      </label>
+    </div>
     <button type="submit" class="btn btn-primary">{% trans "Process" %}</button>
     <button
       type="button"
