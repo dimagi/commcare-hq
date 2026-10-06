@@ -4,8 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 from django.conf import settings
-
-from corehq.util.quickcache import quickcache
+from django.core.cache import cache
 
 # Longer than any calendar month
 _CACHE_TIMEOUT = 60 * 60 * 24 * 32
@@ -16,27 +15,32 @@ class ChatUsageUnavailable(Exception):
     """OCS usage could not be obtained or validated."""
 
 
-def _current_month():
-    return datetime.now(timezone.utc).strftime('%Y-%m')
+def _cache_key(user_id):
+    current_month = datetime.now(timezone.utc).strftime('%Y-%m')
+    return f'ocs-chat-usage:{user_id}:{current_month}'
 
 
 def get_cached_chat_usage(user_id):
-    return _get_cached_chat_usage(user_id, _current_month())
+    return _get_cached_chat_usage(user_id, _cache_key(user_id))
 
 
 def increment_chat_usage(user_id):
-    current_month = _current_month()
-    used = _get_cached_chat_usage(user_id, current_month) + 1
-    _cached_chat_usage.set_cached_value(user_id, current_month).to(used)
+    key = _cache_key(user_id)
+    try:
+        return cache.incr(key)
+    except ValueError:
+        # The sent event fires after OCS has the message; its count includes it.
+        return _get_cached_chat_usage(user_id, key)
+
+
+def _get_cached_chat_usage(user_id, key):
+    used = cache.get(key)
+    if used is None:
+        used = fetch_chat_usage_from_ocs(user_id)
+        cache.add(key, used, timeout=_CACHE_TIMEOUT)
+        # Preserve any count incremented by another request during the fetch.
+        used = cache.get(key, default=used)
     return used
-
-
-def _get_cached_chat_usage(user_id, current_month):
-    cached_usage = _cached_chat_usage.get_cached_value(user_id, current_month)
-    # If the cache is not set, return 0
-    if cached_usage is Ellipsis:
-        cached_usage = 0
-    return cached_usage
 
 
 def fetch_chat_usage_from_ocs(user_id):
@@ -68,11 +72,5 @@ def fetch_chat_usage_from_ocs(user_id):
             'Invalid or unavailable OCS usage response'
         ) from exc
 
-    _cached_chat_usage.set_cached_value(user_id, _current_month()).to(used)
+    cache.set(_cache_key(user_id), used, timeout=_CACHE_TIMEOUT)
     return used
-
-
-@quickcache(['user_id', 'current_month'], timeout=_CACHE_TIMEOUT)
-def _cached_chat_usage(user_id, current_month):
-    """Keyed cache for monthly usage; use get/set_cached_value instead of calling."""
-    raise AssertionError('_cached_chat_usage should not be called directly')
