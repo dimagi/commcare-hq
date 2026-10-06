@@ -8,13 +8,10 @@ from django.views.decorators.http import require_POST
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
-from corehq.apps.hqwebapp.chat_usage import ChatUsageUnavailable, fetch_chat_usage_from_ocs
+from corehq.apps.hqwebapp.chat_usage import fetch_chat_usage_from_ocs
+from corehq.apps.hqwebapp.exceptions import ChatTokenUnavailable, ChatUsageUnavailable
 
 _TOKEN_URL = 'https://www.openchatstudio.com/o/token/'
-
-
-class ChatTokenUnavailable(Exception):
-    """OCS could not issue a valid widget credential."""
 
 
 @login_required
