@@ -42,6 +42,15 @@ class ModelClassField(CharField):
     def pre_save(self, model_instance, add):
         # Override pre_save to ensure the slug value is returned, which is
         # ultimately what is saved to the database.
+        return self._slug_of(model_instance)
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        super().contribute_to_class(cls, name, **kwargs)
+        if not cls._meta.abstract:
+            # Follows Django's own get_FOO_display for choices.
+            setattr(cls, f'{name}_slug', property(self._slug_of))
+
+    def _slug_of(self, model_instance):
         return self.get_prep_value(getattr(model_instance, self.attname))
 
 

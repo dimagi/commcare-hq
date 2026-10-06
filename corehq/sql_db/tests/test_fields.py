@@ -88,3 +88,15 @@ def test_ModelClassField_pre_save_returns_slug_for_class():
     field = {f.name: f for f in Test._meta.fields}["model"]
     obj = Test(model=XFormInstance)
     assert field.pre_save(obj, add=False) == 'xform'
+
+
+def test_ModelClassField_adds_a_slug_accessor():
+    from corehq.form_processor.models import XFormInstance
+
+    @unregistered_django_model
+    class Test(models.Model):
+        model = ModelClassField()
+
+    obj = Test(model=XFormInstance)
+    assert obj.model is XFormInstance
+    assert obj.model_slug == 'xform'
