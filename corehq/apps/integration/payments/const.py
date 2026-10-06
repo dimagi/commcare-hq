@@ -149,5 +149,11 @@ class PaymentStatusErrorCode(models.TextChoices):
         'PaymentStatusRequestError',
         _("Unable to fetch the payment status. It will be retried automatically.")
     )
-    MaxRetryExceededRequestError = _("Maximum retry attempts exceeded with request error.")
-    MaxRetryExceededPendingStatus = _("Maximum retry attempts exceeded with pending status")
+    MaxRetryExceededRequestError = (
+        'MaxRetryExceededRequestError',
+        _("Maximum retry attempts exceeded with request error.")
+    )
+    MaxRetryExceededPendingStatus = (
+        'MaxRetryExceededPendingStatus',
+        _("Maximum retry attempts exceeded with pending status.")
+    )
