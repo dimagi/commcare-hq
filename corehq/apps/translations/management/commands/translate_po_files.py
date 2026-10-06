@@ -334,11 +334,11 @@ class PoTranslationFormat(TranslationFormat):
         return "- Ensure that translations are gender neutral unless the original text is gender specific. " \
                "- Do not translate placeholders in curly braces, Python %-style strings, HTML tags, or URLs. " \
                "- Ensure translated text maintains leading/trailing newlines. " \
-               "- Every translated message should be valid `msgstr` and should adhere to all of its specs." \
-               "- Special characters like double quotes (\") and backslashes (\\) must be escaped"\
-               "a with backslash." \
-               "Input: JSON array of objects with unique hash and message of the following format: " \
-               "{\"0\":\"msgid\", \"1\":\"msgid\", ...}" \
+               "- Every translated message should be valid `msgstr` and should adhere to all of its specs. " \
+               "- Special characters like double quotes (\") and backslashes (\\) must be escaped " \
+               "with a backslash. " \
+               "Input: a JSON object mapping a key to the message to translate, e.g. " \
+               "{\"0\": \"msgid\", \"1\": \"msgid\", ...}. " \
                "Some values are plural messages instead of strings: " \
                "{\"singular\": \"text for one\", \"plural\": \"text for many\", " \
                "\"forms\": {\"0\": \"used when n is ...\", \"1\": \"used when n is ...\"}}. " \
@@ -349,7 +349,7 @@ class PoTranslationFormat(TranslationFormat):
 
     def format_output_description(self):
         return "Response: JSON object on the following format: " \
-               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}" \
+               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}. " \
                "For a plural message, return one key per form instead of the plain key: " \
                "{\"<key>:0\": \"form 0 translation\", \"<key>:1\": \"form 1 translation\", ...}"
 

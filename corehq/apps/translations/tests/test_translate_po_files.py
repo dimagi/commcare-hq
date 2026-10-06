@@ -524,7 +524,7 @@ msgstr[1] ""
         result = po_format.format_input_description()
 
         assert "Ensure that translations are gender neutral" in result
-        assert "Input: JSON array of objects" in result
+        assert "Input: a JSON object mapping a key to the message" in result
         assert "Special characters like double quotes" in result
 
     def test_format_output_description(self):
