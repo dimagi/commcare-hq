@@ -478,9 +478,12 @@ def _handle_payment_status_retry(payment_case, status_update=None, request_error
             notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
             return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
         else:
-            # We only increment the retry count for request errors. Will retry in the next scheduled run
-            # TODO Consider updating status and error so user is aware of the issue
-            return {PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
+            # The status is left unchanged so that the payment is picked up again in the next scheduled run.
+            # The error lets the user know the status could not be fetched.
+            return {
+                PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1,
+                PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR,
+            }
 
     if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)

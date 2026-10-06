@@ -993,11 +993,13 @@ class TestRequestPaymentsStatusForCases(TestCase):
             PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.DEPOSIT_PAYER_ONGOING,
         }
         scenarios = [
-            # (name, initial status, mock side effect, mock return value)
-            ('request_error', PaymentStatus.SUBMITTED, PaymentRequestError('Simulated network failure'), None),
-            ('pending', PaymentStatus.PENDING_PROVIDER, None, pending_response),
+            # (name, initial status, mock side effect, mock return value, expected error)
+            ('request_error', PaymentStatus.SUBMITTED, PaymentRequestError('Simulated network failure'), None,
+             PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR),
+            ('pending', PaymentStatus.PENDING_PROVIDER, None, pending_response,
+             PaymentStatusErrorCode.DEPOSIT_PAYER_ONGOING),
         ]
-        for name, status, side_effect, return_value in scenarios:
+        for name, status, side_effect, return_value, error in scenarios:
             with self.subTest(name):
                 case = self._create_payment_case(f'{name}_below_limit', {
                     PaymentProperties.PAYMENT_STATUS: status,
@@ -1016,6 +1018,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
                     case.case_json[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT],
                     str(PAYMENT_STATUS_RETRY_MAX_ATTEMPTS)
                 )
+                self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], error)
 
 
 def _create_case(factory, name, data):
