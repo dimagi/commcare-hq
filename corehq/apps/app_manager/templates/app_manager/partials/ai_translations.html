@@ -1,0 +1,158 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{# open by default only when there are languages to translate #}
+<div class="accordion-item">
+  <h5 class="accordion-header">
+    <a
+      href="#ai-translations"
+      class="accordion-button fs-5 {% if not ai_translation.languages %}collapsed{% endif %}"
+      data-bs-toggle="collapse"
+      data-bs-target="#ai-translations"
+      >{% trans "Translate with AI" %}
+      <span class="badge text-bg-primary ms-2">{% trans "NEW" %}</span>
+    </a>
+  </h5>
+  <div
+    class="accordion-collapse collapse {% if ai_translation.languages %}show{% endif %}"
+    id="ai-translations"
+    data-bs-parent="#language-settings-options"
+  >
+    <div class="accordion-body">
+      <p class="text-body-secondary">
+        {% blocktrans trimmed %}
+          Fills in missing translations for everything in the bulk translation
+          file: menu and form names, case list and detail labels, form questions
+          and choices. Manual translations are never overwritten; AI
+          translations are redone when their source text changes.
+        {% endblocktrans %}
+      </p>
+
+      {% if not ai_translation.has_privilege %}
+        <div class="alert alert-info mb-0">
+          <p>
+            {% trans "AI translations are available on Standard plans and above." %}
+          </p>
+          <a
+            class="btn btn-outline-primary"
+            href="{% url 'domain_select_plan' domain %}"
+            >{% trans "Compare plans" %}</a
+          >
+        </div>
+      {% elif ai_translation.is_linked_app %}
+        <p class="mb-0">
+          {% blocktrans trimmed %}
+            Linked apps get their translations from their upstream app.
+            Translate the upstream app instead.
+          {% endblocktrans %}
+          {% if upstream_url %}
+            <a href="{{ upstream_url }}"
+              >{% trans "Go to the upstream app" %}</a
+            >
+          {% endif %}
+        </p>
+      {% elif not ai_translation.languages %}
+        <p class="mb-0">
+          {% blocktrans trimmed %}
+            Add a language in the Language List below, then reload the page to
+            translate your app with AI.
+          {% endblocktrans %}
+        </p>
+      {% else %}
+        {% initial_page_data 'ai_translation_languages' ai_translation.languages %}
+        {% initial_page_data 'ai_translation_limit_reached' ai_translation.limit_reached %}
+        {% registerurl "start_ai_translation" domain app.id %}
+        {% registerurl "ai_translation_status" domain app.id %}
+        {% if ai_translation.limit_reached %}
+          <div class="alert alert-warning">
+            {% blocktrans trimmed %}
+              This project has reached its monthly AI translation limit. Contact
+              support to raise it.
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+        <div id="ai-translations-panel">
+          <div
+            class="alert alert-info"
+            data-bind="visible: languagesChanged"
+            style="display: none"
+          >
+            {% blocktrans trimmed %}
+              The language list changed. Reload the page to update AI
+              translation.
+            {% endblocktrans %}
+          </div>
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>{% trans "Language" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Last AI run" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: languages">
+              <tr>
+                <td data-bind="text: code"></td>
+                <td>
+                  <span
+                    class="badge"
+                    data-bind="text: display().label, css: display().labelClass"
+                  ></span>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: display().detail"
+                  ></div>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="visible: display().share, text: display().share"
+                  ></div>
+                  <!-- ko if: display().progress !== null -->
+                  <div class="progress mt-1">
+                    <div
+                      class="progress-bar"
+                      data-bind="style: {width: display().progress + '%'}"
+                    ></div>
+                  </div>
+                  <!-- /ko -->
+                  <div
+                    class="small text-warning-emphasis"
+                    data-bind="visible: display().warning, text: display().warning"
+                  ></div>
+                  <div
+                    class="small text-danger"
+                    data-bind="visible: startError, text: startError"
+                  ></div>
+                </td>
+                <td class="text-nowrap">
+                  <div data-bind="text: lastRun().date"></div>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: lastRun().version"
+                  ></div>
+                </td>
+                <td class="text-end text-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    data-bind="click: start, disable: !canStart()"
+                  >
+                    {% trans "AI Translate" %}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-body-secondary mb-0">
+          {% blocktrans trimmed %}
+            Status reflects the last AI Translate run. Strings you add or change
+            afterwards are translated the next time you run AI Translate.
+            Translations are applied to the current draft; make a new version to
+            release them.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
