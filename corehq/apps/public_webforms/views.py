@@ -217,6 +217,4 @@ def set_public_webform_status(request, domain, webform_id):
 
 def _dashboard_url(request, domain):
     """The dashboard as the admin left it, filters and page included."""
-    url = reverse(ManagePublicWebformsView.urlname, args=[domain])
-    query = request.GET.urlencode()
-    return f'{url}?{query}' if query else url
+    return reverse(ManagePublicWebformsView.urlname, args=[domain], query=request.GET)
