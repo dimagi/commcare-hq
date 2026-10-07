@@ -64,7 +64,7 @@ from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import FormSubmitterFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tasks import build_form_multimedia_zipfile
 from corehq.apps.reports.util import datespan_from_beginning
@@ -419,7 +419,7 @@ def poll_custom_export_download(request, domain):
 @location_safe
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = FormSubmitterFilter
     show_date_range = True
     page_title = gettext_noop("Download Form Data Export")
     check_for_multimedia = True
@@ -574,7 +574,7 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = gettext_noop("Download Form Data Exports")
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = FormSubmitterFilter
     check_for_multimedia = False
 
 
