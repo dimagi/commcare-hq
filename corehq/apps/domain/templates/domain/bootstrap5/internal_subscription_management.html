@@ -25,11 +25,11 @@
   {% endblocktrans %}
 
   <div id="subscription_management">
-    {% crispy select_subscription_type_form %}  {# todo B5: crispy #}
+    {% crispy select_subscription_type_form %}
 
     {% for form in subscription_management_forms %}
       <div data-bind="visible: subscriptionType() == '{{ form.slug }}'">
-        {% crispy form %}  {# todo B5: crispy #}
+        {% crispy form %}
       </div>
     {% endfor %}
   </div>
