@@ -316,6 +316,6 @@ class EditPublicWebformForm(BasePublicWebformForm):
         self.webform.expires_at = self.cleaned_data['expires_at']
         self.webform.allow_email = 'allow_email' in link_choices
         self.webform.allow_sms = 'allow_sms' in link_choices
-        self.webform.is_disabled = not self.cleaned_data['open_to_requests']
+        self.webform.set_disabled(not self.cleaned_data['open_to_requests'])
         self.webform.save()
         return self.webform

@@ -21,7 +21,10 @@ from corehq.apps.public_webforms.forms import (
     EditPublicWebformForm,
     PublicWebformFilterForm,
 )
-from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.models import (
+    PublicWebform,
+    PublicWebformAppDeleted,
+)
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.settings.views import get_qrcode
 from corehq.apps.users.decorators import require_permission
@@ -199,7 +202,12 @@ def public_webform_qr_code(request, domain, webform_id):
 def set_public_webform_status(request, domain, webform_id):
     """Open or close a webform to requests for a one-time link."""
     webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
-    webform.is_disabled = request.POST.get('is_disabled') == 'true'
+    try:
+        webform.set_disabled(request.POST.get('is_disabled') == 'true')
+    except PublicWebformAppDeleted:
+        messages.error(request, _(
+            "This public webform's application has been deleted, so it can't be opened."))
+        return HttpResponseRedirect(_dashboard_url(request, domain))
     webform.save()
     messages.success(request, _("Public webform closed to new requests.")
                      if webform.is_disabled
