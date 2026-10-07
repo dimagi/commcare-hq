@@ -4,7 +4,7 @@ from corehq.util.quickcache import quickcache
 from .table_ddl import create_or_update_project_db
 
 
-@quickcache(['domain'], timeout=60 * 60, memoize_timeout=10)
+@quickcache(['domain'], timeout=5 * 60, memoize_timeout=10)
 def schedule_project_db_sync(domain):
     """Queue a schema sync unless one is already queued for the domain"""
     # Schedule the task with a 15 second debounce delay
