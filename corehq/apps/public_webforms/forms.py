@@ -207,7 +207,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
 
     def initial_expires_at(self):
         return (
-            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30))
+            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90))
             .user_time(self.timezone)
             .ui_string(fmt='%Y-%m-%d %H:%M:%S')
         )
