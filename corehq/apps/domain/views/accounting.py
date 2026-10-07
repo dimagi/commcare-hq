@@ -1050,8 +1050,9 @@ class BillingStatementPdfView(View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
-    template_name = 'domain/bootstrap3/internal_subscription_management.html'
+    template_name = 'domain/bootstrap5/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
     page_title = gettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
