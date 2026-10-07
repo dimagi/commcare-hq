@@ -101,7 +101,8 @@ ALL_STRING_KEYS = {
 
 def test_load_input_fill_missing_extracts_untranslated_source_strings():
     app = _make_app()
-    fmt = AppTranslationFormat(app, 'fra', mode=MODE_FILL_MISSING)
+    fmt = AppTranslationFormat(
+        app, 'fra', mode=MODE_FILL_MISSING, treat_default_copies_as_missing=False)
     units = fmt.load_input()
     # the submit label already has its 'Submit' default
     assert sorted(u.string_key for u in units.values()) == sorted(
@@ -111,7 +112,8 @@ def test_load_input_fill_missing_extracts_untranslated_source_strings():
 def test_all_app_strings_includes_strings_load_input_skips():
     app = _make_app()
     app.get_module(0).name['fra'] = 'mon module'  # for MODULE_NAME_KEY
-    fmt = AppTranslationFormat(app, 'fra', manually_edited_keys={QUESTION_KEY})
+    fmt = AppTranslationFormat(
+        app, 'fra', manually_edited_keys={QUESTION_KEY}, treat_default_copies_as_missing=False)
 
     all_strings = fmt.all_app_strings()
     units = fmt.load_input()
@@ -323,7 +325,7 @@ def test_load_input_extracts_stale_keys():
 
 def test_create_batches_are_sheet_scoped_with_context_header():
     app = _make_app()
-    fmt = AppTranslationFormat(app, 'fra')
+    fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=False)
     fmt.load_input()
     batches = fmt.create_batches(chunk_size=2)
     # 5 units over 3 sheets (Menus_and_forms: 2, module: 2, form: 1)
@@ -362,9 +364,9 @@ def test_treat_default_copies_as_missing():
     downloaded sheet persists the copies into the app."""
     app = _make_app()
     app.get_module(0).name['fra'] = 'register module'
-    fmt = AppTranslationFormat(app, 'fra')  # default: counts as translated
+    fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=False)  # default: counts as translated
     assert 'register module' not in {u.source_text for u in fmt.load_input().values()}
-    fmt2 = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=True)
+    fmt2 = AppTranslationFormat(app, 'fra')
     assert 'register module' in {u.source_text for u in fmt2.load_input().values()}
 
 
@@ -385,7 +387,7 @@ def test_for_app_copies_settings_not_state():
     app = _make_app()
     fmt = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
-        stale_keys={'s'}, treat_default_copies_as_missing=True)
+        stale_keys={'s'}, treat_default_copies_as_missing=False)
     fmt.load_input()
     fmt.results = {'0': 'traduction'}
     other_app = _make_app()
@@ -396,7 +398,7 @@ def test_for_app_copies_settings_not_state():
     assert (copy.target_lang, copy.mode) == ('fra', MODE_RETRANSLATE)
     assert copy.manually_edited_keys == {'k'}
     assert copy.stale_keys == {'s'}
-    assert copy.treat_default_copies_as_missing is True
+    assert copy.treat_default_copies_as_missing is False
     assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
 
 
@@ -855,7 +857,7 @@ class TestRunAppTranslation(TestCase):
 
     def test_full_success(self):
         app = _make_app()
-        fmt = AppTranslationFormat(app, 'fra')
+        fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=False)
         summary = run_app_translation(
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt), chunk_size=2)
@@ -866,7 +868,7 @@ class TestRunAppTranslation(TestCase):
 
     def test_partial_apply_on_batch_failure(self):
         app = _make_app()
-        fmt = AppTranslationFormat(app, 'fra')
+        fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=False)
         summary = run_app_translation(
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt, fail_batches={1}), chunk_size=2)
@@ -894,6 +896,8 @@ class TestRunAppTranslation(TestCase):
     def _run(self, app, **translator_kwargs):
         return run_app_translation(
             app, 'fra', MODE_FILL_MISSING, chunk_size=50,
+            translation_format=prepare_translation_format(
+                app, 'fra', MODE_FILL_MISSING, treat_default_copies_as_missing=False),
             translator_factory=lambda lang, fmt, **kw: _FakeTranslator(fmt, **translator_kwargs))
 
     def test_next_run_skips_edits_and_retranslates_stale_strings(self):
