@@ -279,6 +279,23 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         assert 'form-control is-invalid' in content
         assert escape(error) in content
 
+    def test_sql_must_match_the_parameter_spec(self):
+        with self._project_db_table():
+            response = self.client.post(
+                self._new_url(),
+                self._post_data(
+                    name='sql-endpoint',
+                    sql='SELECT case_id FROM my_case_type WHERE case_name = :who',
+                    parameters=json.dumps([{'name': 'more', 'type': 'text'}]),
+                ),
+            )
+        assert response.status_code == 200
+        assert response.context['form'].errors['sql'] == [
+            "Undefined parameter ':who'. Add it under Parameters, "
+            "or remove it from the SQL.",
+            "Parameter ':more' is not used by the SQL.",
+        ]
+
     def test_failed_post_preserves_submitted_sql(self):
         # Re-render seeds the SQL box from the submitted (not DB) value.
         response = self.client.post(

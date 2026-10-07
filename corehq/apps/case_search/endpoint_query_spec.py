@@ -6,8 +6,10 @@ metadata and, when valid, returns the typed tree a query builder can consume.
 
 Endpoint parameters are shared by both kinds of endpoint. Project DB
 endpoints additionally bind them into SQL: :func:`sql_placeholders` gives the
-placeholder names a spec implies, and :func:`bind_values` maps a request's
-search criteria onto the values those placeholders take.
+placeholder names a spec implies,
+:func:`validate_parameters_match_placeholders` checks them against the SQL's,
+and :func:`bind_values` maps a request's search criteria onto the values
+those placeholders take.
 
 The nodes follow the ``type``/``to_json``/``from_json`` convention used by
 :mod:`corehq.apps.app_execution.data_model`, so they round-trip to and from
@@ -108,6 +110,15 @@ def _duplicate_placeholder_errors(parameters):
 
 def sql_placeholders(parameters):
     return [name for param in parameters for name in placeholders_for(param)]
+
+
+def validate_parameters_match_placeholders(parameters, placeholders):
+    expected = set(sql_placeholders(parameters))
+    for name in sorted(set(placeholders) - expected):
+        yield (f"Undefined parameter ':{name}'. Add it under Parameters, "
+               f"or remove it from the SQL.")
+    for name in sorted(expected - set(placeholders)):
+        yield f"Parameter ':{name}' is not used by the SQL."
 
 
 def placeholders_for(param):

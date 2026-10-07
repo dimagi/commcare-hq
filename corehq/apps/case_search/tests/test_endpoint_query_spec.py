@@ -25,6 +25,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
     bind_values,
     parse_parameter_spec,
     parse_query_spec,
+    validate_parameters_match_placeholders,
     sql_placeholders,
 )
 from corehq.apps.case_search.exceptions import CaseSearchUserError
@@ -439,6 +440,22 @@ GEOPOINT = Parameter(name='near', type=FIELD_TYPE_GEOPOINT)
 ])
 def test_sql_placeholders(parameters, expected):
     assert sql_placeholders(parameters) == expected
+
+
+@pytest.mark.parametrize('placeholders, parameters, expected', [
+    ([], [], []),
+    (['who'], [Parameter(name='who', type='text')], []),
+    # A daterange is used through its two derived placeholders
+    (['dob_from', 'dob_to'], [Parameter(name='dob', type='daterange')], []),
+    (['dob_from'], [Parameter(name='dob', type='daterange')],
+     ["Parameter ':dob_to' is not used by the SQL."]),
+    (['who'], [],
+     ["Undefined parameter ':who'. Add it under Parameters, or remove it from the SQL."]),
+    ([], [Parameter(name='more', type='text')],
+     ["Parameter ':more' is not used by the SQL."]),
+])
+def test_validate_parameters_match_placeholders(placeholders, parameters, expected):
+    assert list(validate_parameters_match_placeholders(parameters, placeholders)) == expected
 
 
 def test_derived_placeholder_may_not_collide():

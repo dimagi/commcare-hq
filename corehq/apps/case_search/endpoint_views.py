@@ -24,6 +24,7 @@ from corehq.apps.case_search.endpoint_query_spec import (
     bind_values,
     parse_parameter_spec,
     parse_query_spec,
+    validate_parameters_match_placeholders,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError, CaseSearchUserError
 from corehq.apps.case_search.models import (
@@ -176,7 +177,7 @@ class CaseSearchEndpointForm(forms.Form):
         elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
             cleaned['case_type'] = None
             cleaned['query'] = None
-            self._clean_sql(cleaned)
+            self._clean_sql(cleaned, parameters)
 
         return cleaned
 
@@ -200,12 +201,14 @@ class CaseSearchEndpointForm(forms.Form):
             for error in errors:
                 self.add_error('query', error)
 
-    def _clean_sql(self, cleaned):
+    def _clean_sql(self, cleaned, parameters):
         sql = (cleaned.get('sql') or '').strip()
+        user_sql = UserSQL(self.domain, sql, max_rows=None)
         try:
-            UserSQL(self.domain, sql, max_rows=None).validate()
+            user_sql.validate()
         except UnsupportedSQL as error:
             self.add_error('sql', str(error.msg))
+            return
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             # Not the author's fault, so report it against the form rather
             # than the field, and let them keep what they wrote.
@@ -213,6 +216,11 @@ class CaseSearchEndpointForm(forms.Form):
                 None, f'project_db unavailable for {self.domain}: {error}'
             )
             self.add_error(None, PROJECT_DB_UNAVAILABLE)
+            return
+        # A spec with errors of its own has already been reported
+        if parameters is not None:
+            for error in validate_parameters_match_placeholders(parameters, user_sql.parameters):
+                self.add_error('sql', error)
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
