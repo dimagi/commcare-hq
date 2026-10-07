@@ -1,4 +1,7 @@
+import uuid
 from unittest.mock import patch
+
+import pytest
 
 from dimagi.utils.couch import get_redis_lock, release_lock
 from django.test import TestCase
@@ -16,7 +19,9 @@ from corehq.apps.translations.tasks import (
     FAILED,
     MANY_SKIPPED,
     NO_LONGER_AVAILABLE,
+    NOT_QUEUED,
     WAITED_TOO_LONG,
+    queue_app_translation,
     run_message,
     translate_app_task,
 )
@@ -28,6 +33,45 @@ DONE = AITranslationStatus.STATE_DONE
 ERROR = AITranslationStatus.STATE_ERROR
 TRANSLATING = AITranslationStatus.STATE_TRANSLATING
 APPLYING = AITranslationStatus.STATE_APPLYING
+
+
+QUEUED = AITranslationStatus.STATE_QUEUED
+
+
+def test_queue_app_translation():
+    app_id = uuid.uuid4().hex
+    with patch.object(translate_app_task, 'delay') as delay:
+        assert queue_app_translation(
+            'test-domain', app_id, 'fra', MODE_FILL_MISSING, 'user@example.com')
+    delay.assert_called_once_with('test-domain', app_id, 'fra', MODE_FILL_MISSING)
+    status = AITranslationStatus(app_id, 'fra').get()
+    assert status['state'] == QUEUED
+    assert status['username'] == 'user@example.com'
+
+
+def test_queue_app_translation_refuses_while_a_run_is_active():
+    app_id = uuid.uuid4().hex
+    AITranslationStatus(app_id, 'fra').start('other@example.com')
+    with patch.object(translate_app_task, 'delay') as delay:
+        assert not queue_app_translation(
+            'test-domain', app_id, 'fra', MODE_FILL_MISSING, 'user@example.com')
+    delay.assert_not_called()
+    assert AITranslationStatus(app_id, 'fra').get()['username'] == 'other@example.com'
+
+
+def test_queue_app_translation_records_a_failure_to_queue():
+    app_id = uuid.uuid4().hex
+    with (
+        patch.object(translate_app_task, 'delay', side_effect=Exception('Broker is down')),
+        pytest.raises(Exception, match='Broker is down'),
+    ):
+        queue_app_translation(
+            'test-domain', app_id, 'fra', MODE_FILL_MISSING, 'user@example.com')
+    status = AITranslationStatus(app_id, 'fra')
+    assert status.get()['state'] == ERROR
+    assert status.get()['message_code'] == NOT_QUEUED
+    # the language is released for another run
+    assert status.start('user@example.com')
 
 
 class TestTranslateAppTask(TestCase):
