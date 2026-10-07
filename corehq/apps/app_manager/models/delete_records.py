@@ -4,7 +4,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.couch.undo import DeleteRecord
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.templatetags.xforms_extras import (
     clean_trans,
