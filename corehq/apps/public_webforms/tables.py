@@ -112,6 +112,7 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         return render_to_string('public_webforms/columns/actions.html', {
             'domain': self.domain,
             'record': record,
+            'is_app_deleted': self.form_paths[record.id]['is_app_deleted'],
         })
 
     def render_expires_at(self, value):

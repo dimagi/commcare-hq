@@ -282,9 +282,13 @@ class EditPublicWebformForm(BasePublicWebformForm):
         super().__init__(domain, timezone, *args, **kwargs)
         form_paths = get_public_webform_form_paths(
             domain, [webform])[webform.id]
+        if form_paths['is_app_deleted']:
+            self.fields['open_to_requests'].disabled = True
+            self.fields['open_to_requests'].help_text = _(
+                "This webform's application has been deleted, so it can't be opened.")
         self.initial.update({
             'label': webform.label,
-            'open_to_requests': not webform.is_disabled,
+            'open_to_requests': not webform.is_disabled and not form_paths['is_app_deleted'],
             'app_name': f"{form_paths['app_name']} (v{form_paths['app_version']})",
             'menu_name': form_paths['menu_name'],
             'form_name': form_paths['form_name'],

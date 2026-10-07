@@ -26,10 +26,14 @@ def _webform(**kwargs):
     return PublicWebform(**{'id': 1, 'expires_at': timezone.now() + timedelta(days=30), **kwargs})
 
 
-def _cells(webform):
+def _cells(webform, **path):
     table = PublicWebformTable(data=[webform], domain=DOMAIN, timezone=TIMEZONE)
     [row] = table.rows
-    return {column.name: str(value) for column, value in row.items()}
+    with patch.object(
+        tables, 'get_public_webform_form_paths',
+        return_value={webform.id: {'is_app_deleted': False, **path}},
+    ):
+        return {column.name: str(value) for column, value in row.items()}
 
 
 @pytest.mark.parametrize('status, expected_label', [
@@ -71,10 +75,7 @@ def test_form_column_names_form_and_links_its_app():
         'app_version': 3,
         'form_name': 'Cohort Registration',
     }
-    with patch.object(
-        tables, 'get_public_webform_form_paths', return_value={1: path}
-    ):
-        rendered = _cells(webform)['label']
+    rendered = _cells(webform, **path)['label']
 
     assert 'Antenatal visit' in rendered
     assert 'Cohort Registration' in rendered
@@ -104,6 +105,15 @@ def test_the_actions_column_offers_the_status_a_webform_is_not_in(
 
     assert expected in rendered
     assert not_expected not in rendered
+
+
+@pytest.mark.parametrize('is_app_deleted', [False, True], ids=['live-app', 'deleted-app'])
+def test_the_open_button_is_disabled_for_a_webform_whose_app_is_deleted(is_app_deleted):
+    webform = _webform(is_disabled=True)
+
+    rendered = _cells(webform, is_app_deleted=is_app_deleted)['actions']
+
+    assert ('disabled' in rendered) is is_app_deleted
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected_titles', [
