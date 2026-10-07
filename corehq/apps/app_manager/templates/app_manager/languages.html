@@ -9,19 +9,24 @@
 {% registerurl "get_app_ui_translations" domain %}
 
 <div class="accordion" id="language-settings-options">
+  {% if ai_translation %}
+    {% include "app_manager/partials/ai_translations.html" %}
+  {% endif %}
+
   {% if not is_linked_app %}
+    {# open by default unless Translate with AI is #}
     <div class="accordion-item">
         <h5 class="accordion-header">
           <a
             href="#supported-languages"
-            class="accordion-button fs-5"
+            class="accordion-button fs-5 {% if ai_translation.languages %}collapsed{% endif %}"
             data-bs-toggle="collapse"
             data-bs-target="#supported-languages"
           >{% trans "Language List" %}
           </a>
         </h5>
       <div
-        class="accordion-collapse collapse show"
+        class="accordion-collapse collapse {% if not ai_translation.languages %}show{% endif %}"
         id="supported-languages"
         data-bs-parent="#language-settings-options"
       >
