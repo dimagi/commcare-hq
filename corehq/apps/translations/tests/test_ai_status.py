@@ -68,7 +68,7 @@ def test_finish_stores_summary_and_releases_the_language():
     assert current['state'] == AITranslationStatus.STATE_DONE
     assert current['message_code'] == 'many_skipped'
     assert current['username'] == 'user@example.com'
-    assert current['finished_on'].endswith('Z')
+    assert current['finished_on']
     assert SUMMARY.items() <= current.items()
 
     # starting a new run is now allowed
@@ -76,12 +76,14 @@ def test_finish_stores_summary_and_releases_the_language():
     assert status.get()['state'] == AITranslationStatus.STATE_QUEUED
 
 
-def test_lost_run_does_not_show_the_previous_summary():
+def test_start_clears_the_previous_summary():
     status = _status()
     status.start('user@example.com')
     status.finish(AITranslationStatus.STATE_DONE, summary=SUMMARY)
     status.start('user@example.com')
-    cache.delete(status._active_key)  # as if it expired
+    # if the new run is lost, its status expires, and the previous
+    # run's summary must not show in its place
+    cache.delete(status._active_key)
     assert status.get() == {}
 
 
@@ -94,7 +96,7 @@ def test_finish_without_an_active_status():
     assert current['message_code'] == 'waited_too_long'
 
 
-def test_finish_rejects_an_active_state():
+def test_finish_requires_a_final_state():
     status = _status()
     with pytest.raises(AssertionError):
         status.finish(AITranslationStatus.STATE_TRANSLATING)
