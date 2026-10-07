@@ -100,7 +100,9 @@ def _mark_translation_failed(sender=None, args=None, exception=None, **kwargs):
 def run_message(message_code):
     """The text for a run's message code, in the active language. Runs
     store codes, not text, so each viewer sees messages in their own
-    language."""
+    language. A run that finished cleanly has no code, and no message."""
+    if message_code is None:
+        return None
     return {
         NOT_QUEUED: _("The translation couldn't be queued. Run it again."),
         NO_LONGER_AVAILABLE: _("AI translation is no longer available for this project."),

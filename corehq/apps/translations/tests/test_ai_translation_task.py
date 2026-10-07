@@ -146,6 +146,10 @@ def test_run_message():
         "More than 20% of translations failed validation and were skipped.")
 
 
+def test_run_message_without_a_code():
+    assert run_message(None) is None
+
+
 def _summary(total=10, translated=0, skipped=0, changed=0):
     return {
         'total': total,
