@@ -33,12 +33,22 @@ def _build_app():
     )
 
 
-def _patch_released_build(app):
+def _patch_released_build(app, live_app_ids=('app-1',)):
     """Serve ``app`` as the latest released build for a single app id."""
     return patch.multiple(
         form_choices,
+        get_app_ids_in_domain=lambda domain: list(live_app_ids),
         get_latest_released_build_ids_by_app_id=lambda domain: {'app-1': 'build-1'},
-        iter_docs=lambda db, build_ids: [app.to_json()],
+        iter_docs=lambda db, build_ids: [app.to_json() for __ in build_ids],
+    )
+
+
+def _patch_released_app(app, live_app_ids=('app-1',)):
+    """Serve ``app`` as the latest released build of any app id."""
+    return patch.multiple(
+        form_choices,
+        get_app_ids_in_domain=lambda domain: list(live_app_ids),
+        get_latest_released_app=lambda domain, app_id: app,
     )
 
 
@@ -69,12 +79,20 @@ def test_choices_omit_app_with_no_eligible_forms():
     assert choices == []
 
 
+@disable_quickcache
+def test_choices_omit_deleted_app():
+    data = _build_app()
+    with _patch_released_build(data.app, live_app_ids=()):
+        choices = form_choices.get_public_webform_choices(data.domain)
+    assert choices == []
+
+
 @pytest.mark.parametrize('form_id_attr', ['survey_form_id', 'registration_form_id'])
 def test_eligible_form_resolves_selection(form_id_attr):
     data = _build_app()
-    with patch.object(form_choices, 'get_latest_released_app', return_value=data.app):
+    with _patch_released_app(data.app):
         form = form_choices.get_public_webform_eligible_form(
-            data.domain, 'ignored-app-id', getattr(data, form_id_attr))
+            data.domain, 'app-1', getattr(data, form_id_attr))
     assert form is not None
     assert form.unique_id == getattr(data, form_id_attr)
 
@@ -89,16 +107,24 @@ def test_eligible_form_rejects_invalid_selection(form_id_or_attr):
     # Attribute names resolve to a real form id; anything else is used as-is
     # (a form id that doesn't exist in the released build).
     form_unique_id = getattr(data, form_id_or_attr, form_id_or_attr)
-    with patch.object(form_choices, 'get_latest_released_app', return_value=data.app):
+    with _patch_released_app(data.app):
         form = form_choices.get_public_webform_eligible_form(
-            data.domain, 'ignored-app-id', form_unique_id)
+            data.domain, 'app-1', form_unique_id)
     assert form is None
 
 
 def test_eligible_form_rejects_app_without_released_build():
-    with patch.object(form_choices, 'get_latest_released_app', return_value=None):
+    with _patch_released_app(None, live_app_ids=('unreleased-app',)):
         form = form_choices.get_public_webform_eligible_form(
             'pwf-test', 'unreleased-app', 'any-form')
+    assert form is None
+
+
+def test_eligible_form_rejects_deleted_app():
+    data = _build_app()
+    with _patch_released_app(data.app, live_app_ids=()):
+        form = form_choices.get_public_webform_eligible_form(
+            data.domain, 'app-1', data.survey_form_id)
     assert form is None
 
 
