@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from unmagic import fixture, use
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
@@ -52,6 +53,17 @@ def create_session(webform, **kwargs):
         'expires_at': timezone.now() + datetime.timedelta(hours=1),
         **kwargs,
     })
+
+
+@use('db')
+@fixture
+def saved_app():
+    app = Application.new_app(DOMAIN, 'Antenatal')
+    app.save()
+    try:
+        yield app
+    finally:
+        Application.get_db().delete_doc(app._id)
 
 
 @use('db')
