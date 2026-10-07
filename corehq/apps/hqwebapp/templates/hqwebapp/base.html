@@ -82,7 +82,7 @@
       {% block messages %}{% endblock %}
 
       {% block content %}{% endblock content %}
-      {% if CHATBOT_ID and request|feature_preview_enabled:"OCS_CHATBOT" and request.couch_user|has_chatbot_allowance %}
+      {% if CHATBOT_ID and CHATBOT_TOKEN and request|feature_preview_enabled:"OCS_CHATBOT" and request.couch_user|has_chatbot_allowance %}
         {% registerurl 'chat_quota' %}
         {% registerurl 'chat_token' %}
         <div class="ocs-widget-container">
@@ -91,6 +91,7 @@
             disabled="true"
             banner-position="bottom"
             chatbot-id="{{ CHATBOT_ID }}"
+            embed-key="{{ CHATBOT_TOKEN }}"
             icon-url="{% static 'hqwebapp/images/chatbot_avatar.png' %}"
             position="right"
             language="{{ LANGUAGE_CODE }}"
