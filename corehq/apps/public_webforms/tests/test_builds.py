@@ -15,9 +15,11 @@ from corehq.apps.app_manager.tests.util import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.public_webforms.app_builds import (
     _restrict_reports_to_form,
+    canonical_app_id,
     create_public_webform_build,
     delete_public_webform_build,
 )
+from corehq.apps.receiverwrapper.util import get_app_and_build_ids
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.blobs import get_blob_db
 
@@ -54,6 +56,14 @@ def test_restrict_reports_to_form_keeps_only_what_the_form_references(
     _restrict_reports_to_form(factory.app, form.unique_id)
 
     assert [c.report_slug for c in report_module.report_configs] == expected
+
+
+@pytest.mark.parametrize('copy_of, expected', [
+    ('abc123__public_webform', 'abc123'),
+    ('abc123', 'abc123'),
+], ids=['public-webform-build', 'ordinary-build'])
+def test_canonical_app_id(copy_of, expected):
+    assert canonical_app_id(copy_of) == expected
 
 
 @use('db')
@@ -114,6 +124,20 @@ class TestCreatePublicWebformBuild:
         suite = new_build.fetch_attachment('files/suite.xml')
         suite = suite.decode('utf-8')
         assert endpoint_id in suite
+
+    def test_submissions_are_attributed_to_the_app(self):
+        app = released_app()
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        assert get_app_and_build_ids(app.domain, build_id) == (app.app_id, build_id)
+
+    def test_build_originates_from_the_app(self):
+        app = released_app()
+        build_id, __ = create_public_webform_build(
+            app.domain, app.app_id, app.form_unique_id)
+
+        assert get_app(app.domain, build_id).origin_id == app.app_id
 
     def test_canonical_is_never_written(self):
         app = released_app()
