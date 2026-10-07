@@ -130,6 +130,17 @@
                     ></div>
                   </div>
                   <!-- /ko -->
+                  <div class="small" data-bind="visible: display().partial">
+                    {% blocktrans trimmed %}
+                      To translate the remaining strings yourself, use
+                      <a
+                        href="#bulk-application-translations"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#bulk-application-translations"
+                        >Bulk Application Translations</a
+                      >.
+                    {% endblocktrans %}
+                  </div>
                   <div
                     class="small text-warning-emphasis"
                     data-bind="visible: display().warning, text: display().warning"

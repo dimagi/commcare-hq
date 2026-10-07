@@ -149,7 +149,7 @@ var languageModel = function (options, panel) {
  */
 var statusDisplay = function (supported, status, lastRun) {
     var display = {
-        label: "", labelClass: "text-bg-secondary", detail: "", warning: "", progress: null, share: null,
+        label: "", labelClass: "text-bg-secondary", detail: "", warning: "", progress: null, share: null, partial: false,
     };
     if (!supported) {
         display.label = gettext("Not yet supported");
@@ -203,6 +203,7 @@ var _finishedRunDisplay = function (display, status) {
     } else {
         display.label = gettext("Finished with errors");
         display.labelClass = "text-bg-warning";
+        display.partial = true;
         var parts = [interpolate(gettext("%(translated)s of %(total)s strings translated (%(percent)s%)"), {
             translated: _number(status.translated),
             total: _number(status.total),
@@ -237,6 +238,7 @@ var _lastRunStatusDisplay = function (display, lastRun) {
     } else {
         display.label = gettext("Partially translated");
         display.labelClass = "text-bg-warning";
+        display.partial = true;
         display.detail = interpolate(gettext(
             "%(translated)s of %(attempted)s strings translated in the last run · " +
             "%(missed)s weren't translated"), {
