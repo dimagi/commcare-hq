@@ -495,7 +495,7 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
             record.process_record(couch_user)
         except ResourceConflict:
             # https://sentry.io/dimagi/commcarehq/issues/521967014/
-            couch_user = CouchUser.get(couch_user.user_id)
+            couch_user = CouchUser.get_by_user_id(couch_user.user_id, strict=True)
             record.process_record(couch_user)
 
 

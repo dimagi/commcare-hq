@@ -1528,11 +1528,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         get_enterprise_links_for_dropdown.clear(self)
 
     @classmethod
-    @quickcache(['userID', 'domain'])
-    def get_by_user_id(cls, userID, domain=None):
+    @quickcache(['userID', 'domain'], skip_arg="strict")
+    def get_by_user_id(cls, userID, domain=None, strict=False):
         """
         if domain is given, checks to make sure the user is a member of that domain
         returns None if there's no user found or if the domain check fails
+        if strict is True, skips the cache and reads the latest doc from couch
         """
         try:
             couch_user = cls.wrap_correctly(cls.get_db().get(userID))

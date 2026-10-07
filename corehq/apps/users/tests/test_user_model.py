@@ -55,6 +55,17 @@ class UserModelTest(TestCase):
             created_via=None,
         )
 
+    def test_get_by_user_id_strict_bypasses_cache(self):
+        cached = CouchUser.get_by_user_id(self.user._id)
+        doc = CouchUser.get_db().get(self.user._id)
+        doc['first_name'] = 'changed out of band'
+        CouchUser.get_db().save_doc(doc)
+
+        assert CouchUser.get_by_user_id(self.user._id)._rev == cached._rev
+        fresh = CouchUser.get_by_user_id(self.user._id, strict=True)
+        assert fresh._rev == doc['_rev']
+        assert isinstance(fresh, CommCareUser)
+
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
         self.assertEqual(len(form_ids), 1)

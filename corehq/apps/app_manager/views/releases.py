@@ -319,7 +319,7 @@ def save_copy(request, domain, app_id):
         user_id = request.couch_user.get_id
         with report_build_time(domain, app._id, 'new_release'):
             copy = make_app_build(app, comment, user_id)
-        CouchUser.get(user_id).set_has_built_app()
+        CouchUser.get_by_user_id(user_id, strict=True).set_has_built_app()
         if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
             ApplicationReleaseLog.objects.create(
                 domain=domain,
