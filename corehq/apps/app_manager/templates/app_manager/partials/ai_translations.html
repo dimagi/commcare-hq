@@ -103,10 +103,25 @@
                     class="small text-body-secondary"
                     data-bind="text: display().detail"
                   ></div>
+                  <!-- ko if: display().share -->
                   <div
-                    class="small text-body-secondary"
-                    data-bind="visible: display().share, text: display().share"
+                    class="small mt-2"
+                    data-bind="text: display().share.text"
                   ></div>
+                  <div
+                    class="progress mt-1"
+                    style="height: 6px"
+                    role="progressbar"
+                    data-bind="attr: {'aria-valuenow': display().share.percent}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <div
+                      class="progress-bar bg-success"
+                      data-bind="style: {width: display().share.percent + '%'}"
+                    ></div>
+                  </div>
+                  <!-- /ko -->
                   <!-- ko if: display().progress !== null -->
                   <div class="progress mt-1">
                     <div
@@ -146,10 +161,11 @@
         </div>
         <p class="small text-body-secondary mb-0">
           {% blocktrans trimmed %}
-            Status reflects the last AI Translate run. Strings you add or change
-            afterwards are translated the next time you run AI Translate.
-            Translations are applied to the current draft; make a new version to
-            release them.
+            Status reflects the last AI Translate run; the percentage is how
+            much of the whole app is AI translated as of that run. Strings you
+            add or change afterwards are translated the next time you run AI
+            Translate. Translations are applied to the current draft; make a new
+            version to release them.
           {% endblocktrans %}
         </p>
       {% endif %}

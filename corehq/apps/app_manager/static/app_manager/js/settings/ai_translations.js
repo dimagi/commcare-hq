@@ -149,7 +149,7 @@ var languageModel = function (options, panel) {
  */
 var statusDisplay = function (supported, status, lastRun) {
     var display = {
-        label: "", labelClass: "text-bg-secondary", detail: "", warning: "", progress: null, share: "",
+        label: "", labelClass: "text-bg-secondary", detail: "", warning: "", progress: null, share: null,
     };
     if (!supported) {
         display.label = gettext("Not yet supported");
@@ -174,12 +174,14 @@ var statusDisplay = function (supported, status, lastRun) {
         display.detail = gettext("Saving to the app");
     } else if (status.state === "done") {
         _finishedRunDisplay(display, status);
+        display.share = _appShare(status.total_app_strings ? status : lastRun);
     } else if (status.state === "error") {
         display.label = gettext("Failed");
         display.labelClass = "text-bg-danger";
         display.detail = status.message;
     } else {
         _lastRunStatusDisplay(display, lastRun);
+        display.share = _appShare(lastRun);
     }
     return display;
 };
@@ -225,14 +227,6 @@ var _lastRunStatusDisplay = function (display, lastRun) {
         display.label = gettext("No AI run yet");
         return;
     }
-    if (lastRun.total_app_strings) {
-        display.share = interpolate(gettext(
-            "AI share of the app: %(translated)s of %(total)s strings (%(percent)s%)"), {
-            translated: _number(lastRun.total_app_strings_ai_translated),
-            total: _number(lastRun.total_app_strings),
-            percent: Math.round(100 * lastRun.total_app_strings_ai_translated / lastRun.total_app_strings),
-        }, true);
-    }
     if (lastRun.strings_translated === lastRun.strings_attempted) {
         display.label = gettext("AI translated");
         display.labelClass = "text-bg-success";
@@ -265,6 +259,26 @@ var lastRunDisplay = function (status, lastRun) {
         return {date: "—", version: ""};
     }
     return {date: _formatDate(lastRun.created_on), version: _versionLine(lastRun.in_version)};
+};
+
+/**
+ * How much of the whole app is AI translated as of a run, or null if
+ * unknown. Unlike a run's own counts, this doesn't depend on which run
+ * happened last.
+ */
+var _appShare = function (run) {
+    if (!run || !run.total_app_strings) {
+        return null;
+    }
+    var percent = Math.round(100 * run.total_app_strings_ai_translated / run.total_app_strings);
+    return {
+        percent: percent,
+        text: interpolate(gettext("%(percent)s% of the app AI translated (%(translated)s of %(total)s strings)"), {
+            percent: percent,
+            translated: _number(run.total_app_strings_ai_translated),
+            total: _number(run.total_app_strings),
+        }, true),
+    };
 };
 
 var _versionLine = function (inVersion) {
