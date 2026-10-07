@@ -1,11 +1,22 @@
 from datetime import date, timedelta
 
+import pytest
+from django.http import Http404
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription, DefaultProductPlan, BillingAccount, \
     SubscriptionAdjustment
-from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn
-from corehq.apps.export.utils import get_default_export_settings_if_available
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
+from corehq.apps.export.models import (
+    CaseExportInstance,
+    ExportColumn,
+    FormExportInstance,
+    TableConfiguration,
+)
+from corehq.apps.export.utils import (
+    get_default_export_settings_if_available,
+    get_export,
+)
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import generator
 from corehq.apps.export.views.utils import clean_odata_columns
@@ -140,3 +151,34 @@ class TestOdataFeedUtils(SimpleTestCase):
         self.assertEqual(export_instance.tables[0].columns[4].label, 'label_reserved_character_05')
         self.assertEqual(export_instance.tables[0].columns[5].label, 'labelreservedcharacter06')
         self.assertEqual(export_instance.tables[0].columns[6].label, 'formid_deleted')
+
+
+class TestGetExport(TestCase):
+
+    domain = 'get-export-domain'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.form_export = FormExportInstance(domain=cls.domain, name='Forms')
+        cls.case_export = CaseExportInstance(domain=cls.domain, name='Cases')
+        cls.other_domain_export = FormExportInstance(domain='other-domain', name='Theirs')
+        for export in [cls.form_export, cls.case_export, cls.other_domain_export]:
+            export.save()
+            cls.addClassCleanup(export.delete)
+
+    def test_form_export(self):
+        export = get_export(FORM_EXPORT, self.domain, self.form_export._id)
+        assert export._id == self.form_export._id
+
+    def test_case_export(self):
+        export = get_export(CASE_EXPORT, self.domain, self.case_export._id)
+        assert export._id == self.case_export._id
+
+    def test_export_in_another_domain(self):
+        with pytest.raises(Http404):
+            get_export(FORM_EXPORT, self.domain, self.other_domain_export._id)
+
+    def test_export_of_another_type(self):
+        with pytest.raises(Http404):
+            get_export(FORM_EXPORT, self.domain, self.case_export._id)

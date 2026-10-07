@@ -32,6 +32,7 @@ from corehq.apps.export.const import (
     MAX_APP_COUNT,
     ALL_CASE_TYPE_EXPORT
 )
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
 from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportDataSchema,
@@ -238,7 +239,7 @@ class ODataFeedMixin(object):
     @property
     @memoized
     def new_export_instance(self):
-        export_instance = self.export_instance_cls.get(self.export_id)
+        export_instance = get_export_instance_or_404(self.domain, self.export_id)
         export_instance._id = None
         export_instance._rev = None
         return export_instance

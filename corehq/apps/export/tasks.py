@@ -25,7 +25,7 @@ from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
     get_daily_saved_export_ids_for_auto_rebuild,
-    get_properly_wrapped_export_instance,
+    wrap_export_instance,
 )
 from .export import get_export_file, rebuild_export
 from .logging import ExportLoggingContext
@@ -116,7 +116,13 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id, manual=False, username=None):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    # This task rebuilds a specific export by id. It is reached only from
+    # request handlers that already scoped the export to a project, or from
+    # the nightly auto-rebuild that spans all projects, so there is no
+    # requester domain to scope the lookup against.
+    from corehq.apps.export.models import ExportInstance
+    export_instance = wrap_export_instance(
+        ExportInstance.get_db().get(export_instance_id))
     rebuild_export(export_instance, progress_tracker=_start_export_task,
                    manual=manual, username=username)
 
