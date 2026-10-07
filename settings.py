@@ -1212,6 +1212,7 @@ DATA_RETENTION_WINDOW = 90  # days
 
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
 OCS_API_KEY = None
 OCS_OAUTH_CLIENT_ID = None
 OCS_OAUTH_CLIENT_SECRET = None
