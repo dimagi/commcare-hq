@@ -1,6 +1,7 @@
 """AI translation of app content via the bulk app translation pipeline."""
 import hashlib
 import json
+import logging
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -42,6 +43,8 @@ from corehq.apps.translations.integrations.llm import (
     get_llm_translator,
 )
 from corehq.apps.translations.models import AITranslation, AITranslationUsage
+
+logger = logging.getLogger(__name__)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -423,6 +426,12 @@ class AppTranslationFormat(TranslationFormat):
                 valid[unit_id] = translated
             else:
                 self.skipped_ids.add(unit_id)
+                # a skipped string is otherwise only a count in the summary
+                logger.warning(
+                    "AI translation failed validation and was skipped: "
+                    "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
+                    self.app.domain, self.app.get_id, self.target_lang,
+                    unit.string_key, unit.source_text[:200], str(translated)[:200])
         self.results.update(valid)
         return valid
 
