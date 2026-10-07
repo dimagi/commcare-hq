@@ -4,6 +4,13 @@ A filter spec (the JSON the query builder produces) is parsed into a tree of
 attrs nodes. :func:`parse_filter_spec` validates a spec against capability
 metadata and, when valid, returns the typed tree a query builder can consume.
 
+Endpoint parameters are shared by both kinds of endpoint. Project DB
+endpoints additionally bind them into SQL: :func:`sql_placeholders` gives the
+placeholder names a spec implies,
+:func:`validate_parameters_match_placeholders` checks them against the SQL's,
+and :func:`bind_values` maps a request's search criteria onto the values
+those placeholders take.
+
 The nodes follow the ``type``/``to_json``/``from_json`` convention used by
 :mod:`corehq.apps.app_execution.data_model`, so they round-trip to and from
 the stored JSON. (If a node tree is ever persisted via a model field, add
@@ -11,16 +18,26 @@ the stored JSON. (If a node tree is ever persisted via a model field, add
 """
 from __future__ import annotations
 
+from datetime import date
+from decimal import Decimal, InvalidOperation
 from typing import ClassVar
+
+from django.utils.translation import gettext as _
 
 from attr import Factory, define, field as attr_field, validators
 
 from corehq.apps.case_search.endpoint_capability import (
-    FIELD_TYPES,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATERANGE,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
+    FIELD_TYPE_TEXT,
     INPUT_TYPE_CHOICE,
     INPUT_TYPE_MATCH_FIELD,
     OPERATORS,
+    PARAMETER_TYPES,
 )
+from corehq.apps.case_search.exceptions import CaseSearchUserError
 
 # Group node types: all = AND, any = OR, none = NOR (no child matches).
 GROUP_TYPES = ('all', 'any', 'none')
@@ -35,7 +52,7 @@ MAX_TOTAL_NODES = 200
 @define
 class Parameter:
     name: str = attr_field(converter=str.strip, validator=validators.min_len(1))
-    type: str = attr_field(validator=validators.in_(FIELD_TYPES))
+    type: str = attr_field(validator=validators.in_(PARAMETER_TYPES))
 
 def parse_parameter_spec(spec):
     """Validate a parameter list spec and parse it.
@@ -64,10 +81,10 @@ def parse_parameter_spec(spec):
             seen_names.add(name)
 
         param_type = item.get('type', '')
-        if param_type not in FIELD_TYPES:
+        if param_type not in PARAMETER_TYPES:
             item_errors.append(
                 f"Parameter '{name or i}': invalid type '{param_type}'."
-                f" Must be one of: {', '.join(FIELD_TYPES)}"
+                f" Must be one of: {', '.join(PARAMETER_TYPES)}"
             )
 
         if item_errors:
@@ -75,9 +92,145 @@ def parse_parameter_spec(spec):
         else:
             parameters.append(Parameter(name=name, type=param_type))
 
+    errors.extend(_duplicate_placeholder_errors(parameters))
     if errors:
         return None, errors
     return parameters, []
+
+
+def _duplicate_placeholder_errors(parameters):
+    """Check for collisions between daterange placeholder names (x_from, x_to)
+    and placeholder directly derived from parameter names"""
+    seen = set()
+    for name in sql_placeholders(parameters):
+        if name in seen:
+            yield f"Duplicate SQL parameter name: '{name}'"
+        seen.add(name)
+
+
+def sql_placeholders(parameters):
+    return [name for param in parameters for name in placeholders_for(param)]
+
+
+def validate_parameters_match_placeholders(parameters, placeholders):
+    expected = set(sql_placeholders(parameters))
+    for name in sorted(set(placeholders) - expected):
+        yield (f"Undefined parameter ':{name}'. Add it under Parameters, "
+               f"or remove it from the SQL.")
+    for name in sorted(expected - set(placeholders)):
+        yield f"Parameter ':{name}' is not used by the SQL."
+
+
+def placeholders_for(param):
+    if param.type == FIELD_TYPE_DATERANGE:
+        return [f'{param.name}_from', f'{param.name}_to']
+    return [param.name]
+
+
+def bind_values(parameters, criteria):
+    """Map values onto the parameters ``UserSQL.run`` expects.
+
+    An absent value binds as ``None`` for every parameter type
+
+    A blank value is different for ``text``: it is one the searcher
+    purposefully supplied, so it is bound as given. For every other type
+    blank means nothing was chosen, so it binds as unset the same as an
+    absent criterion.
+
+    A blank among several values means "or the property is missing".
+    Endpoints can't express that, so it is rejected instead of being
+    silently ignored.
+
+    Date ranges are expected in the format ``SearchCriteria.validate``
+    enforces.
+
+    Dates and numbers are parsed here rather than left to Postgres, so a bad
+    value is a user error, and Postgres-only input like ``'today'`` or
+    ``'NaN'`` is not accepted.
+
+    :raises CaseSearchUserError: when a criterion's shape does not match the
+        type its parameter declares.
+    """
+    by_key = {c.key: c for c in criteria}
+    values = {}
+    for param in parameters:
+        values.update(_bind_parameter(param, by_key.get(param.name)))
+    return values
+
+
+def _bind_parameter(param, criteria):
+    if criteria is not None and criteria.has_multiple_terms and criteria.has_missing_filter:
+        raise CaseSearchUserError(
+            _("Searching for blank values is not supported for '{}'").format(param.name)
+        )
+    if param.type == FIELD_TYPE_TEXT:
+        return {param.name: _as_scalar(param, _raw_value(criteria))}
+    if param.type == FIELD_TYPE_DATERANGE:
+        return dict(zip(placeholders_for(param), _as_date_range(param, criteria)))
+    value = _value_or_none(criteria)
+    if param.type == FIELD_TYPE_SELECT:
+        return {param.name: _as_list(value)}
+    value = _as_scalar(param, value)
+    if value is not None and param.type == FIELD_TYPE_DATE:
+        value = _as_date(param, value)
+    elif value is not None and param.type == FIELD_TYPE_NUMBER:
+        value = _as_number(param, value)
+    return {param.name: value}
+
+
+def _raw_value(criteria):
+    """The criterion's value as supplied, with a blank kept as a blank"""
+    return None if criteria is None else criteria.value
+
+
+def _value_or_none(criteria):
+    return None if criteria is None else criteria.value or None
+
+
+def _as_scalar(param, value):
+    if isinstance(value, list):
+        raise CaseSearchUserError(
+            _("Only one value may be given for '{}'").format(param.name)
+        )
+    return value
+
+
+def _as_list(value):
+    if value is None:
+        return None
+    return value if isinstance(value, list) else [value]
+
+
+def _as_date(param, value):
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise CaseSearchUserError(
+            _("'{}' must be a date in YYYY-MM-DD format").format(param.name)
+        )
+
+
+def _as_number(param, value):
+    try:
+        number = Decimal(value)
+    except InvalidOperation:
+        number = None
+    if number is None or not number.is_finite():
+        raise CaseSearchUserError(
+            _("'{}' must be a number").format(param.name)
+        )
+    return number
+
+
+def _as_date_range(param, criteria):
+    if criteria is None or criteria.is_empty:
+        return None, None
+    if criteria.has_multiple_terms or not criteria.is_daterange:
+        raise CaseSearchUserError(
+            _("'{}' must be given as a date range").format(param.name)
+        )
+    start, end = criteria.get_date_range()
+    return _as_date(param, start), _as_date(param, end)
 
 @define
 class ConstantInput:
