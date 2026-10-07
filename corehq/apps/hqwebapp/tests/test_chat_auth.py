@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqwebapp import chat_auth, chat_usage
+from corehq.apps.hqwebapp.chat_quota import CHATBOT_MESSAGE_QUOTA_BY_EDITION
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
@@ -71,11 +72,11 @@ class ChatAuthTokenTestCase(TestCase):
 
     def test_usage_below_limit_returns_token(self):
         user = self._make_user('test@example.com', self.standard_domain.name)
-        # standard plan has 30 messages per month
+        limit = CHATBOT_MESSAGE_QUOTA_BY_EDITION[SoftwarePlanEdition.STANDARD]
         with self.mock_auth_token_request() as http:
             http.get(
                 chat_usage._USAGE_URL,
-                json={'results': {'messages': {'human': 29}}},
+                json={'results': {'messages': {'human': limit - 1}}},
             )
             response = _call_chat_token(user)
             assert response.status_code == 200
@@ -84,11 +85,11 @@ class ChatAuthTokenTestCase(TestCase):
 
     def test_usage_at_limit_returns_403(self):
         user = self._make_user('test@example.com', self.standard_domain.name)
-        # standard plan has 30 messages per month
+        limit = CHATBOT_MESSAGE_QUOTA_BY_EDITION[SoftwarePlanEdition.STANDARD]
         with self.mock_auth_token_request() as http:
             http.get(
                 chat_usage._USAGE_URL,
-                json={'results': {'messages': {'human': 30}}},
+                json={'results': {'messages': {'human': limit}}},
             )
             response = _call_chat_token(user)
             assert response.status_code == 403
