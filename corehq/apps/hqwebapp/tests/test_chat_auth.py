@@ -111,22 +111,14 @@ def _subscribe_domain(domain_name, edition):
         created_by='test@example.com',
     )[0]
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain_name)
-    Subscription.visible_objects.bulk_create(
-        [
-            Subscription(
-                account=account,
-                subscriber=subscriber,
-                plan_version=DefaultProductPlan.get_default_plan_version(
-                    edition=edition
-                ),
-                date_start=date.today(),
-                is_active=True,
-            )
-        ]
+    subscription = Subscription(
+        account=account,
+        subscriber=subscriber,
+        plan_version=DefaultProductPlan.get_default_plan_version(edition=edition),
+        date_start=date.today(),
+        is_active=True,
     )
-    Subscription._get_active_subscription_by_domain.clear(
-        Subscription, domain_name
-    )
+    subscription.save()
 
 
 def _call_chat_token(couch_user):
