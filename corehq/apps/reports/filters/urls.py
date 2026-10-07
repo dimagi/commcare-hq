@@ -8,11 +8,13 @@ from .api import (
     MobileWorkersOptionsView,
     CaseListActionOptions,
     EnterpriseUserOptions,
+    SubmittedByOptionsView,
 )
 from .location import LocationGroupFilterOptions
 
 urlpatterns = [
     url(r'^emwf_options_all_users/$', EmwfOptionsView.as_view(), name='emwf_options_all_users'),
+    url(r'^submitted_by_options/$', SubmittedByOptionsView.as_view(), name='submitted_by_options'),
     url(r'^users_options/$', MobileWorkersOptionsView.as_view(), name=MobileWorkersOptionsView.urlname),
     url(r'^enterprise_users_options/$', EnterpriseUserOptions.as_view(), name="enterprise_user_options"),
     url(r'^case_list_options/$', CaseListFilterOptions.as_view(), name='case_list_options'),

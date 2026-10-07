@@ -23,6 +23,7 @@ from corehq.apps.reports.filters.controllers import (
     EnterpriseUserOptionsController,
     MobileWorkersOptionsController,
     ReassignCaseOptionsController,
+    SubmittedByOptionsController,
 )
 from corehq.elastic import ESError
 
@@ -67,6 +68,15 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
             'results': [],
             'total': 0,
         })
+
+
+@location_safe
+class SubmittedByOptionsView(EmwfOptionsView):
+
+    @property
+    @memoized
+    def options_controller(self):
+        return SubmittedByOptionsController(self.request, self.domain, self.search)
 
 
 class MobileWorkersOptionsView(EmwfOptionsView):
