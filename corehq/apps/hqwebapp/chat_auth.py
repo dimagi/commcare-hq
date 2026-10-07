@@ -2,7 +2,7 @@
 
 import requests
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 
 from corehq import toggles
@@ -23,10 +23,10 @@ def chat_token(request):
         if toggles.OCS_CHATBOT_PAGE_CONTEXT.enabled_for_request(request):
             limit = get_chatbot_message_quota(couch_user)
             if limit == 0:
-                return HttpResponse(status=403)
+                return HttpResponseForbidden()
             if limit != UNLIMITED:
                 if fetch_chat_usage_from_ocs(couch_user.user_id) >= limit:
-                    return HttpResponse(status=403)
+                    return HttpResponseForbidden()
         token = _mint_widget_token()
     except (ChatUsageUnavailable, ChatTokenUnavailable):
         return HttpResponse(status=503)
