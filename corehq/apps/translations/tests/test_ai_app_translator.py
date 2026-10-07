@@ -36,10 +36,16 @@ from corehq.apps.translations.models import AITranslation, AITranslationUsage
     ("Name", "Nom", True),
     ("Name", "", False),                      # empty output
     ("Name", None, False),                    # non-string output
-    # <output> tags must survive verbatim (count + name sequence + attrs)
+    # <output> tags must survive verbatim (count + attrs)
     ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/name"/>', True),
     ('Hello <output value="/data/name"/>', 'Bonjour', False),
     ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/nom"/>', False),
+    # word order differs between languages, so outputs may move, but not repeat
+    ('<output value="/data/a"/> on <output value="/data/b"/>',
+     '<output value="/data/b"/>的<output value="/data/a"/>', True),
+    ('<b>Seen</b> <output value="/data/a"/>', '<output value="/data/a"/> <b>Vu</b>', True),
+    ('<output value="/data/a"/> on <output value="/data/b"/>',
+     '<output value="/data/a"/>的<output value="/data/a"/>', False),
     # HTML tag sequence preserved
     ("<b>Save</b>", "<b>Enregistrer</b>", True),
     ("<b>Save</b>", "Enregistrer", False),

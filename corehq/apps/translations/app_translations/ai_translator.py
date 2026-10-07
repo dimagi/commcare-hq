@@ -655,17 +655,19 @@ def is_valid_app_translation(source, translated):
     if len(source_tags) != len(translated_tags):
         return False
     if source_tags:
-        # tags must keep their names, order and open/close structure;
-        # attributes are not compared here
+        # tags other than <output/> must keep their names, order and
+        # open/close structure; attributes are not compared here
         def tag_info(tags):
             return [re.match(r'<(/?)(\w+)', tag).groups()
-                    for tag in tags if re.match(r'<(/?)(\w+)', tag)]
+                    for tag in tags
+                    if re.match(r'<(/?)(\w+)', tag) and not tag.startswith('<output')]
         if tag_info(source_tags) != tag_info(translated_tags):
             return False
-        # <output .../> references must survive byte-for-byte,
-        # attributes included — a changed value breaks the form
-        source_outputs = [t for t in source_tags if t.startswith('<output')]
-        translated_outputs = [t for t in translated_tags if t.startswith('<output')]
+        # <output .../> references must survive byte-for-byte, attributes
+        # included (a changed value breaks the form), but word order
+        # differs between languages, so they may move
+        source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
+        translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
         if source_outputs != translated_outputs:
             return False
 
