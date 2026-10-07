@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.exceptions import ChatUsageUnavailable
 
 # Longer than any calendar month
 _CACHE_TIMEOUT = 60 * 60 * 24 * 32
-_USAGE_URL = 'https://openchatstudio.com/api/v2/usage/'
+_USAGE_URL = 'https://www.openchatstudio.com/api/v2/usage/'
 
 
 def _cache_key(user_id):
