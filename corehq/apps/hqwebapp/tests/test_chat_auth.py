@@ -1,12 +1,11 @@
+from contextlib import contextmanager
 from datetime import date
 
 from django.core.cache import cache
-from django.test import RequestFactory, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
-import pytest
 import requests_mock
-from unmagic import use
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -21,99 +20,91 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
 
-@use('db')
-@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
-@override_settings(ENTERPRISE_MODE=False)
-def test_zero_quota_returns_403_without_calling_ocs():
-    user = _create_web_user('test@example.com')
-    try:
-        with requests_mock.Mocker() as http:
-            response = chat_auth.chat_token(_token_request(user))
-            assert response.status_code == 403
-            assert response.content == b''
-            assert not http.called
-    finally:
-        user.delete(None, deleted_by=None)
-
-
-@use('db')
-@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
-@pytest.mark.parametrize(
-    ('used', 'status'),
-    [
-        (29, 200),  # used < limit (Standard = 30)
-        (30, 403),  # used == limit
-    ],
-)
 @override_settings(
     ENTERPRISE_MODE=False,
     OCS_API_KEY='usage-key',
     OCS_OAUTH_CLIENT_ID='client-id',
     OCS_OAUTH_CLIENT_SECRET='client-secret',
 )
-def test_usage_against_limit(used, status):
-    domain = create_domain('test-domain')
-    _subscribe_domain_to_standard_plan(domain.name)
-    user = _create_web_user('test@example.com', domain=domain.name)
-    try:
+@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
+class ChatAuthTokenTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.standard_domain = create_domain('test-domain')
+        cls.free_domain = create_domain('test-free-domain')
+        _subscribe_domain(cls.standard_domain.name, SoftwarePlanEdition.STANDARD)
+        _subscribe_domain(cls.free_domain.name, SoftwarePlanEdition.FREE)
+        for project in (cls.standard_domain, cls.free_domain):
+            cls.addClassCleanup(
+                Subscription._get_active_subscription_by_domain.clear,
+                Subscription, project.name,
+            )
+            cls.addClassCleanup(project.delete)
+
+    @contextmanager
+    def mock_auth_token_request(self):
         with requests_mock.Mocker() as http:
+            http.post(chat_auth._TOKEN_URL, json={'access_token': 'widget-token'})
+            yield http
+
+    def _make_user(self, username, domain):
+        user = WebUser.create(
+            domain,
+            username,
+            'password',
+            created_by=None,
+            created_via=None,
+        )
+        self.addCleanup(user.delete, domain, deleted_by=None)
+        self.addCleanup(cache.delete, chat_usage._cache_key(user.user_id))
+        return user
+
+    def test_zero_quota_returns_403_without_calling_ocs(self):
+        user = self._make_user('test@example.com', self.free_domain.name)
+        with self.mock_auth_token_request() as http:
+            response = _call_chat_token(user)
+            assert response.status_code == 403
+            assert response.content == b''
+            assert not http.called
+
+    def test_usage_below_limit_returns_token(self):
+        user = self._make_user('test@example.com', self.standard_domain.name)
+        # standard plan has 30 messages per month
+        with self.mock_auth_token_request() as http:
             http.get(
                 chat_usage._USAGE_URL,
-                json={'results': {'messages': {'human': used}}},
+                json={'results': {'messages': {'human': 29}}},
             )
-            http.post(
-                chat_auth._TOKEN_URL, json={'access_token': 'widget-token'}
-            )
-            response = chat_auth.chat_token(_token_request(user))
-            assert response.status_code == status
-            if status == 200:
-                assert response.content == b'widget-token'
-                assert http.call_count == 2
-            else:
-                assert response.content == b''
-                assert http.call_count == 1  # fetch usage only
-    finally:
-        cache.delete(chat_usage._cache_key(user.user_id))
-        user.delete(domain.name, deleted_by=None)
-        Subscription._get_active_subscription_by_domain.clear(
-            Subscription, domain.name
-        )
-        domain.delete()
+            response = _call_chat_token(user)
+            assert response.status_code == 200
+            assert response.content == b'widget-token'
+            assert http.call_count == 2
 
-
-@use('db')
-@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
-@override_settings(
-    ENTERPRISE_MODE=False,
-    OCS_OAUTH_CLIENT_ID='client-id',
-    OCS_OAUTH_CLIENT_SECRET='client-secret',
-)
-def test_unlimited_returns_plain_text_token():
-    user = _create_web_user('staff@dimagi.com')
-    try:
-        with requests_mock.Mocker() as http:
-            http.post(
-                chat_auth._TOKEN_URL, json={'access_token': 'widget-token'}
+    def test_usage_at_limit_returns_403(self):
+        user = self._make_user('test@example.com', self.standard_domain.name)
+        # standard plan has 30 messages per month
+        with self.mock_auth_token_request() as http:
+            http.get(
+                chat_usage._USAGE_URL,
+                json={'results': {'messages': {'human': 30}}},
             )
-            response = chat_auth.chat_token(_token_request(user))
+            response = _call_chat_token(user)
+            assert response.status_code == 403
+            assert response.content == b''
+            assert http.call_count == 1  # fetch usage only
+
+    def test_unlimited_returns_plain_text_token(self):
+        user = self._make_user('staff@dimagi.com', self.standard_domain.name)
+        with self.mock_auth_token_request() as http:
+            response = _call_chat_token(user)
             assert response.status_code == 200
             assert response.content == b'widget-token'
             assert http.call_count == 1
-    finally:
-        user.delete(None, deleted_by=None)
 
 
-def _create_web_user(username, domain=None):
-    return WebUser.create(
-        domain,
-        username,
-        'password',
-        created_by=None,
-        created_via=None,
-    )
-
-
-def _subscribe_domain_to_standard_plan(domain_name):
+def _subscribe_domain(domain_name, edition):
     account = BillingAccount.get_or_create_account_by_domain(
         domain_name,
         created_by='test@example.com',
@@ -125,7 +116,7 @@ def _subscribe_domain_to_standard_plan(domain_name):
                 account=account,
                 subscriber=subscriber,
                 plan_version=DefaultProductPlan.get_default_plan_version(
-                    edition=SoftwarePlanEdition.STANDARD
+                    edition=edition
                 ),
                 date_start=date.today(),
                 is_active=True,
@@ -137,8 +128,8 @@ def _subscribe_domain_to_standard_plan(domain_name):
     )
 
 
-def _token_request(couch_user):
+def _call_chat_token(couch_user):
     request = RequestFactory().post(reverse('chat_token'))
     request.user = couch_user.get_django_user()
     request.couch_user = couch_user
-    return request
+    return chat_auth.chat_token(request)
