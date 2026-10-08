@@ -31,3 +31,12 @@ EXCEPTION
     RETURN NULL;
 END;
 $$;
+
+-- Split a space-separated string into an array
+CREATE OR REPLACE FUNCTION lib_projectdb.coerce_to_array(value text)
+RETURNS text[]
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT coalesce(array_remove(string_to_array(value, ' '), ''), '{}')
+$$;

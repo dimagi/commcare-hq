@@ -109,13 +109,6 @@ def _as_utc(value):
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
-def coerce_to_select(value):
-    """Split a space-separated multi-select value into a list of choices"""
-    if value is None:
-        return []
-    return [x for x in str(value).split(' ') if x]
-
-
 def coerce_to_gps(value):
     """Parse a GPS case property into an earthdistance ``earth`` cube literal."""
     try:
@@ -135,7 +128,6 @@ def coerce_to_gps(value):
 
 # Together with _SQL_COERCIONS, parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
-    (CaseProperty.DataType.SELECT, coerce_to_select),
     (CaseProperty.DataType.GPS, coerce_to_gps),
 ]
 
@@ -143,4 +135,5 @@ _TYPED_COERCIONS = [
 _SQL_COERCIONS = [
     (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
     (CaseProperty.DataType.NUMBER, func.lib_projectdb.coerce_to_number),
+    (CaseProperty.DataType.SELECT, func.lib_projectdb.coerce_to_array),
 ]

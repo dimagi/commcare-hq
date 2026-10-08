@@ -10,7 +10,6 @@ from unmagic import use
 from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_gps,
-    coerce_to_select,
     populate_case_type,
     send_cases_to_project_db,
     upsert_cases,
@@ -28,6 +27,7 @@ from .util import project_db_table
 
 to_date = func.lib_projectdb.coerce_to_date
 to_number = func.lib_projectdb.coerce_to_number
+to_array = func.lib_projectdb.coerce_to_array
 
 
 @pytest.mark.parametrize('coercion, expected', [
@@ -45,25 +45,17 @@ to_number = func.lib_projectdb.coerce_to_number
     (to_number('1e3'), Decimal('1E+3')),
     (to_number('1_000'), None),
     (to_number('1e1000000'), None),
+    (to_array(' red '), ['red']),
+    (to_array('red  blue'), ['red', 'blue']),
+    (to_array(None), []),
+    (to_array(''), []),
+    (to_array('  '), []),
 ])
 @use('db')
 def test_sql_coercion(coercion, expected):
     with get_project_db_engine().begin() as conn:
         result = conn.execute(sqlalchemy.select([coercion])).scalar()
     assert result == expected
-
-
-@pytest.mark.parametrize('value, expected', [
-    ('red',            ['red']),
-    (' red ',         ['red']),
-    ('red  blue',     ['red', 'blue']),
-    ('red green blue', ['red', 'green', 'blue']),
-    (None,            []),
-    ('',              []),
-    ('  ',           []),
-])
-def test_coerce_to_select(value, expected):
-    assert coerce_to_select(value) == expected
 
 
 def assert_gps_equals(actual_str, expected):
@@ -152,16 +144,13 @@ def _utc_datetime(*args):
     # raw value coerced to str
     ({'count': 42}, {'prop__count'}, {'prop__count': '42'}),
     # typed columns coerced in SQL are left to upsert_cases
-    ({'dob': '1990-05-20', 'weight': '70.5'},
-     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight'},
-     {'prop__dob': '1990-05-20', 'prop__weight': '70.5'}),
+    ({'dob': '1990-05-20', 'weight': '70.5', 'interests': 'sports music'},
+     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight',
+      'prop__interests', 'select_prop__interests'},
+     {'prop__dob': '1990-05-20', 'prop__weight': '70.5',
+      'prop__interests': 'sports music'}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
-    # select property populates both the raw and the text[] column
-    ({'interests': 'sports music'},
-     {'prop__interests', 'select_prop__interests'},
-     {'prop__interests': 'sports music',
-      'select_prop__interests': ['sports', 'music']}),
 ])
 def test_property_columns(case_json, columns, expected_props):
     result = case_to_row(_make_case(case_json=case_json), columns)
