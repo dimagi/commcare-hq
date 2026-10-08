@@ -1,7 +1,7 @@
 import datetime
 from collections import defaultdict
 
-from sqlalchemy import ARRAY, Text, bindparam, func
+from sqlalchemy import bindparam, func
 from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
@@ -38,14 +38,12 @@ def populate_case_type(domain, case_type, cases):
 
 def upsert_cases(conn, table, cases):
     """Insert or update cases into a project DB table"""
-    column_names = table.c.keys()
-    rows = [case_to_row(case, column_names) for case in cases]
-    rows = [_normalize(row, table.c) for row in rows]
     stmt = insert(table).values(_insert_values(table))
     stmt = stmt.on_conflict_do_update(
         index_elements=['case_id'],
-        set_={col: stmt.excluded[col] for col in column_names if col != 'case_id'},
+        set_={col: stmt.excluded[col] for col in table.c.keys() if col != 'case_id'},
     )
+    rows = [case_to_row(case, table.c) for case in cases]
     conn.execute(stmt, rows)
 
 
@@ -61,20 +59,7 @@ def _insert_values(table):
     return values
 
 
-def _normalize(row, columns):
-    filled = {}  # Row with all columns present
-    for column in columns:
-        value = row.get(column.name)
-        if value is None and not column.nullable:
-            if isinstance(column.type, ARRAY):
-                value = []
-            elif isinstance(column.type, Text):
-                value = ''
-        filled[column.name] = value
-    return filled
-
-
-def case_to_row(case, table_columns):
+def case_to_row(case, columns):
     """Map case to table column names for insertion"""
     ids_by_identifier = {idx.identifier: idx.referenced_id for idx in case.live_indices}
     row = {  # Mirrors CaseTable._static_columns
@@ -85,15 +70,15 @@ def case_to_row(case, table_columns):
         'closed_on': _as_utc(case.closed_on),
         'modified_on': _as_utc(case.modified_on),
         'closed': case.closed,
-        'external_id': case.external_id,
+        'external_id': case.external_id or '',
         'server_modified_on': _as_utc(case.server_modified_on),
         'parent_id': ids_by_identifier.get('parent'),
         'host_id': ids_by_identifier.get('host'),
     }
-    for key, value in case.case_json.items():
-        col_name = property_column(key)
-        if col_name in table_columns:
-            row[col_name] = str(value)
+    for column in columns:
+        if column.name.startswith('prop__'):
+            value = case.case_json.get(column.comment)
+            row[column.name] = '' if value is None else str(value)
     return row
 
 
