@@ -19,6 +19,7 @@ from corehq.apps.translations.management.commands import translate_po_files
 from corehq.apps.translations.management.commands.translate_po_files import (
     PoTranslationFormat,
     counts_by_plural_index_from_header,
+    entry_has_control_chars,
 )
 from corehq.tests.tools import nottest
 
@@ -769,15 +770,44 @@ def test_remove_errored_translations_clears_plural_forms():
         os.remove(po_file_path)
 
 
+@pytest.mark.parametrize("entry, expected", [
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \x14 ahora"), True),
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \u2014 ahora"), False),
+    # A control character that is already in the msgid is allowed
+    (polib.POEntry(msgid="Page\x0cbreak", msgstr="Salto\x0cde p\u00e1gina"), False),
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\u00f3n", 1: "{count} invitaciones"},
+    ), False),
+    # One broken plural form is enough
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\x13n", 1: "{count} invitaciones"},
+    ), True),
+    # The source of a plural form is both msgid and msgid_plural
+    (polib.POEntry(
+        msgid="{count} page", msgid_plural="{count}\x0cpages",
+        msgstr_plural={0: "{count} p\u00e1gina", 1: "{count}\x0cp\u00e1ginas"},
+    ), False),
+])
+def test_entry_has_control_chars(entry, expected):
+    assert entry_has_control_chars(entry) is expected
+
+
 def test_check_and_remove_errored_messages_clears_control_chars():
     po_content = (
         'msgid ""\n'
         'msgstr ""\n'
-        '"Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        '"Plural-Forms: nplurals=2; plural=(n > 1);\\n"\n\n'
         'msgid "Save — now"\n'
         'msgstr "Enregistrer \x14 maintenant"\n\n'
         'msgid "Cancel — later"\n'
-        'msgstr "Annuler — plus tard"\n'
+        'msgstr "Annuler — plus tard"\n\n'
+        'msgid "{count} page — done"\n'
+        'msgid_plural "{count} pages — done"\n'
+        'msgstr[0] "{count} page \x14 termin\u00e9e"\n'
+        'msgstr[1] "{count} pages — termin\u00e9es"\n'
     )
     with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False, encoding="utf-8") as tmp:
         tmp.write(po_content)
@@ -793,6 +823,7 @@ def test_check_and_remove_errored_messages_clears_control_chars():
         updated = polib.pofile(po_file_path)
         assert updated.find("Save — now").msgstr == ""
         assert updated.find("Cancel — later").msgstr == "Annuler — plus tard"
+        assert updated.find("{count} page — done").msgstr_plural == {0: "", 1: ""}
     finally:
         os.remove(po_file_path)
 

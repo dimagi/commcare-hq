@@ -87,6 +87,17 @@ def has_control_chars(msgid, msgstr):
     return bool(set(CONTROL_CHARS_RE.findall(msgstr)) - set(CONTROL_CHARS_RE.findall(msgid)))
 
 
+def entry_has_control_chars(entry):
+    """
+    Like ``has_control_chars``, but for a whole PO entry, including each
+    plural form of a plural entry.
+    """
+    if entry.msgid_plural:
+        source = entry.msgid + entry.msgid_plural
+        return any(has_control_chars(source, msgstr) for msgstr in entry.msgstr_plural.values())
+    return has_control_chars(entry.msgid, entry.msgstr)
+
+
 # msgfmt errors look like "<file>.po:<line>: <message>"
 MSGFMT_ERROR_RE = re.compile(r'^.+\.po:(\d+):\s*(.*)$')
 
@@ -129,7 +140,7 @@ class PoTranslationFormat(TranslationFormat):
     def untranslated_messages(self):
         return [
             msg for msg in self.all_message_objects
-            if msg.fuzzy or not self._is_translated(msg) or has_control_chars(msg.msgid, msg.msgstr)
+            if msg.fuzzy or not self._is_translated(msg) or entry_has_control_chars(msg)
         ]
 
     def _is_translated(self, msg):
@@ -398,9 +409,12 @@ class PoTranslationFormat(TranslationFormat):
         all_translations = polib.pofile(self.file_path)
         count = 0
         for entry in all_translations:
-            if has_control_chars(entry.msgid, entry.msgstr):
+            if entry_has_control_chars(entry):
                 print(f"Removing translation with control characters for msgid: {entry.msgid}")
-                entry.msgstr = ""
+                if entry.msgid_plural:
+                    entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
+                else:
+                    entry.msgstr = ""
                 count += 1
         if count > 0:
             all_translations.save()
