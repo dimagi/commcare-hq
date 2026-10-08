@@ -537,19 +537,34 @@ def _excel_upload_file(upload_file):
 
 def _get_fixture_upload_args_from_request(request, domain):
     try:
+        postFiles = "{%s}" % ", ".join(dict(request.FILES).keys())
+    except Exception:
+        postFiles = "(No multipart files in POST)"
+
+    try:
+        postFields = str(dict(request.POST))
+    except Exception:
+        postFiles = "(No form parameters in POST)"
+
+
+    try:
         upload_file = request.FILES["file-to-upload"]
+
         replace = request.POST["replace"]
         if replace.lower() == "true":
             replace = True
         elif replace.lower() == "false":
             replace = False
+
+
         user_email = None
         if toggles.SUPPORT.enabled(request.couch_user.username):
             user_email = request.couch_user.get_email()
     except Exception:
         raise FixtureAPIRequestError(
             "Invalid post request."
-            "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
+            "Submit the form with field 'file-to-upload' and POST parameter 'replace'."
+            "POST Contents - Files: %s. Form Contents: %s" % (postFiles, postFields))
 
     is_async = request.POST.get("async", "").lower() == "true"
 
