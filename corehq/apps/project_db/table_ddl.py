@@ -71,6 +71,8 @@ def _assert_project_db_configured():
 
 
 SETUP_SQL_PATH = Path(__file__).parent / 'project_db_setup.sql'
+LIB_SQL_PATH = Path(__file__).parent / 'lib_projectdb.sql'
+LIB_SCHEMA = 'lib_projectdb'
 
 
 def setup_project_db():
@@ -78,6 +80,12 @@ def setup_project_db():
     engine = get_project_db_engine()
     with engine.begin() as conn:
         conn.execute(sqlalchemy.text(SETUP_SQL_PATH.read_text()))
+        setup_lib(conn)
+
+
+def setup_lib(conn):
+    """Create shared schema holding utility functions"""
+    conn.execute(sqlalchemy.text(LIB_SQL_PATH.read_text()))
 
 
 class DomainSchema:
