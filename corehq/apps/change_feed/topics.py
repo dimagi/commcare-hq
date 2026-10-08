@@ -9,6 +9,7 @@ DOMAIN = 'domain'
 META = 'meta'
 APP = 'app'
 CASE_SQL = 'case-sql'
+DEMO_CASE_SQL = 'demo-case-sql'
 FORM_SQL = 'form-sql'
 SMS = 'sms'
 LEDGER = 'ledger'
@@ -19,12 +20,13 @@ LOCATION = 'location'
 SYNCLOG_SQL = 'synclog-sql'
 
 
-CASE_TOPICS = (CASE_SQL, )
+CASE_TOPICS = (CASE_SQL, )  # intentionally exclude the demo case sql topic
 FORM_TOPICS = (FORM_SQL, )
 USER_TOPICS = (COMMCARE_USER, WEB_USER)
 ALL = (
     CASE_SQL,
     COMMCARE_USER,
+    DEMO_CASE_SQL,
     DOMAIN,
     FORM_SQL,
     GROUP,
