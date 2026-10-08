@@ -18,3 +18,16 @@ EXCEPTION
     RETURN NULL;
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION lib_projectdb.coerce_to_number(value text)
+RETURNS numeric
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+BEGIN
+  RETURN value::numeric;
+EXCEPTION
+  WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+    RETURN NULL;
+END;
+$$;

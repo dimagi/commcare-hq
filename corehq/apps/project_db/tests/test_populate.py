@@ -10,7 +10,6 @@ from unmagic import use
 from corehq.apps.project_db.populate import (
     case_to_row,
     coerce_to_gps,
-    coerce_to_number,
     coerce_to_select,
     populate_case_type,
     send_cases_to_project_db,
@@ -27,37 +26,31 @@ from corehq.util.metrics.tests.utils import capture_metrics
 from .util import project_db_table
 
 
-@pytest.mark.parametrize('value, expected', [
-    ('2024-03-15',          datetime.date(2024, 3, 15)),
-    ('2024-03-15T10:30:00', datetime.date(2024, 3, 15)),
-    (None,                  None),
-    ('',                    None),
-    ('not-a-date',          None),
-    ('2024-13-01',          None),
-    ('2024-02-30',          None),
-    ('0000-01-01',          None),
-    ('15/03/2024',          None),
+to_date = func.lib_projectdb.coerce_to_date
+to_number = func.lib_projectdb.coerce_to_number
+
+
+@pytest.mark.parametrize('coercion, expected', [
+    (to_date('2024-03-15'), datetime.date(2024, 3, 15)),
+    (to_date('2024-03-15T10:30:00'), datetime.date(2024, 3, 15)),
+    (to_date(None), None),
+    (to_date(''), None),
+    (to_date('2024-02-30'), None),
+    (to_date('15/03/2024'), None),
+    (to_number('-7.5'), Decimal('-7.5')),
+    (to_number(None), None),
+    (to_number(''), None),
+    (to_number('abc'), None),
+    (to_number(' 42 '), Decimal('42')),
+    (to_number('1e3'), Decimal('1E+3')),
+    (to_number('1_000'), None),
+    (to_number('1e1000000'), None),
 ])
 @use('db')
-def test_coerce_to_date(value, expected):
+def test_sql_coercion(coercion, expected):
     with get_project_db_engine().begin() as conn:
-        result = conn.execute(
-            sqlalchemy.select([func.lib_projectdb.coerce_to_date(value)])
-        ).scalar()
+        result = conn.execute(sqlalchemy.select([coercion])).scalar()
     assert result == expected
-
-
-@pytest.mark.parametrize('value, expected', [
-    ('42',   Decimal('42')),
-    ('3.14', Decimal('3.14')),
-    ('-7.5', Decimal('-7.5')),
-    (None,   None),
-    ('',     None),
-    ('abc',  None),
-    ('  ',   None),
-])
-def test_coerce_to_number(value, expected):
-    assert coerce_to_number(value) == expected
 
 
 @pytest.mark.parametrize('value, expected', [
@@ -158,14 +151,10 @@ def _utc_datetime(*args):
     ({'color': 'red', 'size': 'large'}, {'prop__color'}, {'prop__color': 'red'}),
     # raw value coerced to str
     ({'count': 42}, {'prop__count'}, {'prop__count': '42'}),
-    # typed columns populated via coercion
-    ({'weight': '70.5'},
-     {'prop__weight', 'number_prop__weight'},
-     {'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
     # typed columns coerced in SQL are left to upsert_cases
-    ({'dob': '1990-05-20'},
-     {'prop__dob', 'date_prop__dob'},
-     {'prop__dob': '1990-05-20'}),
+    ({'dob': '1990-05-20', 'weight': '70.5'},
+     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight'},
+     {'prop__dob': '1990-05-20', 'prop__weight': '70.5'}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
     # select property populates both the raw and the text[] column

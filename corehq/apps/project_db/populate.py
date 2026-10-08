@@ -1,7 +1,6 @@
 import datetime
 import math
 from collections import defaultdict
-from decimal import Decimal, InvalidOperation
 
 from jsonobject.exceptions import BadValueError
 from sqlalchemy import ARRAY, Text, bindparam, func
@@ -110,15 +109,6 @@ def _as_utc(value):
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
-def coerce_to_number(value):
-    if not value or not str(value).strip():
-        return None
-    try:
-        return Decimal(value)
-    except (InvalidOperation, TypeError):
-        return None
-
-
 def coerce_to_select(value):
     """Split a space-separated multi-select value into a list of choices"""
     if value is None:
@@ -145,7 +135,6 @@ def coerce_to_gps(value):
 
 # Together with _SQL_COERCIONS, parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
-    (CaseProperty.DataType.NUMBER, coerce_to_number),
     (CaseProperty.DataType.SELECT, coerce_to_select),
     (CaseProperty.DataType.GPS, coerce_to_gps),
 ]
@@ -153,4 +142,5 @@ _TYPED_COERCIONS = [
 # Functions defined in lib_projectdb.sql
 _SQL_COERCIONS = [
     (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
+    (CaseProperty.DataType.NUMBER, func.lib_projectdb.coerce_to_number),
 ]
