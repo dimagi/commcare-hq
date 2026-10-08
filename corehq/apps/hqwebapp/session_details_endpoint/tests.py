@@ -14,6 +14,7 @@ from django.utils.dateparse import parse_datetime
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.ip_access.models import IPAccessConfig
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.sso.models import (
     AuthenticatedEmailDomain,
@@ -24,7 +25,7 @@ from corehq.apps.sso.tests import generator as sso_generator
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.hmac_request import get_hmac_digest
-from corehq.util.test_utils import flag_enabled, softer_assert
+from corehq.util.test_utils import flag_disabled, flag_enabled, softer_assert
 
 
 class SessionDetailsViewTest(TestCase):
@@ -441,6 +442,97 @@ class SessionDetailsAccessChecksTest(TestCase):
         response = _post_with_hmac(reverse('session_details'), data,
                                    content_type="application/json")
         assert response.status_code == 400
+
+
+@flag_enabled('IP_ACCESS_CONTROLS')
+@patch('corehq.apps.ip_access.models.IPAccessConfig.is_allowed')
+class SessionDetailsIPAccessTest(TestCase):
+    """
+    Web Apps traffic reaches HQ from formplayer's IP, so the endpoint
+    applies IP access controls to the client IP formplayer forwards.
+    """
+    domain_name = 'checks-ip'
+    allow_key = f'hq_session_ips-{domain_name}'
+    block_key = f'hq_session_blocked_ips-{domain_name}'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.user = WebUser.create(cls.domain_name, 'u-checks-ip', 'shhh', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
+        IPAccessConfig.objects.create(domain=cls.domain_name)
+
+    def setUp(self):
+        self.client = Client()
+        assert self.client.login(username='u-checks-ip', password='shhh')
+        self.session_key = self.client.session.session_key
+
+    def _post(self, origin_ip=None):
+        data = json.dumps({'sessionId': self.session_key, 'domain': self.domain_name})
+        headers = {}
+        if origin_ip is not None:
+            headers['HTTP_X_COMMCAREHQ_ORIGIN_IP'] = origin_ip
+        return _post_with_hmac(reverse('session_details'), data,
+                               content_type="application/json", **headers)
+
+    def test_allowed_ip(self, is_allowed):
+        is_allowed.return_value = True
+        response = self._post('203.0.113.7')
+        assert response.status_code == 200
+        is_allowed.assert_called_once_with('203.0.113.7')
+
+    def test_denied_ip(self, is_allowed):
+        is_allowed.return_value = False
+        response = self._post('203.0.113.7')
+        assert response.status_code == 403
+        assert json.loads(response.content) == {'reason': 'ip_access_denied'}
+
+    def test_missing_origin_ip_is_denied(self, is_allowed):
+        is_allowed.return_value = True
+        response = self._post()
+        assert response.status_code == 403
+        assert json.loads(response.content) == {'reason': 'ip_access_denied'}
+        is_allowed.assert_not_called()
+
+    def test_malformed_origin_ip_is_denied(self, is_allowed):
+        is_allowed.return_value = True
+        response = self._post('not-an-ip')
+        assert response.status_code == 403
+        is_allowed.assert_not_called()
+
+    def test_allowed_ip_is_cached_in_session(self, is_allowed):
+        is_allowed.return_value = True
+        assert self._post('203.0.113.7').status_code == 200
+        assert self.client.session[self.allow_key] == ['203.0.113.7']
+        assert self._post('203.0.113.7').status_code == 200
+        is_allowed.assert_called_once()
+
+    def test_denied_ip_is_cached_in_session(self, is_allowed):
+        is_allowed.return_value = False
+        assert self._post('203.0.113.7').status_code == 403
+        assert self.client.session[self.block_key] == ['203.0.113.7']
+        assert self._post('203.0.113.7').status_code == 403
+        is_allowed.assert_called_once()
+
+    @flag_disabled('IP_ACCESS_CONTROLS')
+    def test_toggle_disabled_ignores_origin_ip(self, is_allowed):
+        is_allowed.return_value = False
+        assert self._post('203.0.113.7').status_code == 200
+        assert self._post().status_code == 200
+        is_allowed.assert_not_called()
+
+    def test_non_member_is_refused_before_ip_check(self, is_allowed):
+        is_allowed.return_value = False
+        other = Domain.get_or_create_with_name('checks-ip-other', is_active=True)
+        self.addCleanup(other.delete)
+        data = json.dumps({'sessionId': self.session_key, 'domain': 'checks-ip-other'})
+        response = _post_with_hmac(reverse('session_details'), data,
+                                   content_type="application/json",
+                                   HTTP_X_COMMCAREHQ_ORIGIN_IP='203.0.113.7')
+        assert response.status_code == 404
+        is_allowed.assert_not_called()
 
 
 class SessionDetailsSsoChecksTest(TestCase):

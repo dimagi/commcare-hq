@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 
 from django.conf import settings
@@ -22,6 +23,8 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
+from corehq.apps.ip_access.middleware import is_valid_ip
+from corehq.apps.ip_access.utils import get_origin_ip
 from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.users.middleware import UsersMiddleware
 from corehq.apps.users.models import CouchUser
@@ -34,6 +37,8 @@ from corehq.util.metrics import (
 )
 
 FORMPLAYER_PERMISSIONS = ['edit_data']
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -51,7 +56,8 @@ class SessionDetailsView(View):
         requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
 
     A 404 response means the session is not valid for the project space it
-    asks about.
+    asks about. A 403 response means the project space denies the session
+    for the reason given in the body, e.g. ``{"reason": "ip_access_denied"}``.
     """
     urlname = 'session_details'
     http_method_names = ['post']
@@ -92,6 +98,10 @@ class SessionDetailsView(View):
 
         if not _may_act_in_domain(session, domain):
             raise Http404
+
+        if not _ip_allowed(session, domain, get_origin_ip(request)):
+            session.save()  # remember the denied IP, sparing repeat lookups
+            return JsonResponse({'reason': 'ip_access_denied'}, status=403)
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
@@ -204,3 +214,28 @@ def _may_act_in_domain(session, domain):
 @login_and_domain_required
 def _sentinel_view(request, domain):
     return ALLOWED
+
+
+def _ip_allowed(session, domain, origin_ip):
+    """
+    Applies the domain's IP access controls, if it has them, to the Web
+    Apps client's IP address.
+
+    (Formplayer forwards the client's IP address because otherwise HQ
+    only sees Formplayer's.)
+    """
+    if not toggles.IP_ACCESS_CONTROLS.enabled(domain):
+        return True
+    if origin_ip is None:
+        logger.warning(
+            "Refusing Web Apps session for domain %r: Formplayer did not "
+            "forward the client's IP address.",
+            domain,
+        )
+        return False
+    # The same check and the same per-session cache as used by
+    # `IPAccessMiddleware.process_view` in `corehq/apps/ip_access/middleware.py`
+    request = HttpRequest()
+    request.META = {'REMOTE_ADDR': origin_ip}
+    request.session = session
+    return is_valid_ip(request, domain)
