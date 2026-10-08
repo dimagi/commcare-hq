@@ -3019,26 +3019,26 @@ msgstr "Tutte le azioni"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s invito accettato"
+msgstr[1] "%(count)s inviti accettati"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s invito in attesa"
+msgstr[1] "%(count)s inviti in attesa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s invito rifiutato"
+msgstr[1] "%(count)s inviti rifiutati"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s spazio progetto partecipante"
+msgstr[1] "%(count)s spazi progetto partecipanti"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

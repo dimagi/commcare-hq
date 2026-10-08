@@ -912,8 +912,11 @@ msgid "{num_days} day of {plan_name} Software Plan.{subscription_date_range}"
 msgid_plural ""
 "{num_days} days of {plan_name} Software Plan.{subscription_date_range}"
 msgstr[0] ""
+"{num_days} dia do Plano de Software {plan_name}.{subscription_date_range}"
 msgstr[1] ""
+"{num_days} dias do Plano de Software {plan_name}.{subscription_date_range}"
 msgstr[2] ""
+"{num_days} dias do Plano de Software {plan_name}.{subscription_date_range}"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -930,9 +933,9 @@ msgstr ""
 #, python-brace-format
 msgid "{num_sms} SMS Message"
 msgid_plural "{num_sms} SMS Messages"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "{num_sms} mensagem SMS"
+msgstr[1] "{num_sms} mensagens SMS"
+msgstr[2] "{num_sms} mensagens SMS"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -952,8 +955,13 @@ msgid_plural ""
 "{num_extra_sms} SMS messages beyond {monthly_limit} messages "
 "included{date_range}."
 msgstr[0] ""
+"{num_extra_sms} mensagem SMS além das {monthly_limit} incluídas{date_range}."
 msgstr[1] ""
+"{num_extra_sms} mensagens SMS além das {monthly_limit} "
+"incluídas{date_range}."
 msgstr[2] ""
+"{num_extra_sms} mensagens SMS além das {monthly_limit} "
+"incluídas{date_range}."
 
 #: corehq/apps/accounting/models.py
 #, python-brace-format
@@ -1117,8 +1125,14 @@ msgid_plural ""
 "You have %(num_apps)d applications that will lose Web Apps access if you "
 "select this plan."
 msgstr[0] ""
+"Você tem %(num_apps)d aplicativo que perderá acesso ao Web Apps se "
+"selecionar este plano."
 msgstr[1] ""
+"Você tem %(num_apps)d aplicativos que perderão acesso ao Web Apps se "
+"selecionar este plano."
 msgstr[2] ""
+"Você tem %(num_apps)d aplicativos que perderão acesso ao Web Apps se "
+"selecionar este plano."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1129,8 +1143,14 @@ msgid_plural ""
 "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
 "these Lookup Tables."
 msgstr[0] ""
+"Você tem %(num_fix)s Tabela de Consulta configurada. Selecionar este plano "
+"irá excluir esta Tabela de Consulta."
 msgstr[1] ""
+"Você tem %(num_fix)s Tabelas de Consulta configuradas. Selecionar este plano"
+" irá excluir estas Tabelas de Consulta."
 msgstr[2] ""
+"Você tem %(num_fix)s Tabelas de Consulta configuradas. Selecionar este plano"
+" irá excluir estas Tabelas de Consulta."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1148,8 +1168,14 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting this"
 " plan will deactivate them."
 msgstr[0] ""
+"Você tem %(num_active)d Regra de Lembrete ou Transmissão ativa. Selecionar "
+"este plano irá desativá-la."
 msgstr[1] ""
+"Você tem %(num_active)d Regras de Lembrete e Transmissões ativas. Selecionar"
+" este plano irá desativá-las."
 msgstr[2] ""
+"Você tem %(num_active)d Regras de Lembrete e Transmissões ativas. Selecionar"
+" este plano irá desativá-las."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1160,8 +1186,14 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts which use a "
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
+"Você tem %(num_active)d Regra de Lembrete ou Transmissão ativa que utiliza "
+"uma Pesquisa. Selecionar este plano irá desativá-la."
 msgstr[1] ""
+"Você tem %(num_active)d Regras de Lembrete e Transmissões ativas que "
+"utilizam uma Pesquisa. Selecionar este plano irá desativá-las."
 msgstr[2] ""
+"Você tem %(num_active)d Regras de Lembrete e Transmissões ativas que "
+"utilizam uma Pesquisa. Selecionar este plano irá desativá-las."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1171,8 +1203,14 @@ msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove "
 "them."
 msgstr[0] ""
+"Você tem %(num)d Exportação Desidentificada. Selecionar este plano irá "
+"removê-la."
 msgstr[1] ""
+"Você tem %(num)d Exportações Desidentificadas. Selecionar este plano irá "
+"removê-las."
 msgstr[2] ""
+"Você tem %(num)d Exportações Desidentificadas. Selecionar este plano irá "
+"removê-las."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1187,8 +1225,20 @@ msgid_plural ""
 "charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
+"Você tem %(num_extra)d Agente Móvel acima do limite mensal de "
+"%(monthly_limit)d para este novo plano. Haverá uma cobrança mensal adicional"
+" de USD %(excess_fee)s por Agente Móvel, totalizando USD %(monthly_total)s "
+"por mês, se você selecionar este plano."
 msgstr[1] ""
+"Você tem %(num_extra)d Agentes Móveis acima do limite mensal de "
+"%(monthly_limit)d para este novo plano. Haverá uma cobrança mensal adicional"
+" de USD %(excess_fee)s por Agente Móvel, totalizando USD %(monthly_total)s "
+"por mês, se você selecionar este plano."
 msgstr[2] ""
+"Você tem %(num_extra)d Agentes Móveis acima do limite mensal de "
+"%(monthly_limit)d para este novo plano. Haverá uma cobrança mensal adicional"
+" de USD %(excess_fee)s por Agente Móvel, totalizando USD %(monthly_total)s "
+"por mês, se você selecionar este plano."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1207,8 +1257,26 @@ msgid_plural ""
 "additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per"
 " month."
 msgstr[0] ""
+"Planos gratuitos incluem %(monthly_limit)s Agentes Móveis por padrão. Como "
+"você tem %(num_extra)d Agente Móvel extra, todos os Agentes Móveis do seu "
+"projeto serão desativados. Você pode reativá-los manualmente após o "
+"downgrade. Cada Agente Móvel ativo acima de %(monthly_limit)s resultará em "
+"uma cobrança adicional de USD %(excess_fee)s, totalizando USD "
+"%(monthly_total)s por mês."
 msgstr[1] ""
+"Planos gratuitos incluem %(monthly_limit)s Agentes Móveis por padrão. Como "
+"você tem %(num_extra)d Agentes Móveis extras, todos os Agentes Móveis do seu"
+" projeto serão desativados. Você pode reativá-los manualmente após o "
+"downgrade. Cada Agente Móvel ativo acima de %(monthly_limit)s resultará em "
+"uma cobrança adicional de USD %(excess_fee)s, totalizando USD "
+"%(monthly_total)s por mês."
 msgstr[2] ""
+"Planos gratuitos incluem %(monthly_limit)s Agentes Móveis por padrão. Como "
+"você tem %(num_extra)d Agentes Móveis extras, todos os Agentes Móveis do seu"
+" projeto serão desativados. Você pode reativá-los manualmente após o "
+"downgrade. Cada Agente Móvel ativo acima de %(monthly_limit)s resultará em "
+"uma cobrança adicional de USD %(excess_fee)s, totalizando USD "
+"%(monthly_total)s por mês."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1221,8 +1289,17 @@ msgid_plural ""
 "select this plan, all users with these roles will change to having the Read "
 "Only role."
 msgstr[0] ""
+"Você tem %(num_roles)d Função Personalizada configurada para seu projeto. Se"
+" você selecionar este plano, todos os usuários com essa função passarão a "
+"ter a função Somente Leitura."
 msgstr[1] ""
+"Você tem %(num_roles)d Funções Personalizadas configuradas para seu projeto."
+" Se você selecionar este plano, todos os usuários com essas funções passarão"
+" a ter a função Somente Leitura."
 msgstr[2] ""
+"Você tem %(num_roles)d Funções Personalizadas configuradas para seu projeto."
+" Se você selecionar este plano, todos os usuários com essas funções passarão"
+" a ter a função Somente Leitura."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1242,8 +1319,16 @@ msgid_plural ""
 "You have %(rule_count)d automatic case update rules configured in your "
 "project. If you select this plan, these rules will be deactivated."
 msgstr[0] ""
+"Você tem %(rule_count)d regra de atualização automática de caso configurada "
+"em seu projeto. Se você selecionar este plano, esta regra será desativada."
 msgstr[1] ""
+"Você tem %(rule_count)d regras de atualização automática de caso "
+"configuradas em seu projeto. Se você selecionar este plano, estas regras "
+"serão desativadas."
 msgstr[2] ""
+"Você tem %(rule_count)d regras de atualização automática de caso "
+"configuradas em seu projeto. Se você selecionar este plano, estas regras "
+"serão desativadas."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1303,8 +1388,14 @@ msgid_plural ""
 "You have %(num_apps)d applications that has a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgstr[0] ""
+"Você tem %(num_apps)d aplicativo que possui um agente móvel de prática "
+"configurado, ele será removido ao fazer downgrade."
 msgstr[1] ""
+"Você tem %(num_apps)d aplicativos que possuem um agente móvel de prática "
+"configurado, ele será removido ao fazer downgrade."
 msgstr[2] ""
+"Você tem %(num_apps)d aplicativos que possuem um agente móvel de prática "
+"configurado, ele será removido ao fazer downgrade."
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -20982,8 +21073,17 @@ msgid_plural ""
 "            %(counter)s forms processed successfully\n"
 "          "
 msgstr[0] ""
+"\n"
+"            %(counter)s formulário processado com sucesso\n"
+"          "
 msgstr[1] ""
+"\n"
+"            %(counter)s formulários processados com sucesso\n"
+"          "
 msgstr[2] ""
+"\n"
+"            %(counter)s formulários processados com sucesso\n"
+"          "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "Some forms were skipped:"
@@ -23273,7 +23373,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr " que corresponde ao seu uso atual de recursos."
+msgstr "— que corresponde ao uso atual de recursos."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -25224,7 +25324,7 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Clique no menu Arquivo do navegador no topo (ex.: Arquivo 2 Salvar como5).\n"
+"        Clique no menu Arquivo do navegador no topo (ex.: Arquivo → Salvar como...).\n"
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -32777,9 +32877,9 @@ msgstr "Usuário '{username}' não encontrado."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "{count} associação de domínio"
+msgstr[1] "{count} associações de domínio"
+msgstr[2] "{count} associações de domínio"
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
@@ -38311,9 +38411,9 @@ msgstr "Restauração inválida como usuário {}"
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "'{params}' é um parâmetro obrigatório"
+msgstr[1] "'{params}' são parâmetros obrigatórios"
+msgstr[2] "'{params}' são parâmetros obrigatórios"
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format
@@ -40906,9 +41006,9 @@ msgstr "Nenhum Espaço de Projeto especificado"
 #, python-brace-format
 msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "{count} convite enviado"
+msgstr[1] "{count} convites enviados"
+msgstr[2] "{count} convites enviados"
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -43993,7 +44093,7 @@ msgstr "Dados Não Reconhecidos"
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form_tree.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form_tree.html
 msgid "…"
-msgstr ""
+msgstr "…"
 
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Show question ids"

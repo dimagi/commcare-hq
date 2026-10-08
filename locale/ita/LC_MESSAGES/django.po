@@ -885,7 +885,9 @@ msgid "{num_days} day of {plan_name} Software Plan.{subscription_date_range}"
 msgid_plural ""
 "{num_days} days of {plan_name} Software Plan.{subscription_date_range}"
 msgstr[0] ""
+"{num_days} giorno del piano software {plan_name}.{subscription_date_range}"
 msgstr[1] ""
+"{num_days} giorni del piano software {plan_name}.{subscription_date_range}"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -902,8 +904,8 @@ msgstr ""
 #, python-brace-format
 msgid "{num_sms} SMS Message"
 msgid_plural "{num_sms} SMS Messages"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{num_sms} messaggio SMS"
+msgstr[1] "{num_sms} messaggi SMS"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -923,7 +925,9 @@ msgid_plural ""
 "{num_extra_sms} SMS messages beyond {monthly_limit} messages "
 "included{date_range}."
 msgstr[0] ""
+"{num_extra_sms} messaggio SMS oltre i {monthly_limit} inclusi{date_range}."
 msgstr[1] ""
+"{num_extra_sms} messaggi SMS oltre i {monthly_limit} inclusi{date_range}."
 
 #: corehq/apps/accounting/models.py
 #, python-brace-format
@@ -1088,7 +1092,11 @@ msgid_plural ""
 "You have %(num_apps)d applications that will lose Web Apps access if you "
 "select this plan."
 msgstr[0] ""
+"Hai %(num_apps)d applicazione che perderà l’accesso alle Web App se "
+"selezioni questo piano."
 msgstr[1] ""
+"Hai %(num_apps)d applicazioni che perderanno l’accesso alle Web App se "
+"selezioni questo piano."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1099,7 +1107,11 @@ msgid_plural ""
 "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
 "these Lookup Tables."
 msgstr[0] ""
+"Hai %(num_fix)s tabella di ricerca configurata. Selezionando questo piano, "
+"questa tabella di ricerca verrà eliminata."
 msgstr[1] ""
+"Hai %(num_fix)s tabelle di ricerca configurate. Selezionando questo piano, "
+"queste tabelle di ricerca verranno eliminate."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1117,7 +1129,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting this"
 " plan will deactivate them."
 msgstr[0] ""
+"Hai %(num_active)d regola di promemoria o broadcast attiva. Selezionando "
+"questo piano verrà disattivata."
 msgstr[1] ""
+"Hai %(num_active)d regole di promemoria e broadcast attivi. Selezionando "
+"questo piano verranno disattivati."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1128,7 +1144,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts which use a "
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
+"Hai %(num_active)d regola di promemoria o broadcast attiva che utilizza un "
+"sondaggio. Selezionando questo piano verrà disattivata."
 msgstr[1] ""
+"Hai %(num_active)d regole di promemoria e broadcast attivi che utilizzano un"
+" sondaggio. Selezionando questo piano verranno disattivati."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1138,7 +1158,11 @@ msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove "
 "them."
 msgstr[0] ""
+"Hai %(num)d esportazione de-identificata. Selezionando questo piano verrà "
+"rimossa."
 msgstr[1] ""
+"Hai %(num)d esportazioni de-identificate. Selezionando questo piano verranno"
+" rimosse."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1153,7 +1177,15 @@ msgid_plural ""
 "charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
+"Hai %(num_extra)d operatore mobile oltre il limite mensile di "
+"%(monthly_limit)d per questo nuovo piano. Ci sarà un costo mensile "
+"aggiuntivo di USD %(excess_fee)s per operatore mobile, per un totale di USD "
+"%(monthly_total)s al mese, se selezioni questo piano."
 msgstr[1] ""
+"Hai %(num_extra)d operatori mobili oltre il limite mensile di "
+"%(monthly_limit)d per questo nuovo piano. Ci sarà un costo mensile "
+"aggiuntivo di USD %(excess_fee)s per operatore mobile, per un totale di USD "
+"%(monthly_total)s al mese, se selezioni questo piano."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1172,7 +1204,19 @@ msgid_plural ""
 "additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per"
 " month."
 msgstr[0] ""
+"I piani gratuiti includono %(monthly_limit)s operatori mobili di default. "
+"Poiché hai %(num_extra)d operatore mobile extra, tutti gli operatori mobili "
+"del tuo progetto verranno disattivati. Puoi riattivarli manualmente dopo il "
+"downgrade. Ogni operatore mobile attivo oltre %(monthly_limit)s comporterà "
+"un costo aggiuntivo di USD %(excess_fee)s, per un totale di USD "
+"%(monthly_total)s al mese."
 msgstr[1] ""
+"I piani gratuiti includono %(monthly_limit)s operatori mobili di default. "
+"Poiché hai %(num_extra)d operatori mobili extra, tutti gli operatori mobili "
+"del tuo progetto verranno disattivati. Puoi riattivarli manualmente dopo il "
+"downgrade. Ogni operatore mobile attivo oltre %(monthly_limit)s comporterà "
+"un costo aggiuntivo di USD %(excess_fee)s, per un totale di USD "
+"%(monthly_total)s al mese."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1185,7 +1229,13 @@ msgid_plural ""
 "select this plan, all users with these roles will change to having the Read "
 "Only role."
 msgstr[0] ""
+"Hai %(num_roles)d ruolo personalizzato configurato per il tuo progetto. Se "
+"selezioni questo piano, tutte le persone con quel ruolo passeranno al ruolo "
+"di sola lettura."
 msgstr[1] ""
+"Hai %(num_roles)d ruoli personalizzati configurati per il tuo progetto. Se "
+"selezioni questo piano, tutte le persone con questi ruoli passeranno al "
+"ruolo di sola lettura."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1205,7 +1255,13 @@ msgid_plural ""
 "You have %(rule_count)d automatic case update rules configured in your "
 "project. If you select this plan, these rules will be deactivated."
 msgstr[0] ""
+"Hai %(rule_count)d regola di aggiornamento automatico dei casi configurata "
+"nel tuo progetto. Se selezioni questo piano, questa regola verrà "
+"disattivata."
 msgstr[1] ""
+"Hai %(rule_count)d regole di aggiornamento automatico dei casi configurate "
+"nel tuo progetto. Se selezioni questo piano, queste regole verranno "
+"disattivate."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1264,7 +1320,11 @@ msgid_plural ""
 "You have %(num_apps)d applications that has a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgstr[0] ""
+"Hai %(num_apps)d applicazione che ha un operatore mobile di prova "
+"configurato, verrà rimosso con il downgrade."
 msgstr[1] ""
+"Hai %(num_apps)d applicazioni che hanno un operatore mobile di prova "
+"configurato, verrà rimosso con il downgrade."
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -18760,7 +18820,13 @@ msgid_plural ""
 "    Finished processing changes, updated %(count)s cases.\n"
 "  "
 msgstr[0] ""
+"\n"
+"    Elaborazione delle modifiche completata, 1 caso aggiornato.\n"
+"  "
 msgstr[1] ""
+"\n"
+"    Elaborazione delle modifiche completata, %(count)s casi aggiornati.\n"
+"  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
@@ -18856,7 +18922,13 @@ msgid_plural ""
 "      A total of %(count)s edits will be applied.\n"
 "    "
 msgstr[0] ""
+"\n"
+"      Verrà applicata una modifica.\n"
+"    "
 msgstr[1] ""
+"\n"
+"      Verranno applicate in totale %(count)s modifiche.\n"
+"    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 msgid ""
@@ -18879,7 +18951,13 @@ msgid_plural ""
 "      A total of %(count)s edits will be cleared.\n"
 "    "
 msgstr[0] ""
+"\n"
+"      Verrà eliminata una modifica.\n"
+"    "
 msgstr[1] ""
+"\n"
+"      Verranno eliminate in totale %(count)s modifiche.\n"
+"    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 msgid ""
@@ -20869,7 +20947,13 @@ msgid_plural ""
 "            %(counter)s forms processed successfully\n"
 "          "
 msgstr[0] ""
+"\n"
+"            %(counter)s modulo elaborato con successo\n"
+"          "
 msgstr[1] ""
+"\n"
+"            %(counter)s moduli elaborati con successo\n"
+"          "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "Some forms were skipped:"
@@ -23167,7 +23251,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr "8 che corrisponde all'utilizzo attuale delle funzionalità."
+msgstr "— che corrisponde all’utilizzo attuale delle funzionalità."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -25117,7 +25201,7 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Clicca sul menu File del browser in alto (ad es. File 2 Salva con nome).\n"
+"        Fai clic sul menu File del browser in alto (ad es. File → Salva con nome…).\n"
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -26129,7 +26213,13 @@ msgid_plural ""
 "            You have %(counter)s backup tokens remaining.\n"
 "          "
 msgstr[0] ""
+"\n"
+"            Ti rimane solo un token di backup.\n"
+"          "
 msgstr[1] ""
+"\n"
+"            Ti rimangono %(counter)s token di backup.\n"
+"          "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
@@ -32689,8 +32779,8 @@ msgstr "Utente '{username}' non trovato."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{count} appartenenza al dominio"
+msgstr[1] "{count} appartenenze al dominio"
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
@@ -33075,7 +33165,13 @@ msgid_plural ""
 "        %(matched_count)s matches found.\n"
 "      "
 msgstr[0] ""
+"\n"
+"        Trovata una corrispondenza.\n"
+"      "
 msgstr[1] ""
+"\n"
+"        Trovate %(matched_count)s corrispondenze.\n"
+"      "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
@@ -34161,7 +34257,13 @@ msgid_plural ""
 "            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
 "          "
 msgstr[0] ""
+"\n"
+"            I tuoi crediti prepagati termineranno tra 1 settimana!\n"
+"          "
 msgstr[1] ""
+"\n"
+"            I tuoi crediti prepagati termineranno tra %(prepaid_weeks_remaining)s settimane!\n"
+"          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
@@ -38234,8 +38336,8 @@ msgstr "Ripristino non valido come utente {}"
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "‘{params}’ è un parametro obbligatorio"
+msgstr[1] "‘{params}’ sono parametri obbligatori"
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format
@@ -40826,8 +40928,8 @@ msgstr "Nessun Project Space specificato"
 #, python-brace-format
 msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{count} invito inviato"
+msgstr[1] "{count} inviti inviati"
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -43907,7 +44009,7 @@ msgstr "Dati non riconosciuti"
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form_tree.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form_tree.html
 msgid "…"
-msgstr ""
+msgstr "…"
 
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Show question ids"
@@ -54962,7 +55064,12 @@ msgid_plural ""
 " still assigned to it. Remove all users assigned to the role before deleting"
 " it."
 msgstr[0] ""
+"Impossibile eliminare il ruolo ‘{role}’. Ha ancora un utente e/o un invito "
+"assegnato. Rimuovi tutte le persone assegnate al ruolo prima di eliminarlo."
 msgstr[1] ""
+"Impossibile eliminare il ruolo ‘{role}’. Ha ancora {user_count} utenti e/o "
+"inviti assegnati. Rimuovi tutte le persone assegnate al ruolo prima di "
+"eliminarlo."
 
 #: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
 msgid "Create Role"
