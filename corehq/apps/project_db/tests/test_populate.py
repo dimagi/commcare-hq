@@ -9,7 +9,6 @@ from unmagic import use
 
 from corehq.apps.project_db.populate import (
     case_to_row,
-    coerce_to_date,
     coerce_to_gps,
     coerce_to_number,
     coerce_to_select,
@@ -35,9 +34,17 @@ from .util import project_db_table
     ('',                    None),
     ('not-a-date',          None),
     ('2024-13-01',          None),
+    ('2024-02-30',          None),
+    ('0000-01-01',          None),
+    ('15/03/2024',          None),
 ])
+@use('db')
 def test_coerce_to_date(value, expected):
-    assert coerce_to_date(value) == expected
+    with get_project_db_engine().begin() as conn:
+        result = conn.execute(
+            sqlalchemy.select([func.lib_projectdb.coerce_to_date(value)])
+        ).scalar()
+    assert result == expected
 
 
 @pytest.mark.parametrize('value, expected', [
@@ -152,10 +159,13 @@ def _utc_datetime(*args):
     # raw value coerced to str
     ({'count': 42}, {'prop__count'}, {'prop__count': '42'}),
     # typed columns populated via coercion
-    ({'dob': '1990-05-20', 'weight': '70.5'},
-     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight'},
-     {'prop__dob': '1990-05-20', 'date_prop__dob': datetime.date(1990, 5, 20),
-      'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
+    ({'weight': '70.5'},
+     {'prop__weight', 'number_prop__weight'},
+     {'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
+    # typed columns coerced in SQL are left to upsert_cases
+    ({'dob': '1990-05-20'},
+     {'prop__dob', 'date_prop__dob'},
+     {'prop__dob': '1990-05-20'}),
     # typed value skipped when only the raw column exists
     ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
     # select property populates both the raw and the text[] column

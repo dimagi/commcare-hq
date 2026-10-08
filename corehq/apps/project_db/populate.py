@@ -4,7 +4,7 @@ from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
 from jsonobject.exceptions import BadValueError
-from sqlalchemy import ARRAY, Text
+from sqlalchemy import ARRAY, Text, bindparam, func
 from sqlalchemy.dialects.postgresql import insert
 
 from couchforms.geopoint import GeoPoint
@@ -45,12 +45,24 @@ def upsert_cases(conn, table, cases):
     column_names = table.c.keys()
     rows = [case_to_row(case, column_names) for case in cases]
     rows = [_normalize(row, table.c) for row in rows]
-    stmt = insert(table)
+    stmt = insert(table).values(_insert_values(table))
     stmt = stmt.on_conflict_do_update(
         index_elements=['case_id'],
         set_={col: stmt.excluded[col] for col in column_names if col != 'case_id'},
     )
     conn.execute(stmt, rows)
+
+
+def _insert_values(table):
+    """Specify what values to insert and how"""
+    # Raw values
+    values = {col.name: bindparam(col.name, type_=col.type) for col in table.c}
+    # Values that are coerced to type in SQL
+    for col in table.c:
+        for data_type, coerce in _SQL_COERCIONS:
+            if col.comment and col.name == property_column(col.comment, data_type):
+                values[col.name] = coerce(values[property_column(col.comment)])
+    return values
 
 
 def _normalize(row, columns):
@@ -98,15 +110,6 @@ def _as_utc(value):
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
-def coerce_to_date(value):
-    if not value:
-        return None
-    try:
-        return datetime.date.fromisoformat(value[:10])
-    except (ValueError, TypeError):
-        return None
-
-
 def coerce_to_number(value):
     if not value or not str(value).strip():
         return None
@@ -140,10 +143,14 @@ def coerce_to_gps(value):
     return f'({x}, {y}, {z})'
 
 
-# Parallels CaseTable.COERCED_PROPERTY_TYPES
+# Together with _SQL_COERCIONS, parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
-    (CaseProperty.DataType.DATE, coerce_to_date),
     (CaseProperty.DataType.NUMBER, coerce_to_number),
     (CaseProperty.DataType.SELECT, coerce_to_select),
     (CaseProperty.DataType.GPS, coerce_to_gps),
+]
+
+# Functions defined in lib_projectdb.sql
+_SQL_COERCIONS = [
+    (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
 ]
