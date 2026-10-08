@@ -284,6 +284,7 @@ class _AuthTestsBothBackends(object):
             app_id=self.app.get_id,
             app_build_id=self.app.get_id,
             form_unique_id='form',
+            xmlns='http://commcarehq.org/test/submit',
             endpoint_id='endpoint',
             session_type='survey',
             allow_sms=False,

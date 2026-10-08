@@ -27,18 +27,18 @@ from corehq.form_processor.utils.xform import convert_xform_to_json
 DOMAIN = 'public-webform-submissions'
 
 
-def _form_json(*case_blocks, user_id=PUBLIC_USER_ID):
-    return convert_xform_to_json(_form_xml(*case_blocks, user_id=user_id))
+def _form_json(*case_blocks, user_id=PUBLIC_USER_ID, xmlns='http://example.com/public-form'):
+    return convert_xform_to_json(_form_xml(*case_blocks, user_id=user_id, xmlns=xmlns))
 
 
-def _form_xml(*case_blocks, user_id=PUBLIC_USER_ID):
+def _form_xml(*case_blocks, user_id=PUBLIC_USER_ID, xmlns='http://example.com/public-form'):
     meta = (
         '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
         f'<n0:userID>{user_id}</n0:userID>'
         '</n0:meta>'
     ) if user_id is not None else ''
     cases = ''.join(cb.as_text() for cb in case_blocks)
-    return f'<data xmlns="http://example.com/public-form">{meta}{cases}</data>'
+    return f'<data xmlns="{xmlns}">{meta}{cases}</data>'
 
 
 def _create_block(owner_id=PUBLIC_USER_ID, case_id=None, **kwargs):
@@ -53,9 +53,13 @@ def _create_block(owner_id=PUBLIC_USER_ID, case_id=None, **kwargs):
 
 
 def _session(session_type, domain=DOMAIN):
-    """An in-memory session for validation, which reads only session_type and
-    domain off the (unsaved) webform."""
-    webform = PublicWebform(domain=domain, session_type=session_type)
+    """An in-memory session for validation, which reads only the (unsaved)
+    webform's domain, session type and published form."""
+    webform = PublicWebform(
+        domain=domain,
+        session_type=session_type,
+        xmlns='http://example.com/public-form',
+    )
     return PublicFormSession(public_webform=webform)
 
 
@@ -77,6 +81,14 @@ class TestValidateAttribution:
         session = _session('survey')
         assert validate_public_form_submission(
             session, _form_json(user_id=None)) is not None
+
+
+class TestValidatePublishedForm:
+
+    def test_another_xmlns_is_rejected(self):
+        session = _session('survey')
+        assert validate_public_form_submission(
+            session, _form_json(xmlns='http://example.com/other-form')) is not None
 
 
 class TestValidateSurveySubmission:
@@ -225,6 +237,7 @@ def receiver_webform():
         app_id='app',
         app_build_id='build',
         form_unique_id='form',
+        xmlns='http://commcarehq.org/public-form-test',
         endpoint_id='endpoint',
         session_type='survey',
         allow_sms=False,

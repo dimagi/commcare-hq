@@ -14,14 +14,18 @@ def validate_public_form_submission(session, form_json):
     persisted. Returns an error message if the submission is not allowed for
     the session's webform type, else ``None``.
 
+    - Every submission must be of the published form, by xmlns.
     - Every submission must be attributed to PUBLIC_USER_ID.
     - Survey webforms may not submit any case data.
     - Registration webforms may only create new cases with PUBLIC_USER_ID.
     """
+    webform = session.public_webform
+    if form_json.get('@xmlns') != webform.xmlns:
+        return "Public form submissions must be of the published form."
     if extract_meta_user_id(form_json) != PUBLIC_USER_ID:
         return f"Public form submissions must be attributed to '{PUBLIC_USER_ID}'."
 
-    session_type = session.public_webform.session_type
+    session_type = webform.session_type
     case_updates = get_case_updates(form_json)
 
     if session_type == PublicWebformType.SURVEY:
