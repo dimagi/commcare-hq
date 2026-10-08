@@ -309,6 +309,12 @@ class _AuthTestsBothBackends(object):
             user_id=PUBLIC_USER_ID,
             username=session.session_username,
             expected_status=201,
+            expected_auth_context={
+                'doc_type': 'AuthContext',
+                'domain': self.domain,
+                'authenticated': True,
+                'user_id': PUBLIC_USER_ID,
+            },
         )
 
     def test_oauth2_good_scope(self):
