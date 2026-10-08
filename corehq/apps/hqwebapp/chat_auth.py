@@ -4,6 +4,8 @@ import requests
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
+from oauthlib.oauth2 import BackendApplicationClient, OAuth2Error
+from requests_oauthlib import OAuth2Session
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_required
@@ -12,6 +14,7 @@ from corehq.apps.hqwebapp.chat_usage import fetch_chat_usage_from_ocs
 from corehq.apps.hqwebapp.exceptions import ChatTokenUnavailable, ChatUsageUnavailable
 
 _TOKEN_URL = 'https://www.openchatstudio.com/o/token/'
+_TOKEN_SCOPE = 'chat:start'
 
 
 @login_required
@@ -36,18 +39,18 @@ def chat_token(request):
 def _mint_widget_token():
     if not (settings.OCS_OAUTH_CLIENT_ID and settings.OCS_OAUTH_CLIENT_SECRET):
         raise ChatTokenUnavailable('Missing OCS OAuth configuration')
+    client = BackendApplicationClient(
+        client_id=settings.OCS_OAUTH_CLIENT_ID,
+        scope=_TOKEN_SCOPE,
+    )
     try:
-        response = requests.post(
-            _TOKEN_URL,
-            data={
-                'grant_type': 'client_credentials',
-                'client_id': settings.OCS_OAUTH_CLIENT_ID,
-                'client_secret': settings.OCS_OAUTH_CLIENT_SECRET,
-                'scope': 'chat:start',
-            },
-            timeout=(5, 15),
-        )
-        response.raise_for_status()
-        return response.json()['access_token']
-    except (requests.RequestException, ValueError, KeyError, TypeError) as exc:
+        with OAuth2Session(client=client) as session:
+            token = session.fetch_token(
+                token_url=_TOKEN_URL,
+                client_id=settings.OCS_OAUTH_CLIENT_ID,
+                client_secret=settings.OCS_OAUTH_CLIENT_SECRET,
+                timeout=(5, 15),
+            )
+    except (requests.RequestException, OAuth2Error, ValueError, Warning) as exc:
         raise ChatTokenUnavailable('OCS widget credential unavailable') from exc
+    return token['access_token']
