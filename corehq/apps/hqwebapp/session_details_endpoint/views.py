@@ -233,9 +233,4 @@ def _ip_allowed(session, domain, origin_ip):
             domain,
         )
         return False
-    # The same check and the same per-session cache as used by
-    # `IPAccessMiddleware.process_view` in `corehq/apps/ip_access/middleware.py`
-    request = HttpRequest()
-    request.META = {'REMOTE_ADDR': origin_ip}
-    request.session = session
-    return is_valid_ip(request, domain)
+    return is_valid_ip(session, origin_ip, domain)
