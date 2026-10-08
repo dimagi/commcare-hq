@@ -110,7 +110,8 @@ class AuthTestMixin(object):
 
     def _test_post(self, file_path, authtype=None, client=None,
                    expected_status=201, expected_auth_context=None,
-                   submit_mode=None, expected_response=None, user_id=None):
+                   submit_mode=None, expected_response=None, user_id=None,
+                   username=None):
         if not client:
             client = django_digest.test.Client()
 
@@ -129,6 +130,7 @@ class AuthTestMixin(object):
             fileobj = FakeFile(
                 f.read().format(
                     userID=user_id or self.user.user_id,
+                    username=username or self.user.username,
                     instanceID=uuid.uuid4().hex,
                     case_id=uuid.uuid4().hex,
                 ),
@@ -305,6 +307,7 @@ class _AuthTestsBothBackends(object):
             file_path=self.public_form,
             client=client,
             user_id=PUBLIC_USER_ID,
+            username=session.session_username,
             expected_status=201,
         )
 

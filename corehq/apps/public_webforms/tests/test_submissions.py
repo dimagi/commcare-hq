@@ -30,14 +30,18 @@ from corehq.form_processor.utils.xform import convert_xform_to_json
 DOMAIN = 'public-webform-submissions'
 
 
-def _form_json(*case_blocks, user_id=PUBLIC_USER_ID):
-    return convert_xform_to_json(_form_xml(*case_blocks, user_id=user_id))
+def _form_json(session, *case_blocks, user_id=PUBLIC_USER_ID, username=None):
+    return convert_xform_to_json(
+        _form_xml(session, *case_blocks, user_id=user_id, username=username))
 
 
-def _form_xml(*case_blocks, user_id=PUBLIC_USER_ID):
+def _form_xml(session, *case_blocks, user_id=PUBLIC_USER_ID, username=None):
+    if username is None:
+        username = session.session_username
     meta = (
         '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
         f'<n0:userID>{user_id}</n0:userID>'
+        f'<n0:username>{username}</n0:username>'
         '</n0:meta>'
     ) if user_id is not None else ''
     cases = ''.join(cb.as_text() for cb in case_blocks)
@@ -56,8 +60,8 @@ def _create_block(owner_id=PUBLIC_USER_ID, case_id=None, **kwargs):
 
 
 def _session(session_type, domain=DOMAIN):
-    """An in-memory session for validation, which reads only session_type and
-    domain off the (unsaved) webform."""
+    """An in-memory session for validation, which reads only the (unsaved)
+    webform's domain, session type and published form."""
     webform = PublicWebform(domain=domain, session_type=session_type)
     return PublicFormSession(public_webform=webform)
 
@@ -74,23 +78,28 @@ class TestValidateAttribution:
     def test_wrong_user_id_is_rejected(self):
         session = _session('survey')
         assert validate_public_form_submission(
-            session, _form_json(user_id='some-real-user')) is not None
+            session, _form_json(session, user_id='some-real-user')) is not None
 
     def test_missing_user_id_is_rejected(self):
         session = _session('survey')
         assert validate_public_form_submission(
-            session, _form_json(user_id=None)) is not None
+            session, _form_json(session, user_id=None)) is not None
+
+    def test_another_username_is_rejected(self):
+        session = _session('survey')
+        assert validate_public_form_submission(
+            session, _form_json(session, username='admin@example.com')) is not None
 
 
 class TestValidateSurveySubmission:
 
     def test_survey_without_case_data_is_allowed(self):
         session = _session('survey')
-        assert validate_public_form_submission(session, _form_json()) is None
+        assert validate_public_form_submission(session, _form_json(session)) is None
 
     def test_survey_with_case_data_is_rejected(self):
         session = _session('survey')
-        error = validate_public_form_submission(session, _form_json(_create_block()))
+        error = validate_public_form_submission(session, _form_json(session, _create_block()))
         assert error is not None
 
 
@@ -100,17 +109,22 @@ class TestValidateRegistrationSubmission:
     def test_create_owned_by_public_user_is_allowed(self):
         session = _session('registration')
         block = _create_block(update={'age': '30'})
-        assert validate_public_form_submission(session, _form_json(block)) is None
+        assert validate_public_form_submission(session, _form_json(session, block)) is None
 
     def test_create_with_wrong_owner_is_rejected(self):
         session = _session('registration')
         block = _create_block(owner_id='some-real-user')
-        assert validate_public_form_submission(session, _form_json(block)) is not None
+        assert validate_public_form_submission(session, _form_json(session, block)) is not None
+
+    def test_create_attributed_to_another_user_is_rejected(self):
+        session = _session('registration')
+        block = _create_block(user_id='some-real-user')
+        assert validate_public_form_submission(session, _form_json(session, block)) is not None
 
     def test_update_without_create_is_rejected(self):
         session = _session('registration')
         block = CaseBlock(case_id=uuid4().hex, update={'age': '30'})
-        assert validate_public_form_submission(session, _form_json(block)) is not None
+        assert validate_public_form_submission(session, _form_json(session, block)) is not None
 
     def test_owner_reassignment_via_update_is_rejected(self):
         # A crafted submission that creates as the public owner but reassigns
@@ -128,6 +142,7 @@ class TestValidateRegistrationSubmission:
         meta = (
             '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
             f'<n0:userID>{PUBLIC_USER_ID}</n0:userID>'
+            f'<n0:username>{session.session_username}</n0:username>'
             '</n0:meta>'
         )
         form_json = convert_xform_to_json(
@@ -138,13 +153,13 @@ class TestValidateRegistrationSubmission:
     def test_index_is_rejected(self):
         session = _session('registration')
         block = _create_block(index={'parent': ('patient', uuid4().hex)})
-        assert validate_public_form_submission(session, _form_json(block)) is not None
+        assert validate_public_form_submission(session, _form_json(session, block)) is not None
 
     def test_reusing_existing_case_id_is_rejected(self):
         existing = CaseFactory(DOMAIN).create_case(owner_id=PUBLIC_USER_ID)
         session = _session('registration')
         block = _create_block(case_id=existing.case_id)
-        assert validate_public_form_submission(session, _form_json(block)) is not None
+        assert validate_public_form_submission(session, _form_json(session, block)) is not None
 
 
 @use('db')
@@ -258,6 +273,7 @@ class TestPublicFormReceiverIntegration:
             '<n0:meta xmlns:n0="http://openrosa.org/jr/xforms">'
             f'<n0:instanceID>{uuid4().hex}</n0:instanceID>'
             f'<n0:userID>{PUBLIC_USER_ID}</n0:userID>'
+            f'<n0:username>{session.session_username}</n0:username>'
             '</n0:meta>'
             '</data>'
         )
