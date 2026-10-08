@@ -20,6 +20,7 @@ from corehq import toggles
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
+from corehq.apps.domain.utils import is_domain_active
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.public_webforms.models import PublicFormSession
@@ -126,7 +127,7 @@ class SessionDetailsView(View):
 
     def _public_session_details(self, public_session_key, start_time):
         session = PublicFormSession.get_active_session_by_key(public_session_key)
-        if session is None:
+        if session is None or not is_domain_active(session.public_webform.domain):
             raise Http404
 
         domain = session.public_webform.domain

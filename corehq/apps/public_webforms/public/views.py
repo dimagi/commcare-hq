@@ -16,6 +16,7 @@ from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.cloudcare.utils import format_app_doc, get_web_apps_context
 from corehq.apps.cloudcare.views import has_geocoder_privs
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import is_domain_active
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.public_webforms.decorators import (
@@ -30,7 +31,8 @@ from corehq.apps.public_webforms.public.forms import (
 
 def public_webforms_enabled(domain):
     return (
-        domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
+        is_domain_active(domain)
+        and domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
         and toggles.PUBLIC_WEBFORMS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
     )
 
