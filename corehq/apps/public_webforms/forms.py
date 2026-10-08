@@ -22,7 +22,7 @@ from corehq.apps.public_webforms.app_builds import (
 from corehq.apps.public_webforms.form_choices import (
     get_public_webform_choices,
     get_public_webform_eligible_form,
-    get_public_webform_type,
+    get_published_form_fields,
 )
 from corehq.apps.public_webforms.form_paths import (
     get_public_webform_form_paths,
@@ -234,7 +234,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 "The selected form can't be used for a public webform."
             ))
 
-        cleaned_data['session_type'] = get_public_webform_type(form)
+        cleaned_data.update(get_published_form_fields(form))
         return cleaned_data
 
     def create_public_webform(self):
@@ -250,6 +250,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 app_id=app_id,
                 app_build_id=app_build_id,
                 form_unique_id=form_unique_id,
+                xmlns=self.cleaned_data['xmlns'],
                 endpoint_id=endpoint_id,
                 session_type=self.cleaned_data['session_type'],
                 expires_at=self.cleaned_data['expires_at'],

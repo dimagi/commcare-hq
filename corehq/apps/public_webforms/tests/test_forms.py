@@ -17,8 +17,14 @@ from corehq.apps.public_webforms.tests.utils import create_webform
 
 DOMAIN = 'public-webform-forms'
 TIMEZONE = pytz.timezone('America/New_York')
-SURVEY_FORM = SimpleNamespace(is_registration_form=lambda: False)
-REGISTRATION_FORM = SimpleNamespace(is_registration_form=lambda: True)
+SURVEY_FORM = SimpleNamespace(
+    is_registration_form=lambda: False,
+    xmlns='http://example.com/survey',
+)
+REGISTRATION_FORM = SimpleNamespace(
+    is_registration_form=lambda: True,
+    xmlns='http://example.com/registration',
+)
 
 
 def _filter(**params):
@@ -144,10 +150,10 @@ def test_an_ineligible_form_is_rejected():
     assert form.non_field_errors() == ["The selected form can't be used for a public webform."]
 
 
-def _create_webform(**post_data):
+def _create_webform(eligible_form=SURVEY_FORM, **post_data):
     """Stubs generating the endpoint, which builds a copy of a released app.
     SMS is granted so delivery options can be exercised independently of it."""
-    form = _form(_post_data(**post_data), has_sms_privilege=True)
+    form = _form(_post_data(**post_data), has_sms_privilege=True, eligible_form=eligible_form)
     assert form.is_valid(), form.errors
     with patch.object(
         forms, 'create_public_webform_build',
@@ -187,6 +193,7 @@ def test_create_stores_the_selection_and_generated_endpoint():
     assert webform.app_build_id == 'build-1'
     assert webform.endpoint_id == 'endpoint-1'
     assert webform.session_type == PublicWebformType.SURVEY
+    assert webform.xmlns == 'http://example.com/survey'
     assert webform.expires_at == datetime(2026, 9, 1, 21, 0)
     assert webform.is_disabled
 

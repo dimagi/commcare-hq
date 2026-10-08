@@ -83,3 +83,11 @@ def get_public_webform_type(form):
         if form.is_registration_form()
         else PublicWebformType.SURVEY
     ).value
+
+
+def get_published_form_fields(form):
+    session_type = get_public_webform_type(form)
+    return {
+        'session_type': session_type,
+        'xmlns': form.xmlns,
+    }

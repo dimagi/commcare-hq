@@ -66,6 +66,7 @@ class PublicWebform(models.Model):
     app_id = models.CharField()
     app_build_id = models.CharField()
     form_unique_id = models.CharField()
+    xmlns = models.CharField()
     endpoint_id = models.CharField()
     session_type = models.CharField(choices=PublicWebformType)
     allow_sms = models.BooleanField()
