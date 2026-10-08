@@ -40,3 +40,25 @@ IMMUTABLE
 AS $$
   SELECT coalesce(array_remove(string_to_array(value, ' '), ''), '{}')
 $$;
+
+-- Parse "lat lon ..." into an earth point, ignoring any further values
+CREATE OR REPLACE FUNCTION lib_projectdb.coerce_to_gps(value text)
+RETURNS public.earth
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+  lat numeric;
+  lon numeric;
+BEGIN
+  lat := split_part(value, ' ', 1);
+  lon := split_part(value, ' ', 2);
+  IF lat NOT BETWEEN -90 AND 90 OR lon NOT BETWEEN -180 AND 180 THEN
+    RETURN NULL;
+  END IF;
+  RETURN public.ll_to_earth(lat, lon);
+EXCEPTION
+  WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+    RETURN NULL;
+END;
+$$;

@@ -9,7 +9,6 @@ from unmagic import use
 
 from corehq.apps.project_db.populate import (
     case_to_row,
-    coerce_to_gps,
     populate_case_type,
     send_cases_to_project_db,
     upsert_cases,
@@ -28,6 +27,7 @@ from .util import project_db_table
 to_date = func.lib_projectdb.coerce_to_date
 to_number = func.lib_projectdb.coerce_to_number
 to_array = func.lib_projectdb.coerce_to_array
+to_gps = func.lib_projectdb.coerce_to_gps
 
 
 @pytest.mark.parametrize('coercion, expected', [
@@ -50,38 +50,22 @@ to_array = func.lib_projectdb.coerce_to_array
     (to_array(None), []),
     (to_array(''), []),
     (to_array('  '), []),
+    (func.latitude(to_gps('42.365 -71.102')), pytest.approx(42.365)),
+    (func.longitude(to_gps('42.365 -71.102')), pytest.approx(-71.102)),
+    (func.latitude(to_gps('42.365 -71.102 x')), pytest.approx(42.365)),  # extra values ignored
+    (to_gps(None), None),
+    (to_gps(''), None),
+    (to_gps('0'), None),
+    (to_gps('0  0'), None),  # double space makes an empty element
+    (to_gps('91 0'), None),
+    (to_gps('0 181'), None),
+    (to_gps('NaN 0'), None),
 ])
 @use('db')
 def test_sql_coercion(coercion, expected):
     with get_project_db_engine().begin() as conn:
         result = conn.execute(sqlalchemy.select([coercion])).scalar()
     assert result == expected
-
-
-def assert_gps_equals(actual_str, expected):
-    actual = tuple(float(n) for n in actual_str.strip('()').split(','))
-    # approx match to account for float rounding
-    assert actual == pytest.approx(expected, abs=1e-3)
-
-
-@pytest.mark.parametrize('value, expected', [
-    (None,             None),
-    ('',               None),
-    ('not a gps',      None),
-    ('91 0 0 0',       None),  # latitude out of range
-    ('0 0 0 0',        (6378168.0, 0.0, 0.0)),  # equator / prime meridian
-    ('0 90 0 0',       (0.0, 6378168.0, 0.0)),  # equator, 90°E
-    ('0 90',           (0.0, 6378168.0, 0.0)),  # two-element version works fine too
-    ('90 0 0 0',       (0.0, 0.0, 6378168.0)),  # north pole
-    ('42.365 -71.102', (1526343.604, -4458592.705, 4297935.938)),
-
-])
-def test_coerce_to_gps(value, expected):
-    result = coerce_to_gps(value)
-    if expected is None:
-        assert result is None
-    else:
-        assert_gps_equals(result, expected)
 
 
 def _make_index(identifier, referenced_id):
@@ -157,15 +141,6 @@ def test_property_columns(case_json, columns, expected_props):
     assert {k: v for k, v in result.items() if 'prop__' in k} == expected_props
 
 
-def test_gps_property_column_populated():
-    result = case_to_row(
-        _make_case(case_json={'location': '0 0 0 0'}),
-        {'prop__location', 'gps_prop__location'},
-    )
-    assert result['prop__location'] == '0 0 0 0'
-    assert_gps_equals(result['gps_prop__location'], (6378168.0, 0, 0))
-
-
 @pytest.mark.parametrize('indices, expected_parent, expected_host', [
     ([],                             None, None),
     ([_make_index('parent', 'p1')],  'p1', None),
@@ -235,30 +210,6 @@ def test_send_select_property_round_trip():
         ).fetchall()
     interests = {r['case_id']: r['select_prop__interests'] for r in rows}
     assert interests == {'c1': ['sports', 'music'], 'c2': []}
-
-
-@use('db')
-def test_send_gps_property_round_trip():
-    # Stored earth values must line up with postgres ll_to_earth, proving the
-    # Python cube formula stays in sync with the earthdistance extension.
-    domain = 'test-gps'
-    with project_db_table(domain, 'patient', {'location': 'gps'}):
-        populate_case_type(domain, 'patient', [
-            _make_case({'location': '40.7128 -74.006 10 5'}, case_id='c1', type='patient'),
-            _make_case({'location': 'garbage'}, case_id='c2', type='patient'),
-            _make_case({}, case_id='c3', type='patient'),  # absent -> NULL
-        ])
-        table = CaseTable(domain, 'patient').reflect()
-        column = table.c['gps_prop__location']
-        distance = func.earth_distance(column, func.ll_to_earth(40.7128, -74.006))
-        with get_project_db_engine().begin() as conn:
-            rows = conn.execute(
-                sqlalchemy.select([table.c.case_id, distance]).order_by(table.c.case_id)
-            ).fetchall()
-    by_id = {r[0]: r[1] for r in rows}
-    assert by_id['c1'] == pytest.approx(0, abs=0.01)  # within a centimeter
-    assert by_id['c2'] is None  # unparseable -> NULL
-    assert by_id['c3'] is None
 
 
 @use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))

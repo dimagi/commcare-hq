@@ -1,12 +1,9 @@
 import datetime
-import math
 from collections import defaultdict
 
-from jsonobject.exceptions import BadValueError
 from sqlalchemy import ARRAY, Text, bindparam, func
 from sqlalchemy.dialects.postgresql import insert
 
-from couchforms.geopoint import GeoPoint
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_dictionary.models import CaseProperty
@@ -97,10 +94,6 @@ def case_to_row(case, table_columns):
         col_name = property_column(key)
         if col_name in table_columns:
             row[col_name] = str(value)
-            for data_type, coerce_fn in _TYPED_COERCIONS:
-                typed_col = property_column(key, data_type)
-                if typed_col in table_columns:
-                    row[typed_col] = coerce_fn(value)
     return row
 
 
@@ -109,31 +102,10 @@ def _as_utc(value):
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
-def coerce_to_gps(value):
-    """Parse a GPS case property into an earthdistance ``earth`` cube literal."""
-    try:
-        point = GeoPoint.from_string(str(value), flexible=True)
-    except BadValueError:
-        return None
-
-    # Mirrors `ll_to_earth(lat, lon)` from the earthdistance extension
-    lat = math.radians(point.latitude)
-    lon = math.radians(point.longitude)
-    EARTH_RADIUS = 6378168.0  # In meters, from earthdistance
-    x = EARTH_RADIUS * math.cos(lat) * math.cos(lon)
-    y = EARTH_RADIUS * math.cos(lat) * math.sin(lon)
-    z = EARTH_RADIUS * math.sin(lat)
-    return f'({x}, {y}, {z})'
-
-
-# Together with _SQL_COERCIONS, parallels CaseTable.COERCED_PROPERTY_TYPES
-_TYPED_COERCIONS = [
-    (CaseProperty.DataType.GPS, coerce_to_gps),
-]
-
 # Functions defined in lib_projectdb.sql
 _SQL_COERCIONS = [
     (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
     (CaseProperty.DataType.NUMBER, func.lib_projectdb.coerce_to_number),
     (CaseProperty.DataType.SELECT, func.lib_projectdb.coerce_to_array),
+    (CaseProperty.DataType.GPS, func.lib_projectdb.coerce_to_gps),
 ]
