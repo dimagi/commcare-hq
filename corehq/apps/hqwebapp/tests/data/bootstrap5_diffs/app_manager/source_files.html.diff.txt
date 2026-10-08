@@ -13,7 +13,7 @@
 -  <p class="form-inline" id="compare-form">
 +  <p class="form-inline" id="compare-form">  {# todo B5: css-form-inline #}
      See
-     <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
+     <a href="{% url "view_app" app.domain app.origin_id %}">
        current app
 @@ -18,7 +18,7 @@
  
