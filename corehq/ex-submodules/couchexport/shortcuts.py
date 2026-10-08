@@ -1,4 +1,5 @@
 import io
+import os
 from wsgiref.util import FileWrapper
 
 from couchexport.files import TempBase
@@ -30,6 +31,7 @@ def export_response(file, format, filename, checkpoint=None):
     if format.download:
         from corehq.util.files import safe_filename_header
         response['Content-Disposition'] = safe_filename_header(filename, format.extension)
+        response['Content-Length'] = os.fstat(file.fileno()).st_size
 
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
