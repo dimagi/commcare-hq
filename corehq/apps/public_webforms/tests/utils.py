@@ -1,11 +1,15 @@
 import datetime
+from uuid import uuid4
 
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from unmagic import fixture, use
 
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.ota.decorators import ORIGIN_TOKEN_SLUG
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.privileges import PUBLIC_WEBFORMS
@@ -44,6 +48,21 @@ def create_webform(**kwargs):
         'expires_at': timezone.now() + datetime.timedelta(days=30),
         **kwargs,
     })
+
+
+def formplayer_origin_headers():
+    """Headers that make a request pass ``is_from_formplayer``.
+
+    Formplayer proves its origin to HQ with a per-request token: it stores
+    ``OriginToken<token>`` in Redis for 60 seconds and sends the token in
+    ``X-CommCareHQ-Origin-Token``. HQ accepts the header only if that key
+    exists with the value ``"valid"``, quotes included, as formplayer JSON
+    encodes it. This writes the same key so the real check passes.
+    """
+    token = uuid4().hex
+    redis = get_redis_client().client.get_client()
+    redis.set(f'{ORIGIN_TOKEN_SLUG}{token}', '"valid"', ex=60)
+    return {'X-CommCareHQ-Origin-Token': token}
 
 
 def create_session(webform, **kwargs):

@@ -87,6 +87,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext, is_api=False):
     if authenticated and not is_api and not _has_mobile_access(domain, user_id, request):
         return HttpResponseForbidden()
+    if isinstance(getattr(request, 'couch_user', None), PublicFormUser) and not is_from_formplayer(request):
+        return HttpResponseForbidden()
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()

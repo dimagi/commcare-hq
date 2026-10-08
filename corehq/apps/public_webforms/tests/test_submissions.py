@@ -19,7 +19,10 @@ from corehq.apps.public_webforms.submissions import (
     public_form_session_already_submitted,
     validate_public_form_submission,
 )
-from corehq.apps.public_webforms.tests.utils import create_session
+from corehq.apps.public_webforms.tests.utils import (
+    create_session,
+    formplayer_origin_headers,
+)
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils.xform import convert_xform_to_json
@@ -246,7 +249,7 @@ class TestPublicFormReceiverIntegration:
             expires_at=datetime.datetime.today() + datetime.timedelta(days=30),
         )
 
-    def _submit(self, session, case_block_xml=''):
+    def _submit(self, session, case_block_xml='', from_formplayer=True):
         form_xml = (
             '<?xml version="1.0" ?>'
             '<data xmlns="http://commcarehq.org/public-form-test">'
@@ -261,10 +264,13 @@ class TestPublicFormReceiverIntegration:
         client = Client()
         client.cookies['public_form_session_key'] = str(session.session_key)
         url = reverse('receiver_post', args=[receiver_webform().domain])
+        headers = {'CommCare-Public-Session': 'true'}
+        if from_formplayer:
+            headers.update(formplayer_origin_headers())
         return client.post(
             url,
             {'xml_submission_file': SimpleUploadedFile('form.xml', form_xml.encode('utf-8'))},
-            headers={'CommCare-Public-Session': 'true'},
+            headers=headers,
         )
 
     def test_survey_submission_accepted_and_consumes_session(self):
@@ -274,6 +280,13 @@ class TestPublicFormReceiverIntegration:
         session.refresh_from_db()
         assert session.submitted_at is not None
         assert session.xform_id
+
+    def test_submission_not_from_formplayer_is_rejected(self):
+        session = self._session()
+        response = self._submit(session, from_formplayer=False)
+        assert response.status_code == 403
+        session.refresh_from_db()
+        assert session.submitted_at is None
 
     def test_survey_submission_with_case_data_is_rejected(self):
         session = self._session()

@@ -35,6 +35,7 @@ from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicWebform,
 )
+from corehq.apps.public_webforms.tests.utils import formplayer_origin_headers
 from corehq.apps.users.util import PUBLIC_USER_ID, normalize_username
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import sharded
@@ -294,8 +295,9 @@ class _AuthTestsBothBackends(object):
             public_webform=webform,
             expires_at=datetime.utcnow() + timedelta(hours=1),
         )
-        client = Client(**{
-            'HTTP_' + PUBLIC_FORM_SESSION_HEADER.upper().replace('-', '_'): 'true',
+        client = Client(headers={
+            PUBLIC_FORM_SESSION_HEADER: 'true',
+            **formplayer_origin_headers(),
         })
         client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = str(session.session_key)
 
