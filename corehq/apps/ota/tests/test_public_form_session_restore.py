@@ -19,6 +19,7 @@ from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_HEADER,
 )
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
+from corehq.apps.public_webforms.tests.utils import formplayer_origin_headers
 from corehq.form_processor.tests.utils import create_case
 from corehq.util.test_utils import flag_enabled
 
@@ -69,12 +70,13 @@ class PublicFormSessionRestoreTest(TestCase):
             expires_at=timezone.now() + datetime.timedelta(hours=1),
         )
 
-    def _restore(self, domain, session=None):
+    def _restore(self, domain, session=None, from_formplayer=True):
         if session is not None:
             self.client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = str(session.session_key)
         params = urllib.parse.urlencode({'version': 2.0, 'device_id': 'WebAppsLogin'})
         return self.client.get(
             '{}?{}'.format(reverse('ota_restore', args=[domain]), params),
+            headers=formplayer_origin_headers() if from_formplayer else {},
             **{SESSION_HEADER: 'true'},
         )
 
@@ -132,6 +134,13 @@ class PublicFormSessionRestoreTest(TestCase):
 
         # the client cannot choose the app, so a link whose build is gone is dead
         assert response.status_code == 404
+
+    def test_a_session_must_restore_through_formplayer(self):
+        session = self._make_session(self.domain)
+
+        response = self._restore(self.domain, session, from_formplayer=False)
+
+        assert response.status_code == 403
 
     def test_a_session_is_not_a_credential_for_another_domain(self):
         session = self._make_session(self.other_domain)
