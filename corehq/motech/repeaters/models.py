@@ -1486,11 +1486,12 @@ class RepeatRecord(models.Model):
     def fire(self, force_send=False, timing_context=None):
         if force_send or not self.succeeded:
             if self.domain != self.repeater.domain:
-                raise ValueError(
+                self.handle_generate_payload_error(
                     f'The domain of repeat record {self.id} ({self.domain}) '
                     "doesn't match the domain of its repeater "
                     f'{self.repeater.repeater_id} ({self.repeater.domain})'
                 )
+                return self.state
             try:
                 self.repeater.fire_for_record(self, timing_context=timing_context)
             except (NoCredentialsError, OSError) as e:
