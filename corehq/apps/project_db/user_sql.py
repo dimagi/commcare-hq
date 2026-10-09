@@ -8,6 +8,7 @@ import operator
 import re
 import time
 from collections import namedtuple
+from contextlib import contextmanager
 from functools import cached_property
 
 import sqlglot
@@ -30,6 +31,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.base import Executable
+from sqlalchemy.sql.expression import ClauseElement
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -129,13 +133,9 @@ class UserSQL:
 
     def run(self, parameter_values):
         params = self._clean_parameters(parameter_values)
-        with get_domain_query_engine(self.domain).begin() as conn:
-            _set_timezone(conn, self.timezone)
+        with self._connect() as conn:
             start = time.perf_counter()
-            try:
-                result = conn.execute(self.query, params)
-            except (DataError, ProgrammingError) as e:
-                raise UserSQLProgrammingError(str(e.orig)) from e
+            result = conn.execute(self.query, params)
             rows = result.fetchall()
             return QueryResult(
                 columns=list(result.keys()),
@@ -143,6 +143,23 @@ class UserSQL:
                 duration=time.perf_counter() - start,
                 timezone=self.timezone,
             )
+
+    def explain_analyze(self, parameter_values):
+        params = self._clean_parameters(parameter_values)
+        with self._connect() as conn:
+            result = conn.execute(ExplainAnalyze(self.query), params)
+            lines = [line for line, in result.cursor.fetchall()]
+            result.close()
+        return '\n'.join(lines)
+
+    @contextmanager
+    def _connect(self):
+        with get_domain_query_engine(self.domain).begin() as conn:
+            _set_timezone(conn, self.timezone)
+            try:
+                yield conn
+            except (DataError, ProgrammingError) as e:
+                raise UserSQLProgrammingError(str(e.orig)) from e
 
     def _clean_parameters(self, raw_parameters):
         unexpected_parameters = set(raw_parameters) - set(self.parameters)
@@ -154,6 +171,16 @@ class UserSQL:
     @cached_property
     def timezone(self):
         return Domain.get_by_name(self.domain).default_timezone
+
+
+class ExplainAnalyze(Executable, ClauseElement):
+    def __init__(self, statement):
+        self.statement = statement
+
+
+@compiles(ExplainAnalyze, 'postgresql')
+def _compile_explain_analyze(element, compiler, **kw):
+    return f"EXPLAIN ANALYZE {compiler.process(element.statement, **kw)}"
 
 
 def _set_timezone(conn, timezone):

@@ -1,11 +1,15 @@
 """AI translation of app content via the bulk app translation pipeline."""
 import hashlib
 import json
+import logging
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 from django.contrib import messages
+from django.db import transaction
+from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
 
@@ -24,6 +28,7 @@ from corehq.apps.translations.app_translations.utils import (
     get_bulk_app_sheet_headers,
     get_form_sheet_name,
     get_module_sheet_name,
+    is_module_sheet,
 )
 from corehq.apps.translations.const import (
     AI_TRANSLATION_APPLY_ATTEMPTS,
@@ -37,6 +42,9 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
 )
+from corehq.apps.translations.models import AITranslation, AITranslationUsage
+
+logger = logging.getLogger(__name__)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -58,7 +66,9 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     fresh copy of the app if it was saved in the meantime.
     ``progress_callback(batches_done, batches_total)`` is optional.
     """
-    fmt = translation_format or AppTranslationFormat(app, target_lang, mode=mode)
+    fmt = translation_format
+    if fmt is None:
+        fmt = prepare_translation_format(app, target_lang, mode)
     units = fmt.load_input()
     if not units:
         return {'total': 0, 'translated': 0, 'skipped': 0, 'changed': 0,
@@ -85,6 +95,8 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     # rebase carries over only its results
     skipped = len(fmt.skipped_ids)
     applied = _apply_translations(fmt)
+    if applied.translated:
+        _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
     return {
         'total': len(units),
         'translated': applied.translated,
@@ -94,6 +106,141 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
         'app_version': applied.app_version,
         'errors': applied.errors,
     }
+
+
+def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
+    """A format for ``app`` that skips AI translations a user has edited
+    and retranslates those whose source text has changed."""
+    fmt = AppTranslationFormat(
+        app, target_lang, mode=mode,
+        treat_default_copies_as_missing=treat_default_copies_as_missing)
+    changed_strings = find_changed_ai_translations(fmt)
+    fmt.manually_edited_keys = changed_strings.manually_edited
+    fmt.stale_keys = changed_strings.stale
+    return fmt
+
+
+def _provenance_rows(fmt):
+    return AITranslation.objects.filter(
+        domain=fmt.app.domain, app_id=fmt.app.get_id, lang=fmt.target_lang)
+
+
+@dataclass
+class ChangedAITranslations:
+    """Keys of AI-translated strings that changed since the AI wrote them."""
+    manually_edited: set
+    stale: set
+
+
+def find_changed_ai_translations(fmt):
+    """
+    Find translations a user has manually edited, and those whose
+    source text has since changed. A cleared translation is in neither
+    set, so fill_missing translates it again.
+    """
+    changed = ChangedAITranslations(manually_edited=set(), stale=set())
+    rows = list(
+        _provenance_rows(fmt).values_list('string_key', 'source_value', 'translated_value'))
+    if not rows:
+        return changed
+    all_strings = fmt.all_app_strings()
+    for string_key, source_value, translated_value in rows:
+        unit = all_strings.get(string_key)
+        if unit is None or not unit.target_text:
+            continue
+        if unit.target_text != translated_value:
+            changed.manually_edited.add(string_key)
+        elif unit.source_text != source_value:
+            changed.stale.add(string_key)
+    return changed
+
+
+def _record_run(fmt, strings_attempted, model):
+    """Record provenance and usage for a run whose results ``fmt`` saved."""
+    # fmt read the app's sheets before the save; a fresh format reads the saved text
+    saved_app_strings = fmt.for_app(fmt.app).all_app_strings()
+    saved_units = _saved_units(fmt, saved_app_strings)
+    with transaction.atomic():
+        _upsert_provenance(fmt, saved_units)
+        ai_translated = _refresh_provenance_statuses(fmt, saved_app_strings)
+        AITranslationUsage.objects.create(
+            domain=fmt.app.domain,
+            app_id=fmt.app.get_id,
+            lang=fmt.target_lang,
+            strings_attempted=strings_attempted,
+            strings_translated=len(saved_units),
+            words_translated=sum(len(unit.source_text.split()) for unit in saved_units),
+            total_app_strings=len(saved_app_strings),
+            total_app_strings_ai_translated=ai_translated,
+            app_version=fmt.app.version,
+            model=model,
+        )
+
+
+def _saved_units(fmt, all_strings):
+    """``all_strings`` holds the app's strings after this run's results
+    were saved. Comparing them with the snapshot taken before the run
+    shows which results this run saved, including results the AI
+    returned unchanged. They aren't compared with the AI's output
+    directly, because the app may escape some characters, such as ``&``."""
+    saved_units = []
+    for unit, result in fmt.applied_units().values():
+        saved = all_strings.get(unit.string_key)
+        if saved is None or not saved.target_text:
+            continue
+        value_changed = saved.target_text != unit.target_text
+        ai_returned_same_text = result == unit.target_text
+        if value_changed or ai_returned_same_text:
+            saved_units.append(saved)
+    return saved_units
+
+
+def _upsert_provenance(fmt, saved_units):
+    AITranslation.objects.bulk_create(
+        [
+            AITranslation(
+                domain=fmt.app.domain,
+                app_id=fmt.app.get_id,
+                lang=fmt.target_lang,
+                string_key=unit.string_key,
+                source_value=unit.source_text,
+                translated_value=unit.target_text,
+                status=AITranslation.STATUS_APPLIED,
+            )
+            for unit in saved_units
+        ],
+        update_conflicts=True,
+        unique_fields=['domain', 'app_id', 'lang', 'string_key'],
+        update_fields=['source_value', 'translated_value', 'status', 'updated_on'],
+        batch_size=1000,
+    )
+
+
+def _refresh_provenance_statuses(fmt, all_strings):
+    """Update every provenance row for ``fmt``'s app and language to
+    match ``all_strings``, the app as saved. Returns how many strings
+    are still AI-translated."""
+    rows = _provenance_rows(fmt).values_list('id', 'string_key', 'translated_value', 'status')
+    ids_by_new_status = defaultdict(list)
+    ai_translated = 0
+    for row_id, string_key, translated_value, status in rows:
+        new_status = _provenance_status(all_strings.get(string_key), translated_value)
+        if new_status == AITranslation.STATUS_APPLIED:
+            ai_translated += 1
+        if new_status != status:
+            ids_by_new_status[new_status].append(row_id)
+    now = timezone.now()
+    for new_status, ids in ids_by_new_status.items():
+        AITranslation.objects.filter(id__in=ids).update(status=new_status, updated_on=now)
+    return ai_translated
+
+
+def _provenance_status(unit, translated_value):
+    if unit is None:
+        return AITranslation.STATUS_REMOVED
+    if unit.target_text != translated_value:
+        return AITranslation.STATUS_MANUALLY_EDITED
+    return AITranslation.STATUS_APPLIED
 
 
 def _rebase_results(stale_fmt, fresh_fmt):
@@ -162,12 +309,14 @@ class AppTranslationFormat(TranslationFormat):
     """
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
-                 manually_edited_keys=None, treat_default_copies_as_missing=False):
+                 manually_edited_keys=None, stale_keys=None,
+                 treat_default_copies_as_missing=True):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
         self.target_lang = target_lang
         self.mode = mode
         self.manually_edited_keys = manually_edited_keys or set()
+        self.stale_keys = stale_keys or set()
         self.treat_default_copies_as_missing = treat_default_copies_as_missing
         self.headers_by_sheet = dict(get_bulk_app_sheet_headers(app))
         self.sheets = get_bulk_app_sheets_by_name(app)
@@ -185,13 +334,39 @@ class AppTranslationFormat(TranslationFormat):
             self.target_lang,
             mode=self.mode,
             manually_edited_keys=self.manually_edited_keys,
+            stale_keys=self.stale_keys,
             treat_default_copies_as_missing=self.treat_default_copies_as_missing,
         )
 
     def load_input(self, input_source=None):
         self.units_by_id = {}
         self.units_by_sheet = {}
-        index = 0
+        for index, unit in enumerate(self._iter_strings_to_translate()):
+            unit_id = str(index)
+            self.units_by_id[unit_id] = unit
+            self.units_by_sheet.setdefault(unit.sheet_name, []).append(unit_id)
+        return self.units_by_id
+
+    def _iter_strings_to_translate(self):
+        for unit in self._iter_strings():
+            if unit.string_key in self.manually_edited_keys:
+                continue
+            keep_existing = bool(unit.target_text)
+            if self.treat_default_copies_as_missing and unit.target_text == unit.source_text:
+                keep_existing = False
+            if unit.string_key in self.stale_keys:
+                keep_existing = False
+            if self.mode == MODE_FILL_MISSING and keep_existing:
+                continue
+            yield unit
+
+    def all_app_strings(self):
+        """Every string in the app by ``string_key``, whether or not it
+        needs translating."""
+        return {unit.string_key: unit for unit in self._iter_strings()}
+
+    def _iter_strings(self):
+        """Yields a TranslationUnit for each row with source text."""
         for sheet_name, rows in self.sheets.items():
             headers = list(self.headers_by_sheet.get(sheet_name, ()))
             src_i = self._lang_index(headers, self.app.default_language)
@@ -199,28 +374,15 @@ class AppTranslationFormat(TranslationFormat):
             if src_i is None or tgt_i is None:
                 continue
             for row_index, row, string_key in self.iter_rows_with_keys(sheet_name, rows):
-                source = row[src_i] if len(row) > src_i else ''
-                target = row[tgt_i] if len(row) > tgt_i else ''
-                if not source:
-                    continue
-                if string_key in self.manually_edited_keys:
-                    continue
-                already_translated = bool(target)
-                if self.treat_default_copies_as_missing and target == source:
-                    already_translated = False
-                if self.mode == MODE_FILL_MISSING and already_translated:
-                    continue
-                unit_id = str(index)
-                self.units_by_id[unit_id] = TranslationUnit(
-                    sheet_name=sheet_name,
-                    row_index=row_index,
-                    source_text=str(source),
-                    target_text=str(target) if target else '',
-                    string_key=string_key,
-                )
-                self.units_by_sheet.setdefault(sheet_name, []).append(unit_id)
-                index += 1
-        return self.units_by_id
+                source = _cell(row, src_i)
+                if source:
+                    yield TranslationUnit(
+                        sheet_name=sheet_name,
+                        row_index=row_index,
+                        source_text=source,
+                        target_text=_cell(row, tgt_i),
+                        string_key=string_key,
+                    )
 
     def create_batches(self, chunk_size=AI_TRANSLATION_CHUNK_SIZE):
         # a batch never mixes sheets: each request gets one context
@@ -264,26 +426,56 @@ class AppTranslationFormat(TranslationFormat):
                 valid[unit_id] = translated
             else:
                 self.skipped_ids.add(unit_id)
+                # a skipped string is otherwise only a count in the summary
+                logger.warning(
+                    "AI translation failed validation and was skipped: "
+                    "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
+                    self.app.domain, self.app.get_id, self.target_lang,
+                    unit.string_key, unit.source_text[:200], str(translated)[:200])
         self.results.update(valid)
         return valid
 
     def save_output(self, output_data=None, output_path=None):
-        """Rows without buffered results are omitted and left untouched
-        (partial-upload semantics); the app is saved once. Returns
-        error messages, [] on success."""
+        """Rows without buffered results keep their values; the app is
+        saved once. Returns error messages, [] on success."""
         if not self.results:
             return []
 
-        msgs = []
+        errors = []
         for sheet_name, translated_by_row in self._results_by_sheet().items():
-            rows = [
-                self._translated_row(sheet_name, row_index, translated)
-                for row_index, translated in sorted(translated_by_row.items())
-            ]
-            msgs += process_sheet_rows(
-                self.app, sheet_name, rows, names_map=self.sheet_unique_ids)
+            if is_module_sheet(sheet_name):
+                errors += self._save_module_sheet(sheet_name, translated_by_row)
+            else:
+                errors += self._save_sheet(sheet_name, translated_by_row)
         self.app.save()
-        return [msg for func, msg in msgs if func == messages.error]
+        return errors
+
+    def _save_sheet(self, sheet_name, translated_by_row):
+        rows = [
+            self._upload_row(sheet_name, row_index, translated)
+            for row_index, translated in sorted(translated_by_row.items())
+        ]
+        return _errors(process_sheet_rows(
+            self.app, sheet_name, rows, names_map=self.sheet_unique_ids))
+
+    def _save_module_sheet(self, sheet_name, translated_by_row):
+        # The module updater matches case list, case detail and ID Mapping
+        # rows to the module's columns by position, so it needs every row
+        # of the sheet. Untranslated rows go back with their current
+        # values, for the target language only, so they change nothing.
+        rows = [
+            self._upload_row(sheet_name, row_index, translated_by_row.get(row_index))
+            for row_index in range(len(self.sheets[sheet_name]))
+        ]
+        errors = _errors(process_sheet_rows(
+            self.app, sheet_name, rows, names_map=self.sheet_unique_ids,
+            lang=self.target_lang))
+        # results are never empty, so a blank row is one the run didn't touch
+        blank_row_errors = {
+            _blank_row_error(row['case_property'])
+            for row in rows if not row.get(f'default_{self.target_lang}')
+        }
+        return [error for error in errors if error not in blank_row_errors]
 
     def _results_by_sheet(self):
         by_sheet = defaultdict(dict)
@@ -292,11 +484,12 @@ class AppTranslationFormat(TranslationFormat):
             by_sheet[unit.sheet_name][unit.row_index] = translated
         return by_sheet
 
-    def _translated_row(self, sheet_name, row_index, translated):
+    def _upload_row(self, sheet_name, row_index, translated):
         headers = self.headers_by_sheet[sheet_name]
         raw = self.sheets[sheet_name][row_index]
         row = {header: _cell(raw, i) for i, header in enumerate(headers)}
-        row[f'default_{self.target_lang}'] = translated
+        if translated is not None:
+            row[f'default_{self.target_lang}'] = translated
         return row
 
     def applied_units(self):
@@ -383,6 +576,16 @@ class TranslationUnit:
     source_text: str
     target_text: str
     string_key: str
+
+
+def _errors(msgs):
+    return [msg for func, msg in msgs if func == messages.error]
+
+
+def _blank_row_error(case_property):
+    # must match BulkAppTranslationModuleUpdater._update_translation
+    return _("You must provide at least one translation"
+             " of the case property '%s'") % case_property
 
 
 def _cell(row, index):

@@ -67,24 +67,3 @@ and thereafter they stay in sync automatically when the data dictionary is
 modified.  New cases are sychronously sent to the ProjectDB during form
 submission.  Pre-existing cases must be manually back-populated using
 ``manage_project_db --populate``
-
-TODOs
-----
-
-- Wire schema cleanup to domain deletion. ``DomainSchema.drop`` exists but
-  is not registered in ``corehq/apps/domain/deletion.py``. Because this is a raw
-  Postgres schema rather than a Django model, the standard model-based
-  registration won't catch it; deleting a domain would orphan its
-  ``projectdb_<domain>`` schema, data, and role.
-- Use the stored property-name comments when populating. Each property column
-  stores its raw case property name as a Postgres comment, which lets the
-  source property be recovered by inspecting the table. ``case_to_row`` could
-  use this to iterate through columns instead of properties.
-- Date vs Datetime. Looks like the DD only supports date
-  properties, not datetime - does it intend the latter? Should we
-  support both?
-- Index external ID.
-- Put limit on number of property columns
-- Set up automatic update call on data dictionary change, and auto population
-  on case update
-- Add a SQL user per domain with only access to that domain's schema

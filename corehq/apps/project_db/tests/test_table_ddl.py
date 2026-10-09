@@ -12,6 +12,7 @@ from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     Earth,
     create_or_update_project_db,
+    drop_project_db,
     get_domain_query_engine,
     get_project_db_engine,
     preview_drop,
@@ -77,8 +78,10 @@ def test_schema_lifecycle():
     engine = get_project_db_engine()
     schema = DomainSchema('test_schema_lifecycle')
     with engine.begin() as conn:
+        assert not schema.exists(conn)
         schema.create(conn)
         assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
+        assert schema.exists(conn)
         assert _role_exists(conn, schema)
 
         schema.create(conn)  # a second sync leaves both in place
@@ -86,6 +89,7 @@ def test_schema_lifecycle():
 
         schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not schema.exists(conn)
         assert not _role_exists(conn, schema)
 
         schema.drop(conn)  # dropping an absent schema and role is a no-op
@@ -346,6 +350,29 @@ def test_preview_drop_lists_tables_without_dropping():
     assert 'drop cascades to table "projectdb_test-preview-drop".patient' in notices
     with get_project_db_engine().begin() as conn:
         assert DomainSchema(domain).name in sqlalchemy.inspect(conn).get_schema_names()
+
+
+@use('db', project_db_table('test-drop-project-db', 'patient', {'first_name': 'plain'}))
+def test_drop_project_db():
+    schema = DomainSchema('test-drop-project-db')
+    drop_project_db('test-drop-project-db')
+    with get_project_db_engine().begin() as conn:
+        assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not _role_exists(conn, schema)
+
+
+@use('db')
+def test_drop_project_db_without_schema():
+    with patch.object(DomainSchema, 'drop') as drop:
+        drop_project_db('test-drop-project-db-without-schema')
+    drop.assert_not_called()
+
+
+# DEBUG/UNIT_TESTING off so the dev/test fallback doesn't supply project_db
+@override_settings(REPORTING_DATABASES={'default': 'default'}, DEBUG=False, UNIT_TESTING=False)
+def test_drop_project_db_not_configured():
+    with patch('corehq.apps.project_db.table_ddl.connection_manager', ConnectionManager()):
+        drop_project_db('test-drop-project-db-not-configured')
 
 
 @use('db')

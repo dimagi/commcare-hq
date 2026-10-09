@@ -279,6 +279,9 @@ case_search
  0019_rename_target_name_casesearchendpoint_case_type
  0020_remove_casesearchendpoint_case_type_and_more
  0021_casesearchendpointversion_dangerous_sql
+ 0022_casesearchendpoint_deactivated
+ 0023_delete_inactive_endpoints
+ 0024_casesearchendpoint_upstream_id
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -427,6 +430,8 @@ data_interfaces
  0038_alter_caseduplicate_potential_duplicates
  0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
  0040_bulkasyncjob
+ 0041_clear_bulkasyncjob
+ 0042_partition_bulkasyncjob
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -766,6 +771,7 @@ linked_domain
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
  0025_alter_domainlinkhistory_model_choices
+ 0026_domainlinkhistory_case_search_endpoint
 locations
  0001_initial
  0002_auto_20160420_2105

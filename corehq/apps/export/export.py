@@ -20,7 +20,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT, FORM_EXPORT, MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE,
 )
 from corehq.apps.export.logging import ExportLoggingContext, build_filter_summary
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_in_domain
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
@@ -476,7 +476,7 @@ def _record_export_duration(duration, export):
     try:
         export.save()
     except ResourceConflict:
-        export = get_properly_wrapped_export_instance(export.get_id)
+        export = get_export_instance_in_domain(export.domain, export.get_id)
         export.last_build_duration = duration
         export.save()
 

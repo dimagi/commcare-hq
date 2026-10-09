@@ -10,6 +10,7 @@ from dimagi.utils.web import get_url_base
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import PUBLIC_USER_ID
+from corehq.util.models import GetOrNoneManager
 
 
 class PublicWebformType(models.TextChoices):
@@ -95,6 +96,7 @@ class PublicWebform(models.Model):
 class PublicFormSession(models.Model):
 
     DEFAULT_LIFESPAN = timedelta(hours=1)
+    REUSE_MARGIN = timedelta(minutes=10)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
@@ -106,6 +108,8 @@ class PublicFormSession(models.Model):
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
     xform_id = models.CharField(null=True)
+
+    objects = GetOrNoneManager()
 
     class Meta:
         indexes = [models.Index(fields=['public_webform', 'id'])]
@@ -119,11 +123,24 @@ class PublicFormSession(models.Model):
             key = UUID(str(session_key))
         except (ValueError, TypeError):
             return None
-        return cls.objects.filter(
+        return cls.objects.get_or_none(
             session_key=key,
             submitted_at__isnull=True,
             expires_at__gt=timezone.now(),
-        ).first()
+        )
+
+    @classmethod
+    def get_active_session_by_id(cls, public_webform, session_id):
+        try:
+            session_uuid = UUID(str(session_id))
+        except (ValueError, TypeError):
+            return None
+        return cls.objects.get_or_none(
+            public_webform=public_webform,
+            id=session_uuid,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
 
     @classmethod
     def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
@@ -132,14 +149,13 @@ class PublicFormSession(models.Model):
         return cls.objects.filter(
             public_webform=public_webform,
             submitted_at__isnull=True,
-            expires_at__gt=timezone.now(),
+            expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
             **contact,
         ).order_by('-created_at').first()
 
     @property
     def one_time_link(self):
         """The absolute link sent to the respondent who asked for it."""
-        # TODO: implement real public link handling, at this url or otherwise
         return f'{self.public_webform.public_url}{self.id.hex}/'
 
     @property

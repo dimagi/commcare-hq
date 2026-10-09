@@ -1,3 +1,4 @@
+import gettext
 import json
 import os
 import re
@@ -16,11 +17,75 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
 )
 
+# Counts tried when working out which numbers each plural index is used for
+PLURAL_SAMPLE_COUNTS = list(range(0, 201)) + [1000, 1000000, 2000000]
+
+# English-style rule used when a header has no ``plural=``: index 0 for
+# exactly one, index 1 for every other count. Pairs with nplurals=2.
+DEFAULT_PLURAL_EXPRESSION = "n != 1"
+
+
+def nplurals_from_header(plural_forms_header):
+    """
+    Return how many ``msgstr[N]`` plural indices a PO file's ``Plural-Forms``
+    header entry declares, or 2 (English-style singular and plural) when the
+    header doesn't say.
+
+    >>> nplurals_from_header("nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);")
+    3
+    >>> nplurals_from_header("")
+    2
+    """
+    match = re.search(r'nplurals\s*=\s*(\d+)', plural_forms_header)
+    return int(match.group(1)) if match else 2
+
+
+def plural_index_function_from_header(plural_forms_header):
+    """
+    Return a function mapping a count ``n`` to the ``msgstr[N]`` index used
+    for it, built from the ``plural=`` expression in a PO file's
+    ``Plural-Forms`` header entry.
+
+    The expression is written in C syntax, e.g.
+    ``plural=(n%10==1 && n%100!=11 ? 0 : 1);``. ``gettext.c2py`` ("C to
+    Python") is the standard library helper that ``ngettext`` itself uses to
+    turn it into a Python function. It accepts only ``n``, numbers and operators, and
+    raises ``ValueError`` for anything else.
+
+    >>> plural_index_for = plural_index_function_from_header("nplurals=2; plural=(n != 1);")
+    >>> plural_index_for(1), plural_index_for(5)
+    (0, 1)
+    """
+    match = re.search(r'plural\s*=\s*([^;]+)', plural_forms_header)
+    plural_expression = match.group(1) if match else DEFAULT_PLURAL_EXPRESSION
+    return gettext.c2py(plural_expression)
+
+
+def counts_by_plural_index_from_header(plural_forms_header):
+    """
+    Map each plural index to the sample counts that select it, according to
+    a PO file's ``Plural-Forms`` header entry.
+
+    >>> counts = counts_by_plural_index_from_header("nplurals=2; plural=(n != 1);")
+    >>> counts[0], counts[1][:4]
+    ([1], [0, 2, 3, 4])
+    """
+    plural_index_for = plural_index_function_from_header(plural_forms_header)
+    counts = {plural_index: [] for plural_index in range(nplurals_from_header(plural_forms_header))}
+    for n in PLURAL_SAMPLE_COUNTS:
+        counts[plural_index_for(n)].append(n)
+    return counts
+
 
 class PoTranslationFormat(TranslationFormat):
     """
     Translation format for PO files. The class expects gettext installed in the system.
     As it uses gettext's msgfmt command to check for errors in the PO file.
+
+    Plural entries (``msgid_plural``) are sent to the LLM as an object describing
+    each plural index of the target language, and the translation for each index
+    comes back as a separate ``"<key>:<plural index>"`` key, so the response stays
+    a flat map of strings.
     """
 
     def __init__(self, file_path):
@@ -48,11 +113,35 @@ class PoTranslationFormat(TranslationFormat):
 
     @property
     def untranslated_messages(self):
-        return [msg for msg in self.all_message_objects if msg.msgstr == "" or msg.fuzzy]
+        return [msg for msg in self.all_message_objects if msg.fuzzy or not self._is_translated(msg)]
 
-    @property
-    def untranslated_messages_plural(self):
-        return [msg for msg in self.all_message_objects if msg.msgid_plural != "" and msg.msgstr_plural[0] == ""]
+    def _is_translated(self, msg):
+        if msg.msgid_plural:
+            return all(msg.msgstr_plural.get(plural_index) for plural_index in range(self.nplurals))
+        return msg.msgstr != ""
+
+    @cached_property
+    def _plural_forms_header(self):
+        return self.all_message_objects.metadata.get('Plural-Forms', '')
+
+    @cached_property
+    def nplurals(self):
+        return nplurals_from_header(self._plural_forms_header)
+
+    @cached_property
+    def counts_by_plural_index(self):
+        """
+        Map each plural index to the sample counts that select it, e.g.
+        ``{0: [1], 1: [0, 2, 3, ...]}`` for ``plural=(n != 1)``.
+        """
+        return counts_by_plural_index_from_header(self._plural_forms_header)
+
+    def _plural_index_description(self, plural_index):
+        counts = self.counts_by_plural_index[plural_index]
+        if not counts:
+            return "not used for whole numbers (e.g. fractions); use the general plural"
+        examples = ", ".join(str(n) for n in counts[:8])
+        return f"used when n is {examples}{', ...' if len(counts) > 8 else ''}"
 
     def _build_translation_obj_map(self, translations):
         """
@@ -69,7 +158,17 @@ class PoTranslationFormat(TranslationFormat):
     def format_input(self, msg_id_batch):
         batch_dict = {}
         for index, message_obj in msg_id_batch.items():
-            batch_dict[index] = message_obj.msgid
+            if message_obj.msgid_plural:
+                batch_dict[index] = {
+                    "singular": message_obj.msgid,
+                    "plural": message_obj.msgid_plural,
+                    "forms": {
+                        str(plural_index): self._plural_index_description(plural_index)
+                        for plural_index in range(self.nplurals)
+                    },
+                }
+            else:
+                batch_dict[index] = message_obj.msgid
         return json.dumps(batch_dict)
 
     def create_batches(self, input_data=None, batch_size=10):
@@ -93,11 +192,14 @@ class PoTranslationFormat(TranslationFormat):
     def parse_output(self, output_data):
         try:
             llm_output = json.loads(output_data)
-            filtered_output = {
-                msg_id: msg_str
-                for msg_id, msg_str in llm_output.items()
-                if self.is_valid_msgstr(self.translation_obj_map[msg_id].msgid, msg_str)
-            }
+            filtered_output = {}
+            for index, message_obj in self.translation_obj_map.items():
+                if message_obj.msgid_plural:
+                    msgstrs = self._parse_plural_msgstrs(index, message_obj, llm_output)
+                    if msgstrs is not None:
+                        filtered_output[index] = msgstrs
+                elif index in llm_output and self.is_valid_msgstr(message_obj.msgid, llm_output[index]):
+                    filtered_output[index] = llm_output[index]
             self.fill_translations(filtered_output)
             return filtered_output
         except json.JSONDecodeError:
@@ -107,6 +209,24 @@ class PoTranslationFormat(TranslationFormat):
             be translated in the next run of the script.
             """
             return {}
+
+    def _parse_plural_msgstrs(self, index, message_obj, llm_output):
+        """
+        Return ``{plural index: msgstr}`` for a plural entry, or None unless every
+        plural index is present and valid. An index used only for n == 1 is
+        checked against the singular msgid, every other one against the plural.
+        """
+        msgstrs = {}
+        for plural_index in range(self.nplurals):
+            msgstr = llm_output.get(f"{index}:{plural_index}")
+            if not isinstance(msgstr, str) or not msgstr:
+                return None
+            is_singular = self.counts_by_plural_index[plural_index] == [1]
+            source = message_obj.msgid if is_singular else message_obj.msgid_plural
+            if not self.is_valid_msgstr(source, msgstr):
+                return None
+            msgstrs[plural_index] = msgstr
+        return msgstrs
 
     @staticmethod
     def is_valid_msgstr(msgid, msgstr):
@@ -193,7 +313,13 @@ class PoTranslationFormat(TranslationFormat):
     def fill_translations(self, llm_output):
         for index, msg_str in llm_output.items():
             msg_obj = self.translation_obj_map[index]
-            msg_obj.msgstr = msg_str
+            if msg_obj.msgid_plural:
+                # Replace every plural index, including ones already translated:
+                # a partly translated entry usually means the Plural-Forms header
+                # gained an index, which can change what the existing ones mean
+                msg_obj.msgstr_plural = msg_str
+            else:
+                msg_obj.msgstr = msg_str
             if msg_obj.fuzzy:
                 # no longer fuzzy, translated by AI
                 msg_obj.flags.remove('fuzzy')
@@ -208,15 +334,24 @@ class PoTranslationFormat(TranslationFormat):
         return "- Ensure that translations are gender neutral unless the original text is gender specific. " \
                "- Do not translate placeholders in curly braces, Python %-style strings, HTML tags, or URLs. " \
                "- Ensure translated text maintains leading/trailing newlines. " \
-               "- Every translated message should be valid `msgstr` and should adhere to all of its specs." \
-               "- Special characters like double quotes (\") and backslashes (\\) must be escaped"\
-               "a with backslash." \
-               "Input: JSON array of objects with unique hash and message of the following format: " \
-               "{\"0\":\"msgid\", \"1\":\"msgid\", ...}"
+               "- Every translated message should be valid `msgstr` and should adhere to all of its specs. " \
+               "- Special characters like double quotes (\") and backslashes (\\) must be escaped " \
+               "with a backslash. " \
+               "Input: a JSON object mapping a key to the message to translate, e.g. " \
+               "{\"0\": \"msgid\", \"1\": \"msgid\", ...}. " \
+               "Some values are plural messages instead of strings: " \
+               "{\"singular\": \"text for one\", \"plural\": \"text for many\", " \
+               "\"forms\": {\"0\": \"used when n is ...\", \"1\": \"used when n is ...\"}}. " \
+               "Translate a plural message once per entry in \"forms\", choosing the grammatical " \
+               "form the target language uses for those numbers. A form used only when n is 1 " \
+               "keeps the placeholders of the singular text; every other form keeps those of " \
+               "the plural text."
 
     def format_output_description(self):
         return "Response: JSON object on the following format: " \
-               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}"
+               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}. " \
+               "For a plural message, return one key per form instead of the plain key: " \
+               "{\"<key>:0\": \"form 0 translation\", \"<key>:1\": \"form 1 translation\", ...}"
 
     def check_and_remove_errored_messages(self, lang_path):
         """
@@ -312,11 +447,11 @@ class PoTranslationFormat(TranslationFormat):
                     print("Removing translation")
                     print(f"Error: {line_num_error_map[msg_str_lin_num]}")
                     print(f"msgid: {entry.msgid} at line {current_msgid_line_num}")
-                    print(f"msgstr: {entry.msgstr}")
+                    print(f"msgstr: {entry.msgstr_plural if entry.msgid_plural else entry.msgstr}")
                     print("--------------------------------")
                     if entry.msgid_plural:
                         # Plural entries store their translations in msgstr_plural,
-                        # not msgstr, so blank every plural form to actually clear it.
+                        # not msgstr, so blank every msgstr[N] to actually clear it.
                         entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
                     else:
                         entry.msgstr = ""

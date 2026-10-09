@@ -225,7 +225,7 @@ class TestDeleteRole(TestCase):
     def test_delete_role_with_users(self):
         self.user_count_mock.return_value = 1
         role = UserRole.create(self.domain, 'test-role')
-        with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
+        with self.assertRaisesRegex(InvalidRequestException, "It has 1 user"):
             _delete_user_role(self.domain, role.get_id)
 
     def test_delete_commcare_user_default_role(self):

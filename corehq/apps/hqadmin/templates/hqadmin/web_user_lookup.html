@@ -133,7 +133,7 @@
             <ul>
               {% if web_user.domain_memberships %}
                 <li>
-                  {% blocktrans count count=web_user.domain_memberships|length %}
+                  {% blocktrans trimmed count count=web_user.domain_memberships|length %}
                     {{ count }} domain membership
                   {% plural %}
                     {{ count }} domain memberships

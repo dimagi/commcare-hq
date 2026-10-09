@@ -2,6 +2,7 @@ import datetime
 from uuid import uuid4
 
 import pytest
+from time_machine import travel
 from unmagic import use
 
 from django.http import HttpResponse
@@ -88,6 +89,41 @@ def test_with_submissions_count(submitted_at, expected_submissions):
 
 
 @use('db')
+def test_get_active_session_by_id():
+    webform = create_webform()
+    session = create_session(webform, email='respondent@example.com')
+
+    assert PublicFormSession.get_active_session_by_id(
+        webform, session.id.hex) == session
+
+
+@use('db')
+def test_get_active_session_by_id_ignores_another_webform():
+    session = create_session(create_webform(), email='respondent@example.com')
+
+    assert PublicFormSession.get_active_session_by_id(
+        create_webform(), session.id.hex) is None
+
+
+@use('db')
+@pytest.mark.parametrize('session_kwargs', [
+    {'expires_at': timezone.now() - datetime.timedelta(minutes=1)},
+    {'submitted_at': timezone.now()},
+], ids=['expired', 'already-submitted'])
+def test_get_active_session_by_id_ignores_inactive_session(session_kwargs):
+    webform = create_webform()
+    session = create_session(webform, email='respondent@example.com', **session_kwargs)
+
+    assert PublicFormSession.get_active_session_by_id(webform, session.id.hex) is None
+
+
+@pytest.mark.parametrize('session_id', ['', 'not-a-uuid', None])
+def test_get_active_session_by_id_ignores_a_malformed_id(session_id):
+    assert PublicFormSession.get_active_session_by_id(
+        PublicWebform(), session_id) is None
+
+
+@use('db')
 def test_get_active_session_for_contact():
     webform = create_webform()
     session = create_session(webform, email='respondent@example.com')
@@ -118,6 +154,20 @@ def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs)
 
     assert PublicFormSession.get_active_session_for_contact(
         webform, email='respondent@example.com', phone_number='') is None
+
+
+@use('db')
+@pytest.mark.parametrize('expires_in, expected', [
+    (PublicFormSession.REUSE_MARGIN - datetime.timedelta(minutes=1), False),
+    (PublicFormSession.REUSE_MARGIN, True),
+], ids=['before-margin', 'at-margin'])
+@travel('2026-10-02', tick=False)
+def test_get_active_session_for_contact_reuse_margin(expires_in, expected):
+    webform = create_webform()
+    create_session(webform, email='respondent@example.com', expires_at=timezone.now() + expires_in)
+
+    assert bool(PublicFormSession.get_active_session_for_contact(
+        webform, email='respondent@example.com', phone_number='')) is expected
 
 
 @pytest.mark.parametrize('email, phone_number', [
