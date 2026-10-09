@@ -163,10 +163,11 @@ class TestExpandedMobileWorkerFilter(TestCase):
         loc_defaults = emwf._get_assigned_locations_default()
         self.assertEqual(loc_defaults, list(map(emwf.utils.location_tuple, self.user_assigned_locations)))
 
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
     def test_submitted_by_options_offer_public_users(self):
         controller = SubmittedByOptionsController(self.request, self.domain.name, 'public')
-        with flag_enabled('PUBLIC_WEBFORMS'), privilege_enabled(PUBLIC_WEBFORMS):
-            options = controller.get_all_static_options('public')
+        options = controller.get_all_static_options('public')
         self.assertEqual(options, [('t__8', '[Public Users]')])
 
 

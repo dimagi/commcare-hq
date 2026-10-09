@@ -126,11 +126,12 @@ class TestDashboardFeedFilterFormSavedSelections(TestCase):
         cls.domain_obj = create_domain('feed-filter-selections')
         cls.addClassCleanup(cls.domain_obj.delete)
 
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
     def test_restores_saved_public_users_selection(self):
         filters = FormExportInstanceFilters(user_types=[HQUserType.PUBLIC])
-        with flag_enabled('PUBLIC_WEBFORMS'), privilege_enabled(PUBLIC_WEBFORMS):
-            data = DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
-                filters, self.domain_obj.name, FormExportInstance)
+        data = DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
+            filters, self.domain_obj.name, FormExportInstance)
         self.assertEqual(data['emwf_form_filter'], [{'id': 't__8', 'text': '[Public Users]'}])
 
 
