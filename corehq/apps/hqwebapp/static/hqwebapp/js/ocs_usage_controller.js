@@ -1,6 +1,5 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 
 function bindUsageController(widget) {
     let usageState;
@@ -86,9 +85,5 @@ $(function () {
         return;
     }
     bindAuthController(widget, initialPageData.reverse('chat_token'));
-    if (toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
-        bindUsageController(widget);
-    } else {
-        widget.disabled = false;
-    }
+    bindUsageController(widget);
 });
