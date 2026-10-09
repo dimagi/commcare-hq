@@ -129,6 +129,7 @@ from corehq.apps.linked_domain.applications import (
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.app_builds import canonical_app_id
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors import get_display_name_for_user_id
@@ -447,7 +448,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def origin_id(self):
         # For app builds this is the ID of the app they were built from. Otherwise, it's just the app's ID.
-        return self.copy_of or self._id
+        return canonical_app_id(self.copy_of) if self.copy_of else self._id
 
     def is_deleted(self):
         return self.doc_type.endswith(DELETED_SUFFIX)
