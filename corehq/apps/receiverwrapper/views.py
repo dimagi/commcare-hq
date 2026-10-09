@@ -87,6 +87,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext, is_api=False):
     if authenticated and not is_api and not _has_mobile_access(domain, user_id, request):
         return HttpResponseForbidden()
+    if isinstance(getattr(request, 'couch_user', None), PublicFormUser) and not is_from_formplayer(request):
+        return HttpResponseForbidden()
 
     if rate_limit_submission(domain):
         return HttpTooManyRequests()
@@ -302,6 +304,9 @@ def post_api(request, domain):
 @set_request_duration_reporting_threshold(60)
 @allow_public_form_session
 def post(request, domain, app_id=None):
+    if isinstance(getattr(request, 'couch_user', None), PublicFormUser):
+        # a public session is a credential whether or not the project requires one
+        return secure_post(request, domain, app_id)
     try:
         if domain_requires_auth(domain):
             # "redirect" to the secure version
@@ -465,13 +470,12 @@ def secure_post(request, domain, app_id=None):
     }
 
     if isinstance(getattr(request, 'couch_user', None), PublicFormUser):
-        # no mobile credential; _process_form authorizes against the public form session
         return _process_form(
             request=request,
             domain=domain,
             app_id=app_id,
-            user_id=None,
-            authenticated=False,
+            user_id=request.couch_user.get_id,
+            authenticated=True,
         )
 
     if request.GET.get('authtype'):

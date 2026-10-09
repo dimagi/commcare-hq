@@ -321,6 +321,19 @@ class PublicSessionDetailsViewTest(TestCase):
         response = _post_with_hmac(self.url, data, content_type="application/json")
         assert response.status_code == 404
 
+    def test_public_session_for_an_inactive_domain(self):
+        session = self._make_session()
+        self.domain.is_active = False
+        self.domain.save()
+        self.addCleanup(self._reactivate_domain)
+        data = json.dumps({'publicSessionKey': str(session.session_key)})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
+
+    def _reactivate_domain(self):
+        self.domain.is_active = True
+        self.domain.save()
+
 
 class SessionDetailsAccessChecksTest(TestCase):
     """One test per answer the endpoint gives about a project space."""

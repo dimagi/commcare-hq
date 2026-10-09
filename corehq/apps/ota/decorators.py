@@ -101,6 +101,8 @@ def mobile_auth_or_public_form_session(view_func):
         session = get_public_form_session(request, domain)
         if session is None:
             return mobile_auth_or_formplayer(view_func)(request, domain, *args, **kwargs)
+        if not is_from_formplayer(request):
+            return HttpResponseForbidden()
 
         request.public_form_session = session
         request.couch_user = PublicFormUser(session)
