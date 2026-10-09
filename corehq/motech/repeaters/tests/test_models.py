@@ -977,6 +977,25 @@ class TestRepeatRecordMethods(TestCase):
             record.postpone_by(3 * hour)
         assert record.next_check == now + 3 * hour
 
+    def test_fire_checks_domain_matches_repeater(self):
+        record = RepeatRecord.objects.create(
+            domain="other-domain",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            registered_at=datetime.utcnow(),
+        )
+        with (
+            patch.object(Repeater, "fire_for_record") as fire_for_record,
+            patch("corehq.motech.repeaters.models.notify_exception") as notify,
+        ):
+            state = record.fire()
+        fire_for_record.assert_not_called()
+        notify.assert_called_once()
+        assert record.next_check is None
+        (attempt,) = record.attempts
+        assert attempt.state == state == State.ErrorGeneratingPayload
+        assert "doesn't match the domain of its repeater" in attempt.message
+
 
 class TestRepeatRecordMethodsNoDB(SimpleTestCase):
     domain = 'repeat-record-tests'
