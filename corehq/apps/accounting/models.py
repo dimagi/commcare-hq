@@ -4012,9 +4012,12 @@ class DomainWebUserHistory(DomainUserHistoryBase):
 
 class BillingAccountWebUserHistory(models.Model):
     """
-    A record of the number of users for a billing account at the record_date.
-    Created by task calculate_web_users_in_all_billing_accounts on the first of every month.
-    It will be used to bill clients for the appropriate number of web users
+    This is now deprecated and replaced by DomainWebUserHistory.
+
+    The number of web users across all of a billing account's active
+    domains at the record_date. Kept as the historical record of what
+    accounts were billed against, and as the invoicing fallback before
+    DomainWebUserHistory existed.
     """
     billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
     record_date = models.DateField()

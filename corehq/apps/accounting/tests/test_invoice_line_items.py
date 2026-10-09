@@ -357,7 +357,8 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(0, self.web_user_rate.monthly_limit)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -385,7 +386,8 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -414,7 +416,8 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
