@@ -70,7 +70,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
         })
 
 
-@location_safe
 class SubmittedByOptionsView(EmwfOptionsView):
 
     @property
