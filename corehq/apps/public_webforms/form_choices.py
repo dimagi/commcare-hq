@@ -1,6 +1,7 @@
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
     get_latest_released_app,
     get_latest_released_build_ids_by_app_id,
     wrap_app,
@@ -13,10 +14,15 @@ from corehq.util.quickcache import quickcache
 
 def get_public_webform_choices(domain):
     """Return the drilldown tree of applications, menus, and eligible forms
-    from latest released app builds. Menus and applications with no eligible
-    forms are omitted.
+    from latest released app builds. Deleted applications, and menus and
+    applications with no eligible forms, are omitted.
     """
-    build_ids = set(get_latest_released_build_ids_by_app_id(domain).values())
+    live_app_ids = set(get_app_ids_in_domain(domain))
+    build_ids = {
+        build_id
+        for app_id, build_id in get_latest_released_build_ids_by_app_id(domain).items()
+        if app_id in live_app_ids
+    }
     return _get_choices_for_builds(build_ids)
 
 
@@ -65,6 +71,8 @@ def _get_build_choice(app):
 
 
 def get_public_webform_eligible_form(domain, app_id, form_unique_id):
+    if app_id not in get_app_ids_in_domain(domain):
+        return None
     app = get_latest_released_app(domain, app_id)
     if app is None:
         return None

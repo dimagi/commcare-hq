@@ -29,6 +29,7 @@ def _form_path(webform, apps, builds, domain):
         'app_name': _app_name(webform, apps, builds),
         'app_url': _app_url(webform, apps, domain),
         'app_version': _app_version(webform, builds),
+        'is_app_deleted': webform.app_id not in apps,
         'menu_name': menu_name,
         'form_name': form_name,
     }
