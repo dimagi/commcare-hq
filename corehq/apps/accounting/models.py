@@ -4000,6 +4000,16 @@ class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
     pass
 
 
+class DomainWebUserHistory(DomainUserHistoryBase):
+    """
+    The usernames of active web users in a domain at the record_date,
+    including Dimagi users. Created by task calculate_web_users_in_all_domains
+    on the first of every month. A web user can belong to several domains, so
+    usernames are stored to count each user once across all the domains billed.
+    """
+    usernames = ArrayField(models.CharField(max_length=255), default=list)
+
+
 class BillingAccountWebUserHistory(models.Model):
     """
     A record of the number of users for a billing account at the record_date.
