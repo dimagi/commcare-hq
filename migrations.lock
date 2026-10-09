@@ -940,6 +940,7 @@ public_webforms
  0001_initial
  0002_publicformsession_contact_info
  0003_publicwebform_published_form
+ 0004_backfill_publicwebform_xmlns
 registration
  0001_initial
  0002_alter_request_ip
