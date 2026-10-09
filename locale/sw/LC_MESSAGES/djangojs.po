@@ -3008,26 +3008,26 @@ msgstr "Matendo Yote"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekubaliwa"
+msgstr[1] "%(count)s Mialiko Imekubaliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Unasubiri"
+msgstr[1] "%(count)s Mialiko Inasubiri"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekataliwa"
+msgstr[1] "%(count)s Mialiko Imekataliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Nafasi ya Mradi Inashiriki"
+msgstr[1] "%(count)s Nafasi za Miradi Zinashiriki"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

@@ -882,7 +882,11 @@ msgid "{num_days} day of {plan_name} Software Plan.{subscription_date_range}"
 msgid_plural ""
 "{num_days} days of {plan_name} Software Plan.{subscription_date_range}"
 msgstr[0] ""
+"{num_days} siku ya Mpango wa Programu ya "
+"{plan_name}.{subscription_date_range}"
 msgstr[1] ""
+"{num_days} siku za Mpango wa Programu ya "
+"{plan_name}.{subscription_date_range}"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -898,8 +902,8 @@ msgstr "Ada kwa kila {user} anayezidi kikomo cha mpango cha {monthly_limit}."
 #, python-brace-format
 msgid "{num_sms} SMS Message"
 msgid_plural "{num_sms} SMS Messages"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{num_sms} Ujumbe wa SMS"
+msgstr[1] "{num_sms} Ujumbe wa SMS"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -919,7 +923,11 @@ msgid_plural ""
 "{num_extra_sms} SMS messages beyond {monthly_limit} messages "
 "included{date_range}."
 msgstr[0] ""
+"{num_extra_sms} ujumbe wa SMS zaidi ya {monthly_limit} ujumbe "
+"uliotolewa{date_range}."
 msgstr[1] ""
+"{num_extra_sms} ujumbe wa SMS zaidi ya {monthly_limit} ujumbe "
+"uliotolewa{date_range}."
 
 #: corehq/apps/accounting/models.py
 #, python-brace-format
@@ -1081,7 +1089,11 @@ msgid_plural ""
 "You have %(num_apps)d applications that will lose Web Apps access if you "
 "select this plan."
 msgstr[0] ""
+"Una programu %(num_apps)d ambayo itapoteza ufikiaji wa Programu za Wavuti "
+"ukichagua mpango huu."
 msgstr[1] ""
+"Una programu %(num_apps)d ambazo zitapoteza ufikiaji wa Programu za Wavuti "
+"ukichagua mpango huu."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1092,7 +1104,11 @@ msgid_plural ""
 "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
 "these Lookup Tables."
 msgstr[0] ""
+"Una Jedwali la Lookup %(num_fix)s lililosanidiwa. Kuchagua mpango huu "
+"kutaondoa Jedwali hili la Lookup."
 msgstr[1] ""
+"Una Majedwali ya Lookup %(num_fix)s yaliyosanidiwa. Kuchagua mpango huu "
+"kutaondoa Majedwali haya ya Lookup."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1108,7 +1124,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting this"
 " plan will deactivate them."
 msgstr[0] ""
+"Una Kanuni ya Kikumbusho au Matangazo %(num_active)d inayofanya kazi. "
+"Kuchagua mpango huu kutaizima."
 msgstr[1] ""
+"Una Kanuni za Kikumbusho na Matangazo %(num_active)d zinazofanya kazi. "
+"Kuchagua mpango huu kutazizima."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1119,7 +1139,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts which use a "
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
+"Una Kanuni ya Kikumbusho au Matangazo %(num_active)d inayotumia Utafiti. "
+"Kuchagua mpango huu kutaizima."
 msgstr[1] ""
+"Una Kanuni za Kikumbusho na Matangazo %(num_active)d zinazotumia Utafiti. "
+"Kuchagua mpango huu kutazizima."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1129,7 +1153,11 @@ msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove "
 "them."
 msgstr[0] ""
+"Una Uhamishaji wa Taarifa %(num)d usio na utambulisho. Kuchagua mpango huu "
+"kutaiondoa."
 msgstr[1] ""
+"Una Uhamishaji wa Taarifa %(num)d usio na utambulisho. Kuchagua mpango huu "
+"kutaziondoa."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1144,7 +1172,15 @@ msgid_plural ""
 "charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
+"Una Mfanyakazi wa Simu %(num_extra)d zaidi ya kikomo cha mwezi cha "
+"%(monthly_limit)d kwa mpango huu mpya. Kutakuwa na ada ya ziada ya kila "
+"mwezi ya USD %(excess_fee)s kwa kila Mfanyakazi wa Simu, jumla ya USD "
+"%(monthly_total)s kwa mwezi, ukichagua mpango huu."
 msgstr[1] ""
+"Una Wafanyakazi wa Simu %(num_extra)d zaidi ya kikomo cha mwezi cha "
+"%(monthly_limit)d kwa mpango huu mpya. Kutakuwa na ada ya ziada ya kila "
+"mwezi ya USD %(excess_fee)s kwa kila Mfanyakazi wa Simu, jumla ya USD "
+"%(monthly_total)s kwa mwezi, ukichagua mpango huu."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1163,7 +1199,19 @@ msgid_plural ""
 "additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per"
 " month."
 msgstr[0] ""
+"Mipango ya bure inajumuisha Wafanyakazi wa Simu %(monthly_limit)s kwa "
+"chaguo-msingi. Kwa sababu una Mfanyakazi wa Simu %(num_extra)d wa ziada, "
+"Wafanyakazi wote wa Simu wa mradi wako watazimwa. Unaweza kuwasha tena "
+"mwenyewe baada ya kushusha mpango. Kila Mfanyakazi wa Simu anayefanya kazi "
+"zaidi ya %(monthly_limit)s atasababisha ada ya ziada ya USD %(excess_fee)s, "
+"jumla ya USD %(monthly_total)s kwa mwezi."
 msgstr[1] ""
+"Mipango ya bure inajumuisha Wafanyakazi wa Simu %(monthly_limit)s kwa "
+"chaguo-msingi. Kwa sababu una Wafanyakazi wa Simu %(num_extra)d wa ziada, "
+"Wafanyakazi wote wa Simu wa mradi wako watazimwa. Unaweza kuwasha tena "
+"mwenyewe baada ya kushusha mpango. Kila Mfanyakazi wa Simu anayefanya kazi "
+"zaidi ya %(monthly_limit)s atasababisha ada ya ziada ya USD %(excess_fee)s, "
+"jumla ya USD %(monthly_total)s kwa mwezi."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1176,7 +1224,13 @@ msgid_plural ""
 "select this plan, all users with these roles will change to having the Read "
 "Only role."
 msgstr[0] ""
+"Una Jukumu Maalum %(num_roles)d lililosanidiwa kwa mradi wako. Ukichagua "
+"mpango huu, watumiaji wote wenye jukumu hilo watabadilishwa kuwa na jukumu "
+"la Kusoma Tu."
 msgstr[1] ""
+"Una Majukumu Maalum %(num_roles)d yaliyosanidiwa kwa mradi wako. Ukichagua "
+"mpango huu, watumiaji wote wenye majukumu haya watabadilishwa kuwa na jukumu"
+" la Kusoma Tu."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1196,7 +1250,11 @@ msgid_plural ""
 "You have %(rule_count)d automatic case update rules configured in your "
 "project. If you select this plan, these rules will be deactivated."
 msgstr[0] ""
+"Una kanuni ya sasisho la kesi otomatiki %(rule_count)d iliyosanidiwa kwenye "
+"mradi wako. Ukichagua mpango huu, kanuni hii itazimwa."
 msgstr[1] ""
+"Una kanuni za sasisho la kesi otomatiki %(rule_count)d zilizosanidiwa kwenye"
+" mradi wako. Ukichagua mpango huu, kanuni hizi zitazimwa."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1254,7 +1312,11 @@ msgid_plural ""
 "You have %(num_apps)d applications that has a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgstr[0] ""
+"Una programu %(num_apps)d ambayo ina mfanyakazi wa simu wa mazoezi "
+"aliyesanidiwa, itaondolewa kwenye kushusha mpango."
 msgstr[1] ""
+"Una programu %(num_apps)d ambazo zina mfanyakazi wa simu wa mazoezi "
+"aliyesanidiwa, itaondolewa kwenye kushusha mpango."
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -18683,7 +18745,13 @@ msgid_plural ""
 "    Finished processing changes, updated %(count)s cases.\n"
 "  "
 msgstr[0] ""
+"\n"
+"    Mabadiliko yamekamilika kuchakatwa, kesi 1 imesasishwa.\n"
+"  "
 msgstr[1] ""
+"\n"
+"    Mabadiliko yamekamilika kuchakatwa, kesi %(count)s zimesasishwa.\n"
+"  "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
@@ -18779,7 +18847,13 @@ msgid_plural ""
 "      A total of %(count)s edits will be applied.\n"
 "    "
 msgstr[0] ""
+"\n"
+"      Mabadiliko moja litatumika.\n"
+"    "
 msgstr[1] ""
+"\n"
+"      Jumla ya mabadiliko %(count)s yatatumika.\n"
+"    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 msgid ""
@@ -18802,7 +18876,13 @@ msgid_plural ""
 "      A total of %(count)s edits will be cleared.\n"
 "    "
 msgstr[0] ""
+"\n"
+"      Mabadiliko moja litaondolewa.\n"
+"    "
 msgstr[1] ""
+"\n"
+"      Jumla ya mabadiliko %(count)s yataondolewa.\n"
+"    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 msgid ""
@@ -19281,9 +19361,9 @@ msgid ""
 "                          "
 msgstr ""
 "\n"
-"                            Sifa ya kesi yenye jina hili tayari ipo.\n"
-"                            Ikiwa hauioni kwenye ukurasa, tafadhali bonyeza kitufe cha Onyesha Zilizopitwa na Wakati ili kuona\n"
-"                            sifa zilizopitwa na wakati.\n"
+"                            Kipengele cha kesi chenye jina hili tayari kipo.\n"
+"                            Ikiwa haukioni kwenye ukurasa, tafadhali bonyeza kitufe cha ‘Onyesha Vilivyopitwa na Wakati’ ili kuona\n"
+"                            vipengele vilivyopitwa na wakati.\n"
 "                          "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -19307,9 +19387,9 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    Kundi la sifa za kesi lenye jina hili tayari lipo.\n"
-"                    Ikiwa hauioni kwenye ukurasa, tafadhali bonyeza kitufe cha Onyesha\n"
-"                    Zilizopitwa na Wakati ili kuona makundi yaliyopitwa na wakati.\n"
+"                    Kikundi cha vipengele vya kesi chenye jina hili tayari kipo.\n"
+"                    Ikiwa haukioni kwenye ukurasa, tafadhali bonyeza kitufe cha ‘Onyesha\n"
+"                    Vilivyopitwa na Wakati’ ili kuona vikundi vilivyopitwa na wakati.\n"
 "                  "
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -20802,7 +20882,13 @@ msgid_plural ""
 "            %(counter)s forms processed successfully\n"
 "          "
 msgstr[0] ""
+"\n"
+"            Fomu %(counter)s imechakatwa kwa mafanikio\n"
+"          "
 msgstr[1] ""
+"\n"
+"            Fomu %(counter)s zimechakatwa kwa mafanikio\n"
+"          "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "Some forms were skipped:"
@@ -23062,7 +23148,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr "1 ambayo inalingana na matumizi yako ya sasa ya vipengele."
+msgstr "— ambayo inalingana na matumizi yako ya sasa ya vipengele."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -25010,7 +25096,7 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Bofya kwenye menyu ya Faili ya kivinjari juu (mfano Faili 2 Hifadhi Kama).\n"
+"        Bonyeza menyu ya Faili ya kivinjari juu (mfano Faili → Hifadhi Kama…).\n"
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -26006,7 +26092,13 @@ msgid_plural ""
 "            You have %(counter)s backup tokens remaining.\n"
 "          "
 msgstr[0] ""
+"\n"
+"            Una tokeni moja tu ya chelezo iliyobaki.\n"
+"          "
 msgstr[1] ""
+"\n"
+"            Una tokeni za chelezo %(counter)s zilizobaki.\n"
+"          "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
@@ -32528,8 +32620,8 @@ msgstr "Mtumiaji '{username}' hakupatikana."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Uanachama wa domain {count}"
+msgstr[1] "Uanachama wa domain {count}"
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
@@ -32915,7 +33007,13 @@ msgid_plural ""
 "        %(matched_count)s matches found.\n"
 "      "
 msgstr[0] ""
+"\n"
+"        Mechi moja imepatikana.\n"
+"      "
 msgstr[1] ""
+"\n"
+"        Mechi %(matched_count)s zimepatikana.\n"
+"      "
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
@@ -33523,8 +33621,8 @@ msgid ""
 "Summary — and I’ll use them to help guide you."
 msgstr ""
 "Habari! Mimi ni CommCare Companion, mwongozo wako binafsi wa CommCare! "
-"Unaweza kuuliza swali, au kuambatisha mafaili hapa 2 kama picha za skrini, "
-"uhamishaji, au Muhtasari wa Programu 2 na nitavitumia kukusaidia."
+"Unaweza kuuliza swali, au ambatisha faili hapa — kama vile picha za skrini, "
+"uhamishaji, au Muhtasari wa Programu — na nitazitumia kukusaidia."
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "I need help with building my CommCare application."
@@ -33988,7 +34086,13 @@ msgid_plural ""
 "            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
 "          "
 msgstr[0] ""
+"\n"
+"            Mikopo yako ya kabla ya malipo itaisha ndani ya wiki 1!\n"
+"          "
 msgstr[1] ""
+"\n"
+"            Mikopo yako ya kabla ya malipo itaisha ndani ya wiki %(prepaid_weeks_remaining)s!\n"
+"          "
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
@@ -38032,8 +38136,8 @@ msgstr "Urejesho batili kama mtumiaji {}"
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "'{params}' ni kigezo kinachohitajika"
+msgstr[1] "'{params}' ni vigezo vinavyohitajika"
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format
@@ -38681,8 +38785,8 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Chapisha fomu ya usajili au utafiti kwenye URL ya umma. Wajibu wanaomba\n"
-"      kiungo cha mara moja, hupitia ukaguzi wa roboti, na kukamilisha fomu mara moja  hakuna\n"
+"      Chapisha fomu ya usajili au utafiti kwenye URL ya umma. Wajibu huomba\n"
+"      kiungo cha mara moja, hupita ukaguzi wa roboti, na kukamilisha fomu mara moja — hakuna\n"
 "      akaunti ya CommCare inahitajika. Dhibiti ni fomu zipi zimefunguliwa, lini zinafungwa, na\n"
 "      batilisha ufikiaji wakati wowote.\n"
 "    "
@@ -38992,7 +39096,7 @@ msgstr "Taja Mradi Wako"
 
 #: corehq/apps/registration/forms.py
 msgid "e.g. — My CommCare Project"
-msgstr "mf. DD Mradi Wangu wa CommCare"
+msgstr "mfano — Mradi Wangu wa CommCare"
 
 #: corehq/apps/registration/forms.py
 msgid ""
@@ -40613,8 +40717,8 @@ msgstr "Hakuna Nafasi za Mradi zilizobainishwa"
 #, python-brace-format
 msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Mwaliko {count} umetumwa"
+msgstr[1] "Mialiko {count} imetumwa"
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -43684,7 +43788,7 @@ msgstr "Data Isiyotambulika"
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form_tree.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form_tree.html
 msgid "…"
-msgstr ""
+msgstr "…"
 
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Show question ids"
@@ -54683,7 +54787,13 @@ msgid_plural ""
 " still assigned to it. Remove all users assigned to the role before deleting"
 " it."
 msgstr[0] ""
+"Imeshindikana kufuta jukumu '{role}'. Lina mtumiaji mmoja na/au mwaliko bado"
+" limeambatanishwa nalo. Ondoa watumiaji wote waliopangiwa jukumu hili kabla "
+"ya kulifuta."
 msgstr[1] ""
+"Imeshindikana kufuta jukumu '{role}'. Lina watumiaji {user_count} na/au "
+"mialiko bado imeambatanishwa nalo. Ondoa watumiaji wote waliopangiwa jukumu "
+"hili kabla ya kulifuta."
 
 #: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
 msgid "Create Role"

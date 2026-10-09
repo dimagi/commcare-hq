@@ -77,6 +77,31 @@ def counts_by_plural_index_from_header(plural_forms_header):
     return counts
 
 
+# C0 control characters other than tab, newline and carriage return, plus DEL.
+# The LLM sometimes turns escapes like "\u2014" into "\u0014", which msgfmt
+# accepts.
+CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
+
+
+def has_control_chars(msgid, msgstr):
+    return bool(set(CONTROL_CHARS_RE.findall(msgstr)) - set(CONTROL_CHARS_RE.findall(msgid)))
+
+
+def entry_has_control_chars(entry):
+    """
+    Like ``has_control_chars``, but for a whole PO entry, including each
+    plural form of a plural entry.
+    """
+    if entry.msgid_plural:
+        source = entry.msgid + entry.msgid_plural
+        return any(has_control_chars(source, msgstr) for msgstr in entry.msgstr_plural.values())
+    return has_control_chars(entry.msgid, entry.msgstr)
+
+
+# msgfmt errors look like "<file>.po:<line>: <message>"
+MSGFMT_ERROR_RE = re.compile(r'^.+\.po:(\d+):\s*(.*)$')
+
+
 class PoTranslationFormat(TranslationFormat):
     """
     Translation format for PO files. The class expects gettext installed in the system.
@@ -113,7 +138,10 @@ class PoTranslationFormat(TranslationFormat):
 
     @property
     def untranslated_messages(self):
-        return [msg for msg in self.all_message_objects if msg.fuzzy or not self._is_translated(msg)]
+        return [
+            msg for msg in self.all_message_objects
+            if msg.fuzzy or not self._is_translated(msg) or entry_has_control_chars(msg)
+        ]
 
     def _is_translated(self, msg):
         if msg.msgid_plural:
@@ -302,7 +330,12 @@ class PoTranslationFormat(TranslationFormat):
                 print_error(f"URLs mismatch. msgid: {msgid_urls}, msgstr: {msgstr_urls}")
                 return False
 
-        # 4. Encoding
+        # 4. Control characters
+        if has_control_chars(msgid, msgstr):
+            print_error(f"Control characters in msgstr: {CONTROL_CHARS_RE.findall(msgstr)}")
+            return False
+
+        # 5. Encoding
         try:
             msgstr.encode('utf-8')
         except UnicodeEncodeError as e:
@@ -358,6 +391,7 @@ class PoTranslationFormat(TranslationFormat):
         Checks PO files using gettext's msgfmt and removes translations that are problematic.
         These problematic translations are those that cause errors during compilemessages or runtime.
         """
+        self._remove_control_char_translations()
         error_output = self._run_msgfmt(lang_path)
         if not error_output:
             print(f"No errors found in the PO file - {lang_path}")
@@ -365,6 +399,26 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = self._extract_errored_msgstr_ids(error_output)
         if line_num_error_map:
             self._remove_errored_translations(line_num_error_map)
+
+    def _remove_control_char_translations(self):
+        """
+        Clears msgstrs containing control characters that are not in the msgid.
+        msgfmt accepts these, so they would otherwise ship whenever
+        re-translating them fails.
+        """
+        all_translations = polib.pofile(self.file_path)
+        count = 0
+        for entry in all_translations:
+            if entry_has_control_chars(entry):
+                print(f"Removing translation with control characters for msgid: {entry.msgid}")
+                if entry.msgid_plural:
+                    entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
+                else:
+                    entry.msgstr = ""
+                count += 1
+        if count > 0:
+            all_translations.save()
+            print(f"Removed {count} translations with control characters")
 
     def _run_msgfmt(self, lang_path):
         """
@@ -389,22 +443,17 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = {}
 
         for line in error_output.splitlines():
-            # Error format: <filename>:<line_number>:<error_message>
-            # Warning format: <filename>:<line_number>: warning<warning_message>
-            error_parts = line.split(':')
-            if len(error_parts) == 3 or len(error_parts) == 4:
-                if error_parts[2].strip() == 'warning':
-                    # Ignore warnings
-                    continue
-                # Some msgfmt lines lack a line number (e.g.
-                # "<file>: warning: Charset missing in header."). These don't map
-                # to a msgstr, so skip anything without a numeric line number.
-                # We expect these errors to be caught by msgfmt itself, not us.
-                try:
-                    line_num = int(error_parts[1].strip())
-                except ValueError:
-                    continue
-                line_num_error_map[line_num] = ": ".join(error_parts[2:]).strip()
+            # Only trust lines that point at a PO file line. Anything else, like
+            # lines without a line number ("<file>: warning: Charset missing in
+            # header.") or stray output from native libraries in the subprocess
+            # ("…/driver.rs:196:23: …"), must not map to a msgstr.
+            match = MSGFMT_ERROR_RE.match(line)
+            if not match:
+                continue
+            line_num, message = match.groups()
+            if message.startswith('warning'):
+                continue
+            line_num_error_map[int(line_num)] = message.strip()
         print(f"Line num error map: {line_num_error_map}")
         return line_num_error_map
 
