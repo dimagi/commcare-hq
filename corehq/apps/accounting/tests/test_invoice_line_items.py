@@ -1,20 +1,28 @@
 import datetime
 import random
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest import mock
 
+from django.test import TestCase
+
+import pytest
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting.invoicing import WebUserLineItemFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
+    BillingAccountWebUserHistory,
     DefaultProductPlan,
     DomainUserHistory,
+    DomainWebUserHistory,
     Feature,
     FeatureRate,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     Invoice,
+    SoftwarePlanEdition,
     Subscriber,
     Subscription,
 )
@@ -411,6 +419,85 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
 
         invoice = self.subscription.invoice_set.latest('date_created')
         self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).count(), 0)
+
+
+class TestWebUserTotalUsersForDate(TestCase):
+
+    month_end = datetime.date(2026, 9, 30)
+
+    @classmethod
+    def setUpTestData(cls):
+        generator.init_default_currency()
+        invoiced_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.ENTERPRISE)
+        other_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD)
+
+        cls.account = cls._account(is_customer_account=True)
+        cls.invoiced_subscription = cls._subscribe(cls.account, 'invoiced', invoiced_plan)
+        cls._subscribe(cls.account, 'same-plan', invoiced_plan, do_not_invoice=True)
+        cls._subscribe(cls.account, 'other-plan', other_plan, do_not_invoice=True)
+
+        cls.non_customer_account = cls._account()
+        cls.non_customer_subscription = cls._subscribe(cls.non_customer_account, 'non-customer', invoiced_plan)
+        cls._subscribe(cls.non_customer_account, 'sandbox', invoiced_plan, do_not_invoice=True)
+
+    def setUp(self):
+        self.factory = self._factory(self.invoiced_subscription)
+
+    def test_counts_distinct_non_dimagi_users_on_same_plan(self):
+        self._record('invoiced', ['a@example.com', 'b@example.com', 'staff@dimagi.com'])
+        self._record('same-plan', ['b@example.com', 'c@example.com'])
+        self._record('other-plan', ['d@example.com'])
+        assert self.factory.total_users_for_date(self.month_end) == 3
+
+    def test_non_customer_account_counts_only_its_domain(self):
+        self._record('non-customer', ['a@example.com'])
+        self._record('sandbox', ['b@example.com', 'c@example.com'])
+        factory = self._factory(self.non_customer_subscription)
+        assert factory.total_users_for_date(self.month_end) == 1
+
+    def test_missing_snapshot_raises(self):
+        self._record('invoiced', ['a@example.com'])
+        with pytest.raises(DomainWebUserHistory.DoesNotExist):
+            self.factory.total_users_for_date(self.month_end)
+
+    @mock.patch('corehq.apps.accounting.invoicing.deleted_domain_exists', return_value=True)
+    def test_missing_snapshot_for_deleted_domain_is_skipped(self, _):
+        self._record('invoiced', ['a@example.com'])
+        assert self.factory.total_users_for_date(self.month_end) == 1
+
+    def test_falls_back_to_account_history_without_snapshots(self):
+        BillingAccountWebUserHistory.objects.create(
+            billing_account=self.account, record_date=self.month_end, num_users=4,
+        )
+        assert self.factory.total_users_for_date(self.month_end) == 4
+
+    def test_raises_without_snapshots_or_account_history(self):
+        with pytest.raises(BillingAccountWebUserHistory.DoesNotExist):
+            self.factory.total_users_for_date(self.month_end)
+
+    @staticmethod
+    def _account(is_customer_account=False):
+        return generator.billing_account(
+            generator.create_arbitrary_web_user_name(),
+            generator.create_arbitrary_web_user_name(),
+            is_customer_account=is_customer_account,
+        )
+
+    @staticmethod
+    def _subscribe(account, domain, plan_version, do_not_invoice=False):
+        return generator.generate_domain_subscription(
+            account, SimpleNamespace(name=domain), datetime.date(2026, 1, 1), None,
+            plan_version=plan_version, do_not_invoice=do_not_invoice,
+        )
+
+    def _factory(self, subscription):
+        invoice = SimpleNamespace(date_start=datetime.date(2026, 9, 1), date_end=self.month_end)
+        return WebUserLineItemFactory(subscription, None, invoice)
+
+    def _record(self, domain, usernames):
+        DomainWebUserHistory.objects.create(
+            domain=domain, record_date=self.month_end, usernames=usernames, num_users=len(usernames),
+        )
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):
