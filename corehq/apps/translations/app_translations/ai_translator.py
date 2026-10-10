@@ -65,9 +65,6 @@ def ai_translation_enabled(domain):
 
 
 def monthly_word_limit_reached(domain):
-    """A guard against abuse, not a strict cap: it is checked when a run
-    is queued, so runs can take the project past it. Counts only words
-    that were saved."""
     month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     words = AITranslationUsage.objects.filter(
         domain=domain, created_on__gte=month_start,
