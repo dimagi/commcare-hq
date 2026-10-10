@@ -96,10 +96,10 @@
           <table class="table align-middle">
             <thead>
               <tr>
-                <th>{% trans "Language" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th>{% trans "Last AI run" %}</th>
-                <th></th>
+                <th class="col-2">{% trans "Language" %}</th>
+                <th class="col-6">{% trans "Status" %}</th>
+                <th class="col-2">{% trans "Last AI run" %}</th>
+                <th class="col-2 text-end">{% trans "Actions" %}</th>
               </tr>
             </thead>
             <tbody data-bind="foreach: languages">
