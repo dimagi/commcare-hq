@@ -17,6 +17,14 @@ const STATE = Object.freeze({
     DONE: "done",
     ERROR: "error",
 });
+// so a status isn't told apart by colour alone
+const BADGE_ICONS = Object.freeze({
+    "text-bg-secondary": "fa-minus",
+    "text-bg-info": "fa-spinner fa-spin",
+    "text-bg-success": "fa-check",
+    "text-bg-warning": "fa-triangle-exclamation",
+    "text-bg-danger": "fa-xmark",
+});
 
 var panelModel = function (options) {
     var self = {};
@@ -207,6 +215,7 @@ var statusDisplay = function (supported, status, lastRun) {
         _lastRunStatusDisplay(display, lastRun);
         display.share = _appShare(lastRun);
     }
+    display.icon = BADGE_ICONS[display.labelClass];
     return display;
 };
 
