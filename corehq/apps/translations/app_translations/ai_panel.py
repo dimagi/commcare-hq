@@ -1,4 +1,6 @@
 """Data for the "Translate with AI" panel on an app's Languages page."""
+from langcodes import get_name as get_language_name
+
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import privileges, toggles
@@ -32,6 +34,7 @@ def get_ai_translation_panel_context(app):
         'languages': [
             {
                 'code': lang,
+                'name': get_language_name(lang),
                 'supported': is_supported_language(lang),
                 'last_run': last_runs.get(lang),
             }

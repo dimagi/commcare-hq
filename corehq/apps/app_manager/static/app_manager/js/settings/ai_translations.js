@@ -95,6 +95,10 @@ var panelModel = function (options) {
 var languageModel = function (options, panel) {
     var self = {};
     self.code = options.code;
+    // a code without a known name shows on its own
+    self.label = options.name
+        ? interpolate(gettext("%(name)s (%(code)s)"), {name: options.name, code: options.code}, true)
+        : options.code;
     self.supported = options.supported;
     self.status = ko.observable({});
     // the last run that saved anything, including one finished on this page

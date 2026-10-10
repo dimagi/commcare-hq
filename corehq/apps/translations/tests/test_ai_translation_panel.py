@@ -27,9 +27,9 @@ class TestAITranslationPanelContext(TestCase):
         context = get_ai_translation_panel_context(app)
 
         assert context['languages'] == [
-            {'code': 'fra', 'supported': True, 'last_run': None},
-            {'code': 'deu', 'supported': True, 'last_run': None},
-            {'code': 'xyz', 'supported': False, 'last_run': None},
+            {'code': 'fra', 'name': 'French', 'supported': True, 'last_run': None},
+            {'code': 'deu', 'name': 'German', 'supported': True, 'last_run': None},
+            {'code': 'xyz', 'name': None, 'supported': False, 'last_run': None},
         ]
         assert not context['limit_reached']
         assert context['active_states'] == ['queued', 'translating', 'applying']
