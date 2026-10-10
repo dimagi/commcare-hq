@@ -114,7 +114,7 @@ def run_message(message_code):
         FAILED: _(
             "Something went wrong and the translation didn't finish. Run it "
             "again, and contact support if it keeps failing."),
-        NO_STRINGS_TRANSLATED: _("No strings could be translated."),
+        NO_STRINGS_TRANSLATED: _("No labels could be translated."),
         MANY_SKIPPED: _(
             "More than {percent}% of translations failed validation and were "
             "skipped.").format(percent=round(HIGH_SKIP_RATE * 100)),

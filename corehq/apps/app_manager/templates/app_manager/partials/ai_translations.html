@@ -21,18 +21,18 @@
     <div class="accordion-body">
       <p class="text-body-secondary">
         {% blocktrans trimmed %}
-          Fills in missing translations for everything in the bulk translation
-          file: menu and form names, case list and detail labels, form questions
-          and choices. Manual translations are never overwritten; AI
-          translations are redone when their source text changes. AI
-          translations can contain mistakes, so please review them before
-          releasing your app.
+          AI fills in missing translations when you click AI Translate. Manual
+          edits are kept. Review AI translations before releasing your app.
         {% endblocktrans %}
         <a
           href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/4408934402/Automatic+AI+Translations"
           target="_blank"
           rel="noopener noreferrer"
-          >{% trans "Learn more" %}</a
+          title="{% trans "Learn more about AI translations" %}"
+          ><i class="fa-solid fa-circle-info" aria-hidden="true"></i
+          ><span class="visually-hidden"
+            >{% trans "Learn more about AI translations" %}</span
+          ></a
         >
       </p>
 
@@ -98,7 +98,7 @@
               <tr>
                 <th class="col-2">{% trans "Language" %}</th>
                 <th class="col-6">{% trans "Status" %}</th>
-                <th class="col-2">{% trans "Last AI run" %}</th>
+                <th class="col-2">{% trans "Last AI translated" %}</th>
                 <th class="col-2 text-end">{% trans "Actions" %}</th>
               </tr>
             </thead>
@@ -135,7 +135,7 @@
                   <!-- /ko -->
                   <div class="small" data-bind="visible: display().partial">
                     {% blocktrans trimmed %}
-                      To translate the remaining strings yourself, use
+                      To translate the remaining labels yourself, use
                       <a
                         href="#bulk-application-translations"
                         data-bs-toggle="collapse"
@@ -177,7 +177,7 @@
         <p class="small text-body-secondary mb-0">
           {% blocktrans trimmed %}
             Status reflects the last AI Translate run; the percentage is how
-            much of the whole app is AI translated as of that run. Strings you
+            much of the whole app is AI translated as of that run. Labels you
             add or change afterwards are translated the next time you run AI
             Translate. Translations are applied to the current draft; make a new
             version to release them.

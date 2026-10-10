@@ -212,19 +212,19 @@ var _finishedRunDisplay = function (display, status) {
     if (!status.total) {
         display.label = gettext("Nothing to translate");
         display.labelClass = "text-bg-success";
-        display.detail = gettext("Every string already has a translation.");
+        display.detail = gettext("Every label already has a translation.");
     } else if (status.translated === status.total) {
         display.label = gettext("AI translated");
         display.labelClass = "text-bg-success";
         display.detail = interpolate(ngettext(
-            "%(count)s string translated in this run",
-            "%(count)s strings translated in this run",
+            "%(count)s label translated in this run",
+            "%(count)s labels translated in this run",
             status.translated), {count: _number(status.translated)}, true);
     } else {
         display.label = gettext("Finished with errors");
         display.labelClass = "text-bg-warning";
         display.partial = true;
-        var parts = [interpolate(gettext("%(translated)s of %(total)s strings translated (%(percent)s%)"), {
+        var parts = [interpolate(gettext("%(translated)s of %(total)s labels translated (%(percent)s%)"), {
             translated: _number(status.translated),
             total: _number(status.total),
             percent: Math.round(100 * status.translated / status.total),
@@ -239,7 +239,7 @@ var _finishedRunDisplay = function (display, status) {
             parts.push(interpolate(gettext("%(count)s changed during the run"), {count: _number(status.changed)}, true));
         }
         display.detail = parts.join(" · ") + ". "
-            + gettext("Run AI Translate again to retry the strings that weren't translated.");
+            + gettext("Run AI Translate again to retry the labels that weren't translated.");
     }
 };
 
@@ -252,15 +252,15 @@ var _lastRunStatusDisplay = function (display, lastRun) {
         display.label = gettext("AI translated");
         display.labelClass = "text-bg-success";
         display.detail = interpolate(ngettext(
-            "%(count)s string translated in the last run",
-            "%(count)s strings translated in the last run",
+            "%(count)s label translated in the last run",
+            "%(count)s labels translated in the last run",
             lastRun.strings_translated), {count: _number(lastRun.strings_translated)}, true);
     } else {
         display.label = gettext("Partially translated");
         display.labelClass = "text-bg-warning";
         display.partial = true;
         display.detail = interpolate(gettext(
-            "%(translated)s of %(attempted)s strings translated in the last run · " +
+            "%(translated)s of %(attempted)s labels translated in the last run · " +
             "%(missed)s weren't translated"), {
             translated: _number(lastRun.strings_translated),
             attempted: _number(lastRun.strings_attempted),
@@ -288,7 +288,7 @@ var _appShare = function (run) {
     if (!run || !run.total_app_strings) {
         return "";
     }
-    return interpolate(gettext("AI translated %(percent)s% of the Application (%(translated)s of %(total)s strings)"), {
+    return interpolate(gettext("AI translated %(percent)s% of the Application (%(translated)s of %(total)s labels)"), {
         percent: Math.round(100 * run.total_app_strings_ai_translated / run.total_app_strings),
         translated: _number(run.total_app_strings_ai_translated),
         total: _number(run.total_app_strings),
