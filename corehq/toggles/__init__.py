@@ -923,6 +923,17 @@ PUBLIC_WEBFORMS = FeatureRelease(
     """
 )
 
+GA_OCS_CHATBOT = StaticToggle(
+    'ga_ocs_chatbot',
+    'GA CommCare Companion',
+    TAG_GA_PATH,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description="""
+        Enable to GA the chatbot and hide the OCS_CHATBOT feature preview.
+        Domains can opt out in Project Settings > Basic.
+    """,
+)
+
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
