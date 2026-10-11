@@ -7,7 +7,6 @@ from django.views.decorators.http import require_POST
 from oauthlib.oauth2 import BackendApplicationClient, OAuth2Error
 from requests_oauthlib import OAuth2Session
 
-from corehq import toggles
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import fetch_chat_usage_from_ocs
@@ -23,13 +22,12 @@ def chat_token(request):
     couch_user = getattr(request, 'couch_user')
 
     try:
-        if toggles.OCS_CHATBOT_PAGE_CONTEXT.enabled_for_request(request):
-            limit = get_chatbot_message_quota(couch_user)
-            if limit == 0:
+        limit = get_chatbot_message_quota(couch_user)
+        if limit == 0:
+            return HttpResponseForbidden()
+        if limit != UNLIMITED:
+            if fetch_chat_usage_from_ocs(couch_user.user_id) >= limit:
                 return HttpResponseForbidden()
-            if limit != UNLIMITED:
-                if fetch_chat_usage_from_ocs(couch_user.user_id) >= limit:
-                    return HttpResponseForbidden()
         token = _mint_widget_token()
     except (ChatUsageUnavailable, ChatTokenUnavailable):
         return HttpResponse(status=503)
