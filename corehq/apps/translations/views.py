@@ -167,12 +167,12 @@ def upload_bulk_app_translations(request, domain, app_id):
 @require_POST
 @require_can_edit_apps
 def start_ai_translation(request, domain, app_id):
+    if not ai_translation_enabled(domain):
+        return _json_error(_("AI translation isn't available for this project."), 403)
     app = _get_app(domain, app_id)
     reason = reason_app_cant_be_translated(app)
     if reason:
         return _json_error(reason, 400)
-    if not ai_translation_enabled(domain):
-        return _json_error(_("AI translation isn't available for this project."), 403)
     if monthly_word_limit_reached(domain):
         return _json_error(_("This project has reached its monthly AI translation "
                              "limit. Contact support to raise it."), 403)
