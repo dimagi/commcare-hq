@@ -80,7 +80,7 @@ def reason_app_cant_be_translated(app):
     if app.is_remote_app():
         return _("Remote apps can't be translated with AI.")
     if app.copy_of:
-        return _("Only the current version of an app can be translated, not a build.")
+        return _("Only the current version of an app can be translated, not a previous version.")
     return None
 
 
