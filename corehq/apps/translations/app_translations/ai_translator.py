@@ -136,15 +136,16 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     # rebase carries over only its results
     skipped = len(fmt.skipped_ids)
     applied = _apply_translations(fmt)
-    app_share = {}
+    # how much of the whole app is AI translated as of this run
+    app_ai_translation_share = {}
     if applied.translated:
         usage = _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
-        app_share = {
+        app_ai_translation_share = {
             'total_app_strings': usage.total_app_strings,
             'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
         }
     return {
-        **app_share,
+        **app_ai_translation_share,
         'total': len(units),
         'translated': applied.translated,
         'skipped': skipped,
