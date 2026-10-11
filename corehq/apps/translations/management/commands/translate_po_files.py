@@ -402,9 +402,8 @@ class PoTranslationFormat(TranslationFormat):
 
     def _remove_control_char_translations(self):
         """
-        Clears msgstrs containing control characters that are not in the msgid.
-        msgfmt accepts these, so they would otherwise ship whenever
-        re-translating them fails.
+        Clears msgstrs containing control characters that are not in the msgid,
+        in the hope that the LLM returns a clean translation in the next run.
         """
         all_translations = polib.pofile(self.file_path)
         count = 0
