@@ -10,6 +10,7 @@ from dimagi.utils.couch.safe_index import safe_index
 
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.const import USER_DATETIME_FORMAT_WITH_SEC
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
@@ -44,6 +45,8 @@ class FormDisplay:
     @property
     def username(self):
         uid = self.form["form"]["meta"]["userID"]
+        if uid == PUBLIC_USER_ID:
+            return _("public user")
         username = self.form["form"]["meta"].get("username")
         try:
             if username not in ['demo_user', 'admin']:
