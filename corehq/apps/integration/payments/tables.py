@@ -11,6 +11,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 )
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.integration.kyc.models import KycVerificationStatus
 from corehq.apps.integration.payments.const import PaymentStatusErrorCode, PaymentStatus
 
 
@@ -59,6 +60,7 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
     campaign = columns.Column(
         verbose_name=_("Campaign"),
     )
+
     activity = columns.Column(
         verbose_name=_("Activity"),
     )
@@ -108,6 +110,14 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             'value': value,
         }
         required_fields = list(set(self.base_columns.keys()) - set(self.OPTIONAL_FIELDS))
+        # Just for demo
+        user_or_case_id = record.record.get('user_or_case_id')
+        kyc_status = self.context['user_or_cases_verification_statuses'].get(user_or_case_id)
+
+        if kyc_status != KycVerificationStatus.PASSED:
+            default_attrs['disabled'] = 'disabled'
+            return mark_safe('<input %s/>' % flatatt(default_attrs))
+        # End of demo code
 
         for field in required_fields:
             if not record.record.get(field):
