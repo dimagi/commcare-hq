@@ -160,7 +160,7 @@ class ServerLocation:
 
     @classmethod
     def get_envs(cls):
-        if settings.DEBUG:
+        if settings.SERVER_ENVIRONMENT == cls.STAGING:
             return cls.ENVS | cls.STAGING_CONFIG
 
         return cls.ENVS
