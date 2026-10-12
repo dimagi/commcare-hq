@@ -927,7 +927,7 @@ GA_OCS_CHATBOT = StaticToggle(
     'ga_ocs_chatbot',
     'GA CommCare Companion',
     TAG_GA_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
     description="""
         Enable to GA the chatbot and hide the OCS_CHATBOT feature preview.
         Domains can opt out in Project Settings > Basic.
