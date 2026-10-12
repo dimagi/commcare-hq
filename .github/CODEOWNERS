@@ -48,6 +48,8 @@
 /corehq/apps/locations/adjacencylist.py @millerdev
 /corehq/apps/locations/resources/v0_6.py @AddisonDunn
 /corehq/apps/ota/ @esoergel
+/corehq/apps/public_webforms/ @nospame
+/corehq/apps/registration/ @nospame
 /corehq/apps/reports/models.py @AddisonDunn
 /corehq/apps/reports/standard/cases/ @esoergel
 /corehq/apps/reports/standard/tableau.py @AddisonDunn
