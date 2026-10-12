@@ -1002,3 +1002,8 @@ def all_app_manager_add_ons_enabled(domain):
 
     app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=domain)
     return bool(app_mgr and app_mgr.all_add_ons_enabled)
+
+
+class ChatbotDomainSettings(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+    disabled = models.BooleanField(default=False)
