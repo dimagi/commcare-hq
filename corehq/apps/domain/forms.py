@@ -110,6 +110,7 @@ from corehq.apps.domain.models import (
     AllowedUCRExpressionSettings,
     AppManagerDomainSettings,
     AppReleaseModeSetting,
+    ChatbotDomainSettings,
     OperatorCallLimitSettings,
     all_restricted_ucr_expressions,
 )
@@ -136,6 +137,8 @@ from corehq.toggles import (
     EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
+    NAMESPACE_DOMAIN,
+    GA_OCS_CHATBOT,
     SECURE_SESSION_TIMEOUT,
     USE_LOGO_IN_SYSTEM_EMAILS,
 )
@@ -551,6 +554,12 @@ class DomainGlobalSettingsForm(forms.Form):
         ),
     )
 
+    disable_chatbot = BooleanField(
+        required=False,
+        label=gettext_lazy("Opt out CommCare Companion"),
+        help_text=gettext_lazy("Hide the CommCare Companion chatbot for all users in this project space."),
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -587,6 +596,12 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_release_mode_setting_value()
         self._handle_enable_all_add_ons()
+        if GA_OCS_CHATBOT.enabled(self.domain, namespace=NAMESPACE_DOMAIN):
+            self.fields['disable_chatbot'].initial = ChatbotDomainSettings.objects.filter(
+                domain=self.domain, disabled=True,
+            ).exists()
+        else:
+            del self.fields['disable_chatbot']
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
 
@@ -598,6 +613,8 @@ class DomainGlobalSettingsForm(forms.Form):
         checkbox_fields = [
             hqcrispy.CheckboxField('release_mode_visibility'),
         ]
+        if 'disable_chatbot' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('disable_chatbot'))
         if 'enable_all_add_ons' in self.fields:
             checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
         checkbox_fields.extend([
@@ -861,6 +878,10 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         self._save_release_mode_setting(domain)
         self._save_enable_all_add_ons_setting(domain)
+        if 'disable_chatbot' in self.fields:
+            ChatbotDomainSettings.objects.update_or_create(
+                domain=self.domain, defaults={'disabled': self.cleaned_data['disable_chatbot']},
+            )
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
