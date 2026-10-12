@@ -838,10 +838,9 @@ msgstr ""
 "مساحة المشروع هذه ليس لديها اشتراك نشط، لذلك لا يمكن جدولة فاتورة لها."
 
 #: corehq/apps/accounting/forms.py
-#, fuzzy
 #| msgid "No project spaces found."
 msgid "Project space '{}' was not found."
-msgstr "لم يتم العثور على مساحات مشاريع."
+msgstr "لم يتم العثور على مساحة المشروع \"{}\"."
 
 #: corehq/apps/accounting/forms.py
 msgid "Renewal Reminder"
@@ -22737,7 +22736,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr " والتي تتوافق مع استخدامك الحالي للميزات."
+msgstr "— والذي يطابق استخدامك الحالي للميزات."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -24628,7 +24627,7 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        انقر على قائمة ملف في المتصفح في الأعلى (مثال: ملف  حفظ باسم).\n"
+"        انقر على قائمة \"ملف\" في المتصفح في الأعلى (مثال: ملف → حفظ باسم...).\n"
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -37442,8 +37441,12 @@ msgstr "استعادة غير صالحة كمستخدم {}"
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "\"{params}\" ليس معلمة مطلوبة"
+msgstr[1] "\"{params}\" معلمة مطلوبة"
+msgstr[2] "\"{params}\" معلمتان مطلوبتان"
+msgstr[3] "\"{params}\" معلمات مطلوبة"
+msgstr[4] "\"{params}\" معلمة مطلوبة"
+msgstr[5] "\"{params}\" معلمة مطلوبة"
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format

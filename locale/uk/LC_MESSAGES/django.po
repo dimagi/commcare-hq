@@ -26002,7 +26002,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr "4 — що відповідає вашому поточному використанню функцій."
+msgstr "— що відповідає вашому поточному використанню функцій."
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -48422,7 +48422,7 @@ msgstr "Нерозпізнані дані"
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap3/single_form_tree.html
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/single_form_tree.html
 msgid "…"
-msgstr "026"
+msgstr "…"
 
 #: corehq/apps/reports/templates/reports/form/partials/bootstrap5/readable_form.html
 msgid "Show question ids"
