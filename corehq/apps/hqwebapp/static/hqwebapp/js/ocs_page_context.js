@@ -8,7 +8,6 @@
 
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 
 const WIDGET_SELECTOR = 'open-chat-studio-widget';
 const BEFORE_SEND_EVENT = 'ocs:message:before-send';
@@ -67,7 +66,7 @@ function getClientPageContext() {
 
 document.addEventListener('DOMContentLoaded', function () {
     const widget = document.querySelector(WIDGET_SELECTOR);
-    if (!widget || !toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
+    if (!widget) {
         return;
     }
     _fetchMyRole();
