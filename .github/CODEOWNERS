@@ -29,10 +29,10 @@
 /corehq/warnings.py @millerdev
 
 /corehq/apps/accounting/ @dannyroberts @nospame
-/corehq/apps/case_search/ @MartinRiese @esoergel @stephherbers @Robert-Costello
+/corehq/apps/case_search/ @MartinRiese @esoergel @Robert-Costello
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/cleanup/management/commands/populate_sql_model_from_couch_model.py @millerdev
-/corehq/apps/cloudcare/ @MartinRiese @stephherbers @Robert-Costello @nospame
+/corehq/apps/cloudcare/ @MartinRiese @Robert-Costello @nospame
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/data_dictionary/ @esoergel @zandre-eng
 /corehq/apps/domain/decorators.py @esoergel
@@ -46,23 +46,17 @@
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @millerdev
-/corehq/apps/locations/resources/v0_6.py @AddisonDunn
 /corehq/apps/ota/ @esoergel
 /corehq/apps/public_webforms/ @nospame
 /corehq/apps/registration/ @nospame
-/corehq/apps/reports/models.py @AddisonDunn
 /corehq/apps/reports/standard/cases/ @esoergel
-/corehq/apps/reports/standard/tableau.py @AddisonDunn
 /corehq/apps/settings/views.py @gherceg
 /corehq/apps/smsbillables/ @dannyroberts
-/corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/reports/builder/ @kaapstorm
 /corehq/apps/users/ @esoergel
 /corehq/ex-submodules/dimagi/utils/couch/migration.py @millerdev
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
-
-/custom/covid/management/commands/ @stephherbers @AddisonDunn
 
 /docs/js-guide/ @millerdev
 
