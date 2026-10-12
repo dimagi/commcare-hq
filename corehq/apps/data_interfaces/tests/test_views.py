@@ -158,7 +158,7 @@ class XFormManagementPostTests(TestCase):
 
 class XFormManagementJobPollTests(TestCase):
 
-    TEMPLATE = 'data_interfaces/partials/xform_management_status_new.html'
+    TEMPLATE = 'data_interfaces/partials/xform_management_status.html'
 
     @classmethod
     def setUpClass(cls):

@@ -555,7 +555,7 @@ class XFormManagementStatusView(DataInterfaceSection):
 @require_can_edit_data
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
-                              template="data_interfaces/partials/xform_management_status_new.html"):
+                              template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
         job = BulkAsyncJob.objects.get(id=download_id, domain=domain)
