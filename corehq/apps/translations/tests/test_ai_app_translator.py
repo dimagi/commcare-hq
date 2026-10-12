@@ -36,6 +36,12 @@ from corehq.apps.translations.models import AITranslation, AITranslationUsage
     ("Name", "Nom", True),
     ("Name", "", False),                      # empty output
     ("Name", None, False),                    # non-string output
+    # characters XML can't hold would fail the app's save
+    ("Name", "N\x0bom", False),
+    ("Name", "N\x00om", False),
+    ("Name", "N\ufffeom", False),
+    ("Name", "Nom\tet\nprénom\r", True),
+    ("Name", "Nom 😀", True),
     # <output> tags must survive verbatim (count + attrs)
     ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/name"/>', True),
     ('Hello <output value="/data/name"/>', 'Bonjour', False),

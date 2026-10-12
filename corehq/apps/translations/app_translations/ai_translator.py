@@ -641,13 +641,21 @@ MARKDOWN_BULLET_PATTERN = r'^\s{0,3}[-*+] '
 MARKDOWN_NUMBERED_PATTERN = r'^\s{0,3}\d+[.)] '
 MARKDOWN_HEADING_PATTERN = r'^\s{0,3}#{1,6} '
 MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
+# Matches any character XML doesn't allow, such as control characters
+# like U+000B (vertical tab). One of these in a form label makes the
+# whole app fail to save. The ranges are the characters XML allows:
+# https://www.w3.org/TR/xml/#charsets
+XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
 
 
 def is_valid_app_translation(source, translated):
-    """Check that a translation preserves the source's structure:
-    ``<output/>`` references, HTML tags, URLs and markdown markers."""
+    """Check that a translation can be saved and preserves the source's
+    structure: ``<output/>`` references, HTML tags, URLs and markdown
+    markers."""
     if not translated or not isinstance(translated, str):
+        return False
+    if re.search(XML_INVALID_CHAR_PATTERN, translated):
         return False
 
     source_tags = re.findall(HTML_TAG_PATTERN, source)
