@@ -1,6 +1,15 @@
-from django.test import TestCase, override_settings
+from datetime import datetime
 
-from corehq.apps.translations.models import AITranslationConfig
+from django.test import TestCase, override_settings
+from time_machine import travel
+
+from corehq.apps.translations.app_translations.ai_translator import (
+    monthly_word_limit_reached,
+)
+from corehq.apps.translations.models import (
+    AITranslationConfig,
+    AITranslationUsage,
+)
 
 DEFAULTS = {
     'provider': 'openai',
@@ -90,3 +99,47 @@ class TestGetModelConfig(TestCase):
             'provider': 'openai',
             'model': 'gpt-4.1',
         }
+
+
+@travel(datetime(2026, 10, 15, 12, 0), tick=False)
+class TestMonthlyWordLimitReached(TestCase):
+
+    def setUp(self):
+        AITranslationConfig.objects.create(domain='d', monthly_word_limit=1000)
+
+    def test_under_the_limit(self):
+        _record_usage('d', words=999)
+        assert not monthly_word_limit_reached('d')
+
+    def test_at_the_limit(self):
+        _record_usage('d', words=600)
+        _record_usage('d', words=400)
+        assert monthly_word_limit_reached('d')
+
+    def test_over_the_limit(self):
+        # a run can take the project past its limit
+        _record_usage('d', words=1001)
+        assert monthly_word_limit_reached('d')
+
+    def test_usage_from_the_start_of_the_month_is_counted(self):
+        _record_usage('d', words=1000, created_on=datetime(2026, 10, 1, 0, 0))
+        assert monthly_word_limit_reached('d')
+
+    def test_last_months_usage_is_not_counted(self):
+        _record_usage('d', words=1000, created_on=datetime(2026, 9, 30, 23, 59))
+        assert not monthly_word_limit_reached('d')
+
+    def test_other_projects_usage_is_not_counted(self):
+        _record_usage('other', words=1000)
+        assert not monthly_word_limit_reached('d')
+
+
+def _record_usage(domain, words, created_on=None):
+    usage = AITranslationUsage.objects.create(
+        domain=domain, app_id='app', lang='fra', strings_attempted=1,
+        words_translated=words, strings_translated=1, total_app_strings=1,
+        total_app_strings_ai_translated=1, app_version=1, model='m',
+    )
+    if created_on:
+        # created_on is auto_now_add, so it can't be set on create
+        AITranslationUsage.objects.filter(pk=usage.pk).update(created_on=created_on)

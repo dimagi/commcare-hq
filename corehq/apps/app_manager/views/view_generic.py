@@ -53,6 +53,9 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_accessible_downstream_domains,
 )
 from corehq.apps.linked_domain.util import can_domain_access_linked_domains
+from corehq.apps.translations.app_translations.ai_panel import (
+    get_ai_translation_panel_context,
+)
 from corehq.util.soft_assert import soft_assert
 
 
@@ -144,6 +147,9 @@ def view_generic(
         if release_manager:
             template = 'app_manager/app_view_release_manager.html'
             context.update(get_releases_context(request, domain, app_id))
+        else:
+            # only the settings page has the Languages tab
+            context['ai_translation'] = get_ai_translation_panel_context(app)
 
         context['is_app_settings_page'] = not release_manager
 

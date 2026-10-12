@@ -861,9 +861,13 @@ class TestRunAppTranslation(TestCase):
         summary = run_app_translation(
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt), chunk_size=2)
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert summary == {
+            'total_app_strings': usage.total_app_strings,
+            'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
             'total': 5, 'translated': 5, 'skipped': 0, 'changed': 0, 'failed': 0,
             'app_version': app.version, 'errors': []}
+        assert usage.total_app_strings_ai_translated == 5
         assert app.get_module(0).name['fra'] == 'FR:register module'
 
     def test_partial_apply_on_batch_failure(self):
@@ -959,5 +963,6 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app, fail_all=True)
 
         assert summary['translated'] == 0
+        assert 'total_app_strings' not in summary
         assert not AITranslationUsage.objects.filter(app_id=app.get_id).exists()
         assert not AITranslation.objects.filter(app_id=app.get_id).exists()
