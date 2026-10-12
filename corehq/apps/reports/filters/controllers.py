@@ -6,7 +6,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
-from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils, EnterpriseUsersUtils
+from corehq.apps.reports.filters.users import (
+    EmwfUtils,
+    EnterpriseUsersUtils,
+    SubmittedByEmwfUtils,
+    UsersUtils,
+)
 from corehq.apps.reports.util import SimplifiedUserInfo
 
 
@@ -207,6 +212,14 @@ class EmwfOptionsController(object):
             has_more = (self.page * self.size) < count
             return has_more, results
         return count, results
+
+
+class SubmittedByOptionsController(EmwfOptionsController):
+
+    @property
+    @memoized
+    def utils(self):
+        return SubmittedByEmwfUtils(self.domain, namespace_locations=self.namespace_locations)
 
 
 class MobileWorkersOptionsController(EmwfOptionsController):
