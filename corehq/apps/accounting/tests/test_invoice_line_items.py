@@ -435,38 +435,43 @@ class TestWebUserTotalUsersForDate(TestCase):
         other_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD)
 
         cls.account = cls._account(is_customer_account=True)
-        cls.invoiced_subscription = cls._subscribe(cls.account, 'invoiced', invoiced_plan)
-        cls._subscribe(cls.account, 'same-plan', invoiced_plan, do_not_invoice=True)
-        cls._subscribe(cls.account, 'other-plan', other_plan, do_not_invoice=True)
+        cls.invoiced_subscription = cls._subscribe(cls.account, 'billed-domain', invoiced_plan)
+        cls._subscribe(cls.account, 'sibling-domain', invoiced_plan, do_not_invoice=True)
+        cls._subscribe(cls.account, 'unrelated-domain', other_plan, do_not_invoice=True)
 
         cls.non_customer_account = cls._account()
-        cls.non_customer_subscription = cls._subscribe(cls.non_customer_account, 'non-customer', invoiced_plan)
-        cls._subscribe(cls.non_customer_account, 'sandbox', invoiced_plan, do_not_invoice=True)
+        cls.non_customer_subscription = cls._subscribe(
+            cls.non_customer_account, 'standalone-domain', invoiced_plan,
+        )
+        cls._subscribe(cls.non_customer_account, 'sandbox-domain', invoiced_plan, do_not_invoice=True)
 
     def setUp(self):
         self.factory = self._factory(self.invoiced_subscription)
 
     def test_counts_distinct_non_dimagi_users_on_same_plan(self):
-        self._record('invoiced', ['a@example.com', 'b@example.com', 'staff@dimagi.com'])
-        self._record('same-plan', ['b@example.com', 'c@example.com'])
-        self._record('other-plan', ['d@example.com'])
+        self._record('billed-domain', ['a@example.com', 'b@example.com', 'staff@dimagi.com'])
+        self._record('sibling-domain', ['b@example.com', 'c@example.com'])
+        self._record('unrelated-domain', ['d@example.com'])
         assert self.factory.total_users_for_date(self.month_end) == 3
 
     def test_non_customer_account_counts_only_its_domain(self):
-        self._record('non-customer', ['a@example.com'])
-        self._record('sandbox', ['b@example.com', 'c@example.com'])
+        self._record('standalone-domain', ['a@example.com'])
+        self._record('sandbox-domain', ['b@example.com', 'c@example.com'])
         factory = self._factory(self.non_customer_subscription)
         assert factory.total_users_for_date(self.month_end) == 1
 
     def test_missing_snapshot_raises(self):
-        self._record('invoiced', ['a@example.com'])
-        with pytest.raises(DomainWebUserHistory.DoesNotExist):
+        self._record('billed-domain', ['a@example.com'])
+        with pytest.raises(DomainWebUserHistory.DoesNotExist, match='sibling-domain'):
             self.factory.total_users_for_date(self.month_end)
 
-    @mock.patch('corehq.apps.accounting.invoicing.deleted_domain_exists', return_value=True)
-    def test_missing_snapshot_for_deleted_domain_is_skipped(self, _):
-        self._record('invoiced', ['a@example.com'])
-        assert self.factory.total_users_for_date(self.month_end) == 1
+    def test_missing_snapshot_for_deleted_domain_is_skipped(self):
+        self._record('billed-domain', ['a@example.com'])
+        with mock.patch(
+            'corehq.apps.accounting.invoicing.deleted_domain_exists',
+            side_effect=lambda domain: domain == 'sibling-domain',
+        ):
+            assert self.factory.total_users_for_date(self.month_end) == 1
 
     def test_falls_back_to_account_history_without_snapshots(self):
         BillingAccountWebUserHistory.objects.create(
