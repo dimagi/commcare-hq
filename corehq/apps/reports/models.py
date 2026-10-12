@@ -35,6 +35,7 @@ class HQUserType(object):
     DEACTIVATED = 5
     WEB = 6
     DEACTIVATED_WEB = 7
+    PUBLIC = 8
     human_readable = [gettext_noop("Active Mobile Workers"),
                       gettext_noop("demo_user"),
                       gettext_noop("admin"),
@@ -42,10 +43,11 @@ class HQUserType(object):
                       gettext_noop("CommCare Supply"),
                       gettext_noop("Deactivated Mobile Workers"),
                       gettext_noop("Active Web Users"),
-                      gettext_noop("Deactivated Web Users")]
-    toggle_defaults = (True, False, False, False, False, True, True, True)
+                      gettext_noop("Deactivated Web Users"),
+                      gettext_noop("Public Users")]
+    toggle_defaults = (True, False, False, False, False, True, True, True, False)
     count = len(human_readable)
-    included_defaults = (True, True, True, True, False, True, True, True)
+    included_defaults = (True, True, True, True, False, True, True, True, False)
 
     @classmethod
     def use_defaults(cls):
