@@ -65,7 +65,6 @@ msgid "Other"
 msgstr "Інше"
 
 #: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
-#| msgid "Schedule Invoice"
 msgid "Generate Invoice"
 msgstr "Створити рахунок"
 
@@ -2685,6 +2684,30 @@ msgstr "Додати все"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/multiselect_utils.js
 msgid "Remove All"
 msgstr "Видалити все"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "CommCare Companion не входить до вашої поточної підписки."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Ви досягли ліміту чатів на цей місяць. Ваш ліміт буде оновлено 1 числа "
+"наступного місяця (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "Ви використали %(percent)s% своїх чат-повідомлень цього місяця."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"Не вдалося перевірити ваш ліміт чатів. Будь ласка, закрийте та знову "
+"відкрийте чат, щоб спробувати ще раз."
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
