@@ -145,7 +145,7 @@ def get_date_header(request):
         try:
             date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
             date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
-        except:
+        except Exception:
             logging.error((
                 "Receiver app: incoming submission has a date header "
                 "that we can't parse: '%s'"
