@@ -863,6 +863,11 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_exports_use_elasticsearch(self, domain):
         domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", False)
 
+    def _save_disable_chatbot(self):
+        ChatbotDomainSettings.objects.update_or_create(
+            domain=self.domain, defaults={'disabled': self.cleaned_data['disable_chatbot']},
+        )
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -883,14 +888,12 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         self._save_release_mode_setting(domain)
         self._save_enable_all_add_ons_setting(domain)
-        if 'disable_chatbot' in self.fields:
-            ChatbotDomainSettings.objects.update_or_create(
-                domain=self.domain, defaults={'disabled': self.cleaned_data['disable_chatbot']},
-            )
         self._save_orphan_case_alerts_setting(domain)
         self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             self._save_exports_use_elasticsearch(domain)
+        if GA_OCS_CHATBOT.enabled(self.domain):
+            self._save_disable_chatbot()
         domain.save()
         return True
 
