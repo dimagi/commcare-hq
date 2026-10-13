@@ -103,35 +103,35 @@ class TestGetModelConfig(TestCase):
 
 @travel(datetime(2026, 10, 15, 12, 0), tick=False)
 class TestMonthlyWordLimitReached(TestCase):
+    domain = 'test-domain-ai-translation-limit'
 
     def setUp(self):
-        AITranslationConfig.objects.create(domain='d', monthly_word_limit=1000)
+        AITranslationConfig.objects.create(domain=self.domain, monthly_word_limit=1000)
 
     def test_under_the_limit(self):
-        _record_usage('d', words=999)
-        assert not monthly_word_limit_reached('d')
+        _record_usage(self.domain, words=999)
+        assert not monthly_word_limit_reached(self.domain)
 
     def test_at_the_limit(self):
-        _record_usage('d', words=600)
-        _record_usage('d', words=400)
-        assert monthly_word_limit_reached('d')
+        _record_usage(self.domain, words=600)
+        _record_usage(self.domain, words=400)
+        assert monthly_word_limit_reached(self.domain)
 
-    def test_over_the_limit(self):
-        # a run can take the project past its limit
-        _record_usage('d', words=1001)
-        assert monthly_word_limit_reached('d')
+    def test_a_run_can_take_the_project_past_its_limit(self):
+        _record_usage(self.domain, words=1001)
+        assert monthly_word_limit_reached(self.domain)
 
     def test_usage_from_the_start_of_the_month_is_counted(self):
-        _record_usage('d', words=1000, created_on=datetime(2026, 10, 1, 0, 0))
-        assert monthly_word_limit_reached('d')
+        _record_usage(self.domain, words=1000, created_on=datetime(2026, 10, 1, 0, 0))
+        assert monthly_word_limit_reached(self.domain)
 
     def test_last_months_usage_is_not_counted(self):
-        _record_usage('d', words=1000, created_on=datetime(2026, 9, 30, 23, 59))
-        assert not monthly_word_limit_reached('d')
+        _record_usage(self.domain, words=1000, created_on=datetime(2026, 9, 30, 23, 59))
+        assert not monthly_word_limit_reached(self.domain)
 
     def test_other_projects_usage_is_not_counted(self):
         _record_usage('other', words=1000)
-        assert not monthly_word_limit_reached('d')
+        assert not monthly_word_limit_reached(self.domain)
 
 
 def _record_usage(domain, words, created_on=None):
