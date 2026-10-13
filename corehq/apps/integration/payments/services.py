@@ -677,20 +677,12 @@ def _get_status_details(status, error_code=None):
         error_code = "UnexpectedStatus-{}".format(status)
         status = PaymentStatus.ERROR
 
-    if status == PaymentStatus.SUCCESSFUL:
-        # Clear any previous error if payment was successful
-        error_code = ''
-
-    status_update = {
+    return {
         PaymentProperties.PAYMENT_STATUS: status,
         PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON: datetime.utcnow().isoformat(),
+        # Clears any previous error when the new status has none
+        PaymentProperties.PAYMENT_ERROR: error_code or '',
     }
-
-    if error_code is not None:
-        status_update.update({
-            PaymentProperties.PAYMENT_ERROR: error_code,
-        })
-    return status_update
 
 
 def _get_http_error_code(code, response):

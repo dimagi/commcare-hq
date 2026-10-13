@@ -694,6 +694,18 @@ class TestRequestPaymentStatus(SimpleTestCase):
 
         self._assert_result(result, PaymentStatus.SUCCESSFUL, '')
 
+    def test_statuses_without_reason_clear_error(self):
+        self.mock_payment_case.get_case_property.return_value = self.transaction_id
+
+        for status in (PaymentStatus.PENDING_PROVIDER, PaymentStatus.FAILED):
+            with self.subTest(status):
+                mock_request = Mock(return_value=(status, None))
+                self.mock_config.get_payment_status_api_method.return_value = mock_request
+
+                result = request_payment_status(self.mock_payment_case, self.mock_config)
+
+                self._assert_result(result, status, '')
+
     def test_failed_status_with_reason(self):
         self.mock_payment_case.get_case_property.return_value = self.transaction_id
 
