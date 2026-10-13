@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
     HtmxInvalidPageRedirectMixin,
     SelectablePaginatedTableView,
 )
-from corehq.apps.integration.kyc.models import KycConfig
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
     PaymentProperties,
     PaymentStatus,
@@ -191,10 +191,7 @@ class PaymentsVerificationTableView(
 
     @cached_property
     def kyc_config(self):
-        try:
-            return KycConfig.objects.get(domain=self.request.domain)
-        except KycConfig.DoesNotExist:
-            return None
+        return get_kyc_config(self.request.domain)
 
     @staticmethod
     def _get_user_or_case_ids(object_list):

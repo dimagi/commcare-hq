@@ -13,7 +13,8 @@ from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.apps.integration.kyc.models import KycConfig, KycVerificationStatus
+from corehq.apps.integration.kyc.models import KycVerificationStatus
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_DEVICE_ID,
     PaymentStatusErrorCode,
@@ -279,7 +280,7 @@ def get_kyc_verification_statuses(kyc_config, user_or_case_ids):
 
 def _validate_payment_cases_for_verification(case_ids, domain):
     valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    kyc_config = KycConfig.objects.filter(domain=domain).first()
+    kyc_config = get_kyc_config(domain)
     for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
         cases = CommCareCase.objects.get_cases(list(case_ids_chunk))
         kyc_statuses = _get_kyc_statuses_for_cases(cases, kyc_config)
