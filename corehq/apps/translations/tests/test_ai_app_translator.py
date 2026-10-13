@@ -915,6 +915,9 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app)
 
         assert summary['total'] == 1
+        # this run translated 1 string; the app holds 4 AI translations,
+        # the first run's 5 less the edited module name
+        assert (summary['translated'], summary['total_app_strings_ai_translated']) == (1, 4)
         assert app.get_module(0).name['fra'] == 'mon module'
         assert app.get_module(0).get_form(0).name['fra'] == 'FR:enrol form'
 
@@ -922,7 +925,6 @@ class TestRunAppTranslation(TestCase):
         # Only the form's name was retranslated;
         # the module's name was skipped because it was manually edited
         assert (usage.strings_attempted, usage.strings_translated, usage.model) == (1, 1, 'fake-model')
-        # the first run's 5, less the edited module name
         assert usage.total_app_strings_ai_translated == 4
 
         statuses = dict(
