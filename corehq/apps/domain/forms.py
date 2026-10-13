@@ -137,7 +137,6 @@ from corehq.toggles import (
     EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
-    NAMESPACE_DOMAIN,
     GA_OCS_CHATBOT,
     SECURE_SESSION_TIMEOUT,
     USE_LOGO_IN_SYSTEM_EMAILS,
@@ -598,12 +597,6 @@ class DomainGlobalSettingsForm(forms.Form):
         self._handle_call_limit_visibility()
         self._handle_release_mode_setting_value()
         self._handle_enable_all_add_ons()
-        if GA_OCS_CHATBOT.enabled(self.domain, namespace=NAMESPACE_DOMAIN):
-            self.fields['disable_chatbot'].initial = ChatbotDomainSettings.objects.filter(
-                domain=self.domain, disabled=True,
-            ).exists()
-        else:
-            del self.fields['disable_chatbot']
         self._handle_orphan_case_alerts_setting_value()
         self._handle_opt_out_of_data_sharing_setting_value()
 
@@ -611,6 +604,11 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['exports_use_elasticsearch']
         else:
             self._handle_exports_use_elasticsearch_setting_value()
+
+        if not GA_OCS_CHATBOT.enabled(self.domain):
+            del self.fields['disable_chatbot']
+        else:
+            self._handle_disable_chatbot_setting_value()
 
         checkbox_fields = [
             hqcrispy.CheckboxField('release_mode_visibility'),
@@ -696,6 +694,11 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_exports_use_elasticsearch_setting_value(self):
         self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
+
+    def _handle_disable_chatbot_setting_value(self):
+        self.fields['disable_chatbot'].initial = ChatbotDomainSettings.objects.filter(
+            domain=self.domain, disabled=True,
+        ).exists()
 
     def _handle_opt_out_of_data_sharing_setting_value(self):
         self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
