@@ -641,13 +641,21 @@ MARKDOWN_BULLET_PATTERN = r'^\s{0,3}[-*+] '
 MARKDOWN_NUMBERED_PATTERN = r'^\s{0,3}\d+[.)] '
 MARKDOWN_HEADING_PATTERN = r'^\s{0,3}#{1,6} '
 MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
+# Matches any character XML doesn't allow, such as control characters
+# like U+000B (vertical tab). One of these in a form label makes the
+# whole app fail to save. The ranges are the characters XML allows:
+# https://www.w3.org/TR/xml/#charsets
+XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
 
 
 def is_valid_app_translation(source, translated):
-    """Check that a translation preserves the source's structure:
-    ``<output/>`` references, HTML tags, URLs and markdown markers."""
+    """Check that a translation can be saved and preserves the source's
+    structure: ``<output/>`` references, HTML tags, URLs and markdown
+    markers."""
     if not translated or not isinstance(translated, str):
+        return False
+    if re.search(XML_INVALID_CHAR_PATTERN, translated):
         return False
 
     source_tags = re.findall(HTML_TAG_PATTERN, source)
@@ -655,17 +663,19 @@ def is_valid_app_translation(source, translated):
     if len(source_tags) != len(translated_tags):
         return False
     if source_tags:
-        # tags must keep their names, order and open/close structure;
-        # attributes are not compared here
+        # tags other than <output/> must keep their names, order and
+        # open/close structure; attributes are not compared here
         def tag_info(tags):
             return [re.match(r'<(/?)(\w+)', tag).groups()
-                    for tag in tags if re.match(r'<(/?)(\w+)', tag)]
+                    for tag in tags
+                    if re.match(r'<(/?)(\w+)', tag) and not tag.startswith('<output')]
         if tag_info(source_tags) != tag_info(translated_tags):
             return False
-        # <output .../> references must survive byte-for-byte,
-        # attributes included — a changed value breaks the form
-        source_outputs = [t for t in source_tags if t.startswith('<output')]
-        translated_outputs = [t for t in translated_tags if t.startswith('<output')]
+        # <output .../> references must survive byte-for-byte, attributes
+        # included (a changed value breaks the form), but word order
+        # differs between languages, so they may move
+        source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
+        translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
         if source_outputs != translated_outputs:
             return False
 
