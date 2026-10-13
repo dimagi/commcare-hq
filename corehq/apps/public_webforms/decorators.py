@@ -1,10 +1,10 @@
 from functools import wraps
 
-from corehq.apps.domain.utils import is_domain_active
 from corehq.apps.public_webforms.models import (
     PublicFormSession,
     PublicFormUser,
 )
+from corehq.apps.public_webforms.utils import public_webforms_enabled
 
 PUBLIC_FORM_SESSION_COOKIE_NAME = 'public_form_session_key'
 PUBLIC_FORM_SESSION_HEADER = 'CommCare-Public-Session'
@@ -37,6 +37,6 @@ def get_public_form_session(request, domain):
     if not raw_key:
         return None
     session = PublicFormSession.get_active_session_by_key(raw_key)
-    if session is None or session.public_webform.domain != domain or not is_domain_active(domain):
+    if session is None or session.public_webform.domain != domain or not public_webforms_enabled(domain):
         return None
     return session

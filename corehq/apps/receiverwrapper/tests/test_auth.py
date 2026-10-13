@@ -43,6 +43,8 @@ from corehq.apps.users.util import PUBLIC_USER_ID, normalize_username
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.tests.utils import sharded
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 class FakeFile(object):
@@ -284,6 +286,8 @@ class _AuthTestsBothBackends(object):
             }
         )
 
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
     def test_public_form_session(self):
         webform = PublicWebform.objects.create(
             domain=self.domain,

@@ -21,12 +21,15 @@ from corehq.apps.public_webforms.decorators import (
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.tests.utils import formplayer_origin_headers
 from corehq.form_processor.tests.utils import create_case
-from corehq.util.test_utils import flag_enabled
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 SESSION_HEADER = 'HTTP_' + PUBLIC_FORM_SESSION_HEADER.upper().replace('-', '_')
 
 
 @override_settings(DEBUG=False)
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
 class PublicFormSessionRestoreTest(TestCase):
 
     domain = 'test-public-restore'

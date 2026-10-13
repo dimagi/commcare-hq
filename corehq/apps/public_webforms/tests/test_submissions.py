@@ -22,6 +22,7 @@ from corehq.apps.public_webforms.submissions import (
 from corehq.apps.public_webforms.tests.utils import (
     create_session,
     formplayer_origin_headers,
+    public_webforms_available,
 )
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
@@ -252,7 +253,7 @@ def receiver_webform():
 
 
 @sharded
-@use(receiver_webform)
+@use(receiver_webform, public_webforms_available)
 class TestPublicFormReceiverIntegration:
     """End-to-end: a submission carrying the public session cookie + header is
     resolved to a PublicFormUser, validated pre-persist, and consumes the

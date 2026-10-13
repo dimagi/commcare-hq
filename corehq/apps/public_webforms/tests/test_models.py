@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -18,7 +19,6 @@ from corehq.apps.public_webforms.decorators import (
     PUBLIC_FORM_SESSION_HEADER,
     allow_public_form_session,
 )
-from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.public_webforms.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
@@ -352,13 +352,11 @@ class OTARestorePublicFormUserTests(SimpleTestCase):
         assert self.restore_user.get_call_center_indicators(None) is None
 
 
+@patch(
+    'corehq.apps.public_webforms.decorators.public_webforms_enabled',
+    new=lambda domain: True,
+)
 class AllowPublicFormSessionTests(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain_obj = create_domain('public-forms-domain')
-        cls.addClassCleanup(cls.domain_obj.delete)
 
     def setUp(self):
         super().setUp()
@@ -434,19 +432,16 @@ class AllowPublicFormSessionTests(TestCase):
         self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
-    def test_an_inactive_domain_leaves_couch_user_untouched(self):
-        self.domain_obj.is_active = False
-        self.domain_obj.save()
-        self.addCleanup(self._reactivate_domain)
+    def test_public_webforms_not_enabled_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=str(self.session.session_key))
-        self._decorated_view()(request, self.webform.domain)
+        with patch(
+            'corehq.apps.public_webforms.decorators.public_webforms_enabled',
+            new=lambda domain: False,
+        ):
+            self._decorated_view()(request, self.webform.domain)
         assert request.couch_user is self.existing_user
 
     def test_a_different_domain_leaves_couch_user_untouched(self):
         request = self._request(cookie_value=str(self.session.session_key))
         self._decorated_view()(request, f'not-{self.webform.domain}')
         assert request.couch_user is self.existing_user
-
-    def _reactivate_domain(self):
-        self.domain_obj.is_active = True
-        self.domain_obj.save()

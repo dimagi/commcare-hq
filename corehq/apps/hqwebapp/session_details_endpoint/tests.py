@@ -24,7 +24,8 @@ from corehq.apps.sso.tests import generator as sso_generator
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.hmac_request import get_hmac_digest
-from corehq.util.test_utils import flag_enabled, softer_assert
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled, softer_assert
 
 
 class SessionDetailsViewTest(TestCase):
@@ -254,6 +255,8 @@ class SessionDetailsViewTest(TestCase):
         self.assertIn('edit_data', json.loads(response.content)['permissions'])
 
 
+@flag_enabled('PUBLIC_WEBFORMS')
+@privilege_enabled(PUBLIC_WEBFORMS)
 class PublicSessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -295,7 +298,7 @@ class PublicSessionDetailsViewTest(TestCase):
             'public': True,
             'app_build_id': 'build',
             'endpoint_id': 'endpoint',
-            'enabled_toggles': [],
+            'enabled_toggles': ['PUBLIC_WEBFORMS'],
             'enabled_previews': [],
         }
 
