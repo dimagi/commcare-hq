@@ -556,9 +556,9 @@ class DomainGlobalSettingsForm(forms.Form):
 
     disable_chatbot = BooleanField(
         required=False,
-        label=gettext_lazy("Opt out CommCare Companion"),
+        label=gettext_lazy("Opt out of CommCare Companion"),
         widget=BootstrapCheckboxInput(
-            inline_label=gettext_lazy("Hide the CommCare Companion chatbot for all users in this project space."),
+            inline_label=gettext_lazy("Hide the CommCare Companion chatbot for all users in this project space"),
         )
     )
 
