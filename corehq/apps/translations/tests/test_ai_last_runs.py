@@ -37,8 +37,10 @@ class TestGetLastAIRuns(TestCase):
 
         assert get_last_ai_runs(app)['fra']['in_version'] == 7
 
-    def test_run_not_in_a_build_yet(self, latest_build_version):
+    def test_run_newer_than_the_latest_build(self, latest_build_version):
         app = _make_app()
+        # a run saves the app, which bumps its version, so the run isn't
+        # in a build until the user makes a new version
         latest_build_version.return_value = 6
         _record_run('fra', app_version=7)
 
@@ -51,9 +53,10 @@ class TestGetLastAIRuns(TestCase):
         assert get_last_ai_runs(app)['fra']['in_version'] is None
 
     def test_runs_for_languages_the_app_no_longer_translates_are_ignored(self, _):
-        app = _make_app()
-        _record_run('spa')  # removed from the app
-        _record_run('en')  # made the default language
+        # spa was removed from the app, and fra made its default language
+        app = _make_app(langs=['fra', 'hin'])
+        _record_run('spa')
+        _record_run('fra')
 
         assert get_last_ai_runs(app) == {}
 
@@ -65,8 +68,8 @@ class TestGetLastAIRuns(TestCase):
         assert not latest_build_version.called
 
 
-def _make_app():
-    return Application(_id=APP_ID, domain=DOMAIN, langs=['en', 'fra', 'hin'])
+def _make_app(langs=('en', 'fra', 'hin')):
+    return Application(_id=APP_ID, domain=DOMAIN, langs=list(langs))
 
 
 def _record_run(lang, app_id=APP_ID, strings_translated=1, app_version=1, created_on=None):
