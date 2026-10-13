@@ -9,7 +9,7 @@ def chatbot_enabled_for_request(request):
     user = getattr(request, 'couch_user', None)
     if not user:
         return False
-    domain = getattr(request, 'domain', None) or request.POST.get('domain')
+    domain = getattr(request, 'domain', None)
     if not domain:
         return False
     if GA_OCS_CHATBOT.enabled(domain, namespace=NAMESPACE_DOMAIN):
