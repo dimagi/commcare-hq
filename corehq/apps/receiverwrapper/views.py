@@ -224,6 +224,17 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     return response
 
 
+def _public_form_post(request, domain, app_id):
+    # allow_public_form_session has already authenticated the submitter
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 def _submission_error(request, message, metric_tags,
         domain, app_id, user_id, authenticated, meta=None, status=400,
         notify=True):
@@ -302,8 +313,7 @@ def post_api(request, domain):
 @allow_public_form_session
 def post(request, domain, app_id=None):
     if getattr(request, 'public_form_session', None):
-        # a public session is a credential whether or not the project requires one
-        return secure_post(request, domain, app_id)
+        return _public_form_post(request, domain, app_id)
     try:
         if domain_requires_auth(domain):
             # "redirect" to the secure version
@@ -467,13 +477,7 @@ def secure_post(request, domain, app_id=None):
     }
 
     if getattr(request, 'public_form_session', None):
-        return _process_form(
-            request=request,
-            domain=domain,
-            app_id=app_id,
-            user_id=request.couch_user.get_id,
-            authenticated=True,
-        )
+        return _public_form_post(request, domain, app_id)
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']
