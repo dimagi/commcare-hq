@@ -19,6 +19,7 @@ from corehq.apps.integration.kyc.models import (
 )
 from corehq.apps.integration.kyc.services import (
     _validate_schema,
+    get_kyc_config,
     get_percent_matching_score,
     get_user_data_for_api,
     order_and_case_insensitive_matching_score,
@@ -129,6 +130,25 @@ class BaseKycUserSetup(TestCase):
             "postCode": 100,
             "country": 100,
         }
+
+
+class TestGetKycConfig(BaseKycUserSetup):
+
+    def test_returns_config_for_domain(self):
+        assert get_kyc_config(self.domain) == self.config
+
+    def test_returns_none_without_config(self):
+        assert get_kyc_config('domain-without-config') is None
+
+    def test_raises_when_domain_has_multiple_configs(self):
+        KycConfig.objects.create(
+            domain=self.domain,
+            provider=KycProviders.ORANGE_CAMEROON_KYC,
+            user_data_store=UserDataStore.CUSTOM_USER_DATA,
+            connection_settings=self.connection_settings,
+        )
+        with pytest.raises(KycConfig.MultipleObjectsReturned):
+            get_kyc_config(self.domain)
 
 
 class TestGetUserDataForAPI(BaseKycUserSetup):

@@ -68,6 +68,11 @@ def test_translate_string_calls_translator():
     fake_translator.translate.assert_called_once_with("Hello")
 
 
+def test_base_prompt_asks_for_unescaped_characters():
+    translator = get_llm_translator('por', translation_format=None, api_key='sk-test')
+    assert "never as \\u escape sequences" in translator.base_prompt()
+
+
 def test_openai_payload_uses_json_schema_mode():
     translator = get_llm_translator('hin', translation_format=None, api_key='sk-test')
     assert translator._response_format() == {

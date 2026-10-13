@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
     HtmxInvalidPageRedirectMixin,
     SelectablePaginatedTableView,
 )
-from corehq.apps.integration.kyc.models import KycConfig
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
     PaymentProperties,
     PaymentStatus,
@@ -29,6 +29,8 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import (
+    get_kyc_verification_statuses,
+    get_user_or_case_ids,
     revert_payment_verification,
     verify_payment_cases,
 )
@@ -170,8 +172,9 @@ class PaymentsVerificationTableView(
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
-            context_data['table'].paginated_rows.data
+        cases = [details.record.case for details in context_data['table'].paginated_rows.data]
+        context_data['user_or_cases_verification_statuses'] = get_kyc_verification_statuses(
+            self.kyc_config, get_user_or_case_ids(cases)
         )
 
         return context_data
@@ -179,38 +182,17 @@ class PaymentsVerificationTableView(
     def export_table_context(self, table):
         context = super().export_table_context(table)
         table.rows = list(table.rows)
-        object_list = [row.record for row in table.rows]
+        cases = [row.record.record.case for row in table.rows]
         context.update({
-            'user_or_cases_verification_statuses': self._get_user_or_cases_verification_status(object_list)
+            'user_or_cases_verification_statuses': get_kyc_verification_statuses(
+                self.kyc_config, get_user_or_case_ids(cases)
+            )
         })
         return context
 
-    def _get_user_or_cases_verification_status(self, object_list):
-        if not self.kyc_config:
-            return {}
-
-        user_or_case_ids = self._get_user_or_case_ids(object_list)
-        kyc_users = self.kyc_config.get_kyc_users_by_ids(user_or_case_ids)
-        return {
-            kyc_user.user_id: kyc_user.kyc_verification_status
-            for kyc_user in kyc_users
-        }
-
     @cached_property
     def kyc_config(self):
-        try:
-            return KycConfig.objects.get(domain=self.request.domain)
-        except KycConfig.DoesNotExist:
-            return None
-
-    @staticmethod
-    def _get_user_or_case_ids(object_list):
-        user_or_case_ids = []
-        for commcare_payment_case_details in object_list:
-            case = commcare_payment_case_details.record.case
-            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
-                user_or_case_ids.append(case_prop)
-        return user_or_case_ids
+        return get_kyc_config(self.request.domain)
 
     def _apply_filters(self, query):
         query_filters = []

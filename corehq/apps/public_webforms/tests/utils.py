@@ -68,7 +68,7 @@ def formplayer_origin_headers():
 def create_session(webform, **kwargs):
     return PublicFormSession.objects.create(**{
         'public_webform': webform,
-        'expires_at': timezone.now() + datetime.timedelta(hours=1),
+        'expires_at': timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
         **kwargs,
     })
 

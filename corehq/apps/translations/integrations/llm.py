@@ -123,7 +123,9 @@ class LLMTranslator(abc.ABC):
     def base_prompt(self):
         lang_name = language_name(self.lang)
         base_prompt = f"""You are a professional translator. Translate the following texts to {lang_name}.
-        Keep the structure and formatting of the original text."""
+        Keep the structure and formatting of the original text.
+        Write accented letters, symbols and other non-ASCII characters directly,
+        never as \\u escape sequences."""
         return base_prompt
 
     def input_format_prompt(self):

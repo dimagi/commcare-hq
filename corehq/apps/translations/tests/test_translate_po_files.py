@@ -19,6 +19,7 @@ from corehq.apps.translations.management.commands import translate_po_files
 from corehq.apps.translations.management.commands.translate_po_files import (
     PoTranslationFormat,
     counts_by_plural_index_from_header,
+    entry_has_control_chars,
 )
 from corehq.tests.tools import nottest
 
@@ -303,6 +304,14 @@ class TestPoTranslationFormat:
         assert fuzzy_entry in result
         assert translated_entry not in result
 
+    def test_untranslated_messages_includes_control_chars(self):
+        po_format = PoTranslationFormat("test_file.po")
+        corrupted = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \x14 maintenant")
+        clean = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \u2014 maintenant")
+        po_format.all_message_objects = [corrupted, clean]
+
+        assert po_format.untranslated_messages == [corrupted]
+
     @use(po_dir)
     def test_untranslated_messages_plural(self):
         po_format = _po_format(SPANISH_PLURAL_PO)
@@ -552,6 +561,8 @@ msgstr[1] ""
         ("Hello &amp; World", "Hola et Mundo"),  # msgstr with HTML entity but msgid is not
         ("Hello ", "Hola "),  # msgstr preserves whitespace
         ("  Hello  ", "  Hola  "),  # msgstr preserves whitespace
+        ("Hello\tWorld", "Hola\tMundo"),  # tab is not a control character we reject
+        ("Save \u2014 now", "Guardar \u2014 ahora"),  # non-ASCII punctuation
     ])
     def test_is_valid_msgstr(self, msgid, msgstr):
         assert PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
@@ -565,6 +576,8 @@ msgstr[1] ""
         ("<a>Hello</a>", "<b>Hola</b>"),  # Different tags
         ("<a>Hello</a>", "<a>Hola"),  # Missing tags
         ("<a>Hello</a>", "Hola"),  # Missing tags
+        ("Save \u2014 now", "Guardar \x14 ahora"),  # "\u2014" mangled to "\u0014"
+        ("U\u200bI translation", "Traduction U\x0bI"),  # "\u200b" mangled to "\u000b"
     ])
     def test_is_valid_msgstr_invalid(self, msgid, msgstr):
         assert not PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
@@ -641,7 +654,7 @@ def test_extract_errored_msgstr_ids():
     assert 15 not in result
     assert result[10] == "some error message"
     assert result[20] == "another error message"
-    assert result[25] == "yet another error message : with a reason"
+    assert result[25] == "yet another error message :with a reason"
 
 
 def test_run_msgfmt_returns_stderr():
@@ -712,6 +725,18 @@ def test_extract_errored_msgstr_ids_skips_lines_without_line_number():
     assert list(result.keys()) == [42]
 
 
+def test_extract_errored_msgstr_ids_ignores_non_po_lines():
+    po_format = PoTranslationFormat("test_file.po")
+    error_output = (
+        "thread 'tokio-rt-worker' panicked at /Users/x/.cargo/registry/src/tokio-1.50.0/"
+        "src/runtime/io/driver.rs:196:23:\n"
+        "unexpected error when polling the I/O driver: Os { code: 9 }\n"
+        "locale/fra/LC_MESSAGES/django.po:32940: 'msgid' and 'msgstr' entries do not both end with '\\n'\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert list(result.keys()) == [32940]
+
+
 def test_remove_errored_translations_clears_plural_forms():
     # A Plural-Forms header is the minimum needed for msgfmt to parse the plural
     # entry and reach the format-placeholder check.
@@ -741,6 +766,64 @@ def test_remove_errored_translations_clears_plural_forms():
         assert all(v == "" for v in entry.msgstr_plural.values())
         # No compile errors remain
         assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+    finally:
+        os.remove(po_file_path)
+
+
+@pytest.mark.parametrize("entry, expected", [
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \x14 ahora"), True),
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \u2014 ahora"), False),
+    # A control character that is already in the msgid is allowed
+    (polib.POEntry(msgid="Page\x0cbreak", msgstr="Salto\x0cde p\u00e1gina"), False),
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\u00f3n", 1: "{count} invitaciones"},
+    ), False),
+    # One broken plural form is enough
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\x13n", 1: "{count} invitaciones"},
+    ), True),
+    # The source of a plural form is both msgid and msgid_plural
+    (polib.POEntry(
+        msgid="{count} page", msgid_plural="{count}\x0cpages",
+        msgstr_plural={0: "{count} p\u00e1gina", 1: "{count}\x0cp\u00e1ginas"},
+    ), False),
+])
+def test_entry_has_control_chars(entry, expected):
+    assert entry_has_control_chars(entry) is expected
+
+
+def test_check_and_remove_errored_messages_clears_control_chars():
+    po_content = (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        '"Plural-Forms: nplurals=2; plural=(n > 1);\\n"\n\n'
+        'msgid "Save — now"\n'
+        'msgstr "Enregistrer \x14 maintenant"\n\n'
+        'msgid "Cancel — later"\n'
+        'msgstr "Annuler — plus tard"\n\n'
+        'msgid "{count} page — done"\n'
+        'msgid_plural "{count} pages — done"\n'
+        'msgstr[0] "{count} page \x14 termin\u00e9e"\n'
+        'msgstr[1] "{count} pages — termin\u00e9es"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False, encoding="utf-8") as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(po_file_path)
+        # Sanity check: msgfmt alone doesn't catch the control character.
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+
+        po_format.check_and_remove_errored_messages(po_file_path)
+
+        updated = polib.pofile(po_file_path)
+        assert updated.find("Save — now").msgstr == ""
+        assert updated.find("Cancel — later").msgstr == "Annuler — plus tard"
+        assert updated.find("{count} page — done").msgstr_plural == {0: "", 1: ""}
     finally:
         os.remove(po_file_path)
 

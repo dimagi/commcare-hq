@@ -1,6 +1,7 @@
 """AI translation of app content via the bulk app translation pipeline."""
 import hashlib
 import json
+import logging
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -42,6 +43,8 @@ from corehq.apps.translations.integrations.llm import (
     get_llm_translator,
 )
 from corehq.apps.translations.models import AITranslation, AITranslationUsage
+
+logger = logging.getLogger(__name__)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -105,10 +108,12 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     }
 
 
-def prepare_translation_format(app, target_lang, mode):
+def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
     """A format for ``app`` that skips AI translations a user has edited
     and retranslates those whose source text has changed."""
-    fmt = AppTranslationFormat(app, target_lang, mode=mode)
+    fmt = AppTranslationFormat(
+        app, target_lang, mode=mode,
+        treat_default_copies_as_missing=treat_default_copies_as_missing)
     changed_strings = find_changed_ai_translations(fmt)
     fmt.manually_edited_keys = changed_strings.manually_edited
     fmt.stale_keys = changed_strings.stale
@@ -305,7 +310,7 @@ class AppTranslationFormat(TranslationFormat):
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
                  manually_edited_keys=None, stale_keys=None,
-                 treat_default_copies_as_missing=False):
+                 treat_default_copies_as_missing=True):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
         self.target_lang = target_lang
@@ -421,6 +426,12 @@ class AppTranslationFormat(TranslationFormat):
                 valid[unit_id] = translated
             else:
                 self.skipped_ids.add(unit_id)
+                # a skipped string is otherwise only a count in the summary
+                logger.warning(
+                    "AI translation failed validation and was skipped: "
+                    "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
+                    self.app.domain, self.app.get_id, self.target_lang,
+                    unit.string_key, unit.source_text[:200], str(translated)[:200])
         self.results.update(valid)
         return valid
 
@@ -630,13 +641,21 @@ MARKDOWN_BULLET_PATTERN = r'^\s{0,3}[-*+] '
 MARKDOWN_NUMBERED_PATTERN = r'^\s{0,3}\d+[.)] '
 MARKDOWN_HEADING_PATTERN = r'^\s{0,3}#{1,6} '
 MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
+# Matches any character XML doesn't allow, such as control characters
+# like U+000B (vertical tab). One of these in a form label makes the
+# whole app fail to save. The ranges are the characters XML allows:
+# https://www.w3.org/TR/xml/#charsets
+XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
 
 
 def is_valid_app_translation(source, translated):
-    """Check that a translation preserves the source's structure:
-    ``<output/>`` references, HTML tags, URLs and markdown markers."""
+    """Check that a translation can be saved and preserves the source's
+    structure: ``<output/>`` references, HTML tags, URLs and markdown
+    markers."""
     if not translated or not isinstance(translated, str):
+        return False
+    if re.search(XML_INVALID_CHAR_PATTERN, translated):
         return False
 
     source_tags = re.findall(HTML_TAG_PATTERN, source)
@@ -644,17 +663,19 @@ def is_valid_app_translation(source, translated):
     if len(source_tags) != len(translated_tags):
         return False
     if source_tags:
-        # tags must keep their names, order and open/close structure;
-        # attributes are not compared here
+        # tags other than <output/> must keep their names, order and
+        # open/close structure; attributes are not compared here
         def tag_info(tags):
             return [re.match(r'<(/?)(\w+)', tag).groups()
-                    for tag in tags if re.match(r'<(/?)(\w+)', tag)]
+                    for tag in tags
+                    if re.match(r'<(/?)(\w+)', tag) and not tag.startswith('<output')]
         if tag_info(source_tags) != tag_info(translated_tags):
             return False
-        # <output .../> references must survive byte-for-byte,
-        # attributes included — a changed value breaks the form
-        source_outputs = [t for t in source_tags if t.startswith('<output')]
-        translated_outputs = [t for t in translated_tags if t.startswith('<output')]
+        # <output .../> references must survive byte-for-byte, attributes
+        # included (a changed value breaks the form), but word order
+        # differs between languages, so they may move
+        source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
+        translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
         if source_outputs != translated_outputs:
             return False
 
