@@ -35,7 +35,8 @@ class PaymentProperties(str, Enum):
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 PAYMENT_STATUS_DEVICE_ID = 'momo_payment_status_service'
-PAYMENT_STATUS_RETRY_MAX_ATTEMPTS = 4
+# Retries after the original attempt, so a payment status is fetched at most 5 times
+PAYMENT_STATUS_MAX_RETRIES = 4
 
 
 class PaymentStatus(models.TextChoices):

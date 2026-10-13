@@ -22,7 +22,7 @@ from corehq.apps.integration.payments.const import (
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
-    PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
+    PAYMENT_STATUS_MAX_RETRIES,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
@@ -470,7 +470,7 @@ def _get_status_retry_count(payment_case):
 
 def _handle_status_request_error(payment_case, request_error):
     retry_count = _get_status_retry_count(payment_case)
-    if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
         details = _get_notify_error_details(
             payment_case.domain,
             payment_case.case_id,
@@ -490,7 +490,7 @@ def _handle_status_request_error(payment_case, request_error):
 
 def _handle_pending_status(payment_case, status_update):
     retry_count = _get_status_retry_count(payment_case)
-    if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
 
     return {**status_update, PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}

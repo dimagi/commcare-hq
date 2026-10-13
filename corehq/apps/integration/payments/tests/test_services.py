@@ -17,7 +17,7 @@ from corehq.apps.integration.payments.const import (
     PaymentStatusErrorCode,
     PaymentProperties,
     PaymentStatus,
-    PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
+    PAYMENT_STATUS_MAX_RETRIES,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
@@ -959,7 +959,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
         case = self._create_payment_case('pending_exceed', {
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_PROVIDER,
             'transaction_id': str(uuid.uuid4()),
-            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
+            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_MAX_RETRIES,
         })
         self.addCleanup(case.delete)
 
@@ -982,7 +982,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
         case = self._create_payment_case('request_error_exceed', {
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
             'transaction_id': str(uuid.uuid4()),
-            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
+            PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_MAX_RETRIES,
         })
         self.addCleanup(case.delete)
 
@@ -1016,7 +1016,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
                 case = self._create_payment_case(f'{name}_below_limit', {
                     PaymentProperties.PAYMENT_STATUS: status,
                     'transaction_id': str(uuid.uuid4()),
-                    PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_RETRY_MAX_ATTEMPTS - 1,
+                    PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: PAYMENT_STATUS_MAX_RETRIES - 1,
                 })
                 self.addCleanup(case.delete)
                 mock_request_status.side_effect = side_effect
@@ -1028,7 +1028,7 @@ class TestRequestPaymentsStatusForCases(TestCase):
                 self.assertEqual(case.case_json[PaymentProperties.PAYMENT_STATUS], status)
                 self.assertEqual(
                     case.case_json[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT],
-                    str(PAYMENT_STATUS_RETRY_MAX_ATTEMPTS)
+                    str(PAYMENT_STATUS_MAX_RETRIES)
                 )
                 self.assertEqual(case.case_json[PaymentProperties.PAYMENT_ERROR], error)
 
