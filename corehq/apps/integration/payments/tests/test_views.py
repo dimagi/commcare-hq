@@ -409,6 +409,17 @@ class TestPaymentsVerifyTableView(BaseTestPaymentsView):
         }
 
     @flag_enabled('MOBILE_MONEY_INTEGRATION')
+    def test_export_context_has_verification_status(self):
+        self._create_kyc_config()
+        view = self._make_request().context_data['view']
+
+        table = view.get_table_for_export()
+
+        assert table.context['user_or_cases_verification_statuses'] == {
+            self.case_linked_to_payment_case.case_id: KycVerificationStatus.PASSED
+        }
+
+    @flag_enabled('MOBILE_MONEY_INTEGRATION')
     def test_revert_verification_success(self):
         verified_case = _create_case(
             self.factory,
