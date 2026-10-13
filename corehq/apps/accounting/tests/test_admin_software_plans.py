@@ -8,6 +8,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SoftwarePlanVersion,
     SoftwareProductRate,
+    Subscriber,
     Subscription,
     SubscriptionType,
     FundingSource,
@@ -28,8 +29,10 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
-        cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.domain1 = 'test-domain-1'
+        subscriber1 = Subscriber.objects.create(domain=cls.domain1)
+        cls.domain2 = 'test-domain-2'
+        subscriber2 = Subscriber.objects.create(domain=cls.domain2)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
@@ -154,8 +157,10 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
     def setUpClass(cls):
         super().setUpClass()
 
-        cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
-        cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.domain1 = 'test-domain-1'
+        subscriber1 = Subscriber.objects.create(domain=cls.domain1)
+        cls.domain2 = 'test-domain-2'
+        subscriber2 = Subscriber.objects.create(domain=cls.domain2)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         cls.account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
