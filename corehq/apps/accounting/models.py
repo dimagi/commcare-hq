@@ -434,11 +434,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
-    # Deprecated: no longer read. Web user billing is determined by the
-    # software plan (SoftwarePlanVersion.has_web_user_feature). Remove this
-    # field in a follow-up after deploy (SAAS-20367).
-    bill_web_user = models.BooleanField(default=False)
-
     class Meta(object):
         app_label = 'accounting'
 
