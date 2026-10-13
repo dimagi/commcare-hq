@@ -449,9 +449,9 @@ def request_payments_status_for_cases(case_ids, config):
                 status_update = request_payment_status(payment_case, config)
                 if status_update.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.PENDING_PROVIDER:
                     # If status is still pending, we need to retry fetching status in future runs
-                    status_update = _handle_payment_status_retry(payment_case, status_update=status_update)
+                    status_update = _handle_pending_status(payment_case, status_update)
             except PaymentRequestError as err:
-                status_update = _handle_payment_status_retry(payment_case, request_error=err)
+                status_update = _handle_status_request_error(payment_case, err)
 
             status_updates.append(
                 (payment_case.case_id, status_update, False)
@@ -461,35 +461,39 @@ def request_payments_status_for_cases(case_ids, config):
         )
 
 
-def _handle_payment_status_retry(payment_case, status_update=None, request_error=None):
+def _get_status_retry_count(payment_case):
     try:
-        retry_count = int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
+        return int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
     except ValueError:
-        retry_count = 0
+        return 0
 
-    if request_error:
-        if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
-            details = _get_notify_error_details(
-                payment_case.domain,
-                payment_case.case_id,
-                str(request_error),
-                payment_case.get_case_property('transaction_id')
-            )
-            notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
-            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
-        else:
-            # The status is left unchanged so that the payment is picked up again in the next scheduled run.
-            # The error lets the user know the status could not be fetched.
-            return {
-                PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1,
-                PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR,
-            }
 
+def _handle_status_request_error(payment_case, request_error):
+    retry_count = _get_status_retry_count(payment_case)
+    if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+        details = _get_notify_error_details(
+            payment_case.domain,
+            payment_case.case_id,
+            str(request_error),
+            payment_case.get_case_property('transaction_id')
+        )
+        notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
+
+    # The status is left unchanged so that the payment is picked up again in the next scheduled run.
+    # The error lets the user know the status could not be fetched.
+    return {
+        PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1,
+        PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR,
+    }
+
+
+def _handle_pending_status(payment_case, status_update):
+    retry_count = _get_status_retry_count(payment_case)
     if retry_count >= PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
-    else:
-        status_update[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT] = retry_count + 1
-    return status_update
+
+    return {**status_update, PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
 
 
 def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
