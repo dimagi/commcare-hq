@@ -10,11 +10,9 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.ota.origin_token import (
     ORIGIN_TOKEN_HEADER,
-    is_from_formplayer,
     validate_origin_token,
 )
-from corehq.apps.public_webforms.decorators import get_public_form_session
-from corehq.apps.public_webforms.models import PublicFormUser
+from corehq.apps.public_webforms.decorators import allow_public_form_session
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
@@ -76,18 +74,10 @@ def mobile_auth_or_formplayer(view_func):
 
 def mobile_auth_or_public_form_session(view_func):
     """
-    Accepts a public form session alongside the usual mobile credentials.
+    Accepts a public form session, through formplayer only, alongside the
+    usual mobile credentials.
     """
-    @wraps(view_func)
-    def _inner(request, domain, *args, **kwargs):
-        session = get_public_form_session(request, domain)
-        if session is None:
-            return mobile_auth_or_formplayer(view_func)(request, domain, *args, **kwargs)
-        if not is_from_formplayer(request):
-            return HttpResponseForbidden()
-
-        request.public_form_session = session
-        request.couch_user = PublicFormUser(session)
-        return view_func(request, domain, *args, **kwargs)
-
-    return _inner
+    return allow_public_form_session(
+        view_func,
+        fallback=mobile_auth_or_formplayer(view_func),
+    )

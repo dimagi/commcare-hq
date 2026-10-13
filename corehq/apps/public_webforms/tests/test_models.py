@@ -1,5 +1,5 @@
 import datetime
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -26,7 +26,11 @@ from corehq.apps.public_webforms.models import (
     PublicWebform,
     PublicWebformStatus,
 )
-from corehq.apps.public_webforms.tests.utils import create_session, create_webform
+from corehq.apps.public_webforms.tests.utils import (
+    create_session,
+    create_webform,
+    formplayer_origin_headers,
+)
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -376,8 +380,10 @@ class AllowPublicFormSessionTests(TestCase):
         self.session = create_session(self.webform, expires_at=future_expiration)
         self.factory = RequestFactory()
 
-    def _request(self, with_header=True, cookie_value=None):
+    def _request(self, with_header=True, cookie_value=None, from_formplayer=True):
         headers = {PUBLIC_FORM_SESSION_HEADER: 'true'} if with_header else {}
+        if from_formplayer:
+            headers.update(formplayer_origin_headers())
         request = self.factory.post('/a/public-forms-domain/receiver/', headers=headers)
         request.couch_user = self.existing_user
         if cookie_value is not None:
@@ -385,17 +391,35 @@ class AllowPublicFormSessionTests(TestCase):
         return request
 
     @staticmethod
-    def _decorated_view():
-        @allow_public_form_session
+    def _decorated_view(fallback=None):
         def view(request, domain):
             return HttpResponse('ok')
-        return view
+        return allow_public_form_session(view, fallback=fallback)
 
     def test_valid_header_and_cookie_sets_public_form_user(self):
         request = self._request(cookie_value=str(self.session.session_key))
         self._decorated_view()(request, self.webform.domain)
         assert isinstance(request.couch_user, PublicFormUser)
         assert request.couch_user.user_id == PUBLIC_USER_ID
+
+    def test_a_session_not_from_formplayer_is_refused(self):
+        request = self._request(cookie_value=str(self.session.session_key), from_formplayer=False)
+        response = self._decorated_view()(request, self.webform.domain)
+        assert response.status_code == 403
+        assert request.couch_user is self.existing_user
+
+    def test_a_session_not_from_formplayer_is_not_given_to_the_fallback(self):
+        fallback = Mock()
+        request = self._request(cookie_value=str(self.session.session_key), from_formplayer=False)
+        self._decorated_view(fallback=fallback)(request, self.webform.domain)
+        fallback.assert_not_called()
+
+    def test_no_usable_session_goes_to_the_fallback(self):
+        fallback = Mock()
+        request = self._request(cookie_value=str(uuid4()))
+        response = self._decorated_view(fallback=fallback)(request, self.webform.domain)
+        fallback.assert_called_once_with(request, self.webform.domain)
+        assert response is fallback.return_value
 
     def test_no_header_leaves_couch_user_untouched(self):
         request = self._request(
