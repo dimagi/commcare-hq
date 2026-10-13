@@ -243,13 +243,9 @@ class PublicFormUserTests(SimpleTestCase):
         user = PublicFormUser(self.session)
         assert user.session is self.session
 
-    def test_can_access_mobile_endpoints_in_own_domain(self):
+    def test_cannot_access_mobile_endpoints(self):
         user = PublicFormUser(self.session)
-        assert user.has_permission(self.domain, 'access_mobile_endpoints') is True
-
-    def test_cannot_access_mobile_endpoints_in_other_domain(self):
-        user = PublicFormUser(self.session)
-        assert user.has_permission('other-domain', 'access_mobile_endpoints') is False
+        assert user.has_permission(self.domain, 'access_mobile_endpoints') is False
 
     def test_has_no_other_permission(self):
         user = PublicFormUser(self.session)
