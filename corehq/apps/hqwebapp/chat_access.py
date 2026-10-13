@@ -14,4 +14,4 @@ def chatbot_enabled_for_request(request):
         return False
     if GA_OCS_CHATBOT.enabled(domain, namespace=NAMESPACE_DOMAIN):
         return not ChatbotDomainSettings.objects.filter(domain=domain, disabled=True).exists()
-    return bool(OCS_CHATBOT.enabled(domain))
+    return OCS_CHATBOT.enabled(domain)
