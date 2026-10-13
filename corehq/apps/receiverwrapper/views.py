@@ -46,7 +46,7 @@ from corehq.apps.domain.decorators import (
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.ota.decorators import is_from_formplayer
+from corehq.apps.ota.origin_token import is_from_formplayer
 from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,

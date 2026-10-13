@@ -9,7 +9,7 @@ from unmagic import fixture, use
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.ota.decorators import ORIGIN_TOKEN_SLUG
+from corehq.apps.ota.origin_token import ORIGIN_TOKEN_SLUG
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.privileges import PUBLIC_WEBFORMS
