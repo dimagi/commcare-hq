@@ -106,6 +106,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         cls.newest_version.save()
 
     def test_that_upgrade_occurs(self):
+        old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
         old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
 
         upgrade_subscriptions_to_latest_plan_version(
@@ -116,37 +117,35 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
 
         new_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
         assert new_subscription1.plan_version == self.newest_version
-        assert new_subscription1.salesforce_contract_id == ''
-        assert new_subscription1.date_end is None
-        assert not new_subscription1.do_not_invoice
-        assert new_subscription1.no_invoice_reason == ''
-        assert not new_subscription1.do_not_email_invoice
-        assert not new_subscription1.do_not_email_reminder
-        assert not new_subscription1.auto_generate_credits
-        assert not new_subscription1.skip_invoicing_if_no_feature_charges
-        assert new_subscription1.service_type == SubscriptionType.IMPLEMENTATION
-        assert new_subscription1.pro_bono_status == ProBonoStatus.NO
-        assert new_subscription1.funding_source == FundingSource.CLIENT
-        assert not new_subscription1.skip_auto_downgrade
-        assert new_subscription1.skip_auto_downgrade_reason == ''
-        assert new_subscription1.skip_auto_downgrade_until is None
+        assert get_preserved_fields(new_subscription1) == get_preserved_fields(old_subscription1)
 
         new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
         assert new_subscription2.plan_version == self.newest_version
-        assert new_subscription2.salesforce_contract_id == "salesforce-id-test"
-        assert new_subscription2.date_end == old_subscription2.date_end
-        assert new_subscription2.do_not_invoice
-        assert new_subscription2.no_invoice_reason == "test no invoice"
-        assert new_subscription2.do_not_email_invoice
-        assert new_subscription2.do_not_email_reminder
-        assert new_subscription2.auto_generate_credits
-        assert new_subscription2.skip_invoicing_if_no_feature_charges
-        assert new_subscription2.service_type == SubscriptionType.SANDBOX
-        assert new_subscription2.pro_bono_status == ProBonoStatus.DISCOUNTED
-        assert new_subscription2.funding_source == FundingSource.EXTERNAL
-        assert new_subscription2.skip_auto_downgrade
-        assert new_subscription2.skip_auto_downgrade_reason == "test skip auto downgrade"
-        assert new_subscription2.skip_auto_downgrade_until == old_subscription2.skip_auto_downgrade_until
+        assert get_preserved_fields(new_subscription2) == get_preserved_fields(old_subscription2)
+
+
+# Fields that upgrading to the latest plan version must carry over unchanged
+PRESERVED_FIELDS = [
+    'salesforce_contract_id',
+    'date_end',
+    'do_not_invoice',
+    'no_invoice_reason',
+    'do_not_email_invoice',
+    'do_not_email_reminder',
+    'auto_generate_credits',
+    'skip_invoicing_if_no_feature_charges',
+    'service_type',
+    'pro_bono_status',
+    'funding_source',
+    'skip_auto_downgrade',
+    'skip_auto_downgrade_reason',
+    'skip_auto_downgrade_until',
+    'auto_renew',
+]
+
+
+def get_preserved_fields(subscription):
+    return {field: getattr(subscription, field) for field in PRESERVED_FIELDS}
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
