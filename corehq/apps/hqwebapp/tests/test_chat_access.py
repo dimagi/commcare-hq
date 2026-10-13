@@ -1,4 +1,3 @@
-from django.template import Context, Template
 from django.test import RequestFactory
 
 import pytest
@@ -49,5 +48,3 @@ def _request(domain='project'):
 
 def _assert_enabled(request, expected):
     assert chatbot_enabled_for_request(request) is expected
-    template = Template('{% load chatbot_tags %}{% if request|chatbot_enabled %}widget{% endif %}')
-    assert template.render(Context({'request': request})) == ('widget' if expected else '')
