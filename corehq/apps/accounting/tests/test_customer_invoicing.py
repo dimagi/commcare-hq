@@ -640,8 +640,6 @@ class TestCustomerInvoiceGenerationIsAtomic(BaseCustomerInvoiceCase):
             per_excess_fee=Decimal('10.00'),
         )
         self.main_subscription.plan_version.feature_rates.add(self.web_user_rate)
-        self.account.bill_web_user = True
-        self.account.save()
         self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
         # The default ADVANCED test plan also carries a USER feature rate, so
         # invoice generation needs a DomainUserHistory snapshot to succeed at

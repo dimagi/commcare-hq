@@ -330,10 +330,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestWebUserLineItem, self).setUp()
-        self.web_user_rate = self.subscription.plan_version.feature_rates.filter(
-            feature__feature_type=FeatureType.WEB_USER)[:1].get()
-        self.subscription.account.bill_web_user = True
-        self.subscription.account.save()
+        self.web_user_rate = generator.add_web_user_feature_rate(self.subscription.plan_version)
 
     def test_under_limit(self):
         """
@@ -394,13 +391,12 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(web_user_line_item.subtotal, num_to_charge * self.web_user_rate.per_excess_fee)
         self.assertEqual(web_user_line_item.total, num_to_charge * self.web_user_rate.per_excess_fee)
 
-    def test_no_line_item_when_bill_web_user_flag_is_false(self):
+    def test_no_line_item_when_plan_has_no_web_user_feature(self):
         """
-        For a billing account that have bill_web_user flag set to False
+        For a software plan without a Web User feature rate
         - there should be no web user line item on the invoice
         """
-        self.subscription.account.bill_web_user = False
-        self.subscription.account.save()
+        self.subscription.plan_version.feature_rates.remove(self.web_user_rate)
 
         invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))

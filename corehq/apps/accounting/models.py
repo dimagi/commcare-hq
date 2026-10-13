@@ -1011,6 +1011,10 @@ class SoftwarePlanVersion(models.Model):
         return UNLIMITED_FEATURE_USAGE
 
     @property
+    def has_web_user_feature(self):
+        return self.feature_rates.filter(feature__feature_type=FeatureType.WEB_USER).exists()
+
+    @property
     def user_fee(self):
         if self.user_feature is not None:
             return "USD %d" % self.user_feature.per_excess_fee
