@@ -97,6 +97,10 @@ def _is_public_webform_build(build):
     return build.copy_of.endswith(PUBLIC_WEBFORM_COPY_OF_SUFFIX)
 
 
+def canonical_app_id(copy_of):
+    return copy_of.removesuffix(PUBLIC_WEBFORM_COPY_OF_SUFFIX)
+
+
 def _public_webform_copy_of(app_id):
     """A traceable, non-canonical ``copy_of``: keeps the doc a build (``copy_of``
     stays truthy) and out of the app's lineage, while recording its origin."""

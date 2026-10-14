@@ -88,7 +88,6 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import (
-    ChatUsageUnavailable,
     fetch_chat_usage_from_ocs,
     get_cached_chat_usage,
     increment_chat_usage,
@@ -97,6 +96,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from corehq.apps.hqwebapp.exceptions import ChatUsageUnavailable
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,

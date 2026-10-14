@@ -1,6 +1,8 @@
 import logging
 from itertools import chain
 
+from django.http import Http404
+
 from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import safe_delete
 from dimagi.utils.logging import notify_exception
@@ -197,13 +199,23 @@ def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
     return export_ids
 
 
-def get_properly_wrapped_export_instance(doc_id):
+def get_export_instance_or_404(domain, export_id):
+    try:
+        return get_export_instance_in_domain(domain, export_id)
+    except ResourceNotFound:
+        raise Http404()
+
+
+def get_export_instance_in_domain(domain, export_id):
+    """Request handlers should use get_export_instance_or_404 instead."""
     from .models import ExportInstance
-    doc = ExportInstance.get_db().get(doc_id)
-    return _properly_wrap_export_instance(doc)
+    export = wrap_export_instance(ExportInstance.get_db().get(export_id))
+    if export.domain != domain:
+        raise ResourceNotFound(f"Export {export_id} is not in domain {domain}")
+    return export
 
 
-def _properly_wrap_export_instance(doc):
+def wrap_export_instance(doc):
     from .models import CaseExportInstance, ExportInstance, FormExportInstance
     class_ = {
         "FormExportInstance": FormExportInstance,

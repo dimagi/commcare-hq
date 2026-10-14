@@ -2,6 +2,7 @@ import datetime
 from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 import pytz
 
@@ -28,12 +29,15 @@ from corehq.apps.export.forms import (
     FilterCaseESExportDownloadForm,
     FormExportFilterBuilder,
 )
+from corehq.apps.export.models.new import FormExportInstance, FormExportInstanceFilters
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.users.models import CommCareUser
+from corehq.privileges import PUBLIC_WEBFORMS
 from corehq.util.es.testing import sync_users_to_es
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 class FakeDomainObject(object):
@@ -105,6 +109,30 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
         }
         form = DashboardFeedFilterForm(FakeDomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
+
+    def test_form_filter_uses_submitted_by_options(self):
+        form = DashboardFeedFilterForm(FakeDomainObject([], 'my-domain'))
+        self.assertEqual(
+            form.fields['emwf_form_filter'].widget.url,
+            reverse('submitted_by_options', args=['my-domain']),
+        )
+
+
+class TestDashboardFeedFilterFormSavedSelections(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain('feed-filter-selections')
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
+    def test_restores_saved_public_users_selection(self):
+        filters = FormExportInstanceFilters(user_types=[HQUserType.PUBLIC])
+        data = DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
+            filters, self.domain_obj.name, FormExportInstance)
+        self.assertEqual(data['emwf_form_filter'], [{'id': 't__8', 'text': '[Public Users]'}])
 
 
 class TestEmwfFilterFormExport(TestCase):
@@ -301,6 +329,18 @@ class TestEmwfFilterFormExportFilters(TestCase):
                                                      active=False, deactivated=False, web=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
         self.assertEqual(user_filters[0].submitted_by, self.user_ids)
+
+    def test_get_user_type_filter_for_public(self):
+        user_filters = self.filter_builder(None, None)._get_user_type_filters([HQUserType.PUBLIC])
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+        self.assertEqual(user_filters[0].submitted_by, ['_public_'])
+
+    @patch.object(filter_builder, 'get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_admin_and_public(self, fetch_user_ids_patch):
+        fetch_user_ids_patch.return_value = ['e80c5e54ab552245457d2546d0cdbb03']
+        user_filters = self.filter_builder(None, None)._get_user_type_filters(
+            [HQUserType.ADMIN, HQUserType.PUBLIC])
+        self.assertEqual(user_filters[0].submitted_by, ['e80c5e54ab552245457d2546d0cdbb03', '_public_'])
 
     @patch.object(form, '_get_selected_es_user_types', lambda x, y: [HQUserType.WEB])
     @patch.object(filter_builder, 'get_user_ids_for_user_types')

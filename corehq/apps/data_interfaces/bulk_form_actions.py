@@ -22,7 +22,7 @@ from corehq.util.metrics import metrics_counter
 
 log = logging.getLogger(__name__)
 
-METRIC_PREFIX = 'commcare.api.bulk_actions'
+METRIC_PREFIX = 'commcare.bulk_actions'
 
 SUCCEEDED = 'succeeded'
 SKIPPED = 'skipped'

@@ -26,6 +26,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_released_app_doc,
     get_latest_released_app_version,
     get_latest_released_app_versions_by_app_id,
+    get_latest_released_build_ids_by_app_id,
     get_case_type_app_module_count,
     get_case_types_for_app_build,
     get_case_types_from_apps,
@@ -330,6 +331,12 @@ class TestAppGetters(TestCase):
         versions = get_latest_released_app_versions_by_app_id(self.domain)
         self.assertEqual(versions, {
             self.app_id: 4,
+        })
+
+    def test_get_latest_released_build_ids_by_app_id(self):
+        build_ids = get_latest_released_build_ids_by_app_id(self.domain)
+        self.assertEqual(build_ids, {
+            self.app_id: self.v4_build._id,
         })
 
     def test_get_case_type_app_module_count(self):

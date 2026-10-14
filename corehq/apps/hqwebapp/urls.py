@@ -9,6 +9,7 @@ from corehq.apps.cloudcare.views import session_endpoint
 from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
+from corehq.apps.hqwebapp.chat_auth import chat_token
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.oauth_views import (
     HQAuthorizationView,
@@ -68,6 +69,7 @@ PASSWORD_RESET_KWARGS = {
 }
 
 urlpatterns = [
+    url(r'^chat_token/$', chat_token, name='chat_token'),
     url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),

@@ -90,9 +90,9 @@ class TestRunBulkFormAction(TestCase):
             run_bulk_form_action(job)
 
         tags = {'domain': DOMAIN, 'action': 'archive', 'model': 'xform'}
-        assert metrics.sum('commcare.api.bulk_actions.job_started', **tags) == 1
-        assert metrics.sum('commcare.api.bulk_actions.succeeded', **tags) == 1
-        assert metrics.sum('commcare.api.bulk_actions.skipped', **tags) == 1
+        assert metrics.sum('commcare.bulk_actions.job_started', **tags) == 1
+        assert metrics.sum('commcare.bulk_actions.succeeded', **tags) == 1
+        assert metrics.sum('commcare.bulk_actions.skipped', **tags) == 1
 
     def test_archive_marks_complete_and_counts(self):
         form = create_form_for_test(DOMAIN, state=XFormInstance.NORMAL)

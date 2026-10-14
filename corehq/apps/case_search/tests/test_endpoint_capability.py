@@ -70,7 +70,8 @@ def test_capability_for_domain():
     patient = cap['case_types']['patient']
     assert {'first_name', 'dob', 'status'} <= patient.keys()
     assert 'equals' in [op['name'] for op in patient['first_name']['operations']]
-    assert set(patient['status']['options']) == {'active', 'closed'}
+    # Multiple choice is really plain text (enum without enforcement)
+    assert patient['status']['type'] == FIELD_TYPE_TEXT
     assert cap['operator_input_schemas']
 
 

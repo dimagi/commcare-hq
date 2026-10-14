@@ -12,8 +12,8 @@ from memoized import memoized
 
 from dimagi.utils.web import json_response
 
-from corehq import toggles
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
@@ -41,8 +41,19 @@ from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_cbc_encrypt
 
 
+def require_openmrs_repeater_access(view_func):
+    """
+    Restricts OpenMRS repeater views to users who can edit MOTECH
+    integrations, on projects with Data Forwarding and the OpenMRS
+    integration enabled.
+    """
+    view_func = toggles.OPENMRS_INTEGRATION.required_decorator()(view_func)
+    view_func = requires_privilege_with_fallback(privileges.DATA_FORWARDING)(view_func)
+    return require_permission(HqPermissions.edit_motech)(view_func)
+
+
 @use_bootstrap5
-@login_and_domain_required
+@require_openmrs_repeater_access
 @require_http_methods(["GET", "POST"])
 def config_openmrs_repeater(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
@@ -100,21 +111,21 @@ def _filter_out_links(json):
         return json
 
 
-@login_and_domain_required
+@require_openmrs_repeater_access
 def openmrs_patient_identifier_types(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
     raw_json = get_patient_identifier_types(helper.repeater.requests)
     return JsonResponse(_filter_out_links(raw_json))
 
 
-@login_and_domain_required
+@require_openmrs_repeater_access
 def openmrs_person_attribute_types(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
     raw_json = get_person_attribute_types(helper.repeater.requests)
     return JsonResponse(_filter_out_links(raw_json))
 
 
-@login_and_domain_required
+@require_openmrs_repeater_access
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
@@ -125,17 +136,26 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     return JsonResponse(raw_json)
 
 
-@login_and_domain_required
+@require_openmrs_repeater_access
+@require_http_methods(['POST'])
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = OpenmrsRepeater.objects.get(domain=domain, id=repeater_id)
-    record = RepeatRecord.objects.get(domain=domain, id=record_id)
-    assert record.repeater_id == repeater.id
-
+    repeater = get_object_or_404(
+        OpenmrsRepeater,
+        domain=domain,
+        id=repeater_id,
+    )
+    record = get_object_or_404(
+        RepeatRecord,
+        domain=domain,
+        id=record_id,
+        repeater_id=repeater.id,
+    )
     repeater.fire_for_record(record)
     return JsonResponse({'status': 'OK'}, status=200)
 
 
-@login_and_domain_required
+@require_permission(HqPermissions.edit_motech)
+@toggles.OPENMRS_INTEGRATION.required_decorator()
 @require_http_methods(['POST'])
 def openmrs_import_now(request, domain):
     import_patients_to_domain(request.domain, force=True)

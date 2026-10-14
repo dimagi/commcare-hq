@@ -1,6 +1,5 @@
 import $ from "jquery";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import toggles from "hqwebapp/js/toggles";
 
 function bindUsageController(widget) {
     let usageState;
@@ -70,14 +69,21 @@ function bindUsageController(widget) {
     }
 }
 
+export function bindAuthController(widget, tokenUrl) {
+    widget.authTokenProvider = async function () {
+        try {
+            return await $.ajax({url: tokenUrl, method: 'POST', dataType: 'text'});
+        } catch {
+            widget.disabled = true;
+        }
+    };
+}
+
 $(function () {
     const widget = document.querySelector('open-chat-studio-widget');
     if (!widget) {
         return;
     }
-    if (toggles.toggleEnabled('OCS_CHATBOT_PAGE_CONTEXT')) {
-        bindUsageController(widget);
-    } else {
-        widget.disabled = false;
-    }
+    bindAuthController(widget, initialPageData.reverse('chat_token'));
+    bindUsageController(widget);
 });

@@ -95,8 +95,8 @@ class PublicWebform(models.Model):
 
 class PublicFormSession(models.Model):
 
-    DEFAULT_LIFESPAN = timedelta(hours=1)
-    REUSE_MARGIN = timedelta(minutes=10)
+    DEFAULT_LIFESPAN = timedelta(hours=24)
+    REUSE_MARGIN = timedelta(hours=1)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
@@ -221,11 +221,12 @@ class PublicFormUser:
         return False
 
     def has_permission(self, domain, permission, data=None):
-        if domain != self._session.public_webform.domain:
-            return False
-        if permission == 'access_web_app':
-            return data == self._session.public_webform.app_id
-        return permission == 'access_mobile_endpoints'
+        webform = self._session.public_webform
+        return (
+            domain == webform.domain
+            and permission == 'access_web_app'
+            and data == webform.app_id
+        )
 
     def can_access_any_web_apps(self, domain=None):
         return domain == self._session.public_webform.domain

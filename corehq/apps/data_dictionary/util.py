@@ -18,6 +18,7 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyAllowedValue,
     CasePropertyGroup,
     CaseType,
+    sync_project_db,
 )
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -110,6 +111,7 @@ def create_properties_for_case_types(domain, case_type_to_prop):
 
     CaseProperty.objects.bulk_create(new_case_properties, ignore_conflicts=True)
 
+    sync_project_db(domain)
     for case_type, props in case_type_to_prop.items():
         if case_type:
             CaseProperty.clear_caches(domain, case_type)

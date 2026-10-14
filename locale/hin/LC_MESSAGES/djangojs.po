@@ -68,7 +68,6 @@ msgid "Other"
 msgstr "अन्य"
 
 #: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
-#| msgid "Schedule Invoice"
 msgid "Generate Invoice"
 msgstr "इनवॉइस जनरेट करें"
 
@@ -2680,6 +2679,30 @@ msgstr "सभी जोड़ें"
 msgid "Remove All"
 msgstr "सभी हटाएँ"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "CommCare Companion आपकी वर्तमान सदस्यता में शामिल नहीं है।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"आपने इस महीने के लिए अपनी चैट सीमा पूरी कर ली है। आपकी अनुमति अगले महीने की "
+"1 तारीख (UTC) को रीसेट हो जाएगी।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "आपने इस महीने अपनी चैट संदेशों का %(percent)s% उपयोग कर लिया है।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"हम आपकी चैट अनुमति की जाँच नहीं कर सके। कृपया चैट को बंद करें और फिर से "
+"खोलें, और पुनः प्रयास करें।"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "आपका पासवर्ड बहुत कमजोर है! कृपया संख्याएँ या प्रतीक जोड़ें।"
@@ -3005,26 +3028,26 @@ msgstr "सभी क्रियाएँ"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण स्वीकार किया गया"
+msgstr[1] "%(count)s निमंत्रण स्वीकार किए गए"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण लंबित है"
+msgstr[1] "%(count)s निमंत्रण लंबित हैं"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण अस्वीकार किया गया"
+msgstr[1] "%(count)s निमंत्रण अस्वीकार किए गए"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s प्रोजेक्ट स्पेस में भाग लिया जा रहा है"
+msgstr[1] "%(count)s प्रोजेक्ट स्पेस में भाग लिया जा रहा है"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

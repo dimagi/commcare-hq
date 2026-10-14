@@ -1,12 +1,13 @@
 import json
+from datetime import datetime
 from unittest.mock import patch
-
-import pytest
 
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.html import escape
+
+import pytest
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.domain.shortcuts import create_domain
@@ -19,14 +20,16 @@ from corehq.apps.project_db.tests.util import project_db_table
 from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_enabled
 
+from ..endpoint_query_spec import Parameter
 from ..endpoint_views import (
     CaseSearchEndpointDeactivateView,
     CaseSearchEndpointEditView,
     CaseSearchEndpointNewView,
     CaseSearchEndpointsView,
     CaseSearchEndpointTestView,
-    _bind_parameters,
+    _tester_criteria,
 )
+from ..exceptions import CaseFilterError
 from ..models import CaseSearchEndpoint, CaseSearchEndpointVersion
 
 EMPTY_QUERY = {'type': 'all', 'children': []}
@@ -77,7 +80,9 @@ class EndpointViewTestCase(TestCase):
         return endpoint
 
     def _project_db_table(self, case_type='my_case_type'):
-        return project_db_table(self.domain, case_type, {'nickname': 'plain'})
+        return project_db_table(
+            self.domain, case_type, {'nickname': 'plain', 'tags': 'select'}
+        )
 
     def _list_url(self):
         return reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
@@ -273,6 +278,23 @@ class TestCaseSearchEndpointNewView(EndpointViewTestCase):
         # Bootstrap only reveals .invalid-feedback next to .is-invalid
         assert 'form-control is-invalid' in content
         assert escape(error) in content
+
+    def test_sql_must_match_the_parameter_spec(self):
+        with self._project_db_table():
+            response = self.client.post(
+                self._new_url(),
+                self._post_data(
+                    name='sql-endpoint',
+                    sql='SELECT case_id FROM my_case_type WHERE case_name = :who',
+                    parameters=json.dumps([{'name': 'more', 'type': 'text'}]),
+                ),
+            )
+        assert response.status_code == 200
+        assert response.context['form'].errors['sql'] == [
+            "Undefined parameter ':who'. Add it under Parameters, "
+            "or remove it from the SQL.",
+            "Parameter ':more' is not used by the SQL.",
+        ]
 
     def test_failed_post_preserves_submitted_sql(self):
         # Re-render seeds the SQL box from the submitted (not DB) value.
@@ -475,10 +497,11 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         response = self.client.get(self._test_url())
         assert response.status_code == 405
 
-    def _post_sql(self, sql, **param_values):
+    def _post_sql(self, sql, parameters=(), **param_values):
         return self.client.post(self._test_url(), {
             'target_type': 'project_db',
             'sql': sql,
+            'parameters': json.dumps(list(parameters)),
             'test_param_values': json.dumps(param_values),
         })
 
@@ -488,10 +511,14 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
             conn.execute(table.insert().values([
                 {'case_id': 'c1', 'owner_id': 'o1', 'case_name': 'Ann',
                  'closed': False, 'external_id': '',
-                 property_column('nickname'): 'Annie'},
+                 'opened_on': datetime(2026, 1, 5),
+                 property_column('nickname'): 'Annie',
+                 property_column('tags', 'select'): ['red', 'blue']},
                 {'case_id': 'c2', 'owner_id': 'o1', 'case_name': 'Bob',
                  'closed': False, 'external_id': '',
-                 property_column('nickname'): 'Bobby'},
+                 'opened_on': datetime(2026, 8, 18),
+                 property_column('nickname'): 'Bobby',
+                 property_column('tags', 'select'): ['green']},
             ]))
 
     def test_sql_shows_every_selected_column(self):
@@ -508,28 +535,67 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         # a column the query did not select
         assert 'owner_id' not in content
 
-    def test_sql_binds_supplied_parameter_values(self):
-        sql = ('SELECT case_name FROM my_case_type '
+    WHO_SQL = ('SELECT case_name FROM my_case_type '
                'WHERE (:who IS NULL OR case_name = :who)')
-        with self._project_db_table():
-            self._add_pets()
-            response = self._post_sql(sql, who='Bob')
-        content = response.content.decode()
-        assert 'Bob' in content
-        assert 'Ann' not in content
+    WHO_PARAMS = [{'name': 'who', 'type': 'text'}]
 
-    def test_sql_binds_a_blank_parameter_as_null(self):
-        # NULL leaves the guard open, matching how an endpoint runs when a
-        # criterion is not supplied
-        sql = ('SELECT case_name FROM my_case_type '
-               'WHERE (:who IS NULL OR case_name = :who)')
-        with self._project_db_table():
-            self._add_pets()
-            response = self._post_sql(sql, who='')
+    def _names(self, response):
         content = response.content.decode()
         assert 'alert-danger' not in content
-        assert 'Ann' in content
-        assert 'Bob' in content
+        return [name for name in ['Ann', 'Bob'] if name in content]
+
+    def test_sql_binds_supplied_parameter_values(self):
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(self.WHO_SQL, self.WHO_PARAMS, who='Bob')
+        assert self._names(response) == ['Bob']
+
+    def test_sql_binds_a_blank_parameter_as_null(self):
+        # An input left blank was not filled in, so NULL leaves the guard
+        # open, matching how an endpoint runs when a criterion is not supplied
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(self.WHO_SQL, self.WHO_PARAMS, who='')
+        assert self._names(response) == ['Ann', 'Bob']
+
+    def test_sql_binds_a_select_parameter_as_a_list(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:tags IS NULL OR select_prop__tags && :tags)')
+        params = [{'name': 'tags', 'type': 'select'}]
+        cases = [
+            ('blue', ['Ann']),
+            ('blue, green', ['Ann', 'Bob']),
+            ('', ['Ann', 'Bob']),
+        ]
+        with self._project_db_table():
+            self._add_pets()
+            for tags, expected in cases:
+                with self.subTest(tags=tags):
+                    response = self._post_sql(sql, params, tags=tags)
+                    assert self._names(response) == expected
+
+    def test_sql_binds_a_daterange_parameter(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:opened_from IS NULL OR opened_on >= :opened_from) '
+               'AND (:opened_to IS NULL OR opened_on <= :opened_to)')
+        params = [{'name': 'opened', 'type': 'daterange'}]
+        with self._project_db_table():
+            self._add_pets()
+            response = self._post_sql(
+                sql, params, opened_from='2026-08-01', opened_to='2026-08-31')
+        assert self._names(response) == ['Bob']
+
+    def test_sql_reports_an_invalid_parameter_value(self):
+        sql = ('SELECT case_name FROM my_case_type '
+               'WHERE (:opened_from IS NULL OR opened_on >= :opened_from) '
+               'AND (:opened_to IS NULL OR opened_on <= :opened_to)')
+        params = [{'name': 'opened', 'type': 'daterange'}]
+        with self._project_db_table():
+            response = self._post_sql(sql, params, opened_from='2026-08-01')
+        content = response.content.decode()
+        assert 'alert-danger' in content
+        assert escape('Invalid date range format, __range__2026-08-01__') in content
+        assert '<table' not in content
 
     def test_sql_errors_are_rendered(self):
         cases = [
@@ -629,14 +695,38 @@ class TestCaseSearchEndpointTestView(EndpointViewTestCase):
         assert self._region(content, 'sql-errors') is None
 
 
-@pytest.mark.parametrize('parameters, values, expected', [
-    (['who'], {'who': 'ann'}, {'who': 'ann'}),
-    # what the query asks for and was not given
-    (['who'], {}, {'who': None}),
-    # a criterion left blank was not supplied
-    (['who'], {'who': ''}, {'who': None}),
-    # ...and what it did not ask for is dropped
-    (['who'], {'who': 'ann', 'stale': 'x'}, {'who': 'ann'}),
+TESTER_PARAMS = [
+    Parameter(name='who', type='text'),
+    Parameter(name='tags', type='select'),
+    Parameter(name='dob', type='daterange'),
+]
+
+
+@pytest.mark.parametrize('values, expected', [
+    ({}, {}),
+    # Blank inputs were not filled in, so are left out
+    ({'who': '', 'tags': ' , ', 'dob_from': '', 'dob_to': ''}, {}),
+    ({'who': ' Bob '}, {'who': 'Bob'}),
+    ({'who': 12}, {'who': '12'}),
+    # A select parameter's comma-separated input becomes a list
+    ({'tags': 'red'}, {'tags': 'red'}),
+    ({'tags': 'red, ,blue'}, {'tags': ['red', 'blue']}),
+    # A date range's bounds are joined the way Web Apps sends them
+    ({'dob_from': '2026-08-01', 'dob_to': '2026-08-31'},
+     {'dob': '__range__2026-08-01__2026-08-31'}),
+    # Inputs the parameters do not declare are ignored
+    ({'undeclared': 'x', 'dob': 'x'}, {}),
 ])
-def test_bind_parameters(parameters, values, expected):
-    assert _bind_parameters(parameters, values) == expected
+def test_tester_criteria(values, expected):
+    criteria = _tester_criteria(TESTER_PARAMS, values)
+    assert {c.key: c.value for c in criteria} == expected
+
+
+@pytest.mark.parametrize('values', [
+    {'dob_from': '2026-08-01'},
+    {'dob_to': '2026-08-31'},
+    {'dob_from': 'today', 'dob_to': '2026-08-31'},
+])
+def test_tester_criteria_rejects_a_partial_date_range(values):
+    with pytest.raises(CaseFilterError, match='Invalid date range format'):
+        _tester_criteria(TESTER_PARAMS, values)
