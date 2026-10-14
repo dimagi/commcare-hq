@@ -2,6 +2,8 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.domain.utils import is_domain_active
+from corehq.apps.users.decorators import get_permission_name
+from corehq.apps.users.models import HqPermissions
 
 
 def public_webforms_enabled(domain):
@@ -9,6 +11,16 @@ def public_webforms_enabled(domain):
         is_domain_active(domain)
         and domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
         and toggles.PUBLIC_WEBFORMS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
+    )
+
+
+def can_access_public_webforms(request, domain):
+    return (
+        domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
+        and request.couch_user.has_permission(
+            domain, get_permission_name(HqPermissions.edit_public_webforms)
+        )
+        and toggles.PUBLIC_WEBFORMS.enabled_for_request(request)
     )
 
 
