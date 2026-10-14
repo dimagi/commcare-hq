@@ -246,7 +246,19 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS = [
+    'captcha.recaptcha_test_key_error',
+    # django-oauth-toolkit RFC 9700 (OAuth 2.0 Security BCP) compliance
+    # warnings. Defaults change in 4.0, and W007/W008 become errors.
+    'oauth2_provider.W001',
+    'oauth2_provider.W002',
+    'oauth2_provider.W003',
+    'oauth2_provider.W004',
+    'oauth2_provider.W005',
+    'oauth2_provider.W006',
+    'oauth2_provider.W007',
+    'oauth2_provider.W008',
+]
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
