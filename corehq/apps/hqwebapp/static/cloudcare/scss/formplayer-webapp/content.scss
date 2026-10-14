@@ -51,6 +51,10 @@ body {
 #content-container {
   background: transparent;
   max-width: 1000px;
+
+  &:has(.form-dense) {
+    max-width: none;
+  }
 }
 
 @media print {
