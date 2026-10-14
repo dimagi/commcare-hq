@@ -381,7 +381,8 @@ def flush_databases():
             db.flush()
         except (ResourceNotFound, HTTPError):
             pass
-    call_command('flush', interactive=False)
+    for connection, db_name, _ in get_sql_databases():
+        call_command('flush', interactive=False, database=connection.alias)
     bootstrap_migrated_db_state()
 
 
