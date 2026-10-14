@@ -700,11 +700,7 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
     format_label = _('JSON')
 
     def get_payload(self, repeat_record, form):
-        from corehq.apps.api.resources.v0_4 import XFormInstanceResource
-        from corehq.apps.api.util import form_to_es_form
-        res = XFormInstanceResource()
-        bundle = res.build_bundle(obj=form_to_es_form(form, include_attachments=True))
-        return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
+        return get_form_json_payload(form)
 
     @property
     def content_type(self):
@@ -750,6 +746,15 @@ class ConnectFormRepeaterPayloadGenerator(FormRepeaterJsonPayloadGenerator):
                     constructed_dict[key] = match_dict[key]
                     break
         return json.dumps(payload)
+
+
+def get_form_json_payload(form, include_attachments=True):
+    from corehq.apps.api.resources.v0_4 import XFormInstanceResource
+    from corehq.apps.api.util import form_to_es_form
+
+    res = XFormInstanceResource()
+    bundle = res.build_bundle(form_to_es_form(form, include_attachments))
+    return res.serialize(None, res.full_dehydrate(bundle), 'application/json')
 
 
 class FormDictPayloadGenerator(BasePayloadGenerator):
