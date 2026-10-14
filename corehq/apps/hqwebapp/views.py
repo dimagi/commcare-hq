@@ -86,6 +86,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
+from corehq.apps.hqwebapp.chat_access import require_chatbot_enabled
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import (
     fetch_chat_usage_from_ocs,
@@ -212,6 +213,7 @@ def not_found(request, template_name='404.html', exception=None):
 
 
 @login_and_domain_required
+@require_chatbot_enabled
 @require_http_methods(['GET', 'POST'])
 def chat_quota(request, domain):
     couch_user = getattr(request, 'couch_user')
