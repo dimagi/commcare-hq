@@ -50,6 +50,23 @@ services:
     ports:
       - "9092:9092"
 
+  # A separate Kafka broker for tests, so that tests and the dev
+  # environment do not consume each other's changes. See DEV_SETUP.md.
+  kafka-tests:
+    extends:
+      file: hq-compose.yml
+      service: kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181/hq-tests
+      KAFKA_LISTENERS: HQ_KAFKA://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: HQ_KAFKA://${KAFKA_HOSTNAME:-localhost}:9093
+    healthcheck:
+      test: bash -c 'exec 6<>/dev/tcp/localhost/9093'
+    ports:
+      - "9093:9093"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-kafka-tests:}/kafka/kafka-logs-1
+
   zookeeper:
     extends:
       file: hq-compose.yml
