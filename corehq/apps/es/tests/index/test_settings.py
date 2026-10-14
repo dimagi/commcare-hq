@@ -155,7 +155,8 @@ class TestConstantValues(SimpleTestCase):
     def test_index_settings_keys_members(self):
         self.assertEqual(
             [
-                "case_search", 'case_search_bha', 'case_search_cc_perf', "hqapps", "hqcases",
+                "case_search", "case_search_bha", "case_search_cc_perf",
+                "case_search_philly_ubr", "hqapps", "hqcases",
                 "hqdomains", "hqgroups", "hqusers", "smslogs", "xforms",
             ],
             sorted(IndexSettingsKey),
@@ -203,6 +204,10 @@ class TestConstantValues(SimpleTestCase):
                     IndexTuningKey.SHARDS: 2,
                 },
                 IndexSettingsKey.CASE_SEARCH_CC_PERF: {
+                    IndexTuningKey.REPLICAS: 1,
+                    IndexTuningKey.SHARDS: 2,
+                },
+                IndexSettingsKey.CASE_SEARCH_PHILLY_UBR: {
                     IndexTuningKey.REPLICAS: 1,
                     IndexTuningKey.SHARDS: 2,
                 }
