@@ -2431,13 +2431,13 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails'),
-            crispy.Field('trial_length', data_bind='value: trialLength'),
+            crispy.Field('trial_length', x_model='trialLength'),
             crispy.Div(
                 crispy.Div(
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
-                        'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
-                        'On <span data-bind="text: end_date"></span> '
+                        'as you hit "Update" and end on <span x-text="endDate"></span>.  '
+                        'On <span x-text="endDate"></span> '
                         'the project space will be automatically paused.</p>'
                     )),
                     css_class='field-control-offset'
@@ -2764,7 +2764,7 @@ class SelectSubscriptionTypeForm(forms.Form):
             self.helper.layout = crispy.Layout(
                 crispy.Field(
                     'subscription_type',
-                    data_bind='value: subscriptionType',
+                    x_model='subscriptionType',
                     css_class="disabled"
                 )
             )
