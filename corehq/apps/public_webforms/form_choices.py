@@ -8,7 +8,11 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms.models import PublicWebformType
-from corehq.apps.public_webforms.utils import get_live_app_ids, is_app_live
+from corehq.apps.public_webforms.utils import (
+    get_live_app_ids,
+    is_app_live,
+    is_public_webform_eligible,
+)
 from corehq.util.quickcache import quickcache
 
 
@@ -44,15 +48,13 @@ def _get_build_choice(app):
         return None
     menus = []
     for module in app.get_modules():
-        if module.module_type != 'basic':
-            continue
         forms = [
             {
                 'id': form.unique_id,
                 'name': form.default_name(),
             }
             for form in module.get_forms()
-            if not form.requires_case()
+            if is_public_webform_eligible(form)
         ]
         if forms:
             menus.append({
@@ -80,7 +82,7 @@ def get_public_webform_eligible_form(domain, app_id, form_unique_id):
         form = app.get_form(form_unique_id)
     except FormNotFoundException:
         return None
-    if form.get_module().module_type != 'basic' or form.requires_case():
+    if not is_public_webform_eligible(form):
         return None
     return form
 
