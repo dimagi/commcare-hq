@@ -1,22 +1,26 @@
 """AI translation of app content via the bulk app translation pipeline."""
 import hashlib
 import json
+import logging
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
+from langcodes import get_name as get_language_name
 
 from dimagi.utils.logging import notify_exception
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
 )
@@ -41,7 +45,13 @@ from corehq.apps.translations.integrations.llm import (
     TranslationFormat,
     get_llm_translator,
 )
-from corehq.apps.translations.models import AITranslation, AITranslationUsage
+from corehq.apps.translations.models import (
+    AITranslation,
+    AITranslationConfig,
+    AITranslationUsage,
+)
+
+logger = logging.getLogger(__name__)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
@@ -52,6 +62,40 @@ def ai_translation_enabled(domain):
         toggles.AI_APP_TRANSLATION.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
         and domain_has_privilege(domain, privileges.AI_APP_TRANSLATION)
     )
+
+
+def monthly_word_limit_reached(domain):
+    month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    words = AITranslationUsage.objects.filter(
+        domain=domain, created_on__gte=month_start,
+    ).aggregate(total=Sum('words_translated'))['total'] or 0
+    return words >= AITranslationConfig.get_monthly_word_limit(domain)
+
+
+def reason_app_cant_be_translated(app):
+    if is_linked_app(app):
+        # the next update from upstream would overwrite AI translations
+        return _("Linked apps get their translations from their upstream app. "
+                 "Translate the upstream app instead.")
+    if app.is_remote_app():
+        return _("Remote apps can't be translated with AI.")
+    if app.copy_of:
+        return _("Only the current version of an app can be translated, not a previous version.")
+    return None
+
+
+def langs_to_translate(app):
+    return [lang for lang in non_default_langs(app) if is_supported_language(lang)]
+
+
+def is_supported_language(lang):
+    """The prompt names the target language, so a code that langcodes
+    doesn't know, e.g. one typed into the Languages page, isn't supported."""
+    return get_language_name(lang) is not None
+
+
+def non_default_langs(app):
+    return [lang for lang in app.langs if lang != app.default_language]
 
 
 def run_app_translation(app, target_lang, mode, provider=None, model=None,
@@ -92,9 +136,16 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     # rebase carries over only its results
     skipped = len(fmt.skipped_ids)
     applied = _apply_translations(fmt)
+    # how much of the whole app is AI translated as of this run
+    app_ai_translation_share = {}
     if applied.translated:
-        _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
+        usage = _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
+        app_ai_translation_share = {
+            'total_app_strings': usage.total_app_strings,
+            'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
+        }
     return {
+        **app_ai_translation_share,
         'total': len(units),
         'translated': applied.translated,
         'skipped': skipped,
@@ -105,10 +156,12 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     }
 
 
-def prepare_translation_format(app, target_lang, mode):
+def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
     """A format for ``app`` that skips AI translations a user has edited
     and retranslates those whose source text has changed."""
-    fmt = AppTranslationFormat(app, target_lang, mode=mode)
+    fmt = AppTranslationFormat(
+        app, target_lang, mode=mode,
+        treat_default_copies_as_missing=treat_default_copies_as_missing)
     changed_strings = find_changed_ai_translations(fmt)
     fmt.manually_edited_keys = changed_strings.manually_edited
     fmt.stale_keys = changed_strings.stale
@@ -151,14 +204,15 @@ def find_changed_ai_translations(fmt):
 
 
 def _record_run(fmt, strings_attempted, model):
-    """Record provenance and usage for a run whose results ``fmt`` saved."""
+    """Record provenance and usage for a run whose results ``fmt`` saved,
+    and return the usage row."""
     # fmt read the app's sheets before the save; a fresh format reads the saved text
     saved_app_strings = fmt.for_app(fmt.app).all_app_strings()
     saved_units = _saved_units(fmt, saved_app_strings)
     with transaction.atomic():
         _upsert_provenance(fmt, saved_units)
         ai_translated = _refresh_provenance_statuses(fmt, saved_app_strings)
-        AITranslationUsage.objects.create(
+        return AITranslationUsage.objects.create(
             domain=fmt.app.domain,
             app_id=fmt.app.get_id,
             lang=fmt.target_lang,
@@ -305,7 +359,7 @@ class AppTranslationFormat(TranslationFormat):
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
                  manually_edited_keys=None, stale_keys=None,
-                 treat_default_copies_as_missing=False):
+                 treat_default_copies_as_missing=True):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
         self.target_lang = target_lang
@@ -421,6 +475,12 @@ class AppTranslationFormat(TranslationFormat):
                 valid[unit_id] = translated
             else:
                 self.skipped_ids.add(unit_id)
+                # a skipped string is otherwise only a count in the summary
+                logger.warning(
+                    "AI translation failed validation and was skipped: "
+                    "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
+                    self.app.domain, self.app.get_id, self.target_lang,
+                    unit.string_key, unit.source_text[:200], str(translated)[:200])
         self.results.update(valid)
         return valid
 
@@ -630,13 +690,21 @@ MARKDOWN_BULLET_PATTERN = r'^\s{0,3}[-*+] '
 MARKDOWN_NUMBERED_PATTERN = r'^\s{0,3}\d+[.)] '
 MARKDOWN_HEADING_PATTERN = r'^\s{0,3}#{1,6} '
 MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
+# Matches any character XML doesn't allow, such as control characters
+# like U+000B (vertical tab). One of these in a form label makes the
+# whole app fail to save. The ranges are the characters XML allows:
+# https://www.w3.org/TR/xml/#charsets
+XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
 
 
 def is_valid_app_translation(source, translated):
-    """Check that a translation preserves the source's structure:
-    ``<output/>`` references, HTML tags, URLs and markdown markers."""
+    """Check that a translation can be saved and preserves the source's
+    structure: ``<output/>`` references, HTML tags, URLs and markdown
+    markers."""
     if not translated or not isinstance(translated, str):
+        return False
+    if re.search(XML_INVALID_CHAR_PATTERN, translated):
         return False
 
     source_tags = re.findall(HTML_TAG_PATTERN, source)
@@ -644,17 +712,19 @@ def is_valid_app_translation(source, translated):
     if len(source_tags) != len(translated_tags):
         return False
     if source_tags:
-        # tags must keep their names, order and open/close structure;
-        # attributes are not compared here
+        # tags other than <output/> must keep their names, order and
+        # open/close structure; attributes are not compared here
         def tag_info(tags):
             return [re.match(r'<(/?)(\w+)', tag).groups()
-                    for tag in tags if re.match(r'<(/?)(\w+)', tag)]
+                    for tag in tags
+                    if re.match(r'<(/?)(\w+)', tag) and not tag.startswith('<output')]
         if tag_info(source_tags) != tag_info(translated_tags):
             return False
-        # <output .../> references must survive byte-for-byte,
-        # attributes included — a changed value breaks the form
-        source_outputs = [t for t in source_tags if t.startswith('<output')]
-        translated_outputs = [t for t in translated_tags if t.startswith('<output')]
+        # <output .../> references must survive byte-for-byte, attributes
+        # included (a changed value breaks the form), but word order
+        # differs between languages, so they may move
+        source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
+        translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
         if source_outputs != translated_outputs:
             return False
 

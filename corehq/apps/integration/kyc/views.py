@@ -34,7 +34,7 @@ from corehq.apps.integration.kyc.models import (
     KycVerificationStatus,
     UserDataStore,
 )
-from corehq.apps.integration.kyc.services import verify_users
+from corehq.apps.integration.kyc.services import get_kyc_config, verify_users
 from corehq.apps.integration.kyc.tables import (
     KycCaseElasticRecord,
     KycUserElasticRecord,
@@ -87,12 +87,7 @@ class KycConfigurationView(HqHtmxActionMixin, BaseDomainView):
 
     @property
     def config(self):
-        try:
-            # Currently a domain can only save one config so we shouldn't
-            # expect more than one per domain
-            return KycConfig.objects.get(domain=self.domain)
-        except KycConfig.DoesNotExist:
-            return KycConfig(domain=self.domain)
+        return get_kyc_config(self.domain) or KycConfig(domain=self.domain)
 
     @property
     def config_form(self):
@@ -326,7 +321,7 @@ class KycVerificationReportView(BaseDomainView, KYCFiltersMixin):
 
     @cached_property
     def kyc_config(self):
-        return KycConfig.objects.filter(domain=self.domain).first()
+        return get_kyc_config(self.domain)
 
     @property
     def page_url(self):

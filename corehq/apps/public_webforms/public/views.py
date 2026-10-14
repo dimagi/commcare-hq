@@ -9,8 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils.timesince import timeuntil
 from django.utils.translation import get_language, gettext_lazy as _
 
-from corehq import feature_previews, privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import feature_previews, toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_doc
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.cloudcare.utils import format_app_doc, get_web_apps_context
@@ -26,13 +25,7 @@ from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
 )
-
-
-def public_webforms_enabled(domain):
-    return (
-        domain_has_privilege(domain, privileges.PUBLIC_WEBFORMS)
-        and toggles.PUBLIC_WEBFORMS.enabled(domain, namespace=toggles.NAMESPACE_DOMAIN)
-    )
+from corehq.apps.public_webforms.utils import public_webforms_enabled
 
 
 class BasePublicWebformView(BasePageView):

@@ -65,7 +65,6 @@ msgid "Other"
 msgstr "Інше"
 
 #: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
-#| msgid "Schedule Invoice"
 msgid "Generate Invoice"
 msgstr "Створити рахунок"
 
@@ -2686,6 +2685,30 @@ msgstr "Додати все"
 msgid "Remove All"
 msgstr "Видалити все"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "CommCare Companion не входить до вашої поточної підписки."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Ви досягли ліміту чатів на цей місяць. Ваш ліміт буде оновлено 1 числа "
+"наступного місяця (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "Ви використали %(percent)s% своїх чат-повідомлень цього місяця."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"Не вдалося перевірити ваш ліміт чатів. Будь ласка, закрийте та знову "
+"відкрийте чат, щоб спробувати ще раз."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "Ваш пароль занадто слабкий! Спробуйте додати цифри або символи."
@@ -3011,26 +3034,34 @@ msgstr "Всі дії"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s прийняте запрошення"
+msgstr[1] "%(count)s прийнятих запрошення"
+msgstr[2] "%(count)s прийнятих запрошень"
+msgstr[3] "%(count)s прийнятих запрошень"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s запрошення очікує"
+msgstr[1] "%(count)s запрошення очікують"
+msgstr[2] "%(count)s запрошень очікують"
+msgstr[3] "%(count)s запрошень очікують"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s відхилене запрошення"
+msgstr[1] "%(count)s відхилених запрошення"
+msgstr[2] "%(count)s відхилених запрошень"
+msgstr[3] "%(count)s відхилених запрошень"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s простір проєкту бере участь"
+msgstr[1] "%(count)s простори проєкту беруть участь"
+msgstr[2] "%(count)s просторів проєкту беруть участь"
+msgstr[3] "%(count)s просторів проєкту беруть участь"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

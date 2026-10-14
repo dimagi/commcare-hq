@@ -578,6 +578,14 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
+# Redis redelivers any message not acked within visibility_timeout (default 1h),
+# so acks_late tasks running longer, and countdown/ETA tasks due later, would
+# run more than once. Keep this above both; the longest countdown today is the
+# report builder's 24h TEMP_DATA_SOURCE_LIFESPAN.
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 26 * 60 * 60,
+}
+
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
 

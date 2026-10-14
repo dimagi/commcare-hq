@@ -18,7 +18,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqwebapp import chat_auth, chat_usage
 from corehq.apps.hqwebapp.chat_quota import CHATBOT_MESSAGE_QUOTA_BY_EDITION
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled
 
 
 @override_settings(
@@ -27,7 +26,6 @@ from corehq.util.test_utils import flag_enabled
     OCS_OAUTH_CLIENT_ID='client-id',
     OCS_OAUTH_CLIENT_SECRET='client-secret',
 )
-@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
 class ChatAuthTokenTestCase(TestCase):
 
     @classmethod
