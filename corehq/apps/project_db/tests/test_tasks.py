@@ -1,7 +1,11 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.core.cache import cache
 
+import pytest
+from celery.exceptions import Retry
+from psycopg2 import errorcodes
+from sqlalchemy.exc import OperationalError
 from unmagic import fixture
 
 from corehq.apps.project_db.tasks import (
@@ -42,3 +46,12 @@ def test_eager_mode_syncs_every_time():
         schedule_project_db_sync(DOMAIN)
         schedule_project_db_sync(DOMAIN)
     assert sync_mock.call_count == 2
+
+
+def test_sync_retries_on_lock_timeout():
+    err = OperationalError('ALTER TABLE', {}, Mock(pgcode=errorcodes.LOCK_NOT_AVAILABLE))
+    with patch('corehq.apps.project_db.tasks.create_or_update_project_db', side_effect=err), \
+         patch.object(update_project_db_schema, 'retry', side_effect=Retry) as retry_mock, \
+         pytest.raises(Retry):
+        update_project_db_schema(DOMAIN)
+    retry_mock.assert_called_once_with(exc=err)

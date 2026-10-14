@@ -23,6 +23,7 @@ from corehq.sql_db.connections import (
 
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
+SCHEMA_SYNC_LOCK_TIMEOUT = '5s'
 
 
 def truncate_identifier(identifier):
@@ -276,12 +277,18 @@ def _create_or_update_project_db(domain):
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
+        _set_lock_timeout(conn)
         schema = DomainSchema(domain)
         schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
             update_table(conn, table)
         schema.grant_role_read_access(conn)
+
+
+def _set_lock_timeout(conn):
+    """Fail rather than queue behind a long-running query"""
+    conn.execute(sqlalchemy.text(f"SET LOCAL lock_timeout = '{SCHEMA_SYNC_LOCK_TIMEOUT}'"))
 
 
 def get_domain_tables(domain):
