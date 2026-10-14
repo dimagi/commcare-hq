@@ -24,6 +24,10 @@ def can_access_public_webforms(request, domain):
     )
 
 
+def is_public_webform_eligible(form):
+    return form.get_module().module_type == 'basic' and not form.requires_case()
+
+
 def is_app_live(domain, app_id):
     return app_id in get_live_app_ids(domain)
 
