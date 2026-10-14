@@ -35,7 +35,7 @@ class AuthContext(DocumentSchema):
     user_id = StringProperty()
 
     def _auth_required(self):
-        domain_requires_auth(self.domain)
+        return domain_requires_auth(self.domain)
 
     def is_valid(self):
         try:

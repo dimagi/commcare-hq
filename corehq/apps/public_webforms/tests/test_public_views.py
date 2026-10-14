@@ -24,6 +24,7 @@ from corehq.apps.public_webforms.tests.utils import (
     create_webform,
     public_webforms_available,
     skip_turnstile,
+    webform_domain,
 )
 
 
@@ -43,7 +44,7 @@ def _request_a_link(public_id, **fields):
     })
 
 
-@use('db', public_webforms_available)
+@use('db', webform_domain, public_webforms_available)
 @pytest.mark.parametrize('expires_in, is_disabled', [
     (datetime.timedelta(days=1), True),
     (datetime.timedelta(days=-1), False),
@@ -60,7 +61,7 @@ def test_a_webform_not_accepting_requests_says_so(expires_in, is_disabled):
     assert b'Requests Closed' in response.content
 
 
-@use('db', public_webforms_available)
+@use('db', webform_domain, public_webforms_available)
 def test_an_unknown_link_is_not_found():
     response = _get(uuid4())
 
@@ -68,7 +69,7 @@ def test_an_unknown_link_is_not_found():
     assert b'Requests Closed' not in response.content
 
 
-@use('db', public_webforms_available, skip_turnstile)
+@use('db', webform_domain, public_webforms_available, skip_turnstile)
 def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
     webform = create_webform(is_disabled=True)
 
@@ -78,7 +79,7 @@ def test_a_request_to_a_webform_not_accepting_requests_creates_no_session():
     assert not PublicFormSession.objects.filter(public_webform=webform).exists()
 
 
-@use('db', public_webforms_available, skip_turnstile)
+@use('db', webform_domain, public_webforms_available, skip_turnstile)
 def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
     webform = create_webform(is_disabled=False)
     with mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None):
@@ -89,7 +90,7 @@ def test_a_requested_link_redirects_to_a_page_saying_it_was_sent():
         PublicWebformLinkSentView.urlname, webform.public_id)
 
 
-@use('db', public_webforms_available, skip_turnstile)
+@use('db', webform_domain, public_webforms_available, skip_turnstile)
 def test_a_requested_link_is_sent():
     webform = create_webform(is_disabled=False)
 
@@ -117,7 +118,7 @@ def _open_form(public_id, session_id):
         'public_id': public_id.hex, 'session_id': session_id}))
 
 
-@use('db', public_webforms_available, stub_app_doc)
+@use('db', webform_domain, public_webforms_available, stub_app_doc)
 def test_public_form_page_context():
     session = create_session(create_webform(), email='respondent@example.com')
 
@@ -131,7 +132,7 @@ def test_public_form_page_context():
         kwargs={'public_id': session.public_webform.public_id.hex})
 
 
-@use('db', public_webforms_available, stub_app_doc)
+@use('db', webform_domain, public_webforms_available, stub_app_doc)
 def test_opening_a_one_time_link_sets_public_session_key_cookie():
     session = create_session(create_webform(), email='respondent@example.com')
 
@@ -143,7 +144,7 @@ def test_opening_a_one_time_link_sets_public_session_key_cookie():
     assert cookie['samesite'] == 'Lax'
 
 
-@use('db', public_webforms_available, stub_app_doc)
+@use('db', webform_domain, public_webforms_available, stub_app_doc)
 def test_opening_a_one_time_link_puts_the_session_on_the_request():
     # the only request with a session but no couch_user, which is how
     # CloudcareMiddleware knows what to route formplayer on
@@ -154,7 +155,7 @@ def test_opening_a_one_time_link_puts_the_session_on_the_request():
     assert response.wsgi_request.public_form_session == session
 
 
-@use('db', public_webforms_available, stub_app_doc)
+@use('db', webform_domain, public_webforms_available, stub_app_doc)
 def test_opening_a_one_time_link_records_when_it_was_opened():
     session = create_session(create_webform(), email='respondent@example.com')
 
@@ -162,3 +163,13 @@ def test_opening_a_one_time_link_records_when_it_was_opened():
 
     session.refresh_from_db()
     assert session.opened_at is not None
+
+
+@use('db', webform_domain, public_webforms_available)
+def test_a_deactivated_project_hides_its_webforms():
+    webform = create_webform(is_disabled=False)
+    domain_obj = webform_domain()
+    domain_obj.is_active = False
+    domain_obj.save()
+
+    assert _get(webform.public_id).status_code == 404

@@ -221,11 +221,12 @@ class PublicFormUser:
         return False
 
     def has_permission(self, domain, permission, data=None):
-        if domain != self._session.public_webform.domain:
-            return False
-        if permission == 'access_web_app':
-            return data == self._session.public_webform.app_id
-        return permission == 'access_mobile_endpoints'
+        webform = self._session.public_webform
+        return (
+            domain == webform.domain
+            and permission == 'access_web_app'
+            and data == webform.app_id
+        )
 
     def can_access_any_web_apps(self, domain=None):
         return domain == self._session.public_webform.domain

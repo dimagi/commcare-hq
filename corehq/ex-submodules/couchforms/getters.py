@@ -145,7 +145,7 @@ def get_date_header(request):
         try:
             date = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S GMT")
             date = datetime.strftime(date, "%Y-%m-%dT%H:%M:%SZ")
-        except:
+        except Exception:
             logging.error((
                 "Receiver app: incoming submission has a date header "
                 "that we can't parse: '%s'"
@@ -158,7 +158,7 @@ def get_date_header(request):
 
 
 def get_submit_ip(request):
-    from corehq.apps.ota.decorators import is_from_formplayer
+    from corehq.apps.ota.origin_token import is_from_formplayer
     origin_ip = request.META.get(COMMCAREHQ_ORIGIN_IP)
     if is_from_formplayer(request) and origin_ip and IP_RE.match(origin_ip):
         return origin_ip
