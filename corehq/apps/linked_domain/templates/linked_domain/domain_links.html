@@ -1,8 +1,7 @@
-{% extends "hqwebapp/bootstrap3/base_section.html" %}
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
 {% load hq_shared_tags %}
 {% load i18n %}
-
-{% js_entry_b3 "linked_domain/js/domain_links" %}
+{% js_entry "linked_domain/js/domain_links" %}
 
 {% block page_content %}
   {% initial_page_data 'view_data' view_data %}
@@ -11,47 +10,79 @@
 
   <div id="ko-linked-projects" class="ko-template">
     <!-- ko if: showGetStarted -->
-        {% include 'linked_domain/partials/get_started.html' %}
+    {% include 'linked_domain/partials/get_started.html' %}
     <!-- /ko -->
     <!-- ko ifnot: showGetStarted -->
-      <!-- ko if: showMultipleTabs -->
-        <ul class="nav nav-tabs">
-          <!-- ko if: isUpstreamDomain -->
-            <li data-bind="class: manageDownstreamDomainsTabStatus"><a data-toggle="tab" href="#tabs-manage-downstream">{% trans "Downstream Project Spaces" %}</a></li>
-            <li><a data-toggle="tab" href="#tabs-push-content">{% trans "Push Content" %}</a></li>
-          <!-- /ko -->
-          <!-- ko if: isDownstreamDomain -->
-            <li data-bind="class: pullContentTabStatus"><a data-toggle="tab" href="#tabs-pull-content">{% trans "Manage Linked Project Space" %}</a></li>
-            {% if view_data.linkable_ucr %}
-              <li><a data-toggle="tab" href="#tabs-remote-report">{% trans "Add Remote Reports" %}</a></li>
-            {% endif %}
-          <!-- /ko -->
-        </ul>
+    <!-- ko if: showMultipleTabs -->
+    <ul class="nav nav-tabs">
+      <!-- ko if: isUpstreamDomain -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          data-bs-toggle="tab"
+          href="#tabs-manage-downstream"
+          data-bind="css: manageDownstreamDomainsTabStatus"
+          >{% trans "Downstream Project Spaces" %}</a
+        >
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#tabs-push-content"
+          >{% trans "Push Content" %}</a
+        >
+      </li>
       <!-- /ko -->
-      <!-- ko ifnot: showMultipleTabs -->
-        <h2>{% trans "Manage Linked Project Space" %}</h2>  {# header for the only tab that will be displayed #}
+      <!-- ko if: isDownstreamDomain -->
+      <li class="nav-item">
+        <a
+          class="nav-link"
+          data-bs-toggle="tab"
+          href="#tabs-pull-content"
+          data-bind="css: pullContentTabStatus"
+          >{% trans "Manage Linked Project Space" %}</a
+        >
+      </li>
+      {% if view_data.linkable_ucr %}
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#tabs-remote-report"
+            >{% trans "Add Remote Reports" %}</a
+          >
+        </li>
+      {% endif %}
       <!-- /ko -->
-      <div id="domain_links">
-        <div class="tab-content">
-          <div class="tab-pane fade" id="tabs-pull-content" data-bind="class: pullTabActiveStatus">
-            {% include 'linked_domain/partials/pull_content.html' %}
-          </div>
-          <div class="tab-pane fade" id="tabs-manage-downstream" data-bind="class: manageTabActiveStatus">
-            {% include 'linked_domain/partials/manage_downstream_domains.html' %}
-          </div>
-          <div class="tab-pane fade" id="tabs-push-content">
-            {% include 'linked_domain/partials/push_content.html' %}
-          </div>
-          {% if view_data.linkable_ucr %}
-            <div class="tab-pane fade" id="tabs-remote-report">
-              {% include 'linked_domain/partials/link_remote_ucr.html' %}
-            </div>
-          {% endif %}
+    </ul>
+    <!-- /ko -->
+    <!-- ko ifnot: showMultipleTabs -->
+    <h2>{% trans "Manage Linked Project Space" %}</h2>
+    {# header for the only tab that will be displayed #}
+    <!-- /ko -->
+    <div id="domain_links" class="mt-3">
+      <div class="tab-content">
+        <div
+          class="tab-pane fade"
+          id="tabs-pull-content"
+          data-bind="css: pullTabActiveStatus"
+        >
+          {% include 'linked_domain/partials/pull_content.html' %}
         </div>
+        <div
+          class="tab-pane fade"
+          id="tabs-manage-downstream"
+          data-bind="css: manageTabActiveStatus"
+        >
+          {% include 'linked_domain/partials/manage_downstream_domains.html' %}
+        </div>
+        <div class="tab-pane fade" id="tabs-push-content">
+          {% include 'linked_domain/partials/push_content.html' %}
+        </div>
+        {% if view_data.linkable_ucr %}
+          <div class="tab-pane fade" id="tabs-remote-report">
+            {% include 'linked_domain/partials/link_remote_ucr.html' %}
+          </div>
+        {% endif %}
       </div>
+    </div>
     <!-- /ko -->
   </div>
-
 {% endblock %}
 
 {% block modals %}
@@ -60,25 +91,53 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-label='{% trans_html_attr "Close" %}'><span aria-hidden="true">&times;</span></button>
-          <h4 class="modal-title">{% trans 'Add Downstream Project Space' %}</h4>
-          <!-- ko if: parent.showGetStarted -->
-            <p>{% trans 'To make this project space an upstream project space, you need to add a downstream project space.' %}</p>
-          <!-- /ko -->
+          <h4 class="modal-title">
+            {% trans 'Add Downstream Project Space' %}
+          </h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans_html_attr "Close" %}"
+          ></button>
         </div>
         <div class="modal-body">
+          <!-- ko if: parent.showGetStarted -->
+          <p>
+            {% trans 'To make this project space an upstream project space, you need to add a downstream project space.' %}
+          </p>
+          <!-- /ko -->
           <div class="ko-model">
-            <label >{% trans 'Project Space:' %}</label>
+            <label>{% trans 'Project Space:' %}</label>
             {% if view_data.is_superuser %}
-              <select class="form-control" data-bind="autocompleteSelect2: availableDomains, value: domainToAdd"></select>
+              <select
+                class="form-select"
+                data-bind="autocompleteSelect2: availableDomains, value: domainToAdd"
+              ></select>
             {% else %}
-              <select class="form-control" data-bind="select2: availableDomains, value: domainToAdd"></select>
+              <select
+                class="form-select"
+                data-bind="select2: availableDomains, value: domainToAdd"
+              ></select>
             {% endif %}
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" data-bind="click: addDownstreamDomain, enable: didSelectDomain">{% trans 'Add' %}</button>
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+          >
+            {% trans 'Cancel' %}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-dismiss="modal"
+            data-bind="click: addDownstreamDomain, enable: didSelectDomain"
+          >
+            {% trans 'Add' %}
+          </button>
         </div>
       </div>
     </div>
