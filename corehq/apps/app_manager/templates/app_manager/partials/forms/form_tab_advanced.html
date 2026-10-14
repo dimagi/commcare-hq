@@ -106,4 +106,19 @@
       </ul>
     </div>
   </div>
+  {% if create_public_webform_url %}
+    <div class="card card-modern-gray mb-3">
+      <h5 class="card-header">{% trans "Public Webform" %}</h5>
+      <div class="card-body">
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ create_public_webform_url }}">
+              <i class="fa fa-plus"></i>
+              {% trans "Create public webform from latest released version" %}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  {% endif %}
 </div>

@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
@@ -26,6 +28,22 @@ def can_access_public_webforms(request, domain):
 
 def is_public_webform_eligible(form):
     return form.get_module().module_type == 'basic' and not form.requires_case()
+
+
+def get_create_public_webform_url(request, form):
+    app = form.get_app()
+    if not (
+        can_access_public_webforms(request, app.domain)
+        and app.can_generate_session_endpoints
+        and is_public_webform_eligible(form)
+    ):
+        return None
+
+    return reverse(
+        'create_public_webform',
+        args=[app.domain],
+        query={'app_id': app.id, 'form_unique_id': form.unique_id},
+    )
 
 
 def is_app_live(domain, app_id):
