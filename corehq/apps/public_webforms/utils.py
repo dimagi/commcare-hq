@@ -1,3 +1,5 @@
+from django.urls import reverse
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import (
@@ -25,6 +27,21 @@ def can_access_public_webforms(request, domain):
             domain, get_permission_name(HqPermissions.edit_public_webforms)
         )
         and toggles.PUBLIC_WEBFORMS.enabled_for_request(request)
+    )
+
+
+def get_create_public_webform_url(request, form):
+    app = form.get_app()
+    if not (
+        can_access_public_webforms(request, app.domain)
+        and get_latest_released_eligible_form(app.domain, app.id, form.unique_id)
+    ):
+        return None
+
+    return reverse(
+        'create_public_webform',
+        args=[app.domain],
+        query={'app_id': app.id, 'form_unique_id': form.unique_id},
     )
 
 

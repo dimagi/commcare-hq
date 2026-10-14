@@ -1,9 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from unmagic import use
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.public_webforms import utils
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
@@ -12,6 +13,7 @@ from corehq.apps.public_webforms.tests.utils import (
     webform_domain,
 )
 from corehq.apps.public_webforms.utils import (
+    get_create_public_webform_url,
     is_app_live,
     public_webforms_enabled,
 )
@@ -119,3 +121,24 @@ def test_eligible_form_rejects_deleted_app():
         form = utils.get_public_webform_eligible_form(
             data.domain, 'app-1', data.survey_form_id)
     assert form is None
+
+
+@patch('corehq.apps.public_webforms.utils.can_access_public_webforms', lambda *args: True)
+@patch('corehq.apps.public_webforms.utils.get_latest_released_eligible_form', lambda *args: True)
+def test_create_url_preselects_the_form():
+    factory = AppFactory(domain='pwf-test')
+    factory.app._id = 'app-1'
+    __, form = factory.new_basic_module('survey', 'patient')
+
+    url = get_create_public_webform_url(Mock(), form)
+
+    assert url == f'/a/pwf-test/public_webforms/create/?app_id=app-1&form_unique_id={form.unique_id}'
+
+
+@patch('corehq.apps.public_webforms.utils.can_access_public_webforms', lambda *args: True)
+@patch('corehq.apps.public_webforms.utils.get_latest_released_eligible_form', lambda *args: None)
+def test_create_url_is_not_offered_for_an_ineligible_form():
+    factory = AppFactory(domain='pwf-test')
+    __, form = factory.new_basic_module('survey', 'patient')
+
+    assert get_create_public_webform_url(Mock(), form) is None
