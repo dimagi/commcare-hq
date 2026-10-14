@@ -209,7 +209,7 @@ class Downgrade(UnpaidInvoiceAction):
             subscription.plan_version.plan.edition not in [
                 SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.PAUSED,
-            ] and not subscription.skip_auto_downgrade
+            ] and not subscription.should_skip_downgrade
         )
 
     @classmethod

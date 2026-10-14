@@ -15,6 +15,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.es import CaseES, CaseSearchES, FormES
+from corehq.apps.project_db.table_ddl import drop_project_db
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -253,6 +254,24 @@ def _delete_data_files(domain_name):
     )))
 
 
+def _delete_bulk_async_jobs(domain_name):
+    from corehq.apps.data_interfaces.models import BulkAsyncJob
+
+    blob_db = get_blob_db()
+    query = BulkAsyncJob.objects.filter(domain=domain_name)
+    for job_id in query.values_list('id', flat=True):
+        parent_id = job_id.hex
+        blob_db.bulk_delete(
+            metas=list(
+                BlobMeta.objects.partitioned_query(parent_id).filter(
+                    parent_id=parent_id,
+                    type_code=CODES.bulk_async_job,
+                )
+            )
+        )
+    BulkAsyncJob.objects.filter(domain=domain_name).delete()
+
+
 def _delete_sms_content_events_schedules(domain_name):
     models = [
         'SMSContent', 'EmailContent', 'SMSSurveyContent',
@@ -387,6 +406,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'fhir.FHIRResourceProperty',
     ]),
     ModelDeletion('scheduling', 'MigratedReminder', 'rule__domain'),
+    CustomDeletion('data_interfaces', _delete_bulk_async_jobs, ['BulkAsyncJob']),
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
@@ -440,6 +460,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ota', _delete_demo_user_restores, ['DemoUserRestore']),
     ModelDeletion('phonelog', 'ForceCloseEntry', 'domain'),
     ModelDeletion('phonelog', 'UserErrorEntry', 'domain'),
+    ModelDeletion('public_webforms', 'PublicWebform', 'domain'),
     ModelDeletion('registration', 'RegistrationRequest', 'domain'),
     ModelDeletion('reminders', 'EmailUsage', 'domain'),
     ModelDeletion('registry', 'DataRegistry', 'domain', [
@@ -452,9 +473,13 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
     ModelDeletion('reports', 'TableauUser', 'server__domain'),
     ModelDeletion('reports', 'QueryStringHash', 'domain'),
+    ModelDeletion('short_links', 'ShortLink', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     CustomDeletion('toggles', _disable_toggles, []),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
+    ModelDeletion('translations', 'AITranslation', 'domain'),
+    ModelDeletion('translations', 'AITranslationUsage', 'domain'),
+    ModelDeletion('translations', 'AITranslationConfig', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
         extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
@@ -494,6 +519,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
                   extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    CustomDeletion('project_db', drop_project_db, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),

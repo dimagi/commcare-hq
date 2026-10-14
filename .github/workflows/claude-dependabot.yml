@@ -24,7 +24,10 @@ on:
 
 jobs:
   dependabot-review:
-    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    # Only run on the canonical repo, not on forks or mirrors
+    if: >-
+      github.repository == 'dimagi/commcare-hq'
+      && (github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -46,14 +49,14 @@ jobs:
           echo "ref=$REF" >> $GITHUB_OUTPUT
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           ref: ${{ steps.pr.outputs.ref }}
           fetch-depth: 1
 
       - name: Run Claude Dependabot Analysis
         id: claude_review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@9db594c7a0e82298c121c18b7f08aa1579ce7341  # v1.0.185
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           allowed_bots: "dependabot[bot]"

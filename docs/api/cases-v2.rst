@@ -354,9 +354,10 @@ Exclude specific fields:
 
     GET /a/<domain>/api/case/v2/<case_id>?exclude=case_name&exclude.properties=husband_name
 
-These parameters work on all GET endpoints and on the case object returned
-by POST/PUT (create/update) endpoints. For list and bulk responses, the
-filtering applies to each individual case object; envelope fields
+These parameters work on all GET endpoints, on the bulk fetch endpoint (as
+URL query parameters alongside the POST body), and on the case object
+returned by POST/PUT (create/update) endpoints. For list and bulk responses,
+the filtering applies to each individual case object; envelope fields
 (``matching_records``, ``next``) are not affected.
 
 Field filtering is preserved across paginated requests.
@@ -464,22 +465,22 @@ endpoint.
 2. POST request using Case IDs or External IDs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interface - ``POST /a/<domain>/api/case/v2/bulk_fetch/``
+Interface - ``POST /a/<domain>/api/case/v2/bulk-fetch/``
 
 A more flexible approach to fetching cases in bulk is to use a POST
 request where the case IDs are supplied in the POST body.  You may also
 specify external IDs in this way.
 
-Body must have one or both of the ‘case_id’, ‘external_id’ fields.
+Body must have one or both of the ‘case_ids’, ‘external_ids’ fields.
 
 .. code-block:: json
 
     {
-      "case_id": [
+      "case_ids": [
         "30ad22bd-f828-4e3f-8287-a67a180cff4f",
         "d5e5962a-c5f1-483c-a58a-590167d594a9"
       ],
-      "external_id": [
+      "external_ids": [
         "id1",
         "id2"
       ]
@@ -487,6 +488,11 @@ Body must have one or both of the ‘case_id’, ‘external_id’ fields.
 
 **Note**: This endpoint allows you to pull data about specific cases by
 ID or external ID.
+
+The ``fields`` and ``exclude`` parameters described in
+"`Limiting Response Fields`_" may be passed as URL query parameters to
+limit which fields are returned for each case, e.g.
+``POST /a/<domain>/api/case/v2/bulk-fetch/?fields=case_id&fields.properties=dob``.
 
 Response format (cases truncated for clarity)
 

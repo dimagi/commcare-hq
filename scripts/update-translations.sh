@@ -103,7 +103,7 @@ then
 fi
 
 echo "Pushing updates to transifex."
-tx push -s -t
+tx push --silent -s -t
 
 if [ -z "${UPDATE_TRANSLATIONS_SKIP_GIT-}" ]
 then

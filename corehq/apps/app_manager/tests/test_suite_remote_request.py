@@ -231,6 +231,22 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         [element] = parse_normalize(suite, to_string=False).xpath(xpath)
         self.assertEqual(element.get('ref'), "'42'")
 
+    def test_remote_request_endpoint_is_unfiltered(self):
+        xpath = "./remote-request/session/datum[@id='search_case_id']"
+
+        suite = self.app.create_suite()
+        [datum] = parse_normalize(suite, to_string=False).xpath(xpath)
+        self.assertEqual(
+            datum.get('nodeset'),
+            f"instance('results')/results/case[@case_type='case']{EXCLUDE_RELATED_CASES_FILTER}",
+        )
+
+        self.module.search_config.case_search_endpoint_id = 42
+        with flag_enabled('CASE_SEARCH_ENDPOINTS'):
+            suite = self.app.create_suite()
+        [datum] = parse_normalize(suite, to_string=False).xpath(xpath)
+        self.assertEqual(datum.get('nodeset'), "instance('results')/results/case")
+
     def test_remote_request_custom_detail(self):
         """Remote requests for modules with custom details point to the custom detail
         """

@@ -1,7 +1,6 @@
-import abc
+import gettext
 import json
 import os
-import random
 import re
 import subprocess
 import sys
@@ -12,237 +11,106 @@ from django.core.management.base import BaseCommand, CommandError
 
 import gevent
 import polib
-import requests
-from memoized import memoized
+
+from corehq.apps.translations.integrations.llm import (
+    OpenaiTranslator,
+    TranslationFormat,
+)
+
+# Counts tried when working out which numbers each plural index is used for
+PLURAL_SAMPLE_COUNTS = list(range(0, 201)) + [1000, 1000000, 2000000]
+
+# English-style rule used when a header has no ``plural=``: index 0 for
+# exactly one, index 1 for every other count. Pairs with nplurals=2.
+DEFAULT_PLURAL_EXPRESSION = "n != 1"
 
 
-def retry_with_exponential_backoff(
-    initial_delay=1, exponential_base=2, jitter=True,
-    max_retries=10, errors=(Exception,), backup_model=''
-):
+def nplurals_from_header(plural_forms_header):
     """
-    :param initial_delay: initial delay in seconds
-    :param exponential_base: exponential base for the delay
-    :param jitter: whether to add randomness to the delay
-    :param max_retries: maximum number of retries
-    :param errors: tuple of errors to catch
-    :param backup_model: when the primary model is rate limited,
-        this model will be used,optional, default is ''
+    Return how many ``msgstr[N]`` plural indices a PO file's ``Plural-Forms``
+    header entry declares, or 2 (English-style singular and plural) when the
+    header doesn't say.
 
-    This approach has been inspired by the approaches suggested in
-    https://github.com/openai/openai-cookbook/blob/main/examples/How_to_handle_rate_limits.ipynb
-    We are adding exponential backoff on retries and also a backup model to use
-    if the primary model is rate limited.
-
+    >>> nplurals_from_header("nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);")
+    3
+    >>> nplurals_from_header("")
+    2
     """
-
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            num_retries = 0
-            delay = initial_delay
-
-            while True:
-                try:
-                    return func(*args, **kwargs)
-                except errors:
-                    num_retries += 1
-                    if num_retries == 1 and backup_model:
-                        print(f"Rate limit error, retrying with backup model: {backup_model}")
-                        return func(*args, **kwargs, backup_model=backup_model)
-                    if num_retries > max_retries:
-                        raise Exception(
-                            f"Maximum number of retries ({max_retries}) exceeded."
-                        )
-                    delay *= exponential_base * (1 + jitter * random.random())
-                    gevent.sleep(delay)
-                except Exception as e:
-                    raise Exception("Error calling LLM") from e
-        return wrapper
-    return decorator
+    match = re.search(r'nplurals\s*=\s*(\d+)', plural_forms_header)
+    return int(match.group(1)) if match else 2
 
 
-@memoized
-def langcode_to_langname_map():
-    langs = settings.LANGUAGES
-    lang_name_map = {}
-    for lang_code, lang_name in langs:
-        lang_name_map[lang_code] = lang_name
-    return lang_name_map
-
-
-class LLMTranslator(abc.ABC):
+def plural_index_function_from_header(plural_forms_header):
     """
-    Abstract class for different LLM translators. This class can be extended to support different LLM clients.
-    In this case, we will be implementing a class for OpenAI.
+    Return a function mapping a count ``n`` to the ``msgstr[N]`` index used
+    for it, built from the ``plural=`` expression in a PO file's
+    ``Plural-Forms`` header entry.
+
+    The expression is written in C syntax, e.g.
+    ``plural=(n%10==1 && n%100!=11 ? 0 : 1);``. ``gettext.c2py`` ("C to
+    Python") is the standard library helper that ``ngettext`` itself uses to
+    turn it into a Python function. It accepts only ``n``, numbers and operators, and
+    raises ``ValueError`` for anything else.
+
+    >>> plural_index_for = plural_index_function_from_header("nplurals=2; plural=(n != 1);")
+    >>> plural_index_for(1), plural_index_for(5)
+    (0, 1)
     """
-
-    def __init__(self, api_key, model, lang, translation_format, backup_model=''):
-        """
-        :param api_key: str
-        :param model: str
-        :param translation_format: an instance of TranslationFormat or its subclass
-        :param backup_model: when the primary model is rate limited,
-            this model will be used, optional, default is ''
-        """
-        self.api_key = api_key
-        assert model in self.supported_models, f"Model {model} is not supported by {self.__class__.__name__}."
-        self.model = model
-        self.lang = lang
-        self.backup_model = backup_model
-        self.translation_format = translation_format
-
-    def base_prompt(self):
-        lang_map = langcode_to_langname_map()
-        lang_name = lang_map.get(self.lang, self.lang)
-        base_prompt = f"""You are a professional translator. Translate the following texts to {lang_name}.
-        Keep the structure and formatting of the original text."""
-        return base_prompt
-
-    def input_format_prompt(self):
-        return f"Input format: {self.translation_format.format_input_description()}"
-
-    def output_format_prompt(self):
-        return f"Output format: {self.translation_format.format_output_description()}"
-
-    @abc.abstractmethod
-    def supported_models(self):
-        return []
-
-    def translate(self, input_data):
-        system_prompt = "\n".join([
-            self.base_prompt(),
-            self.input_format_prompt(),
-            self.output_format_prompt(),
-        ])
-        user_message = self.translation_format.format_input(input_data)
-
-        llm_output = self._call_llm(system_prompt, user_message)
-        return self.translation_format.parse_output(llm_output)
-
-    @abc.abstractmethod
-    def _call_llm(self, system_prompt, user_message):
-        """Call LLM using the client library"""
-        pass
-
-    @abc.abstractmethod
-    def _call_llm_http(self, system_prompt, user_message):
-        """Call LLM using direct HTTP requests without client libraries"""
-        pass
+    match = re.search(r'plural\s*=\s*([^;]+)', plural_forms_header)
+    plural_expression = match.group(1) if match else DEFAULT_PLURAL_EXPRESSION
+    return gettext.c2py(plural_expression)
 
 
-class TranslationFormat(abc.ABC):
+def counts_by_plural_index_from_header(plural_forms_header):
     """
-    Abstract class for different translation formats.
-    The idea is to have a class for each format and have input prompt and output prompt for each format.
-    Defined in the subclasses. It also has methods to load input, format input, parse output, save output.
-    An example can be we can have a class for Simple text file, JSON file etc.
-    We have implemented a class for PO file translation.
+    Map each plural index to the sample counts that select it, according to
+    a PO file's ``Plural-Forms`` header entry.
+
+    >>> counts = counts_by_plural_index_from_header("nplurals=2; plural=(n != 1);")
+    >>> counts[0], counts[1][:4]
+    ([1], [0, 2, 3, 4])
     """
-    @abc.abstractmethod
-    def load_input(self, input_source=None):
-        pass
-
-    @abc.abstractmethod
-    def format_input(self, input_data):
-        pass
-
-    @abc.abstractmethod
-    def parse_output(self, output_data):
-        pass
-
-    @abc.abstractmethod
-    def save_output(self, output_data, output_path):
-        pass
-
-    @abc.abstractmethod
-    def format_input_description(self):
-        pass
-
-    @abc.abstractmethod
-    def format_output_description(self):
-        pass
+    plural_index_for = plural_index_function_from_header(plural_forms_header)
+    counts = {plural_index: [] for plural_index in range(nplurals_from_header(plural_forms_header))}
+    for n in PLURAL_SAMPLE_COUNTS:
+        counts[plural_index_for(n)].append(n)
+    return counts
 
 
-class OpenaiTranslator(LLMTranslator):
-    @property
-    def supported_models(self):
-        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
+# C0 control characters other than tab, newline and carriage return, plus DEL.
+# The LLM sometimes turns escapes like "\u2014" into "\u0014", which msgfmt
+# accepts.
+CONTROL_CHARS_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
 
-    def __init__(self, api_key, model, lang, translation_format, backup_model=''):
-        super().__init__(api_key, model, lang, translation_format)
-        try:
-            import openai
-            self.openai = openai
-            self.client = openai.OpenAI(api_key=api_key)
-        except ImportError:
-            self.openai = None
-            self.client = None
-            print("OpenAI Python package not found, will use HTTP requests instead.")
 
-        self.api_base = "https://api.openai.com/v1"
+def has_control_chars(msgid, msgstr):
+    return bool(set(CONTROL_CHARS_RE.findall(msgstr)) - set(CONTROL_CHARS_RE.findall(msgid)))
 
-    def _call_llm(self, system_prompt, user_message):
 
-        if self.client is None:
-            return self._call_llm_http(system_prompt, user_message)
+def entry_has_control_chars(entry):
+    """
+    Like ``has_control_chars``, but for a whole PO entry, including each
+    plural form of a plural entry.
+    """
+    if entry.msgid_plural:
+        source = entry.msgid + entry.msgid_plural
+        return any(has_control_chars(source, msgstr) for msgstr in entry.msgstr_plural.values())
+    return has_control_chars(entry.msgid, entry.msgstr)
 
-        @retry_with_exponential_backoff(
-            max_retries=5, errors=(self.openai.RateLimitError,), backup_model=self.backup_model
-        )
-        def _call_openai_client(backup_model=None):
-            model = backup_model or self.model
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
-            return response.choices[0].message.content
 
-        try:
-            return _call_openai_client()
-        except Exception as e:
-            raise Exception("OpenAI API call failed") from e
-
-    def _call_llm_http(self, system_prompt, user_message):
-        # We might not use this method at all, but it was useful in testing other LLM clients
-        # without installing their package, so I am keeping it here for now.
-        try:
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                "temperature": 0.2,
-                "response_format": {"type": "json_object"}
-            }
-
-            response = requests.post(
-                f"{self.api_base}/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            response.raise_for_status()
-
-            result = response.json()
-            return result["choices"][0]["message"]["content"]
-        except Exception as e:
-            raise Exception("Error making HTTP request to OpenAI API") from e
+# msgfmt errors look like "<file>.po:<line>: <message>"
+MSGFMT_ERROR_RE = re.compile(r'^.+\.po:(\d+):\s*(.*)$')
 
 
 class PoTranslationFormat(TranslationFormat):
     """
     Translation format for PO files. The class expects gettext installed in the system.
     As it uses gettext's msgfmt command to check for errors in the PO file.
+
+    Plural entries (``msgid_plural``) are sent to the LLM as an object describing
+    each plural index of the target language, and the translation for each index
+    comes back as a separate ``"<key>:<plural index>"`` key, so the response stays
+    a flat map of strings.
     """
 
     def __init__(self, file_path):
@@ -270,11 +138,38 @@ class PoTranslationFormat(TranslationFormat):
 
     @property
     def untranslated_messages(self):
-        return [msg for msg in self.all_message_objects if msg.msgstr == "" or msg.fuzzy]
+        return [
+            msg for msg in self.all_message_objects
+            if msg.fuzzy or not self._is_translated(msg) or entry_has_control_chars(msg)
+        ]
 
-    @property
-    def untranslated_messages_plural(self):
-        return [msg for msg in self.all_message_objects if msg.msgid_plural != "" and msg.msgstr_plural[0] == ""]
+    def _is_translated(self, msg):
+        if msg.msgid_plural:
+            return all(msg.msgstr_plural.get(plural_index) for plural_index in range(self.nplurals))
+        return msg.msgstr != ""
+
+    @cached_property
+    def _plural_forms_header(self):
+        return self.all_message_objects.metadata.get('Plural-Forms', '')
+
+    @cached_property
+    def nplurals(self):
+        return nplurals_from_header(self._plural_forms_header)
+
+    @cached_property
+    def counts_by_plural_index(self):
+        """
+        Map each plural index to the sample counts that select it, e.g.
+        ``{0: [1], 1: [0, 2, 3, ...]}`` for ``plural=(n != 1)``.
+        """
+        return counts_by_plural_index_from_header(self._plural_forms_header)
+
+    def _plural_index_description(self, plural_index):
+        counts = self.counts_by_plural_index[plural_index]
+        if not counts:
+            return "not used for whole numbers (e.g. fractions); use the general plural"
+        examples = ", ".join(str(n) for n in counts[:8])
+        return f"used when n is {examples}{', ...' if len(counts) > 8 else ''}"
 
     def _build_translation_obj_map(self, translations):
         """
@@ -291,7 +186,17 @@ class PoTranslationFormat(TranslationFormat):
     def format_input(self, msg_id_batch):
         batch_dict = {}
         for index, message_obj in msg_id_batch.items():
-            batch_dict[index] = message_obj.msgid
+            if message_obj.msgid_plural:
+                batch_dict[index] = {
+                    "singular": message_obj.msgid,
+                    "plural": message_obj.msgid_plural,
+                    "forms": {
+                        str(plural_index): self._plural_index_description(plural_index)
+                        for plural_index in range(self.nplurals)
+                    },
+                }
+            else:
+                batch_dict[index] = message_obj.msgid
         return json.dumps(batch_dict)
 
     def create_batches(self, input_data=None, batch_size=10):
@@ -315,11 +220,14 @@ class PoTranslationFormat(TranslationFormat):
     def parse_output(self, output_data):
         try:
             llm_output = json.loads(output_data)
-            filtered_output = {
-                msg_id: msg_str
-                for msg_id, msg_str in llm_output.items()
-                if self.is_valid_msgstr(self.translation_obj_map[msg_id].msgid, msg_str)
-            }
+            filtered_output = {}
+            for index, message_obj in self.translation_obj_map.items():
+                if message_obj.msgid_plural:
+                    msgstrs = self._parse_plural_msgstrs(index, message_obj, llm_output)
+                    if msgstrs is not None:
+                        filtered_output[index] = msgstrs
+                elif index in llm_output and self.is_valid_msgstr(message_obj.msgid, llm_output[index]):
+                    filtered_output[index] = llm_output[index]
             self.fill_translations(filtered_output)
             return filtered_output
         except json.JSONDecodeError:
@@ -329,6 +237,24 @@ class PoTranslationFormat(TranslationFormat):
             be translated in the next run of the script.
             """
             return {}
+
+    def _parse_plural_msgstrs(self, index, message_obj, llm_output):
+        """
+        Return ``{plural index: msgstr}`` for a plural entry, or None unless every
+        plural index is present and valid. An index used only for n == 1 is
+        checked against the singular msgid, every other one against the plural.
+        """
+        msgstrs = {}
+        for plural_index in range(self.nplurals):
+            msgstr = llm_output.get(f"{index}:{plural_index}")
+            if not isinstance(msgstr, str) or not msgstr:
+                return None
+            is_singular = self.counts_by_plural_index[plural_index] == [1]
+            source = message_obj.msgid if is_singular else message_obj.msgid_plural
+            if not self.is_valid_msgstr(source, msgstr):
+                return None
+            msgstrs[plural_index] = msgstr
+        return msgstrs
 
     @staticmethod
     def is_valid_msgstr(msgid, msgstr):
@@ -404,7 +330,12 @@ class PoTranslationFormat(TranslationFormat):
                 print_error(f"URLs mismatch. msgid: {msgid_urls}, msgstr: {msgstr_urls}")
                 return False
 
-        # 4. Encoding
+        # 4. Control characters
+        if has_control_chars(msgid, msgstr):
+            print_error(f"Control characters in msgstr: {CONTROL_CHARS_RE.findall(msgstr)}")
+            return False
+
+        # 5. Encoding
         try:
             msgstr.encode('utf-8')
         except UnicodeEncodeError as e:
@@ -415,7 +346,13 @@ class PoTranslationFormat(TranslationFormat):
     def fill_translations(self, llm_output):
         for index, msg_str in llm_output.items():
             msg_obj = self.translation_obj_map[index]
-            msg_obj.msgstr = msg_str
+            if msg_obj.msgid_plural:
+                # Replace every plural index, including ones already translated:
+                # a partly translated entry usually means the Plural-Forms header
+                # gained an index, which can change what the existing ones mean
+                msg_obj.msgstr_plural = msg_str
+            else:
+                msg_obj.msgstr = msg_str
             if msg_obj.fuzzy:
                 # no longer fuzzy, translated by AI
                 msg_obj.flags.remove('fuzzy')
@@ -430,21 +367,31 @@ class PoTranslationFormat(TranslationFormat):
         return "- Ensure that translations are gender neutral unless the original text is gender specific. " \
                "- Do not translate placeholders in curly braces, Python %-style strings, HTML tags, or URLs. " \
                "- Ensure translated text maintains leading/trailing newlines. " \
-               "- Every translated message should be valid `msgstr` and should adhere to all of its specs." \
-               "- Special characters like double quotes (\") and backslashes (\\) must be escaped"\
-               "a with backslash." \
-               "Input: JSON array of objects with unique hash and message of the following format: " \
-               "{\"0\":\"msgid\", \"1\":\"msgid\", ...}"
+               "- Every translated message should be valid `msgstr` and should adhere to all of its specs. " \
+               "- Special characters like double quotes (\") and backslashes (\\) must be escaped " \
+               "with a backslash. " \
+               "Input: a JSON object mapping a key to the message to translate, e.g. " \
+               "{\"0\": \"msgid\", \"1\": \"msgid\", ...}. " \
+               "Some values are plural messages instead of strings: " \
+               "{\"singular\": \"text for one\", \"plural\": \"text for many\", " \
+               "\"forms\": {\"0\": \"used when n is ...\", \"1\": \"used when n is ...\"}}. " \
+               "Translate a plural message once per entry in \"forms\", choosing the grammatical " \
+               "form the target language uses for those numbers. A form used only when n is 1 " \
+               "keeps the placeholders of the singular text; every other form keeps those of " \
+               "the plural text."
 
     def format_output_description(self):
         return "Response: JSON object on the following format: " \
-               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}"
+               "{\"0\":\"translated_message for key 0\", \"1\":\"translated_message for key 1\", ...}. " \
+               "For a plural message, return one key per form instead of the plain key: " \
+               "{\"<key>:0\": \"form 0 translation\", \"<key>:1\": \"form 1 translation\", ...}"
 
     def check_and_remove_errored_messages(self, lang_path):
         """
         Checks PO files using gettext's msgfmt and removes translations that are problematic.
         These problematic translations are those that cause errors during compilemessages or runtime.
         """
+        self._remove_control_char_translations()
         error_output = self._run_msgfmt(lang_path)
         if not error_output:
             print(f"No errors found in the PO file - {lang_path}")
@@ -452,6 +399,25 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = self._extract_errored_msgstr_ids(error_output)
         if line_num_error_map:
             self._remove_errored_translations(line_num_error_map)
+
+    def _remove_control_char_translations(self):
+        """
+        Clears msgstrs containing control characters that are not in the msgid,
+        in the hope that the LLM returns a clean translation in the next run.
+        """
+        all_translations = polib.pofile(self.file_path)
+        count = 0
+        for entry in all_translations:
+            if entry_has_control_chars(entry):
+                print(f"Removing translation with control characters for msgid: {entry.msgid}")
+                if entry.msgid_plural:
+                    entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
+                else:
+                    entry.msgstr = ""
+                count += 1
+        if count > 0:
+            all_translations.save()
+            print(f"Removed {count} translations with control characters")
 
     def _run_msgfmt(self, lang_path):
         """
@@ -476,22 +442,17 @@ class PoTranslationFormat(TranslationFormat):
         line_num_error_map = {}
 
         for line in error_output.splitlines():
-            # Error format: <filename>:<line_number>:<error_message>
-            # Warning format: <filename>:<line_number>: warning<warning_message>
-            error_parts = line.split(':')
-            if len(error_parts) == 3 or len(error_parts) == 4:
-                if error_parts[2].strip() == 'warning':
-                    # Ignore warnings
-                    continue
-                # Some msgfmt lines lack a line number (e.g.
-                # "<file>: warning: Charset missing in header."). These don't map
-                # to a msgstr, so skip anything without a numeric line number.
-                # We expect these errors to be caught by msgfmt itself, not us.
-                try:
-                    line_num = int(error_parts[1].strip())
-                except ValueError:
-                    continue
-                line_num_error_map[line_num] = ": ".join(error_parts[2:]).strip()
+            # Only trust lines that point at a PO file line. Anything else, like
+            # lines without a line number ("<file>: warning: Charset missing in
+            # header.") or stray output from native libraries in the subprocess
+            # ("…/driver.rs:196:23: …"), must not map to a msgstr.
+            match = MSGFMT_ERROR_RE.match(line)
+            if not match:
+                continue
+            line_num, message = match.groups()
+            if message.startswith('warning'):
+                continue
+            line_num_error_map[int(line_num)] = message.strip()
         print(f"Line num error map: {line_num_error_map}")
         return line_num_error_map
 
@@ -534,11 +495,11 @@ class PoTranslationFormat(TranslationFormat):
                     print("Removing translation")
                     print(f"Error: {line_num_error_map[msg_str_lin_num]}")
                     print(f"msgid: {entry.msgid} at line {current_msgid_line_num}")
-                    print(f"msgstr: {entry.msgstr}")
+                    print(f"msgstr: {entry.msgstr_plural if entry.msgid_plural else entry.msgstr}")
                     print("--------------------------------")
                     if entry.msgid_plural:
                         # Plural entries store their translations in msgstr_plural,
-                        # not msgstr, so blank every plural form to actually clear it.
+                        # not msgstr, so blank every msgstr[N] to actually clear it.
                         entry.msgstr_plural = {k: "" for k in entry.msgstr_plural}
                     else:
                         entry.msgstr = ""

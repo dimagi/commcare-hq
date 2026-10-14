@@ -91,7 +91,7 @@ Request & Response Details
    * - Name
      - Description
      - Example
-   * - ``user_id``
+   * - ``id``
      - User UUID
      - ``3c5a623af057e23a32ae4000cf291339``
 

@@ -23,6 +23,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr "A pausa automática será ignorada indefinidamente"
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr "A pausa automática será retomada em %(date)s"
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Meu projeto foi encerrado"
@@ -61,6 +69,15 @@ msgstr "Preciso de recursos adicionais/personalizados"
 #: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
 msgid "Other"
 msgstr "Outro"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+msgid "Generate Invoice"
+msgstr "Gerar Fatura"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Agendar Fatura"
 
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
@@ -2682,6 +2699,30 @@ msgstr "Adicionar Tudo"
 msgid "Remove All"
 msgstr "Remover Tudo"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "O CommCare Companion não está incluído na sua assinatura atual."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Você atingiu o limite de chats deste mês. Sua cota será renovada no dia 1º "
+"do próximo mês (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "Você usou %(percent)s% das suas mensagens de chat este mês."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"Não foi possível verificar sua cota de chats. Por favor, feche e reabra o "
+"chat para tentar novamente."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "Sua senha é muito fraca! Tente adicionar números ou símbolos."
@@ -3011,30 +3052,30 @@ msgstr "Todas as Ações"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s Convite Aceito"
+msgstr[1] "%(count)s Convites Aceitos"
+msgstr[2] "%(count)s Convites Aceitos"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s Convite Pendente"
+msgstr[1] "%(count)s Convites Pendentes"
+msgstr[2] "%(count)s Convites Pendentes"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s Convite Rejeitado"
+msgstr[1] "%(count)s Convites Rejeitados"
+msgstr[2] "%(count)s Convites Rejeitados"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s Espaço de Projeto Participando"
+msgstr[1] "%(count)s Espaços de Projeto Participando"
+msgstr[2] "%(count)s Espaços de Projeto Participando"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"
@@ -3967,7 +4008,6 @@ msgid "Allow locking and unlocking questions in forms."
 msgstr "Permitir bloquear e desbloquear perguntas em formulários."
 
 #: corehq/apps/users/static/users/js/edit_role.js
-#| msgid "Allow locking and unlocking questions in forms."
 msgid "Allow creating and modifying public webforms."
 msgstr "Permitir criar e modificar formulários públicos."
 

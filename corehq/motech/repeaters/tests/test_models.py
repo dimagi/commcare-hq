@@ -26,6 +26,7 @@ from ..const import (
     MAX_BACKOFF_ATTEMPTS,
     RECORD_QUEUED_STATES,
     State,
+    states_for_key,
 )
 from ..models import (
     HTTP_STATUS_BACK_OFF,
@@ -810,8 +811,17 @@ class TestRepeatRecordManager(RepeaterTestCase):
     def test_get_repeat_record_ids_for_state(self):
         cancelled = self.new_record(state=State.Cancelled, next_check=None)
         self.new_record(state=State.Success, next_check=None)
-        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, state=State.Cancelled)
+        ids = RepeatRecord.objects.get_repeat_record_ids(DOMAIN, states=[State.Cancelled])
         assert Counter([cancelled.id]) == Counter(ids)
+
+    def test_get_repeat_record_ids_for_state_group(self):
+        rejected = self.new_record(state=State.PayloadRejected, next_check=None)
+        error = self.new_record(state=State.ErrorGeneratingPayload, next_check=None)
+        self.new_record(state=State.Cancelled, next_check=None)
+        ids = RepeatRecord.objects.get_repeat_record_ids(
+            DOMAIN, states=states_for_key('PAYLOADERROR')
+        )
+        assert Counter([rejected.id, error.id]) == Counter(ids)
 
     def test_get_repeat_record_ids_for_payload(self):
         actual = self.new_record(payload_id="waldo")
@@ -829,7 +839,7 @@ class TestRepeatRecordManager(RepeaterTestCase):
         self.new_record_for_repeater(non_default_repeater, state=State.Fail, payload_id="not-waldo")
         self.new_record_for_repeater(self.repeater, state=State.Fail, payload_id="waldo")
         ids = RepeatRecord.objects.get_repeat_record_ids(
-            DOMAIN, repeater_id=non_default_repeater.id, state=State.Fail, payload_id="waldo"
+            DOMAIN, repeater_id=non_default_repeater.id, states=[State.Fail], payload_id="waldo"
         )
         assert Counter([actual.id]) == Counter(ids)
 
@@ -966,6 +976,25 @@ class TestRepeatRecordMethods(TestCase):
         with travel(now, tick=False):
             record.postpone_by(3 * hour)
         assert record.next_check == now + 3 * hour
+
+    def test_fire_checks_domain_matches_repeater(self):
+        record = RepeatRecord.objects.create(
+            domain="other-domain",
+            repeater_id=self.repeater.id.hex,
+            payload_id="abc123",
+            registered_at=datetime.utcnow(),
+        )
+        with (
+            patch.object(Repeater, "fire_for_record") as fire_for_record,
+            patch("corehq.motech.repeaters.models.notify_exception") as notify,
+        ):
+            state = record.fire()
+        fire_for_record.assert_not_called()
+        notify.assert_called_once()
+        assert record.next_check is None
+        (attempt,) = record.attempts
+        assert attempt.state == state == State.ErrorGeneratingPayload
+        assert "doesn't match the domain of its repeater" in attempt.message
 
 
 class TestRepeatRecordMethodsNoDB(SimpleTestCase):

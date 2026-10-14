@@ -11,6 +11,7 @@ from corehq.apps.hqwebapp.tables.elasticsearch.records import (
 )
 from corehq.apps.hqwebapp.tables.elasticsearch.tables import ElasticTable
 from corehq.apps.hqwebapp.tables.htmx import BaseHtmxTable
+from corehq.apps.integration.kyc.models import KycVerificationStatus
 from corehq.apps.integration.payments.const import PaymentStatusErrorCode, PaymentStatus
 
 
@@ -113,6 +114,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
             if not record.record.get(field):
                 default_attrs['disabled'] = 'disabled'
                 break
+        else:
+            if self._get_kyc_status(record) != KycVerificationStatus.PASSED:
+                default_attrs['disabled'] = 'disabled'
         return mark_safe('<input %s/>' % flatatt(default_attrs))
 
     def render_payment_status(self, record, value):
@@ -144,8 +148,9 @@ class PaymentsVerifyTable(BaseHtmxTable, ElasticTable):
 
         return render_to_string('payments/partials/payments_status.html', context)
 
-    def render_kyc_status(self, record, value):
+    def _get_kyc_status(self, record):
         user_or_case_id = record.record.get('user_or_case_id')
-        if user_or_case_id and user_or_case_id in self.context['user_or_cases_verification_statuses']:
-            return self.context['user_or_cases_verification_statuses'][user_or_case_id]
-        return _("Unavailable")
+        return self.context['user_or_cases_verification_statuses'].get(user_or_case_id)
+
+    def render_kyc_status(self, record, value):
+        return self._get_kyc_status(record) or _("Unavailable")

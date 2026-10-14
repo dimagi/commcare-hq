@@ -1,5 +1,6 @@
 import logging
-from collections import Counter, defaultdict
+from collections import defaultdict
+
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import BytesIO
@@ -8,7 +9,6 @@ from django.db import InternalError, models, transaction
 from django.db.models import Q
 
 from jsonfield.fields import JSONField
-from lxml import etree
 from memoized import memoized
 
 from couchforms import const
@@ -34,9 +34,11 @@ from corehq.sql_db.util import (
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
+from corehq.util.xml_utils import safe_fromstring
 
 from ..exceptions import (
     AttachmentNotFound,
+    CannotModifyDeletedForm,
     MissingFormXml,
     XFormNotFound,
     XFormSaveError,
@@ -194,6 +196,18 @@ class XFormInstanceManager(RequireDBManager):
                 .values_list('form_id', flat=True)
             )
         return result
+
+    def get_deleted_form_ids(self, domain, form_ids):
+        """Return the subset of ``form_ids`` that are soft deleted in ``domain``"""
+        deleted_ids = []
+        for db_name, db_form_ids in split_list_by_db_partition(form_ids):
+            deleted_ids.extend(
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=db_form_ids,
+                        deleted_on__isnull=False)
+                .values_list('form_id', flat=True)
+            )
+        return deleted_ids
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -380,15 +394,23 @@ class XFormInstanceManager(RequireDBManager):
         :param commit: defaults to False. If True, will delete expired forms
         :return: dictionary of count of deleted forms
         """
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
+
         expiration_date = get_cutoff_date_for_data_deletion()
-        total_count = Counter({})
+        total_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=expiration_date)
+            queryset = (
+                self.using(db_name)
+                .filter(deleted_on__lt=expiration_date)
+                .values_list('form_id', flat=True)
+            )
             if commit:
-                deleted_counts = queryset.delete()[1]
+                deleted_count = self.hard_delete_forms(
+                    ALL_DOMAINS_SENTINEL, list(queryset)
+                )
             else:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            total_count += Counter(deleted_counts)
+                deleted_count = queryset.count()
+            total_count += deleted_count
         return total_count
 
     def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
@@ -401,25 +423,25 @@ class XFormInstanceManager(RequireDBManager):
             The user location mapping case and domain deletion are the only valid
             use cases for not leaving tombstones.
         """
-        from corehq.apps.cleanup.tasks import SENTINEL_DOMAIN
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
         assert isinstance(form_ids, list)
 
-        domain_filter = Q() if domain == SENTINEL_DOMAIN else Q(domain=domain)
+        domain_filter = Q() if domain == ALL_DOMAINS_SENTINEL else Q(domain=domain)
 
         deleted_count = 0
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            queryset = (
-                self.using(db_name)
-                .filter(domain_filter, form_id__in=split_form_ids)
-                .values_list('form_id', 'deleted_on', 'domain')
-            )
             shard_count = 0
-            while results := queryset[:BATCH_SIZE]:
+            for chunked_form_ids in chunked(split_form_ids, BATCH_SIZE):
+                chunked_queryset = (
+                    self.using(db_name)
+                    .filter(domain_filter, form_id__in=chunked_form_ids)
+                    .values_list('form_id', 'deleted_on', 'domain')
+                )
                 hard_deletion_date = datetime.now(tz=UTC)
                 form_ids_to_delete = []
                 form_ids_by_domain = defaultdict(list)
                 tombstones = []
-                for form_id, soft_deleted_on, form_domain in results:
+                for form_id, soft_deleted_on, form_domain in chunked_queryset:
                     form_ids_by_domain[form_domain].append(form_id)
                     form_ids_to_delete.append(form_id)
                     if leave_tombstones:
@@ -437,7 +459,7 @@ class XFormInstanceManager(RequireDBManager):
                     Tombstone.objects.using(db_name).bulk_create(
                         tombstones, ignore_conflicts=True
                     )
-                    _, batch_count = (
+                    _, chunk_count = (
                         self.using(db_name)
                         .filter(domain_filter, form_id__in=form_ids_to_delete)
                         .delete()
@@ -451,7 +473,7 @@ class XFormInstanceManager(RequireDBManager):
                     for _domain, form_ids_in_domain in form_ids_by_domain.items():
                         self.publish_deleted_forms(_domain, form_ids_in_domain)
 
-                shard_count += batch_count.get(self.model._meta.label, 0)
+                shard_count += chunk_count.get(self.model._meta.label, 0)
             deleted_count += shard_count
         return deleted_count
 
@@ -730,7 +752,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         xml = self.get_xml()
         if not xml:
             return None
-        return etree.fromstring(xml)
+        return safe_fromstring(xml)
 
     def get_data(self, path):
         """
@@ -754,12 +776,21 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if not self.is_archived:
             type(self).objects.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
+
+    def _assert_not_deleted(self):
+        """Without this, unarchiving a soft deleted form would
+        rebuild its cases from a form no longer visible.
+        """
+        if self.is_deleted:
+            raise CannotModifyDeletedForm(self.form_id)
 
     def __str__(self):
         return (

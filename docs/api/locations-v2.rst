@@ -1,7 +1,7 @@
 Location API v2
 ===============
 
-V2 of the Location API updates the serilization used in v1 and adds the ability
+V2 of the Location API updates the serialization used in v1 and adds the ability
 to create and update locations, one at a time or in bulk.
 
 Data format
@@ -50,8 +50,8 @@ Locations can be filtered by the following attributes as request parameters:
      - Description
      - Example
    * - ``format``
-     - Data format returned, defaults to xml
-     - ```?format=json``
+     - Data format returned, defaults to json
+     - ``?format=json``
    * - ``site_code``
      - Site code for the location
      - ``?site_code=boston``
@@ -105,7 +105,7 @@ Location Details
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
+    GET https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]/
 
 
 Create Location (Individual)
@@ -170,7 +170,7 @@ Allows editing an individual location.
 
 .. code-block:: text
 
-    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]
+    PUT https://www.commcarehq.org/a/[domain]/api/location/v2/[location_id]/
 
 **Editable Fields**
 

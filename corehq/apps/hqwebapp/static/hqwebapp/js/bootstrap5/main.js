@@ -1,7 +1,6 @@
 import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
-import modernizr from "hqwebapp/js/lib/modernizr";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import alertUser from "hqwebapp/js/bootstrap5/alert_user";
 import googleAnalytics from "analytix/js/google";
@@ -412,7 +411,12 @@ $(function () {
         // We don't explicitly rely on SVG SMIL animation,
         // but it's a decent test for avoiding legacy IE.
         // TODO: Find more granular tests for what the website requires
-        return !modernizr.smil;
+        var supportsSmil = !!document.createElementNS && /SVGAnimate/.test(
+            Object.prototype.toString.call(
+                document.createElementNS("http://www.w3.org/2000/svg", "animate"),
+            ),
+        );
+        return !supportsSmil;
     }
 
     var $unsupportedBrowser = $("#unsupported-browser");

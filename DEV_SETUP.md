@@ -299,7 +299,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka garage formplayer
     ```
 
    **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
@@ -1038,6 +1038,18 @@ export PATH="$(yarn global bin):$PATH"
 
 More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
+`.yarnrc` sets `ignore-scripts true` repo-wide as a supply-chain control, so no
+package's install hooks run — including puppeteer's, which is what downloads the
+Chrome build the tests drive. You'll need to install that browser explicitly,
+once:
+
+```sh
+npx puppeteer browsers install chrome
+```
+
+This is only needed to run the tests locally; CI uses the Chrome installed in
+the docker image.
+
 In order for the tests to run the **development server needs to be running on port 8000**.
 
 
@@ -1096,3 +1108,69 @@ This script goes through the steps to prepare a report for test coverage of
 JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
 coverage will not be shown. A coverage summary is output to the terminal and a
 detailed html report is generated at ``coverage-js/index.html``.
+
+## Checking an API against its OpenAPI spec
+
+[Schemathesis](https://schemathesis.readthedocs.io/) generates requests from an
+OpenAPI spec and reports where the responses disagree with it.
+
+Run it with `uvx`, which fetches it into a cache on first use and leaves the
+project virtualenv alone:
+
+```sh
+uvx schemathesis@4.27.3 --version
+```
+
+
+
+To see what it does, run it against Schemathesis' own demo service, whose
+endpoints are named after the defects they contain. The run is meant to report
+failures:
+
+```sh
+uvx schemathesis@4.27.3 --config-file /dev/null \
+    run https://example.schemathesis.io/openapi.json \
+    --include-path-regex '/response-conformance/' -n 2
+```
+
+`--config-file /dev/null` keeps the config below out of this run. Without it,
+once `schemathesis.toml` exists the demo run picks it up and sends the requests
+to `base-url`, your local dev server, instead of the demo service.
+
+To run it against a commcare-hq spec, give it a file path or the URL that serves one.
+Copy the example config first and add a valid API key and project slug:
+
+```sh
+cp schemathesis.toml.example schemathesis.toml
+export CCHQ_API_KEY="me@example.com:<key>"
+export CCHQ_DOMAIN=my-project
+uvx schemathesis@4.27.3 run <spec.json> -m positive
+```
+
+Schemathesis picks up `schemathesis.toml` from the directory you run it in or
+any parent, stopping at the repository root, so run it from the root.
+
+`-m positive` limits the run to data the spec calls valid. Without it
+Schemathesis also sends data the spec calls invalid, and because the current
+specs document a 200 and nothing else, a correct 400 for an invalid request is
+reported as an undocumented status. Drop the flag once the specs document the
+400, 401, 403 and 404 each resource returns. Most API bugs hide in the invalid
+requests, so this is the restriction worth lifting first.
+
+
+Generated requests are real requests, sent to the project space you name in
+`CCHQ_DOMAIN`.
+
+The example config keeps the run read-only with these settings:
+
+- The `[[operations]]` block with `enabled = false` deselects POST, PUT, PATCH
+  and DELETE, so none of those operations is ever tested.
+- `unexpected-methods = []` under `[phases.coverage]` turns off the coverage
+  probe, which sends each path the methods it does not document to see whether
+  the API answers instead of refusing. That probe only runs on negative data,
+  so `-m positive` suppresses it as well, and the empty list is the backstop
+  for a run that drops the flag.
+
+Remove the `[[operations]]` block and the run writes to the project space, with
+or without `-m positive`. Remove `unexpected-methods = []` and it writes as soon
+as `-m positive` is missing.

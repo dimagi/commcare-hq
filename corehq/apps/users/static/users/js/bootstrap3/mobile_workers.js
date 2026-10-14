@@ -402,13 +402,14 @@ var newUserCreationModel = function (options) {
         var numbers = '0123456789';
 
         var all = specials + lowercase + uppercase + numbers;
+        var minimumPasswordLength = initialPageData.get('minimumPasswordLength');
 
         var password = '';
         password += pick(specials, 1);
         password += pick(lowercase, 1);
         password += pick(uppercase, 1);
         password += pick(numbers, 1);
-        password += pick(all, 6, 10);
+        password += pick(all, minimumPasswordLength - password.length);
         return shuffle(password);
     };
 

@@ -1011,6 +1011,22 @@ CASE_SEARCH_ENDPOINTS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+
+def _sync_project_db_schema(domain, is_enabled):
+    from corehq.apps.project_db.tasks import schedule_project_db_sync
+    if is_enabled:
+        schedule_project_db_sync(domain)
+
+
+PROJECT_DB = StaticToggle(
+    'project_db',
+    'ProjectDB: Auto-managed SQL database of project case data',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description="Note that this is in testing and will not work without a dev helping.",
+    save_fn=_sync_project_db_schema,
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
@@ -1051,18 +1067,6 @@ USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-ENUM_CALC_VARIABLES = StaticToggle(
-    'enum_calc_variables',
-    'Switch Enum Fields to Variables',
-    TAG_INTERNAL,
-    description="""
-    Switch enum field types to reference the calculated_property variable
-    rather than repeat the expression for each mapping.  This is a performance
-    optimization for when the expression is expensive to compute.
-    """,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 HIDE_SYNC_BUTTON = StaticToggle(
     "hide_sync_button",
     "USH: Hide Sync Button in Web Apps",
@@ -1092,14 +1096,6 @@ def _ensure_search_index_is_enabled(domain, enabled):
     if enabled and not has_case_search_cases:
         reindex_case_search_for_domain.delay(domain)
 
-
-FORMBUILDER_SAVE_TO_CASE = StaticToggle(
-    'saas_formbuilder_save_to_case',
-    'Form Builder - Save Questions to Case Properties',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    description='Allows users to save questions to case properties within the Form Builder'
-)
 
 ACTION_TIMES_API = StaticToggle(
     'action_times_api',
@@ -2132,6 +2128,14 @@ ENTERPRISE_ADMIN_SELF_SERVICE = FeatureRelease(
     ),
 )
 
+FACE_CAPTURE = FeatureRelease(
+    'face_capture',
+    'Form Builder includes a "Face Capture" question type',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    owner='Norman Hooper',
+)
+
 APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
@@ -2190,7 +2194,21 @@ COMMCARE_CONNECT = StaticToggle(
     'Enable CommCare Connect features',
     tag=TAG_CONNECT_DIVISION,
     namespaces=[NAMESPACE_DOMAIN],
-    description='More details to come',
+    description='Enables CommCare Connect features, along with the other '
+                'feature flags that Connect projects require.',
+    parent_toggles=[SESSION_ENDPOINTS, CUSTOM_PROPERTIES],
+)
+
+OCS_CONNECT_INTEGRATION = StaticToggle(
+    'ocs_connect_integration',
+    'Enable feature flags required for Open Chat Studio (OCS) and Connect integration',
+    tag=TAG_CONNECT_DIVISION,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='A bundle flag that does not add any functionality itself. '
+                'Enabling it through this page also enables the feature flags '
+                'listed below. Disabling it does not disable them, they'
+                'will need to be disabled individually',
+    parent_toggles=[UCR_EXPRESSION_REGISTRY, EXPRESSION_REPEATER],
 )
 
 SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER_TOGGLE = StaticToggle(
@@ -2523,10 +2541,26 @@ ACTIVATE_DATADOG_APM_TRACES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-BULK_FORM_DELETION = FeatureRelease(
-    slug='bulk_form_deletion',
-    label='Allows deleting archived forms in bulk via the API.',
+BULK_FORM_ACTIONS_API = FeatureRelease(
+    slug='bulk_form_actions_api',
+    label='Archive, unarchive, and delete forms in bulk via the API.',
     tag=TAG_RELEASE,
     namespaces=[NAMESPACE_DOMAIN],
     owner="Graham Herceg",
+)
+
+CHUNKED_LIVEQUERY = FeatureRelease(
+    slug='chunked_livequery',
+    label='LiveQuery variant: fetch case indexes in chunks rather than all at once. More but smaller queries.',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Daniel Miller',
+)
+
+AI_APP_TRANSLATION = FeatureRelease(
+    slug='ai_app_translation',
+    label='Translate app content with AI from the Languages page',
+    tag=TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Amit Phulera',
 )

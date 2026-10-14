@@ -13,8 +13,8 @@
 +{% js_entry 'app_manager/js/modules/bootstrap5/module_view_report' %}
  
  {% block form-view %}
-   {% initial_page_data 'lang' lang %}
-@@ -21,12 +21,12 @@
+   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+@@ -20,12 +20,12 @@
    {% registerurl "edit_report_module" domain app.id module.unique_id %}
    {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
  

@@ -16,7 +16,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.generic import View
 
-from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -38,7 +37,7 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_INFO,
     SharingOption,
 )
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
 from corehq.apps.export.exceptions import (
     BadExportConfiguration,
     ExportAppException,
@@ -541,10 +540,7 @@ class DeleteNewCustomExportView(BaseExportView):
     @property
     @memoized
     def export_instance(self):
-        try:
-            return self.export_instance_cls.get(self.export_id)
-        except ResourceNotFound:
-            raise Http404()
+        return get_export_instance_or_404(self.domain, self.export_id)
 
     def commit(self, request):
         count = request.POST.get("count")
@@ -552,9 +548,13 @@ class DeleteNewCustomExportView(BaseExportView):
             deletelist = json.loads(request.POST.get("deleteList"))
             self.export_type = self.kwargs.get('export_type')
             export = self.export_instance
+            # 404 if any export is not in this domain before deleting
+            bulk_exports = [
+                get_export_instance_or_404(self.domain, item["id"])
+                for item in deletelist
+            ]
             export.delete()
-            for item in deletelist:
-                bulkexport = self.export_instance_cls.get(item["id"])
+            for bulkexport in bulk_exports:
                 bulkexport.delete()
 
             if self.export_instance.is_odata_config or self.export_instance.export_format == "html":
@@ -616,19 +616,15 @@ class CopyExportView(View):
             return super(CopyExportView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, domain, export_id, *args, **kwargs):
-        try:
-            export = get_properly_wrapped_export_instance(export_id)
-        except ResourceNotFound:
-            messages.error(request, _('You can only copy new exports.'))
-        else:
-            new_export = export.copy_export()
-            if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
-                new_export.owner_id = request.couch_user.user_id
-                new_export.sharing = SharingOption.PRIVATE
-            new_export.save()
-            messages.success(
-                request,
-                format_html(_("Export <strong>{}</strong> created."), new_export.name)
-            )
+        export = get_export_instance_or_404(domain, export_id)
+        new_export = export.copy_export()
+        if domain_has_privilege(domain, privileges.EXPORT_OWNERSHIP):
+            new_export.owner_id = request.couch_user.user_id
+            new_export.sharing = SharingOption.PRIVATE
+        new_export.save()
+        messages.success(
+            request,
+            format_html(_("Export <strong>{}</strong> created."), new_export.name)
+        )
         redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(redirect)

@@ -37,6 +37,7 @@
             data-bs-placement="right"
             data-bs-container="body"></i>
         <span
+          data-ocs-module-name
           {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
           {% if module.case_type %}
             title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"

@@ -143,6 +143,9 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
+# Shared password for all ProjectDB projectdb_<domain> roles - put into localsettings.py
+PROJECTDB_USERS_PASSWORD = 'you should really change this'
+
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
@@ -188,7 +191,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 MINIMUM_ZXCVBN_SCORE = 2
-MINIMUM_PASSWORD_LENGTH = 8
+MINIMUM_PASSWORD_LENGTH = 14
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 FORMS_URLFIELD_ASSUME_HTTPS = True
@@ -247,6 +250,9 @@ SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
+TURNSTILE_SECRET_KEY = ''
+TURNSTILE_SITE_KEY = ''
+
 MAXMIND_ACCOUNT_ID = ''
 MAXMIND_LICENSE_KEY = ''
 
@@ -290,6 +296,8 @@ HQ_APPS = (
     'corehq.apps.products',
     'corehq.apps.programs',
     'corehq.apps.project_db',
+    'corehq.apps.public_webforms',
+    'corehq.apps.short_links',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -787,6 +795,7 @@ AUDIT_ALL_VIEWS = False
 AUDIT_VIEWS = []
 AUDIT_MODULES = []
 AUDIT_ADMIN_VIEWS = False
+AUDITCARE_RETENTION_YEARS = 6
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -811,6 +820,13 @@ MAPBOX_ACCESS_TOKEN = ''
 USERFLOW_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
+
+# API keys for AI app translations, per provider. Deliberately separate
+# from OPENAI_API_KEY, which is only used by the PO-file translation
+# pipeline in GitHub Actions.
+AI_TRANSLATION_API_KEYS = {
+    'openai': '',
+}
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -889,12 +905,7 @@ OAUTH2_PROVIDER = {
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
-    'SCOPES': {
-        'access_apis': 'Access API data on all your CommCare projects',
-        'reports:view': 'Allow users to view and download all report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints',
-        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
-    },
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 
@@ -967,7 +978,6 @@ STRIPE_PRIVATE_KEY = ''
 REPORTING_DATABASES = {
     'default': 'default',
     'ucr': 'default',
-    'project_db': 'default',
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
@@ -1001,6 +1011,28 @@ METRICS_PROVIDERS = []
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
+
+OFFBOARDING_PLATFORMS = {
+    'datadog': {
+        'api_key': None,
+        'app_key': None,
+        'site': 'datadoghq.com',
+    },
+    'sentry': {
+        'auth_token': None,
+        'api_url': 'https://sentry.io/api/0/',
+        'org_slug': None,
+    },
+    'sumologic': {
+        'access_id': None,
+        'access_key': None,
+        'api_url': 'https://api.us2.sumologic.com/api/',
+    },
+    'hubspot': {
+        'access_token': None,
+    },
+}
+OFFBOARDING_PROTECTED_EMAILS = []
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
@@ -1181,6 +1213,17 @@ DATA_RETENTION_WINDOW = 90  # days
 # ID of the chatbot in Open Chat Studio
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
+OCS_API_KEY = None
+OCS_OAUTH_CLIENT_ID = None
+OCS_OAUTH_CLIENT_SECRET = None
+
+# Platform-wide defaults for AI app translations, used where no
+# AITranslationConfig row overrides them. Override in localsettings.py.
+AI_TRANSLATION_DEFAULTS = {
+    'provider': 'openai',
+    'model': 'gpt-4.1',
+    'monthly_word_limit': 1_000_000,
+}
 
 #  Credentials for Orange Cameroon API. Override in localsettings.py
 ORANGE_CAMEROON_API_CREDS = {
@@ -1303,6 +1346,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
+                'corehq.util.context_processors.lockout_banner',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.commcare_hq_names',

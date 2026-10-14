@@ -7,7 +7,6 @@ from django.conf import settings
 from django.template import Template, Context
 
 from django.test import TestCase
-import lxml
 from django.core.files.uploadedfile import UploadedFile
 
 from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
@@ -17,6 +16,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.util.xml_utils import safe_fromstring
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
@@ -216,7 +216,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
 
     def _validateOTARestore(self, domain, case_id, restore_attachments):
         case_xml = CommCareCase.objects.get_case(case_id, domain).to_xml(V2)
-        root_node = lxml.etree.fromstring(case_xml)
+        root_node = safe_fromstring(case_xml)
         attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
         self.assertEqual(len(restore_attachments), len(attaches))
 

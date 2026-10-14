@@ -10,13 +10,11 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.forms import modelform_factory
 from django.http import (
     Http404,
     HttpResponse,
@@ -41,14 +39,13 @@ from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
 import pytz
 from memoized import memoized
-from oauth2_provider.models import get_application_model
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
 from two_factor.views import LoginView
@@ -70,6 +67,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
+    login_required,
     require_superuser,
     track_domain_request,
     two_factor_exempt,
@@ -88,10 +86,17 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
+from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
+from corehq.apps.hqwebapp.chat_usage import (
+    fetch_chat_usage_from_ocs,
+    get_cached_chat_usage,
+    increment_chat_usage,
+)
 from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from corehq.apps.hqwebapp.exceptions import ChatUsageUnavailable
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
@@ -99,7 +104,7 @@ from corehq.apps.hqwebapp.forms import (
     HQBackupTokenForm,
 )
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
-from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import (
     get_bootstrap_version,
@@ -206,6 +211,28 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
+@login_required
+@require_http_methods(['GET', 'POST'])
+def chat_quota(request):
+    couch_user = getattr(request, 'couch_user')
+
+    limit = get_chatbot_message_quota(couch_user)
+    if limit == UNLIMITED or limit == 0:
+        return JsonResponse({'limit': limit, 'used': None})
+
+    refresh = request.GET.get('refresh', 'false') == 'true'
+    try:
+        if request.method == 'POST':
+            used = increment_chat_usage(couch_user.user_id)
+        elif refresh:
+            used = fetch_chat_usage_from_ocs(couch_user.user_id)
+        else:
+            used = get_cached_chat_usage(couch_user.user_id)
+    except ChatUsageUnavailable:
+        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    return JsonResponse({'limit': limit, 'used': used})
+
+
 @require_GET
 @location_safe
 @always_allow_project_access
@@ -284,7 +311,7 @@ def _two_factor_needed(domain_name, request):
         )
 
 
-@login_required()
+@login_required
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
     if req.method == 'POST':
@@ -1487,65 +1514,6 @@ def log_email_event(request, secret, domain=None):
     handle_email_sns_event(message)
 
     return HttpResponse()
-
-
-@method_decorator(require_superuser, name="dispatch")
-class OauthApplicationRegistration(BasePageView):
-    urlname = 'oauth_application_registration'
-    page_title = "Oauth Application Registration"
-    template_name = "hqwebapp/bootstrap3/oauth_application_registration_form.html"
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname)
-
-    @property
-    def base_application_form(self):
-        return modelform_factory(
-            get_application_model(),
-            fields=(
-                "name",
-                "client_id",
-                "client_secret",
-                "client_type",
-                "authorization_grant_type",
-                "redirect_uris",
-            ),
-        )
-
-    @property
-    def hq_application_form(self):
-        return modelform_factory(
-            HQOauthApplication,
-            fields=(
-                "pkce_required",
-            ),
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if 'forms' not in kwargs:
-            context['forms'] = [self.base_application_form(), self.hq_application_form()]
-        return context
-
-    def post(self, request, *args, **kwargs):
-
-        base_application_form = self.base_application_form(data=self.request.POST)
-        hq_application_form = self.hq_application_form(data=self.request.POST)
-
-        if base_application_form.is_valid() and hq_application_form.is_valid():
-            base_application_form.instance.user = self.request.user
-            base_application = base_application_form.save()
-            HQOauthApplication.objects.create(
-                application=base_application,
-                **hq_application_form.cleaned_data,
-            )
-        else:
-            return self.render_to_response(self.get_context_data(
-                forms=[base_application_form, hq_application_form]
-            ))
-
-        return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
 
 
 @csrf_exempt

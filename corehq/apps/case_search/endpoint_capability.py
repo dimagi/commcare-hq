@@ -12,13 +12,17 @@ from corehq.apps.data_dictionary.models import (
     CaseProperty,
     CaseType,
 )
+from corehq.apps.es.queries import DISTANCE_UNITS
 
 FIELD_TYPE_TEXT = 'text'
 FIELD_TYPE_NUMBER = 'number'
 FIELD_TYPE_DATE = 'date'
 FIELD_TYPE_DATETIME = 'datetime'
-FIELD_TYPE_SELECT = 'select'
 FIELD_TYPE_GEOPOINT = 'geopoint'
+
+# Parameter-only
+FIELD_TYPE_SELECT = 'select'
+FIELD_TYPE_DATERANGE = 'daterange'
 
 # DataType -> field type mapping
 _DATA_TYPE_MAP = {
@@ -28,7 +32,7 @@ _DATA_TYPE_MAP = {
     CaseProperty.DataType.UNDEFINED: FIELD_TYPE_TEXT,
     CaseProperty.DataType.DATE: FIELD_TYPE_DATE,
     CaseProperty.DataType.NUMBER: FIELD_TYPE_NUMBER,
-    CaseProperty.DataType.SELECT: FIELD_TYPE_SELECT,
+    CaseProperty.DataType.SELECT: FIELD_TYPE_TEXT,
     CaseProperty.DataType.GPS: FIELD_TYPE_GEOPOINT,
 }
 
@@ -46,6 +50,8 @@ _OPERATOR_BY_TYPE = {
         ('equals', _('is exactly')),
         ('not_equals', _('is not')),
         ('starts_with', _('starts with')),
+        ('fuzzy', _('is like')),
+        ('phonetic', _('sounds like')),
     ],
     FIELD_TYPE_NUMBER: [
         ('equals', _('equals')),
@@ -59,16 +65,16 @@ _OPERATOR_BY_TYPE = {
         ('equals', _('on')),
         ('lt', _('before')),
         ('gt', _('after')),
+        ('lte', _('on or before')),
+        ('gte', _('on or after')),
+        ('fuzzy_date', _('is approximately')),
     ],
     FIELD_TYPE_DATETIME: [
         ('equals', _('on')),
         ('lt', _('before')),
         ('gt', _('after')),
-    ],
-    FIELD_TYPE_SELECT: [
-        ('selected_any', _('is any')),
-        ('selected_all', _('is all')),
-        ('is_empty', _('is empty')),
+        ('lte', _('on or before')),
+        ('gte', _('on or after')),
     ],
     FIELD_TYPE_GEOPOINT: [
         ('within_distance', _('within distance')),
@@ -76,6 +82,10 @@ _OPERATOR_BY_TYPE = {
 }
 
 FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
+
+# Types a parameter may declare. A superset of the field types, since a
+# parameter need not correspond to a case property.
+PARAMETER_TYPES = (*FIELD_TYPES, FIELD_TYPE_SELECT, FIELD_TYPE_DATERANGE)
 
 # Sentinel input-slot type: the slot has no fixed type of its own and instead
 # takes the type of the field the condition is applied to. Used by operators
@@ -85,12 +95,16 @@ FIELD_TYPES = _OPERATOR_BY_TYPE.keys()
 # (e.g. a date picker for a date field); that resolution is not implemented yet.
 INPUT_TYPE_MATCH_FIELD = 'match_field'
 
+# Input-slot type for a fixed set of string choices. The value is always a
+# constant (parameters cannot bind to it) and must be one of the slot's
+# ``options``. Not a field type.
+INPUT_TYPE_CHOICE = 'choice'
+
 OPERATOR_INPUT_SCHEMAS = {
     'not_equals': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'starts_with': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'selected_any': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'selected_all': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
-    'is_empty': [],
+    'fuzzy': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
+    'phonetic': [{'name': 'value', 'type': FIELD_TYPE_TEXT}],
     'equals': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     # lt/gt(/lte/gte) are shared by number and date fields, so the input
     # follows the field's own type rather than being pinned to number.
@@ -98,10 +112,11 @@ OPERATOR_INPUT_SCHEMAS = {
     'gte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lt': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'lte': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
+    'fuzzy_date': [{'name': 'value', 'type': INPUT_TYPE_MATCH_FIELD}],
     'within_distance': [
         {'name': 'point', 'type': FIELD_TYPE_GEOPOINT},
         {'name': 'distance', 'type': FIELD_TYPE_NUMBER},
-        {'name': 'unit', 'type': 'choice'},
+        {'name': 'unit', 'type': INPUT_TYPE_CHOICE, 'options': DISTANCE_UNITS},
     ],
 }
 
@@ -158,10 +173,6 @@ def get_capability(domain):
                 'type': field_type,
                 'operations': get_operations_for_field_type(field_type),
             }
-            if field_type == FIELD_TYPE_SELECT:
-                field['options'] = [
-                    av.allowed_value for av in prop.allowed_values.all()
-                ]
             fields[prop.name] = field
         result_case_types[ct.name] = fields
 

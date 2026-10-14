@@ -18,6 +18,7 @@ MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
 MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
 MODEL_AUTO_UPDATE_RULE = 'auto_update_rule'
 MODEL_UCR_EXPRESSION = 'ucr_expression'
+MODEL_CASE_SEARCH_ENDPOINT = 'case_search_endpoint'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, gettext_lazy('Application')),
@@ -26,6 +27,7 @@ INDIVIDUAL_DATA_MODELS = [
     (MODEL_KEYWORD, gettext_lazy('Keyword')),
     (MODEL_UCR_EXPRESSION, gettext_lazy('Data Expressions and Filters')),
     (MODEL_AUTO_UPDATE_RULE, gettext_lazy("Automatic Update Rule")),
+    (MODEL_CASE_SEARCH_ENDPOINT, gettext_lazy('Case Search Endpoint')),
 ]
 
 DOMAIN_LEVEL_DATA_MODELS = [
@@ -56,4 +58,5 @@ FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: toggles.EMBEDDED_TABLEAU,
     MODEL_PRODUCT_DATA: toggles.COMMTRACK,
+    MODEL_CASE_SEARCH_ENDPOINT: toggles.CASE_SEARCH_ENDPOINTS,
 }

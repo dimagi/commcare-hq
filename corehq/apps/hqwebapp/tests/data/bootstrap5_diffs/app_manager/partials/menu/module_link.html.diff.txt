@@ -9,7 +9,7 @@
         class="appnav-delete">
        <i class="fa-regular fa-trash-can"></i>
      </a>
-@@ -33,16 +33,16 @@
+@@ -33,17 +33,17 @@
            <i class="fa fa-folder-open appnav-primary-icon"
          {% endif %}
              title="{% if request|toggle_enabled:"SUPPORT" %}{% blocktrans with module.id as index %}This is menu {{ index }}{% endblocktrans %}{% endif %}"
@@ -20,6 +20,7 @@
 +            data-bs-placement="right"
 +            data-bs-container="body"></i>
          <span
+           data-ocs-module-name
            {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}
            {% if module.case_type %}
              title="{% blocktrans  with module.case_type as case_type %}case type: {{case_type}}{% endblocktrans %}"
@@ -32,7 +33,7 @@
            {% endif %}
          >
              {{ module.name|html_trans_prefix:langs }}
-@@ -70,7 +70,6 @@
+@@ -71,7 +71,6 @@
        <div class="modal-dialog" role="document">
          <div class="modal-content">
            <div class="modal-header">
@@ -40,7 +41,7 @@
              {% if module.module_type == 'basic' %}
                {% if module.is_surveys %}
                  {% trans "Survey Menu" as menu %}
-@@ -91,6 +90,12 @@
+@@ -92,6 +91,12 @@
                  Are you sure you want to delete this {{ menu }}?
                {% endblocktrans %}
              </h4>
@@ -53,7 +54,7 @@
            </div>
            <form action="{% url "delete_module" domain app.id module.unique_id %}"
                  method="post">
-@@ -107,10 +112,10 @@
+@@ -108,10 +113,10 @@
                </p>
              </div>
              <div class="modal-footer">

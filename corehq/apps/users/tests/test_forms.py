@@ -2,6 +2,8 @@ import string
 
 from django.test import SimpleTestCase
 
+from corehq.apps.domain.forms import clean_password
+
 from ..forms import STRONG_PASSWORD_LEN, generate_strong_password
 
 
@@ -26,3 +28,6 @@ class TestGenerateStrongPassword(SimpleTestCase):
 
     def test_contains_punc(self):
         self.assertTrue(any(c in string.punctuation for c in self.password))
+
+    def test_passes_password_validation(self):
+        assert clean_password(self.password) == self.password

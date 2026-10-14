@@ -27,7 +27,6 @@ from couchdbkit import ResourceNotFound
 from looseversion import LooseVersion
 from memoized import memoized
 
-from corehq.apps.users.models import ActivityLevel
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -61,10 +60,12 @@ from corehq.apps.app_manager.const import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     LATEST_APK_VALUE,
     LATEST_APP_VALUE,
+    NON_BUILD_APP_KEYS,
 )
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_app_doc,
     get_app_languages,
     get_apps_in_domain,
     get_build_ids,
@@ -87,22 +88,24 @@ from corehq.apps.app_manager.helpers.validators import (
     ApplicationBaseValidator,
     ApplicationValidator,
 )
+from corehq.apps.app_manager.lookup_table_import import (
+    copy_lookup_tables,
+    delete_copied_lookup_tables,
+    rewrite_lookup_table_references,
+)
 from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
-from corehq.apps.app_manager.templatetags.xforms_extras import (
-    trans,
-)
+from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
+    domain_has_usercase_access,
     expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
     get_correct_app_class,
     get_latest_app_release_by_location,
     is_remote_app,
-    domain_has_usercase_access,
     save_xform,
     update_form_unique_ids,
     update_report_module_ids,
@@ -126,9 +129,11 @@ from corehq.apps.linked_domain.applications import (
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.app_builds import canonical_app_id
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors import get_display_name_for_user_id
+from corehq.apps.users.models import ActivityLevel
 from corehq.apps.users.util import cc_user_domain
 from corehq.blobs.mixin import CODES, BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
@@ -137,23 +142,10 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext, time_method
 from corehq.util.timezones.conversions import ServerTime
 
-from .base import (
-    CustomAssertion,
-    IndexedSchema,
-    rename_key,
-)
-from .form_actions import (
-    FormActionCondition,
-    UpdateCaseAction,
-)
-from .forms import (
-    AdvancedForm,
-    FormBase,
-    ShadowForm,
-)
-from .mixins import (
-    CommentMixin,
-)
+from .base import CustomAssertion, IndexedSchema, rename_key
+from .form_actions import FormActionCondition, UpdateCaseAction
+from .forms import AdvancedForm, FormBase, ShadowForm
+from .mixins import CommentMixin
 
 ATTACHMENT_REGEX = r'[^/]*\.xml'
 
@@ -347,6 +339,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     short_odk_media_url = StringProperty()
     _meta_fields = ['_id', '_rev', 'domain', 'copy_of', 'version',
                     'short_odk_url', 'short_odk_media_url']
+    _update_excluded_fields = _meta_fields + [
+        'date_created', 'name', 'comment', 'doc_type',
+        'multimedia_map', 'family_id', 'copy_history',
+        'build_profiles', 'custom_base_url', 'practice_mobile_worker_id',
+        '_LAZY_ATTACHMENTS', 'copy_of'
+    ]
 
     # this is the supported way of specifying which commcare build to use
     build_spec = SchemaProperty(BuildSpec)
@@ -450,7 +448,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def origin_id(self):
         # For app builds this is the ID of the app they were built from. Otherwise, it's just the app's ID.
-        return self.copy_of or self._id
+        return canonical_app_id(self.copy_of) if self.copy_of else self._id
 
     def is_deleted(self):
         return self.doc_type.endswith(DELETED_SUFFIX)
@@ -688,12 +686,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             copy = copies[0]
         else:
             copy = deepcopy(self.to_json())
-            bad_keys = ('_id', '_rev', '_attachments', 'external_blobs',
-                        'short_odk_url', 'short_odk_media_url', 'recipients')
-
-            for bad_key in bad_keys:
-                if bad_key in copy:
-                    del copy[bad_key]
+            for key in NON_BUILD_APP_KEYS:
+                if key in copy:
+                    del copy[key]
 
             copy = cls.wrap(copy)
             copy.convert_app_to_build(self._id, user_id, comment)
@@ -958,10 +953,12 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         super(Application, self).save(*args, **kwargs)
         # Import loop if this is imported at the top
         # TODO: revamp so signal_connections <- models <- signals
-        from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+
+        from corehq.apps.app_manager import signals
         from corehq.apps.reports.analytics.esaccessors import (
-            guess_form_name_from_submissions_using_xmlns)
+            guess_form_name_from_submissions_using_xmlns,
+        )
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
             guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
@@ -1696,7 +1693,9 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
-        from corehq.apps.app_manager.app_schemas.app_case_metadata import AppCaseMetadataBuilder
+        from corehq.apps.app_manager.app_schemas.app_case_metadata import (
+            AppCaseMetadataBuilder,
+        )
         return AppCaseMetadataBuilder(self.domain, self).case_metadata()
 
     def get_subcase_types(self, case_type):
@@ -1882,7 +1881,9 @@ class LinkedApplication(Application):
     @property
     @memoized
     def domain_link(self):
-        from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
+        from corehq.apps.linked_domain.dbaccessors import (
+            get_upstream_domain_link,
+        )
         return get_upstream_domain_link(self.domain)
 
     @memoized
@@ -1946,9 +1947,50 @@ class LinkedApplication(Application):
             self.create_mapping(mm, ref['path'], save=False)
 
 
-def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
-    source_app = _get_source_app(app_id_or_doc)
+def import_app_from_id(app_id, domain, extra_properties=None, request=None):
+    source_app = get_app(None, app_id)
     source_doc = source_app.export_json(dump_json=False)
+
+    lookup_table_result = copy_lookup_tables(source_doc, source_app.domain, domain)
+    rewrite_lookup_table_references(source_doc, lookup_table_result.tag_mapping)
+    try:
+        app = _import_app(source_app, domain, extra_properties, request, source_doc=source_doc)
+    except Exception:
+        delete_copied_lookup_tables(domain, lookup_table_result.created_table_ids)
+        raise
+    _notify_lookup_table_import(request, lookup_table_result)
+    return app
+
+
+def _notify_lookup_table_import(request, result):
+    if not request:
+        return
+    if result.tag_mapping:
+        messages.success(request, _(
+            "Application successfully copied. The following lookup tables were also copied: {}."
+        ).format(
+            ", ".join(sorted(result.tag_mapping.values()))
+        ))
+    else:
+        messages.success(request, _("Application successfully copied."))
+    if result.missing_tags:
+        messages.warning(request, _(
+            "Could not copy lookup tables missing from the source project: {}."
+        ).format(", ".join(result.missing_tags)))
+    if result.failed_tags:
+        messages.warning(request, _(
+            "An error occurred while copying the following lookup tables: {}."
+        ).format(", ".join(result.failed_tags)))
+
+
+def import_app_from_doc(source_doc, domain, extra_properties=None, request=None):
+    source_app = wrap_app(source_doc)
+    return _import_app(source_app, domain, extra_properties, request)
+
+
+def _import_app(source_app, domain, extra_properties=None, request=None, source_doc=None):
+    if source_doc is None:
+        source_doc = source_app.export_json(dump_json=False)
 
     attachments = _get_attachments(source_doc)
     source_doc['_attachments'] = {}
@@ -1981,14 +2023,6 @@ def import_app(app_id_or_doc, domain, extra_properties=None, request=None):
                                     "multimedia file(s)."))
 
     return app
-
-
-def _get_source_app(app_id_or_doc):
-    if isinstance(app_id_or_doc, str):
-        source_app = get_app(None, app_id_or_doc)
-    else:
-        source_app = wrap_app(app_id_or_doc)
-    return source_app
 
 
 def _get_attachments(doc):
@@ -2030,6 +2064,68 @@ def _update_valid_domains_for_media(app, domain_to_add):
                 media.valid_domains.append(domain_to_add)
                 media.save()
 
+
+def _merge_source_into_app(existing_app_json, source, extra_properties=None):
+    """Return a new app JSON built from ``existing_app_json`` with content
+    fields replaced from ``source``.
+
+    This overlays ``source`` onto a copy of the existing app rather than
+    performing a strict replace: a non-excluded content field present on the
+    existing app but absent from ``source`` is retained, not cleared.
+    """
+    excluded_fields = set(Application._update_excluded_fields + ['build_spec', '_attachments'])
+    source_doc_type = source.get('doc_type')
+    if source_doc_type and source_doc_type != existing_app_json.get('doc_type'):
+        raise AppEditingError(
+            "Uploaded app type '{}' does not match existing app type '{}'".format(
+                source_doc_type, existing_app_json.get('doc_type')
+            )
+        )
+    merged = dict(existing_app_json)
+    for key, value in source.items():
+        if key not in excluded_fields:
+            merged[key] = value
+    if extra_properties:
+        merged.update(extra_properties)
+    return merged
+
+
+def overwrite_app_from_source(domain, app_id, source, extra_properties=None, request=None):
+    """Update the app ``app_id`` in ``domain`` in place from an uploaded JSON
+    ``source``, preserving the app's identity, name, and multimedia.
+
+    The create-time counterpart is :func:`import_app_from_doc`. Raises
+    ``ResourceNotFound`` if the app does not exist in ``domain`` and
+    ``AppEditingError`` if the source's app type is incompatible.
+    """
+    app = get_app_doc(domain, app_id)
+
+    attachments = _get_attachments(source)
+    source['_attachments'] = {}
+
+    merged = _merge_source_into_app(app, source, extra_properties)
+    app = wrap_app(merged)
+
+    report_map = get_static_report_mapping(source.get('domain'), domain)
+    _update_report_config_ids(app, report_map, source.get('domain'))
+
+    # save_attachments persists the doc and bumps the version (non-copy app);
+    # do not call app.save() again or the version would bump twice.
+    app.save_attachments(attachments)
+
+    try:
+        _update_valid_domains_for_media(app, domain)
+    except ReportConfigurationNotFoundError:
+        if request:
+            messages.warning(request, _("Updating the application succeeded, but the application will have "
+                                        "errors because it contains a Mobile Report Module that references a "
+                                        "custom report (UCR) that isn't available in this project space. "
+                                        "Multimedia may be absent."))
+    except ResourceNotFound:
+        messages.warning(request, _("Updating the application succeeded, but the application is missing "
+                                    "multimedia file(s)."))
+
+    return app
 
 
 class ExchangeApplication(models.Model):

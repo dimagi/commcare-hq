@@ -1,11 +1,12 @@
 from xml.etree import cElementTree as ElementTree
 
 from eulxml.xmlmap import (DateTimeField, IntegerField, NodeField, StringField,
-                           XmlObject, load_xmlobject_from_string)
+                           XmlObject)
 
 from casexml.apps.stock.const import (COMMTRACK_REPORT_XMLNS,
                                       REPORT_TYPE_BALANCE,
                                       REPORT_TYPE_TRANSFER)
+from corehq.util.xml_utils import safe_fromstring
 
 
 class LedgerXML(XmlObject):
@@ -17,7 +18,7 @@ class LedgerXML(XmlObject):
 
     @classmethod
     def from_xml(cls, node):
-        return load_xmlobject_from_string(ElementTree.tostring(node, encoding='utf-8'), cls)
+        return cls(safe_fromstring(ElementTree.tostring(node, encoding='utf-8')))
 
     def as_string(self):
         return self.serialize()

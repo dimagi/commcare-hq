@@ -7,7 +7,7 @@ from unittest.mock import patch
 from corehq import privileges
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.app_manager.dbaccessors import get_app, get_build_ids
-from corehq.apps.app_manager.models import CaseReferences, ConditionalCaseUpdate, import_app
+from corehq.apps.app_manager.models import CaseReferences, ConditionalCaseUpdate, import_app_from_doc
 from corehq.apps.app_manager.tasks import (
     autogenerate_build,
     prune_auto_generated_builds,
@@ -41,7 +41,7 @@ class AppManagerTasksTest(TestCase):
 
     def test_prune_auto_generated_builds(self):
         # Build #1, manually generated
-        app = import_app(self._yesno_source, self.domain)
+        app = import_app_from_doc(self._yesno_source, self.domain)
         for module in app.modules:
             module.get_or_create_unique_id()
         app.save()

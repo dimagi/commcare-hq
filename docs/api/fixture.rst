@@ -290,7 +290,7 @@ Edit or Delete Lookup Table
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/lookup_table/v1/[lookup_table_id]
+    https://www.commcarehq.org/a/[domain]/api/lookup_table/v1/[lookup_table_id]/
 
 **HTTP Method**
     PUT, DELETE
@@ -304,7 +304,7 @@ Edit or Delete Lookup Table
         "fields": [
             {"field_name": "name", "properties": ["lang"]},
             {"field_name": "price", "properties": []}
-        ],
+        ]
     }
 
 
@@ -431,7 +431,7 @@ Edit or Delete Lookup Table Row
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/lookup_table_item/v1/[lookup_table_item_id]
+    https://www.commcarehq.org/a/[domain]/api/lookup_table_item/v1/[lookup_table_item_id]/
 
 **HTTP Method**
     PUT, DELETE

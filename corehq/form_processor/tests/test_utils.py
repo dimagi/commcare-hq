@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from corehq.form_processor.utils.xform import build_form_xml_from_property_dict, get_node, RE_DATETIME_MATCH
-from lxml import etree
+from corehq.util.xml_utils import safe_fromstring
 
 
 class FormSubmissionBuilderTest(SimpleTestCase):
@@ -76,7 +76,7 @@ class FormSubmissionBuilderTest(SimpleTestCase):
     <has_attribute attr="dirty" />
 </data>
         '''
-        root = etree.fromstring(xml)
+        root = safe_fromstring(xml)
         self.assertEqual('elephant', get_node(root, '/data/something').text)
         self.assertEqual('romulus', get_node(root, '/data/twin[1]/name').text)
         self.assertEqual('remus', get_node(root, '/data/twin[2]/name').text)

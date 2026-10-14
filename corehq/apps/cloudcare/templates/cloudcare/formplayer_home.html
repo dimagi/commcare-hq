@@ -12,36 +12,11 @@
 
 {% block head %}
   {{ block.super }}
-  <style id="persistent-cell-layout-style"></style>
-  <style id="persistent-cell-grid-style"></style>
-  <style id="list-cell-layout-style"></style>
-  <style id="list-cell-grid-style"></style>
-  <style id="list-cell-wrapper-style"></style>
-  <style id="list-cell-container-style"></style>
+  {% include 'cloudcare/partials/web_apps_head_styles.html' %}
 {% endblock %}
 
 {% block stylesheets %}
-  {% compress css %}
-    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}" />
-    <link
-      rel="stylesheet"
-      href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}"
-    />
-  {% endcompress %}
-  {% compress css %}
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-common.scss' %}"
-    />
-    <link
-      type="text/scss"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'cloudcare/scss/formplayer-webapp.scss' %}"
-    />
-  {% endcompress %}
+  {% include 'cloudcare/partials/web_apps_stylesheets.html' %}
 {% endblock %}
 {% js_entry "cloudcare/js/formplayer/main" %}
 
@@ -75,7 +50,6 @@
   {% registerurl 'api_histogram_metrics' request.domain %}
 
   <div id="cloudcare-main" class="cloudcare-home-content">
-    <section id="cases"></section>
     <div id="main-container" class="d-lg-flex flex-column">
       <section id="formplayer-progress-container"></section>
       <nav class="navbar navbar-cloudcare">
@@ -101,49 +75,7 @@
       <div class="d-lg-none">
         <div id="mobile-restore-as-region"></div>
       </div>
-      <div id="breadcrumb-region" class="print-container"></div>
-      <section
-        id="cloudcare-notifications"
-        class="container notifications-container"
-      ></section>
-      <div
-        id="content-plus-persistent-menu-container"
-        class="flex-grow-1 d-lg-flex"
-      >
-        <div
-          id="persistent-menu-region"
-          class="d-print-none d-none position-relative"
-        ></div>
-        <div
-          id="content-plus-version-info-container"
-          class="h-100 flex-grow-1 overflow-scroll d-lg-flex-column"
-        >
-          <div
-            id="sidebar-and-content"
-            class="d-lg-flex justify-content-center m-3"
-          >
-            <div id="sidebar-region" class="noprint-sub-container me-3"></div>
-            <div id="content-container" class="mx-0 flex-grow-1">
-              <div class="container case-tile-container">
-                <div id="persistent-case-tile" class="print-container"></div>
-              </div>
-              <div id="menu-region" class="print-container"></div>
-              <section
-                id="webforms"
-                data-bind="
-                template: {
-                name: 'form-fullform-ko-template',
-                afterRender: afterRender
-                }"
-              ></section>
-            </div>
-          </div>
-          <small id="version-info" class="pb-5"></small>
-          {% if request.couch_user.can_edit_data %}
-            <div class="pb-4"></div>
-          {% endif %}
-        </div>
-      </div>
+      {% include 'cloudcare/partials/web_apps_content.html' %}
     </div>
     <div
       role="region"

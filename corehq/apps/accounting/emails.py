@@ -6,6 +6,7 @@ from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.exceptions import SubscriptionReminderError
 from corehq.apps.accounting.utils import (
+    fmt_dollar_amount,
     get_default_domain_url,
     get_dimagi_from_email,
     log_accounting_info,
@@ -108,6 +109,48 @@ def send_flagged_pay_annually_subscription_alert(subscription, current_invoice, 
         sub_change_email_address,
         render_to_string('accounting/email/pay_annually_unpaid.html', email_context),
         text_content=render_to_string('accounting/email/pay_annually_unpaid.txt', email_context),
+    )
+
+
+def send_scheduled_invoice_notice(scheduled):
+    """Notify accounting before a queued prepayment invoice is sent"""
+    from corehq.apps.accounting.dispatcher import (
+        AccountingAdminInterfaceDispatcher,
+    )
+
+    subscription = scheduled.subscription
+    email_context = {
+        'domain': scheduled.domain,
+        'billing_account': subscription.account,
+        'plan_version': subscription.plan_version,
+        'send_date': scheduled.send_date,
+        'credit_label': scheduled.credit_label,
+        'amount': fmt_dollar_amount(scheduled.amount),
+        'quantity': scheduled.quantity,
+        'unit_cost': fmt_dollar_amount(scheduled.unit_cost),
+        'date_start': scheduled.date_start,
+        'date_end': scheduled.date_end,
+        'created_by': scheduled.created_by,
+        'contact_emails': ', '.join(scheduled.contact_emails),
+        'report_url': absolute_reverse(
+            AccountingAdminInterfaceDispatcher.name(), args=['scheduled_invoices']
+        ),
+    }
+
+    env_prefix = (
+        '[{}] '.format(settings.SERVER_ENVIRONMENT.upper())
+        if settings.SERVER_ENVIRONMENT == 'staging' else ''
+    )
+    email_subject = (
+        f'{env_prefix}A prepayment invoice for {scheduled.domain} '
+        f'is scheduled to be sent on {scheduled.send_date}'
+    )
+
+    send_html_email_async.delay(
+        email_subject,
+        settings.ACCOUNTS_EMAIL,
+        render_to_string('accounting/email/scheduled_invoice_notice.html', email_context),
+        text_content=render_to_string('accounting/email/scheduled_invoice_notice.txt', email_context),
     )
 
 
@@ -234,8 +277,7 @@ def _ending_reminder_context(subscription, days_left):
         'base_url': get_site_domain(),
         'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         'sales_email': settings.SALES_EMAIL,
-        'plan_info_url': ('https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/'
-                          'CommCare+Pricing+Overview#Detailed-Software-Plan-%26-Feature-Comparisons')
+        'plan_info_url': 'https://commcare.dimagi.com/pricing/#plans'
     }
 
     subject = _(

@@ -338,44 +338,9 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
         module.case_details.short.columns = [column]
         return app
 
-    def test_enum_calc_repeats_expression(self, *args):
-        """Without ENUM_CALC_VARIABLES enabled, enum-image columns whose field
-        is a calculated expression repeat the full expression for each mapping
-        rather than referencing the ``$calculated_property`` variable defined
-        alongside. This locks in that pre-flag behavior.
-        """
-        app = self._build_calculated_enum_image_app()
-
-        expected = """
-        <partial>
-          <template form="image" width="13%">
-            <text>
-              <xpath function="if(if(stars &gt; 4, 'high', 'low') = 'high', $khigh, if(if(stars &gt; 4, 'high', 'low') = 'low', $klow, ''))">
-                <variable name="calculated_property">
-                  <xpath function="if(stars &gt; 4, 'high', 'low')"/>
-                </variable>
-                <variable name="khigh">
-                  <locale id="m0.case_short.case_if(stars &gt; 4, 'high', 'low')_1.enum.khigh"/>
-                </variable>
-                <variable name="klow">
-                  <locale id="m0.case_short.case_if(stars &gt; 4, 'high', 'low')_1.enum.klow"/>
-                </variable>
-              </xpath>
-            </text>
-          </template>
-        </partial>
-        """  # noqa: E501
-        self.assertXmlPartialEqual(
-            expected,
-            app.create_suite(),
-            './detail/field/template[@form="image"]',
-        )
-
-    @flag_enabled('ENUM_CALC_VARIABLES')
     def test_enum_calc_references_variable(self, *args):
-        """With ENUM_CALC_VARIABLES enabled, enum-image columns reference the
-        ``$calculated_property`` variable in each mapping condition instead of
-        repeating the source expression.
+        """Enum-image columns reference the ``$calculated_property`` variable in
+        each mapping condition instead of repeating the source expression.
         """
         app = self._build_calculated_enum_image_app()
 
@@ -404,7 +369,6 @@ class SuiteFormatsTest(SimpleTestCase, TestXmlMixin):
             './detail/field/template[@form="image"]',
         )
 
-    @flag_enabled('ENUM_CALC_VARIABLES')
     def test_enum_calc_alt_text_defines_variable(self, *args):
         app = self._build_calculated_enum_image_app()
 

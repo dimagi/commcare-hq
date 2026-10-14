@@ -88,6 +88,7 @@ class CODES:
     data_file = 15      # domain data file (see DataFile class)
     form_multimedia = 16     # form submission multimedia zip
     email_multimedia = 17    # email images and attachments
+    bulk_async_job = 18  # requested/skipped ids payload for a BulkAsyncJob
 
 
 CODES.name_of = {code: name

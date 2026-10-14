@@ -6,8 +6,12 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, validate_slug
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.validators import (
+    MinLengthValidator,
+    validate_email,
+    validate_slug,
+)
 from django.db import transaction
 from django.forms.utils import ErrorList
 from django.template.loader import render_to_string
@@ -31,6 +35,7 @@ from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
     SoftwareProductRateAsyncHandler,
 )
+from corehq.apps.accounting.const import MAX_INVOICE_AMOUNT
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     InvoiceError,
@@ -38,6 +43,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -58,10 +64,11 @@ from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
     FundingSource,
     Invoice,
-    InvoicingPlan,
     PaymentType,
     PreOrPostPay,
     ProBonoStatus,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
@@ -81,6 +88,7 @@ from corehq.apps.accounting.utils import (
     get_account_name_from_default_name,
     get_money_str,
     has_subscription_already_ended,
+    log_accounting_info,
     make_anchor_tag,
 )
 from corehq.apps.accounting.utils.software_plans import (
@@ -128,10 +136,6 @@ class BillingAccountBasicForm(forms.Form):
         label="Enterprise Domains for Restricting Signups",
         required=False,
         help_text='ex: dimagi.com, commcarehq.org',
-    )
-    invoicing_plan = forms.ChoiceField(
-        label="Invoicing Plan",
-        required=False
     )
     active_accounts = forms.IntegerField(
         label=gettext_lazy("Transfer Subscriptions To"),
@@ -193,7 +197,6 @@ class BillingAccountBasicForm(forms.Form):
                 'is_sms_billable_report_visible': account.is_sms_billable_report_visible,
                 'enterprise_admin_emails': account.enterprise_admin_emails,
                 'enterprise_restricted_signup_domains': ','.join(account.enterprise_restricted_signup_domains),
-                'invoicing_plan': account.invoicing_plan,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -208,12 +211,10 @@ class BillingAccountBasicForm(forms.Form):
                 'entry_point': EntryPoint.CONTRACTED,
                 'last_payment_method': PaymentType.NONE,
                 'pre_or_post_pay': PreOrPostPay.POSTPAY,
-                'invoicing_plan': InvoicingPlan.MONTHLY
             }
         super(BillingAccountBasicForm, self).__init__(*args, **kwargs)
         self.fields['currency'].choices =\
             [(cur.code, cur.code) for cur in Currency.objects.order_by('code')]
-        self.fields['invoicing_plan'].choices = InvoicingPlan.CHOICES
         self.helper = FormHelper()
         self.helper.form_id = "account-form"
         self.helper.form_class = "form-horizontal"
@@ -238,7 +239,6 @@ class BillingAccountBasicForm(forms.Form):
             ))
             additional_fields.append(
                 crispy.Div(
-                    'invoicing_plan',
                     crispy.Field(
                         'enterprise_admin_emails',
                         css_class='input-xxlarge accounting-email-select2',
@@ -429,7 +429,6 @@ class BillingAccountBasicForm(forms.Form):
         account.is_sms_billable_report_visible = self.cleaned_data['is_sms_billable_report_visible']
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
-        account.invoicing_plan = self.cleaned_data['invoicing_plan']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
         account.bill_web_user = self.cleaned_data['bill_web_user']
         account.require_auto_pay = self.cleaned_data['require_auto_pay']
@@ -602,6 +601,12 @@ class SubscriptionForm(forms.Form):
         max_length=256,
         required=False,
     )
+    skip_auto_downgrade_days = forms.IntegerField(
+        label=gettext_lazy("Extension length"),
+        help_text=mark_safe('<span data-bind="text: skipAutoDowngradeHint"></span>'),  # nosec: no user input
+        required=False,
+        min_value=1,
+    )
     auto_renew = forms.BooleanField(
         label=gettext_lazy("Enable auto renewal"),
         help_text=gettext_lazy("Applies if subscription has a future end date and is type 'Product'"),
@@ -692,8 +697,13 @@ class SubscriptionForm(forms.Form):
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
-            self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
-            self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+            self.fields['skip_auto_downgrade'].initial = subscription.should_skip_downgrade
+            if subscription.should_skip_downgrade:
+                self.fields['skip_auto_downgrade_reason'].initial = subscription.skip_auto_downgrade_reason
+                if subscription.skip_auto_downgrade_until:
+                    self.fields['skip_auto_downgrade_days'].initial = (
+                        subscription.skip_auto_downgrade_until - today
+                    ).days
             self.fields['auto_renew'].initial = subscription.auto_renew
 
             if (
@@ -781,6 +791,10 @@ class SubscriptionForm(forms.Form):
                 ),
                 crispy.Div(
                     crispy.Field(
+                        'skip_auto_downgrade_days',
+                        data_bind="value: skipAutoDowngradeDays, valueUpdate: 'input'",
+                    ),
+                    crispy.Field(
                         'skip_auto_downgrade_reason', data_bind="attr: {required: skipAutoDowngrade}"
                     ),
                     data_bind="visible: skipAutoDowngrade",
@@ -830,6 +844,11 @@ class SubscriptionForm(forms.Form):
 
     @property
     def shared_keywords(self):
+        skip_auto_downgrade_days = self.cleaned_data['skip_auto_downgrade_days']
+        skip_auto_downgrade_until = (
+            datetime.date.today() + datetime.timedelta(days=skip_auto_downgrade_days)
+            if skip_auto_downgrade_days is not None else None
+        )
         return dict(
             date_start=self.cleaned_data['date_start'],
             date_end=self.cleaned_data['date_end'],
@@ -845,6 +864,7 @@ class SubscriptionForm(forms.Form):
             funding_source=self.cleaned_data['funding_source'],
             skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
             skip_auto_downgrade_reason=self.cleaned_data['skip_auto_downgrade_reason'],
+            skip_auto_downgrade_until=skip_auto_downgrade_until,
             auto_renew=self.cleaned_data['auto_renew'],
         )
 
@@ -1124,6 +1144,50 @@ class CreditForm(forms.Form):
             permit_inactive=True,
         )
         return True
+
+
+class CancelScheduledInvoiceForm(forms.Form):
+    """Confirm cancelling a queued prepayment invoice"""
+
+    reason = forms.CharField(
+        label="Reason",
+        required=True,
+        max_length=256,
+        widget=forms.Textarea(attrs={"class": "vertical-resize", "rows": "2"}),
+        help_text="Describe why this prepayment is being cancelled.",
+    )
+
+    def __init__(self, scheduled, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.scheduled = scheduled
+
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Cancel Scheduled Invoice',
+                'reason',
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    'Cancel This Invoice',
+                    css_class='btn-danger disable-on-submit',
+                    type='submit',
+                ),
+            ),
+        )
+
+    def cancel(self, cancelled_by):
+        self.scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        self.scheduled.cancelled_by = cancelled_by
+        self.scheduled.cancelled_reason = self.cleaned_data['reason']
+        self.scheduled.save()
+        log_accounting_info(
+            f"Scheduled prepayment invoice {self.scheduled.id} for domain "
+            f"{self.scheduled.domain} cancelled by {cancelled_by}."
+        )
 
 
 class RemoveAutopayForm(forms.Form):
@@ -2027,6 +2091,211 @@ class PlanContactForm(forms.Form):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class WirePrepaymentForm(forms.Form):
+    """Validates a request to generate a wire prepayment invoice.
+
+    A blank ``send_date`` generates the invoice now; a future one schedules it.
+
+    These fields are rendered by Knockout, in
+    ``domain/partials/payment_modal.html``. Field labels are duplicated here
+    and in that template.
+    """
+    email_to = forms.EmailField(
+        label=gettext_lazy("Email To"),
+    )
+    email_cc = forms.CharField(
+        label=gettext_lazy("Additional Recipients"),
+        required=False,
+    )
+    prepay_date_start = forms.DateField(
+        label=gettext_lazy("Prepayment Start Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    prepay_date_end = forms.DateField(
+        label=gettext_lazy("Prepayment End Date"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+    credit_label = forms.CharField(
+        label=gettext_lazy("Credit Label"),
+        required=False,
+        empty_value="General Credits",
+    )
+    unit_cost = forms.DecimalField(
+        label=gettext_lazy("Unit Cost"),
+        min_value=0,
+        max_digits=8,
+        decimal_places=2,
+    )
+    quantity = forms.IntegerField(
+        label=gettext_lazy("Quantity"),
+        min_value=1,
+    )
+    send_date = forms.DateField(
+        label=gettext_lazy("Send On"),
+        required=False,
+        input_formats=['%Y-%m-%d'],
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_start = cleaned_data.get('prepay_date_start')
+        date_end = cleaned_data.get('prepay_date_end')
+        if date_start and date_end and date_end < date_start:
+            self.add_error('prepay_date_end', _("Prepayment end date must be after start date."))
+
+        unit_cost = cleaned_data.get('unit_cost')
+        quantity = cleaned_data.get('quantity')
+        if unit_cost is not None and quantity is not None:
+            amount = unit_cost * quantity
+            if amount > MAX_INVOICE_AMOUNT:
+                self.add_error(None, _(
+                    "The total prepayment amount cannot be more than ${max_amount}."
+                ).format(max_amount=MAX_INVOICE_AMOUNT))
+            cleaned_data['amount'] = amount
+        return cleaned_data
+
+    def clean_email_cc(self):
+        """Returns the comma-separated recipients as a list of addresses."""
+        emails = [
+            email.strip()
+            for email in self.cleaned_data['email_cc'].split(',')
+            if email.strip()
+        ]
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            raise ValidationError(
+                _("The following e-mail addresses contain invalid characters, or are missing "
+                  "required characters: ")
+                + ', '.join('"{}"'.format(email) for email in invalid_emails)
+            )
+        return emails
+
+    def clean_prepay_date_start(self):
+        return self.cleaned_data['prepay_date_start'] or datetime.date.today()
+
+    def clean_prepay_date_end(self):
+        return self.cleaned_data['prepay_date_end'] or datetime.date.today()
+
+    def clean_credit_label(self):
+        credit_label = self.cleaned_data['credit_label']
+        max_length = ScheduledPrepaymentInvoice._meta.get_field('credit_label').max_length
+        if len(credit_label) > max_length:
+            raise ValidationError(message=_(
+                'The credit label must be %(max_length)d characters or fewer.'
+            ) % {'max_length': max_length})
+        return credit_label
+
+    def clean_send_date(self):
+        # The modal leaves this blank to send the invoice now
+        send_date = self.cleaned_data.get('send_date')
+        if send_date and send_date <= datetime.date.today():
+            raise ValidationError(message=_('The send date must be in the future.'))
+        return send_date
+
+    def save(self, domain, couch_user):
+        """Generates the invoice for ``domain``, or schedules it.
+
+        :returns: the scheduled invoice, or ``None`` if one was generated now.
+        :raises InvoiceError: if the invoice can be neither generated nor
+            scheduled.
+        """
+        if not self.cleaned_data['send_date']:
+            self.create_invoice(domain)
+            return None
+
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        if subscription is None:
+            raise InvoiceError(_(
+                'This project space has no active subscription, so an invoice '
+                'cannot be scheduled for it.'
+            ))
+        return self.create_scheduled_invoice(domain, subscription, couch_user)
+
+    def create_invoice(self, domain):
+        """Emails a wire prepayment invoice for ``domain``.
+
+        :raises InvoiceError: if the domain does not exist.
+        """
+        invoice_factory = DomainWireInvoiceFactory(
+            domain,
+            date_start=self.cleaned_data['prepay_date_start'].isoformat(),
+            date_end=self.cleaned_data['prepay_date_end'].isoformat(),
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+        )
+        invoice_factory.create_wire_credits_invoice(
+            self.cleaned_data['amount'],
+            self.cleaned_data['credit_label'],
+            self.cleaned_data['unit_cost'],
+            self.cleaned_data['quantity'],
+        )
+
+    def create_scheduled_invoice(self, domain, subscription, couch_user):
+        scheduled = ScheduledPrepaymentInvoice.objects.create(
+            domain=domain,
+            subscription=subscription,
+            send_date=self.cleaned_data['send_date'],
+            amount=self.cleaned_data['amount'],
+            credit_label=self.cleaned_data['credit_label'],
+            unit_cost=self.cleaned_data['unit_cost'],
+            quantity=self.cleaned_data['quantity'],
+            contact_emails=[self.cleaned_data['email_to']],
+            cc_emails=self.cleaned_data['email_cc'],
+            date_start=self.cleaned_data['prepay_date_start'],
+            date_end=self.cleaned_data['prepay_date_end'],
+            created_by=couch_user.username,
+        )
+        log_accounting_info(
+            f"Scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} on {scheduled.send_date} by {scheduled.created_by}."
+        )
+        return scheduled
+
+    def get_error_message(self):
+        """Returns all of the form's errors as a single string."""
+        return ' '.join(
+            ' '.join(errors) if field == NON_FIELD_ERRORS
+            else '{}: {}'.format(self.fields[field].label, ' '.join(errors))
+            for field, errors in self.errors.items()
+        )
+
+
+class GeneratePrepaymentInvoiceForm(WirePrepaymentForm):
+
+    domain = forms.CharField(
+        label=gettext_lazy("Project Space"),
+        widget=forms.Select(choices=[]),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Generate Prepayment Invoice',
+                crispy.Field(
+                    'domain',
+                    css_class="accounting-async-select2",
+                ),
+            ),
+        )
+
+    def clean_domain(self):
+        domain_name = self.cleaned_data['domain']
+        if Domain.get_by_name(domain_name) is None:
+            raise ValidationError(
+                _("Project space '{}' was not found.").format(domain_name)
+            )
+        return domain_name
+
+
 class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
@@ -2213,7 +2482,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         try:
             account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
-            invoice_start, invoice_end = self.get_invoice_dates(account, year, month)
+            invoice_start, invoice_end = get_first_last_days(year, month)
             self.clean_previous_invoices(invoice_start, invoice_end, account)
             invoice_factory = CustomerAccountInvoiceFactory(
                 date_start=invoice_start,
@@ -2255,35 +2524,6 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         if (year, month) >= (today.year, today.month):
             raise ValidationError('Statement period must be in the past')
-
-    def get_invoice_dates(self, account, year, month):
-        if account.invoicing_plan == InvoicingPlan.YEARLY:
-            if month == 12:
-                # Set invoice start date to January 1st
-                return datetime.date(year, 1, 1), datetime.date(year, 12, 31)
-            else:
-                raise InvoiceError(
-                    "%s is set to be invoiced yearly, and you may not invoice in this month. "
-                    "You must select December in the year for which you are triggering an annual invoice."
-                    % self.cleaned_data['customer_account']
-                )
-        if account.invoicing_plan == InvoicingPlan.QUARTERLY:
-            if month == 3:
-                return datetime.date(year, 1, 1), datetime.date(year, 3, 31)    # Quarter 1
-            if month == 6:
-                return datetime.date(year, 4, 1), datetime.date(year, 6, 30)    # Quarter 2
-            if month == 9:
-                return datetime.date(year, 7, 1), datetime.date(year, 9, 30)    # Quarter 3
-            if month == 12:
-                return datetime.date(year, 10, 1), datetime.date(year, 12, 31)  # Quarter 4
-            else:
-                raise InvoiceError(
-                    "%s is set to be invoiced quarterly, and you may not invoice in this month. "
-                    "You must select the last month of a quarter to trigger a quarterly invoice."
-                    % self.cleaned_data['customer_account']
-                )
-        else:
-            return get_first_last_days(year, month)
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

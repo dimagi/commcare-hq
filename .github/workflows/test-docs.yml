@@ -8,10 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09  # v5.1.0
         with:
           submodules: recursive
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7.6.0
       - name: Install docs requirements
         run: uv sync --group=docs --no-group=sso --locked --compile-bytecode --no-progress
       - name: Test docs build
@@ -20,7 +20,7 @@ jobs:
           ./scripts/test-make-docs.sh
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: make-docs-artifacts
           path: artifacts

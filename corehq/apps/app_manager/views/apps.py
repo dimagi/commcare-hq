@@ -40,7 +40,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
@@ -58,7 +58,10 @@ from corehq.apps.app_manager.models import (
     LinkedApplication,
     Module,
 )
-from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models import (
+    import_app_from_doc,
+    import_app_from_id,
+)
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
     app_doc_types,
@@ -80,8 +83,8 @@ from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
+    api_auth,
     login_and_domain_required,
-    login_or_digest,
     track_domain_request,
 )
 from corehq.apps.domain.models import all_app_manager_add_ons_enabled
@@ -364,13 +367,12 @@ def get_apps_base_context(request, domain, app):
     context = {
         'lang': lang,
         'langs': langs,
+        'langs_for_ocs_context': app.langs if app and app.langs else [],
         'domain': domain,
         'app': app,
         'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
-            'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,
@@ -410,7 +412,8 @@ def get_apps_base_context(request, domain, app):
     return context
 
 
-@login_or_digest
+@require_GET
+@api_auth()
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
@@ -474,7 +477,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 
 def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
-    app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
+    app_copy = import_app_from_id(from_app_id, to_domain, extra_properties, request)
     if is_linked_app(app_copy):
         app_copy = app_copy.convert_to_application()
         app_copy.save()
@@ -513,7 +516,7 @@ def _load_app_template(slug):
 def load_app_from_slug(domain, username, slug):
     # Import app itself
     template = _load_app_template(slug)
-    app = import_app_util(template, domain, {
+    app = import_app_from_doc(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
@@ -602,7 +605,7 @@ def app_exchange(request, domain):
             messages.error(request, _("Invalid application id requested for exchange import"))
             return render(request, template, context)
 
-        app_copy = import_app_util(from_app_id, domain, {
+        app_copy = import_app_from_id(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
         return back_to_main(request, domain, app_id=app_copy._id)
@@ -619,14 +622,14 @@ def _valid_exchange_record_exists_helper(app_id, records):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)

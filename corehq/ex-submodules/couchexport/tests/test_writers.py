@@ -1,13 +1,16 @@
 from codecs import BOM_UTF8
 from contextlib import closing
+import gc
 import io
 import os
+import warnings
 
 from django.test import SimpleTestCase
 from lxml import html, etree
+from openpyxl.worksheet._write_only import WriteOnlyWorksheet
 from unittest.mock import patch, Mock
 
-from couchexport.export import export_from_tables
+from couchexport.export import export_from_tables, export_raw_to_writer
 from couchexport.models import Format
 from couchexport.writers import (
     MAX_XLS_COLUMNS,
@@ -66,7 +69,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + b'ham')
+        assert file_start == BOM_UTF8 + b'ham'
 
     def test_csv_file_writer_utf8(self):
         writer = CsvFileWriter()
@@ -75,7 +78,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(7)
-        self.assertEqual(file_start, BOM_UTF8 + 'hám'.encode('utf-8'))
+        assert file_start == BOM_UTF8 + 'hám'.encode('utf-8')
 
     def test_csv_file_writer_int(self):
         writer = CsvFileWriter()
@@ -84,7 +87,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(6)
-        self.assertEqual(file_start, BOM_UTF8 + b'100')
+        assert file_start == BOM_UTF8 + b'100'
 
 
 class HtmlExportWriterTests(SimpleTestCase):
@@ -104,10 +107,11 @@ class HtmlExportWriterTests(SimpleTestCase):
             [etree.tostring(td, encoding='utf-8').strip().decode('utf-8') for td in tr.xpath('./td')]
             for tr in root.xpath('./body/table/tbody/tr')
         ]
-        self.assertEqual(html_rows,
-                         [['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
-                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
-                          ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>']])
+        assert html_rows == [
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+            ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>'],
+        ]
 
 
 class Excel2007ExportWriterTests(SimpleTestCase):
@@ -122,6 +126,72 @@ class Excel2007ExportWriterTests(SimpleTestCase):
         ]
         tables = [[b'table\xe2\x80\x93title', table]]
         export_from_tables(tables, file_, format_)
+
+
+class ExportWriterCleanupTests(SimpleTestCase):
+    """
+    If a write fails partway through, the writer must still be closed.
+    Otherwise an in-progress openpyxl write-only workbook is abandoned:
+    its generator-based XML writer is left suspended and gets garbage
+    collected at some arbitrary later point (potentially during an
+    unrelated test), raising unraisable lxml errors at that time.
+    """
+
+    def test_export_from_tables_closes_writer_on_write_error(self):
+        mock_writer = Mock()
+        mock_writer.write.side_effect = ValueError("boom")
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                export_from_tables([['title', [['header']]]], io.BytesIO(), Format.XLS_2007)
+        mock_writer.close.assert_called_once()
+
+    def test_export_raw_to_writer_closes_writer_on_write_error(self):
+        mock_writer = Mock()
+        mock_writer.write.side_effect = ValueError("boom")
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                with export_raw_to_writer([['title', ['header']]], [['title', []]], io.BytesIO()):
+                    pass
+        mock_writer.close.assert_called_once()
+
+    def test_export_raw_to_writer_closes_writer_on_consumer_error(self):
+        mock_writer = Mock()
+        with patch('couchexport.export.get_writer', return_value=mock_writer):
+            with self.assertRaises(ValueError):
+                with export_raw_to_writer([['title', ['header']]], [['title', []]], io.BytesIO()):
+                    raise ValueError("boom")
+        mock_writer.close.assert_called_once()
+
+    def test_xlsx_write_failure_does_not_leave_unraisable_generator(self):
+        """
+        A real (unmocked) regression test for the mechanism above: an
+        openpyxl write-only workbook whose write is interrupted, and never
+        saved/closed, leaves its lxml-backed generators suspended. When
+        those get garbage collected -- possibly much later, during an
+        unrelated test -- lxml raises unraisable errors from within the
+        abandoned generator's __del__.
+        """
+        original_append = WriteOnlyWorksheet.append
+        calls = {'n': 0}
+
+        def flaky_append(self, *args, **kwargs):
+            calls['n'] += 1
+            if calls['n'] == 2:
+                raise ValueError("simulated failure mid-write")
+            return original_append(self, *args, **kwargs)
+
+        WriteOnlyWorksheet.append = flaky_append
+        try:
+            tables = [['title', [['h1', 'h2'], ['r1', 'r2']]]]
+            with self.assertRaises(ValueError):
+                export_from_tables(tables, io.BytesIO(), Format.XLS_2007)
+        finally:
+            WriteOnlyWorksheet.append = original_append
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            gc.collect()
+        assert [w for w in caught if 'Unraisable' in w.category.__name__] == []
 
 
 class Excel2003ExportWriterTests(SimpleTestCase):
@@ -166,9 +236,7 @@ class HeaderNameTest(SimpleTestCase):
 
         first_sheet_name = preview[0]['table_name']
         second_sheet_name = preview[1]['table_name']
-        self.assertNotEqual(
-            first_sheet_name.lower(),
-            second_sheet_name.lower(),
+        assert first_sheet_name.lower() != second_sheet_name.lower(), (
             "Sheet names must not be equal. Comparison is NOT case sensitive. Names were '{}' and '{}'".format(
                 first_sheet_name, second_sheet_name
             )
@@ -186,9 +254,9 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertGreater(len(table_index), writer.max_table_name_size)
-        self.assertEqual(preview[0]['table_name'], "my_t...dex")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert len(table_index) > writer.max_table_name_size
+        assert preview[0]['table_name'] == "my_t...dex"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_odd_max_header_length(self):
         writer = PythonDictWriter()
@@ -202,8 +270,8 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertEqual(preview[0]['table_name'], "anothe...b name")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert preview[0]['table_name'] == "anothe...b name"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_exact_max_header_length(self):
         writer = PythonDictWriter()
@@ -217,8 +285,8 @@ class HeaderNameTest(SimpleTestCase):
         )
         writer.close()
         preview = writer.get_preview()
-        self.assertEqual(preview[0]['table_name'], "sheet_name_for_tabs")
-        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+        assert preview[0]['table_name'] == "sheet_name_for_tabs"
+        assert len(preview[0]['table_name']) <= writer.max_table_name_size
 
     def test_max_header_length_duplicates(self):
         writer = PythonDictWriter()
@@ -235,7 +303,7 @@ class HeaderNameTest(SimpleTestCase):
         writer.close()
         preview = writer.get_preview()
         table_names = {table['table_name'] for table in preview}
-        self.assertEqual(len(table_names), 2)
+        assert len(table_names) == 2
 
 
 class TestGeoJSONWriter(SimpleTestCase):
@@ -262,12 +330,12 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'properties': {'name': 'Delhi', 'country': 'India'}
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features__other_geo_property_configured(self):
         table = TableConfiguration(selected_geo_property="some-other-property")
         features = GeoJSONWriter().get_features(table, self._table_data())
-        self.assertEqual(features, [])
+        assert features == []
 
     def test_get_features__invalid_geo_property_column_value(self):
         table = TableConfiguration(selected_geo_property=self.GEO_PROPERTY)
@@ -277,7 +345,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         features = GeoJSONWriter().get_features(table, data)
 
         features_names = [feature['properties']['name'] for feature in features]
-        self.assertTrue(data[1][2] not in features_names)
+        assert data[1][2] not in features_names
 
     def test_get_features_from_path(self):
         table = self.geopoint_table_configuration(
@@ -303,7 +371,7 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'type': 'Feature'
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features_from_path__invalid_path(self):
         table = self.geopoint_table_configuration(
@@ -313,7 +381,7 @@ class TestGeoJSONWriter(SimpleTestCase):
         features = GeoJSONWriter().get_features(table, self._table_data(geo_property_header='some.path'))
 
         expected_features = []
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def test_get_features_from_path__location_metadata(self):
         table = self.geopoint_table_configuration(
@@ -340,7 +408,7 @@ class TestGeoJSONWriter(SimpleTestCase):
                 'type': 'Feature'
             },
         ]
-        self.assertEqual(features, expected_features)
+        assert features == expected_features
 
     def _table_data(self, geo_property_header=None):
         data = [self._table_header(geo_property_header)]

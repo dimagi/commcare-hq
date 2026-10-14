@@ -1,16 +1,22 @@
 import re
 from datetime import datetime
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import expire_case_properties_caches
 from corehq.apps.case_importer import exceptions
+
+
+def sync_project_db(domain):
+    if toggles.PROJECT_DB.enabled(domain):
+        from corehq.apps.project_db.tasks import schedule_project_db_sync
+        transaction.on_commit(lambda: schedule_project_db_sync(domain))
 
 
 class CaseType(models.Model):
@@ -45,7 +51,9 @@ class CaseType(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_cache(self.domain)
-        return super(CaseType, self).save(*args, **kwargs)
+        result = super(CaseType, self).save(*args, **kwargs)
+        sync_project_db(self.domain)
+        return result
 
     def delete(self, *args, **kwargs):
         self.clear_cache(self.domain)
@@ -160,7 +168,9 @@ class CaseProperty(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)
-        return super(CaseProperty, self).save(*args, **kwargs)
+        result = super(CaseProperty, self).save(*args, **kwargs)
+        sync_project_db(self.case_type.domain)
+        return result
 
     def delete(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)

@@ -4,7 +4,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.exceptions import AppValidationError
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models import import_app_from_doc
 from corehq.apps.data_cleaning.management.commands.utils import input_validation
 
 APP_JSON_DIR = Path(__file__).resolve().parent / 'utils' / 'apps'
@@ -36,7 +36,7 @@ class Command(BaseCommand):
             )
             return
         template = get_plant_app_template()
-        app = import_app(
+        app = import_app_from_doc(
             template,
             domain,
             {

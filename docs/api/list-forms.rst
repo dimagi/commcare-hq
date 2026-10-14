@@ -152,7 +152,7 @@ The forms can be filtered using the following parameters, which also control pag
           },
           "id": "f959449c-8776-42ac-b776-3f564fafc331",
           "initial_processing_complete": true,
-          "is_phone_submission": "2.0",
+          "is_phone_submission": false,
           "metadata": {
             "appVersion": "CommCare Android, version \"2.31.0\"(423345). App v18. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
             "app_build_version": 18,

@@ -83,6 +83,7 @@ msgid "Account Name"
 msgstr "खाता नाम"
 
 #: corehq/apps/accounting/filters.py corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/bulk_payment_receipt.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
@@ -193,7 +194,8 @@ msgstr "केवल ट्रायल सब्सक्रिप्शन द
 #: corehq/apps/hqadmin/templates/hqadmin/email_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
-#: corehq/apps/notifications/forms.py corehq/apps/reports/standard/sms.py
+#: corehq/apps/notifications/forms.py corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/tables.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
 #: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -208,6 +210,48 @@ msgstr "डिस्काउंटेड"
 #: corehq/apps/accounting/filters.py
 msgid "Is Hidden"
 msgstr "छिपा है"
+
+#: corehq/apps/accounting/filters.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
+#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
+#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_cleaning/tables.py
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
+#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
+#: corehq/apps/enterprise/enterprise.py
+#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/reports/standard/cases/basic.py
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
+#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
+#: corehq/apps/settings/templates/settings/my_projects.html
+#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/generic_inbound/reports.py
+#: corehq/motech/repeaters/views/repeat_records.py
+#: corehq/motech/templates/motech/log_detail.html
+#: corehq/motech/templates/motech/logs.html
+msgid "Status"
+msgstr "स्थिति"
 
 #: corehq/apps/accounting/filters.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/reports/standard/cases/basic.py
@@ -420,6 +464,10 @@ msgid "Justify why \"Skip Auto Pause\""
 msgstr "\"ऑटो पॉज़ छोड़ें\" का कारण स्पष्ट करें"
 
 #: corehq/apps/accounting/forms.py
+msgid "Extension length"
+msgstr "एक्सटेंशन की लंबाई"
+
+#: corehq/apps/accounting/forms.py
 msgid "Enable auto renewal"
 msgstr "स्वचालित नवीनीकरण सक्षम करें"
 
@@ -474,6 +522,7 @@ msgstr "%s सदस्यता"
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
 #: corehq/apps/locations/templates/locations/manage/location_template.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
 #: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
 #: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -726,6 +775,95 @@ msgid "Submit Request"
 msgstr "अनुरोध सबमिट करें"
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Email To"
+msgstr "ईमेल प्राप्तकर्ता"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+#: corehq/apps/reports/forms.py
+msgid "Additional Recipients"
+msgstr "अतिरिक्त प्राप्तकर्ता"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment Start Date"
+msgstr "प्रीपेमेंट प्रारंभ तिथि"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Prepayment End Date"
+msgstr "प्रीपेमेंट समाप्ति तिथि"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Credit Label"
+msgstr "क्रेडिट लेबल"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Unit Cost"
+msgstr "यूनिट लागत"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Quantity"
+msgstr "मात्रा"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "Send On"
+msgstr "भेजने की तिथि"
+
+#: corehq/apps/accounting/forms.py
+msgid "Prepayment end date must be after start date."
+msgstr "प्रीपेमेंट की समाप्ति तिथि प्रारंभ तिथि के बाद होनी चाहिए।"
+
+#: corehq/apps/accounting/forms.py
+#, python-brace-format
+msgid "The total prepayment amount cannot be more than ${max_amount}."
+msgstr "कुल अग्रिम भुगतान राशि ${max_amount} से अधिक नहीं हो सकती है।"
+
+#: corehq/apps/accounting/forms.py corehq/apps/domain/views/accounting.py
+msgid ""
+"The following e-mail addresses contain invalid characters, or are missing "
+"required characters: "
+msgstr ""
+"निम्नलिखित ई-मेल पतों में अमान्य अक्षर हैं, या आवश्यक अक्षर गायब हैं: "
+
+#: corehq/apps/accounting/forms.py
+#, python-format
+msgid "The credit label must be %(max_length)d characters or fewer."
+msgstr "क्रेडिट लेबल %(max_length)d अक्षरों या उससे कम का होना चाहिए।"
+
+#: corehq/apps/accounting/forms.py
+#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
+#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
+msgid "The send date must be in the future."
+msgstr "भेजने की तिथि भविष्य में होनी चाहिए।"
+
+#: corehq/apps/accounting/forms.py
+msgid ""
+"This project space has no active subscription, so an invoice cannot be "
+"scheduled for it."
+msgstr ""
+"इस प्रोजेक्ट स्पेस की कोई सक्रिय सदस्यता नहीं है, इसलिए इसके लिए इनवॉइस "
+"अनुसूचित नहीं किया जा सकता।"
+
+#: corehq/apps/accounting/forms.py
+msgid "Project space '{}' was not found."
+msgstr "प्रोजेक्ट स्पेस '{}' नहीं मिला।"
+
+#: corehq/apps/accounting/forms.py
 msgid "Renewal Reminder"
 msgstr "नवीनीकरण अनुस्मारक"
 
@@ -753,7 +891,9 @@ msgid "{num_days} day of {plan_name} Software Plan.{subscription_date_range}"
 msgid_plural ""
 "{num_days} days of {plan_name} Software Plan.{subscription_date_range}"
 msgstr[0] ""
+"{num_days} दिन {plan_name} सॉफ़्टवेयर प्लान के।{subscription_date_range}"
 msgstr[1] ""
+"{num_days} दिन {plan_name} सॉफ़्टवेयर प्लान के।{subscription_date_range}"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -769,8 +909,8 @@ msgstr "योजना सीमा {monthly_limit} से अधिक प्�
 #, python-brace-format
 msgid "{num_sms} SMS Message"
 msgid_plural "{num_sms} SMS Messages"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{num_sms} एसएमएस संदेश"
+msgstr[1] "{num_sms} एसएमएस संदेश"
 
 #: corehq/apps/accounting/invoicing.py
 #, python-brace-format
@@ -790,7 +930,11 @@ msgid_plural ""
 "{num_extra_sms} SMS messages beyond {monthly_limit} messages "
 "included{date_range}."
 msgstr[0] ""
+"{num_extra_sms} एसएमएस संदेश {monthly_limit} संदेशों से अधिक शामिल "
+"हैं{date_range}।"
 msgstr[1] ""
+"{num_extra_sms} एसएमएस संदेश {monthly_limit} संदेशों से अधिक शामिल "
+"हैं{date_range}।"
 
 #: corehq/apps/accounting/models.py
 #, python-brace-format
@@ -830,6 +974,7 @@ msgstr "हम आपके खाते से संबंधित संच�
 #: corehq/apps/accounting/models.py corehq/apps/data_dictionary/models.py
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/settings/forms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/add_gateway.html
@@ -950,7 +1095,11 @@ msgid_plural ""
 "You have %(num_apps)d applications that will lose Web Apps access if you "
 "select this plan."
 msgstr[0] ""
+"आपके पास %(num_apps)d एप्लिकेशन है जो इस प्लान को चुनने पर वेब ऐप्स एक्सेस "
+"खो देगा।"
 msgstr[1] ""
+"आपके पास %(num_apps)d एप्लिकेशन हैं जो इस प्लान को चुनने पर वेब ऐप्स एक्सेस "
+"खो देंगे।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -961,7 +1110,11 @@ msgid_plural ""
 "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
 "these Lookup Tables."
 msgstr[0] ""
+"आपके पास %(num_fix)s लुकअप टेबल सेटअप है। इस प्लान को चुनने पर यह लुकअप टेबल"
+" हटा दी जाएगी।"
 msgstr[1] ""
+"आपके पास %(num_fix)s लुकअप टेबल्स सेटअप हैं। इस प्लान को चुनने पर ये लुकअप "
+"टेबल्स हटा दी जाएंगी।"
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -979,7 +1132,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting this"
 " plan will deactivate them."
 msgstr[0] ""
+"आपके पास %(num_active)d सक्रिय रिमाइंडर रूल या ब्रॉडकास्ट है। इस प्लान को "
+"चुनने पर यह निष्क्रिय हो जाएगा।"
 msgstr[1] ""
+"आपके पास %(num_active)d सक्रिय रिमाइंडर रूल्स और ब्रॉडकास्ट्स हैं। इस प्लान "
+"को चुनने पर ये निष्क्रिय हो जाएंगी।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -990,7 +1147,11 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts which use a "
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
+"आपके पास %(num_active)d सक्रिय रिमाइंडर रूल या ब्रॉडकास्ट है जो सर्वे का "
+"उपयोग करता है। इस प्लान को चुनने पर यह निष्क्रिय हो जाएगा।"
 msgstr[1] ""
+"आपके पास %(num_active)d सक्रिय रिमाइंडर रूल्स और ब्रॉडकास्ट्स हैं जो सर्वे "
+"का उपयोग करते हैं। इस प्लान को चुनने पर ये निष्क्रिय हो जाएंगी।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1000,7 +1161,11 @@ msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove "
 "them."
 msgstr[0] ""
+"आपके पास %(num)d डी-आइडेंटिफाइड एक्सपोर्ट है। इस प्लान को चुनने पर यह हटा "
+"दिया जाएगा।"
 msgstr[1] ""
+"आपके पास %(num)d डी-आइडेंटिफाइड एक्सपोर्ट्स हैं। इस प्लान को चुनने पर ये हटा"
+" दिए जाएंगे।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1015,7 +1180,15 @@ msgid_plural ""
 "charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
+"आपके पास %(num_extra)d मोबाइल वर्कर हैं जो इस नए प्लान की मासिक सीमा "
+"%(monthly_limit)d से अधिक हैं। यदि आप यह प्लान चुनते हैं, तो प्रत्येक "
+"अतिरिक्त मोबाइल वर्कर के लिए USD %(excess_fee)s मासिक शुल्क लगेगा, कुल USD "
+"%(monthly_total)s प्रति माह।"
 msgstr[1] ""
+"आपके पास %(num_extra)d मोबाइल वर्कर हैं जो इस नए प्लान की मासिक सीमा "
+"%(monthly_limit)d से अधिक हैं। यदि आप यह प्लान चुनते हैं, तो प्रत्येक "
+"अतिरिक्त मोबाइल वर्कर के लिए USD %(excess_fee)s मासिक शुल्क लगेगा, कुल USD "
+"%(monthly_total)s प्रति माह।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1034,20 +1207,46 @@ msgid_plural ""
 "additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per"
 " month."
 msgstr[0] ""
+"मुफ्त प्लान में डिफ़ॉल्ट रूप से %(monthly_limit)s मोबाइल वर्कर शामिल हैं। "
+"आपके पास %(num_extra)d अतिरिक्त मोबाइल वर्कर होने के कारण, आपके प्रोजेक्ट के"
+" सभी मोबाइल वर्कर निष्क्रिय कर दिए जाएंगे। डाउनग्रेड के बाद आप इन्हें "
+"मैन्युअली पुनः सक्रिय कर सकते हैं। %(monthly_limit)s से अधिक प्रत्येक सक्रिय"
+" मोबाइल वर्कर के लिए USD %(excess_fee)s अतिरिक्त शुल्क लगेगा, कुल USD "
+"%(monthly_total)s प्रति माह।"
 msgstr[1] ""
+"मुफ्त प्लान में डिफ़ॉल्ट रूप से %(monthly_limit)s मोबाइल वर्कर शामिल हैं। "
+"आपके पास %(num_extra)d अतिरिक्त मोबाइल वर्कर होने के कारण, आपके प्रोजेक्ट के"
+" सभी मोबाइल वर्कर निष्क्रिय कर दिए जाएंगे। डाउनग्रेड के बाद आप इन्हें "
+"मैन्युअली पुनः सक्रिय कर सकते हैं। %(monthly_limit)s से अधिक प्रत्येक सक्रिय"
+" मोबाइल वर्कर के लिए USD %(excess_fee)s अतिरिक्त शुल्क लगेगा, कुल USD "
+"%(monthly_total)s प्रति माह।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
+#| msgid ""
+#| "You have %(num_roles)d Custom Role configured for your project. If you "
+#| "select this plan, all users with that role will change to having the Read "
+#| "Only role."
+#| msgid_plural ""
+#| "You have %(num_roles)d Custom Roles configured for your project . If you "
+#| "select this plan, all users with these roles will change to having the Read "
+#| "Only role."
 msgid ""
 "You have %(num_roles)d Custom Role configured for your project. If you "
 "select this plan, all users with that role will change to having the Read "
 "Only role."
 msgid_plural ""
-"You have %(num_roles)d Custom Roles configured for your project . If you "
+"You have %(num_roles)d Custom Roles configured for your project. If you "
 "select this plan, all users with these roles will change to having the Read "
 "Only role."
 msgstr[0] ""
+"आपके प्रोजेक्ट के लिए %(num_roles)d कस्टम रोल कॉन्फ़िगर किया गया है। यदि आप "
+"इस प्लान का चयन करते हैं, तो उस रोल वाले सभी उपयोगकर्ताओं को केवल रीड ओनली "
+"रोल मिल जाएगा।"
 msgstr[1] ""
+"आपके प्रोजेक्ट के लिए %(num_roles)d कस्टम रोल्स कॉन्फ़िगर किए गए हैं। यदि आप"
+" इस प्लान का चयन करते हैं, तो इन सभी रोल्स वाले उपयोगकर्ताओं को केवल रीड "
+"ओनली रोल मिल जाएगा।"
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1067,7 +1266,11 @@ msgid_plural ""
 "You have %(rule_count)d automatic case update rules configured in your "
 "project. If you select this plan, these rules will be deactivated."
 msgstr[0] ""
+"आपके प्रोजेक्ट में %(rule_count)d स्वचालित केस अपडेट रूल कॉन्फ़िगर किया गया "
+"है। यदि आप यह प्लान चुनते हैं, तो यह रूल निष्क्रिय हो जाएगा।"
 msgstr[1] ""
+"आपके प्रोजेक्ट में %(rule_count)d स्वचालित केस अपडेट रूल्स कॉन्फ़िगर किए गए "
+"हैं। यदि आप यह प्लान चुनते हैं, तो ये रूल्स निष्क्रिय हो जाएंगे।"
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1118,14 +1321,24 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
+#| msgid ""
+#| "You have %(num_apps)d application that has a practice mobile worker "
+#| "configured, it will be unset on downgrade."
+#| msgid_plural ""
+#| "You have %(num_apps)d applications that has a practice mobile worker "
+#| "configured, it will be unset on downgrade."
 msgid ""
 "You have %(num_apps)d application that has a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgid_plural ""
-"You have %(num_apps)d applications that has a practice mobile worker "
+"You have %(num_apps)d applications that have a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgstr[0] ""
+"आपके पास %(num_apps)d एप्लिकेशन है जिसमें प्रैक्टिस मोबाइल वर्कर कॉन्फ़िगर "
+"किया गया है, डाउनग्रेड करने पर यह अनसेट हो जाएगा।"
 msgstr[1] ""
+"आपके पास %(num_apps)d एप्लिकेशन हैं जिनमें प्रैक्टिस मोबाइल वर्कर कॉन्फ़िगर "
+"किया गया है, डाउनग्रेड करने पर यह अनसेट हो जाएगा।"
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -1162,6 +1375,7 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/disable.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
+#: corehq/apps/hqadmin/offboarding/clients.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/manage_downstream_domains.html
 #: corehq/apps/locations/templates/locations/location_types.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
@@ -1254,8 +1468,10 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_solutions_feature_request.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
@@ -1270,6 +1486,8 @@ msgstr ""
 #: corehq/apps/notifications/forms.py
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/apps/registration/forms.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/registry/templates/registry/registry_list.html
@@ -1357,6 +1575,7 @@ msgstr "हटा दिया गया"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid "Account"
 msgstr "खाता"
 
@@ -1374,6 +1593,75 @@ msgstr "क्रेडिट्स"
 #: corehq/apps/domain/templates/domain/bootstrap5/current_subscription.html
 msgid "Autopay"
 msgstr "ऑटोपे"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
+#: corehq/apps/campaign/forms.py
+#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
+#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/domain/templates/domain/admin/feature_previews.html
+#: corehq/apps/export/templates/export/customize_export_new.html
+#: corehq/apps/export/templates/export/download_data_files.html
+#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
+#: corehq/apps/hqadmin/reports.py
+#: corehq/apps/products/templates/products/manage/products.html
+#: corehq/apps/programs/templates/programs/manage/program.html
+#: corehq/apps/registry/templates/registry/registry_list.html
+#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
+#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
+#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
+#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
+#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
+#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
+msgid "Description"
+msgstr "विवरण"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/integration/payments/tables.py
+msgid "Amount"
+msgstr "राशि"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "Prepayment Term"
+msgstr "प्रीपेमेंट अवधि"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+#: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
+#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
+#: corehq/messaging/scheduling/forms.py
+msgid "Recipients"
+msgstr "प्राप्तकर्ता"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "Scheduled By"
+msgstr "अनुसूचित द्वारा"
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid ""
+"\n"
+"        Cancelling stops this invoice from being generated and emailed. It\n"
+"        cannot be undone. Schedule a replacement if the amount or dates need\n"
+"        to change.\n"
+"      "
+msgstr ""
+"\n"
+"        रद्द करने से यह इनवॉइस बनना और ईमेल होना बंद हो जाएगा।\n"
+"        इसे पूर्ववत नहीं किया जा सकता। यदि राशि या तिथियों में बदलाव करना है तो प्रतिस्थापन अनुसूचित करें।\n"
+"      "
+
+#: corehq/apps/accounting/templates/accounting/cancel_scheduled_invoice.html
+msgid "This invoice is no longer pending, so there is nothing to cancel."
+msgstr "यह इनवॉइस अब लंबित नहीं है, इसलिए रद्द करने के लिए कुछ नहीं है।"
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_card_removed.html
 #, python-format
@@ -1928,44 +2216,6 @@ msgstr "स्टेटमेंट संख्या"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/data_cleaning/tables.py
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_run_history.html
-#: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
-#: corehq/apps/enterprise/enterprise.py
-#: corehq/apps/hqadmin/templates/hqadmin/email_status.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/reports/standard/cases/basic.py
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
-#: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
-#: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/sms/views.py corehq/apps/sso/forms.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-#: corehq/motech/generic_inbound/reports.py
-#: corehq/motech/repeaters/views/repeat_records.py
-#: corehq/motech/templates/motech/log_detail.html
-#: corehq/motech/templates/motech/logs.html
-msgid "Status"
-msgstr "स्थिति"
-
-#: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
-#: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
-#: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 msgid "Amount Due this Month"
 msgstr "इस माह देय राशि"
 
@@ -2210,12 +2460,6 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/customer_invoice.html
 #: corehq/apps/accounting/templates/accounting/email/invoice.html
-#| msgid ""
-#| "\n"
-#| "    Statement From:\n"
-#| "    CommCare and the corporation Dimagi, Inc.\n"
-#| "    245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
-#| "  "
 msgid ""
 "\n"
 "    Statement From: CommCare and the corporation Dimagi, Inc. 245 Main Street, 2nd Floor, Cambridge, MA 02142 USA\n"
@@ -4014,6 +4258,10 @@ msgstr ""
 "CommCare और कंपनी Dimagi, Inc.\n"
 "245 मेन स्ट्रीट, दूसरी मंजिल, कैम्ब्रिज, MA 02142 USA\n"
 
+#: corehq/apps/accounting/templates/accounting/generate_prepayment_invoice.html
+msgid "Generate Invoice"
+msgstr "इनवॉइस जनरेट करें"
+
 #: corehq/apps/accounting/templates/accounting/invoice.html
 #, python-format
 msgid ""
@@ -4063,13 +4311,6 @@ msgid "Date"
 msgstr "तिथि"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
-#: corehq/messaging/scheduling/forms.py
-msgid "Recipients"
-msgstr "प्राप्तकर्ता"
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
 msgid "View PDF"
 msgstr "PDF देखें"
 
@@ -4098,11 +4339,6 @@ msgstr "भुगतान प्रकार"
 #: corehq/motech/fhir/const.py
 msgid "User"
 msgstr "उपयोगकर्ता"
-
-#: corehq/apps/accounting/templates/accounting/invoice.html
-#: corehq/apps/integration/payments/tables.py
-msgid "Amount"
-msgstr "राशि"
 
 #: corehq/apps/accounting/templates/accounting/partials/adjust_balance.html
 msgid "Adjust Balance for Invoice #"
@@ -4812,6 +5048,7 @@ msgstr "जोड़े गए उपयोगकर्ता:"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -5350,6 +5587,8 @@ msgstr "केस"
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 #: corehq/apps/reports/standard/inspect.py
 #: corehq/apps/reports/templates/reports/reportdata/bootstrap3/case_data.html
@@ -5371,8 +5610,9 @@ msgstr "डेटा स्रोत"
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/doc_info.py
-#: corehq/apps/linked_domain/const.py corehq/apps/reports/filters/forms.py
-#: corehq/apps/reports/filters/select.py
+#: corehq/apps/linked_domain/const.py corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/forms.py corehq/apps/reports/filters/select.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/styleguide/examples/bootstrap5/htmx_pagination_table.py
 msgid "Application"
@@ -5421,12 +5661,16 @@ msgstr "इस रिपोर्ट के लिए डेटा प्रा�
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_view_settings.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/base_navigation.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/base_navigation.html
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 #: corehq/apps/reports/filters/forms.py
 msgid "Menu"
 msgstr "मेनू"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/domain/forms.py
-#: corehq/apps/export/forms.py corehq/apps/reports/filters/select.py
+#: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+#: corehq/apps/reports/filters/select.py
 msgid "Select Application"
 msgstr "एप्लिकेशन चुनें"
 
@@ -5434,10 +5678,12 @@ msgstr "एप्लिकेशन चुनें"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list.html
 #: corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Menu"
 msgstr "मेनू चुनें"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/export/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
 msgid "Select Form"
 msgstr "फॉर्म चुनें"
 
@@ -5776,6 +6022,29 @@ msgid "Remote Application"
 msgstr "रिमोट एप्लिकेशन"
 
 #: corehq/apps/app_manager/models/applications.py
+#| msgid "Application successfully copied and linked."
+msgid ""
+"Application successfully copied. The following lookup tables were also "
+"copied: {}."
+msgstr ""
+"एप्लिकेशन सफलतापूर्वक कॉपी की गई। निम्नलिखित लुकअप टेबल्स भी कॉपी की गईं: "
+"{}."
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid "Application successfully copied and linked."
+msgid "Application successfully copied."
+msgstr "एप्लिकेशन सफलतापूर्वक कॉपी की गई।"
+
+#: corehq/apps/app_manager/models/applications.py
+msgid "Could not copy lookup tables missing from the source project: {}."
+msgstr "सोर्स प्रोजेक्ट से गायब लुकअप टेबल्स कॉपी नहीं की जा सकीं: {}."
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid "An error occurred during the download."
+msgid "An error occurred while copying the following lookup tables: {}."
+msgstr "निम्नलिखित लुकअप टेबल्स की कॉपी करते समय एक त्रुटि हुई: {}."
+
+#: corehq/apps/app_manager/models/applications.py
 msgid ""
 "Copying the application succeeded, but the application will have errors "
 "because your application contains a Mobile Report Module that references a "
@@ -5792,6 +6061,25 @@ msgid ""
 msgstr ""
 "एप्लिकेशन की कॉपी सफल रही, लेकिन एप्लिकेशन में मल्टीमीडिया फ़ाइल(फ़ाइलें) "
 "गायब हैं।"
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Updating the application succeeded, but the application will have errors "
+"because it contains a Mobile Report Module that references a custom report "
+"(UCR) that isn't available in this project space. Multimedia may be absent."
+msgstr ""
+"एप्लिकेशन अपडेट करना सफल रहा, लेकिन एप्लिकेशन में त्रुटियाँ होंगी क्योंकि "
+"इसमें एक मोबाइल रिपोर्ट मॉड्यूल है जो एक कस्टम रिपोर्ट (UCR) को संदर्भित "
+"करता है जो इस प्रोजेक्ट स्पेस में उपलब्ध नहीं है। मल्टीमीडिया अनुपस्थित हो "
+"सकता है।"
+
+#: corehq/apps/app_manager/models/applications.py
+msgid ""
+"Updating the application succeeded, but the application is missing "
+"multimedia file(s)."
+msgstr ""
+"एप्लिकेशन अपडेट करना सफल रहा, लेकिन एप्लिकेशन में मल्टीमीडिया फ़ाइल(फ़ाइलें)"
+" गायब हैं।"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid "Space-separated list of privilege strings from corehq.privileges"
@@ -7538,6 +7826,7 @@ msgstr "मेनू सेटिंग्स"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
@@ -7696,6 +7985,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/case_management.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/case_management.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/multimedia_uploader.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/multimedia_uploader.html
@@ -7710,6 +8000,9 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/bootstrap5/ko_feedback.html
 #: corehq/apps/products/templates/products/manage/products.html
 #: corehq/apps/programs/templates/programs/manage/programs.html
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/forms.py
 #: corehq/apps/reports/templates/reports/async/bootstrap5/default.html
@@ -7892,7 +8185,7 @@ msgstr "मूल्य"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 #: corehq/apps/data_cleaning/forms/columns.py
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
+#: corehq/apps/data_dictionary/views.py corehq/apps/public_webforms/forms.py
 #: corehq/apps/reports/templates/reports/filters/bootstrap3/explorer_columns.html
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/bootstrap3/property_list_configuration.html
@@ -8066,7 +8359,8 @@ msgstr "बल्क ऐप्लिकेशन अनुवाद"
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
-#: corehq/apps/app_manager/views/modules.py corehq/apps/reminders/forms.py
+#: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py corehq/apps/reminders/forms.py
 #: corehq/apps/sms/filters.py
 msgid "Survey"
 msgstr "सर्वेक्षण"
@@ -10010,6 +10304,7 @@ msgid "Case Tag"
 msgstr "केस टैग"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/case_config_advanced.html
+#: corehq/apps/case_search/templates/case_search/partials/query_tester.html
 msgid "from"
 msgstr "से"
 
@@ -10347,10 +10642,8 @@ msgstr "कस्टम इंस्टेंस जोड़ें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_filter.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_form_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/module_filter.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_form_setting.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/module_filter.html
 msgid "Display Condition"
 msgstr "प्रदर्शन शर्त"
@@ -11793,6 +12086,7 @@ msgstr "बैकएंड"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#: corehq/apps/linked_domain/const.py
 msgid "Case Search Endpoint"
 msgstr "केस सर्च एंडपॉइंट"
 
@@ -11950,6 +12244,12 @@ msgstr "खोज स्क्रीन शीर्षक अनुवाद"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
 msgid "Search Screen Subtitle"
 msgstr "खोज स्क्रीन उपशीर्षक"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
+#| msgid "Display Condition"
+msgid "Search Button Display Condition"
+msgstr "सर्च बटन डिस्प्ले कंडीशन"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
@@ -12506,35 +12806,6 @@ msgstr "एनोटेशन जोड़ें"
 #: corehq/apps/userreports/reports/builder/forms.py
 msgid "Report"
 msgstr "रिपोर्ट"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
-#: corehq/apps/campaign/forms.py
-#: corehq/apps/data_dictionary/templates/data_dictionary/base.html
-#: corehq/apps/data_dictionary/views.py
-#: corehq/apps/domain/templates/domain/admin/feature_previews.html
-#: corehq/apps/export/templates/export/customize_export_new.html
-#: corehq/apps/export/templates/export/download_data_files.html
-#: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html
-#: corehq/apps/hqadmin/reports.py
-#: corehq/apps/products/templates/products/manage/products.html
-#: corehq/apps/programs/templates/programs/manage/program.html
-#: corehq/apps/registry/templates/registry/registry_list.html
-#: corehq/apps/reminders/forms.py corehq/apps/reminders/views.py
-#: corehq/apps/reports/templates/reports/bootstrap3/reports_home.html
-#: corehq/apps/reports/templates/reports/bootstrap5/reports_home.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap3/save_reports_modal.html
-#: corehq/apps/reports/templates/reports/partials/bootstrap5/save_reports_modal.html
-#: corehq/apps/sms/forms.py corehq/apps/sms/views.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-#: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/bootstrap5/ucr_expression.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap3/filter_panel.html
-#: corehq/apps/userreports/templates/userreports/partials/bootstrap5/filter_panel.html
-#: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
-msgid "Description"
-msgstr "विवरण"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/mobile_report_configs.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/mobile_report_configs.html
@@ -14064,10 +14335,6 @@ msgid "Smart link to external domain"
 msgstr "बाहरी डोमेन के लिए स्मार्ट लिंक"
 
 #: corehq/apps/app_manager/views/modules.py
-msgid "Case list used by Select Parent First in '{}' not found"
-msgstr "‘{}’ में Select Parent First द्वारा उपयोग की गई केस सूची नहीं मिली"
-
-#: corehq/apps/app_manager/views/modules.py
 msgid "Product List"
 msgstr "उत्पाद सूची"
 
@@ -14100,6 +14367,15 @@ msgstr "केस पदानुक्रम में एक चक्री�
 #: corehq/apps/app_manager/views/modules.py
 msgid "\"{}\" has sub-menus. You must remove these before you can delete it."
 msgstr "\"{}\" में उप-मेनू हैं। इन्हें हटाने के बाद ही आप इसे हटा सकते हैं।"
+
+#: corehq/apps/app_manager/views/modules.py
+#, python-brace-format
+msgid ""
+"\"{module}\" is used by \"{dependents}\" for Parent Child Selection. Change "
+"or turn off that setting before deleting it."
+msgstr ""
+"\"{module}\" का उपयोग \"{dependents}\" द्वारा पेरेंट चाइल्ड चयन के लिए किया "
+"जा रहा है। इसे हटाने से पहले वह सेटिंग बदलें या बंद करें।"
 
 #: corehq/apps/app_manager/views/modules.py
 #, python-brace-format
@@ -14149,6 +14425,10 @@ msgstr ""
 "हैं।"
 
 #: corehq/apps/app_manager/views/modules.py
+msgid "Invalid case search endpoint."
+msgstr "अमान्य केस सर्च एंडपॉइंट।"
+
+#: corehq/apps/app_manager/views/modules.py
 msgid "There was a problem processing your request."
 msgstr "आपके अनुरोध को संसाधित करने में समस्या हुई।"
 
@@ -14169,6 +14449,7 @@ msgid "Followup Form"
 msgstr "फॉलोअप फॉर्म"
 
 #: corehq/apps/app_manager/views/modules.py
+#: corehq/apps/public_webforms/models.py
 msgid "Registration"
 msgstr "पंजीकरण"
 
@@ -14298,6 +14579,12 @@ msgstr "ऐप अंतर"
 #: corehq/apps/app_manager/views/releases.py
 msgid "Reverted to version {log.info['version']}"
 msgstr "{log.info['version']} संस्करण पर वापस लौटाया गया"
+
+#: corehq/apps/app_manager/views/utils.py
+msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
+msgstr ""
+"मॉड्यूल '{}' के लिए एंडपॉइंट नहीं मिला। पहले एंडपॉइंट्स पुश करने का प्रयास "
+"करें"
 
 #: corehq/apps/app_manager/views/utils.py
 #, python-format
@@ -14501,6 +14788,11 @@ msgstr ""
 "loacation:mytype:referencetype/property। उदाहरण के लिए: "
 "location:outlet:state/name"
 
+#: corehq/apps/builds/models.py
+#, python-format
+msgid "Build version %(value)s does not comply with the x.y.z schema"
+msgstr "बिल्ड संस्करण %(value)s x.y.z स्कीमा के अनुरूप नहीं है"
+
 #: corehq/apps/builds/templates/builds/all.html
 msgid "Build Number"
 msgstr "बिल्ड नंबर"
@@ -14692,6 +14984,7 @@ msgstr "क्या आप वाकई इस विजेट को हटा
 #: corehq/apps/data_dictionary/templates/data_dictionary/partials/confirmation_modals.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/delete_saved_area_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/delete_saved_area_modal.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 #: corehq/apps/integration/templates/payments/partials/payments_confirmation_modal.html
 #: corehq/apps/integration/templates/payments/partials/payments_revert_verification_modal.html
@@ -14713,6 +15006,7 @@ msgstr "विजेट संपादित करें"
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
 #: corehq/apps/integration/templates/payments/payments_verify_report.html
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
 #: corehq/apps/styleguide/templates/styleguide/bootstrap5/examples/htmx_pagination.html
 #: corehq/apps/styleguide/templates/styleguide/htmx_alpine_crispy/main.html
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
@@ -15211,7 +15505,6 @@ msgid "Confirm Import"
 msgstr "आयात की पुष्टि करें"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html
-#| msgid "Upload File"
 msgid "Upload an Excel File"
 msgstr "एक एक्सेल फ़ाइल अपलोड करें"
 
@@ -15251,10 +15544,6 @@ msgid "blank"
 msgstr "रिक्त"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      Case importer is a tool for bulk uploading new cases or modifying existing ones.\n"
-#| "    "
 msgid ""
 "\n"
 "      Bulk upload new cases or update existing ones from a spreadsheet.\n"
@@ -15265,14 +15554,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/help_message.html
-#| msgid ""
-#| "\n"
-#| "      This tool can make changes to your data that might confuse your reports or applications.\n"
-#| "      Please exercise caution and see the\n"
-#| "      <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946828/Case+Import+with+Excel\" target=\"_blank\">\n"
-#| "        help pages for this feature.\n"
-#| "      </a>\n"
-#| "    "
 msgid ""
 "\n"
 "      Imports can modify existing data and may affect your reports. Review the\n"
@@ -15287,7 +15568,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "Recent Uploads"
 msgid "Recent Imports"
 msgstr "हाल की इम्पोर्ट्स"
 
@@ -15352,7 +15632,6 @@ msgid "Complete"
 msgstr "पूर्ण"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#| msgid "No recent uploads found."
 msgid "No recent imports found."
 msgstr "कोई हाल की इम्पोर्ट्स नहीं मिली।"
 
@@ -15565,6 +15844,16 @@ msgstr "से शुरू होता है"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is like"
+msgstr "जैसा है"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
+msgid "sounds like"
+msgstr "जैसी आवाज़ है"
+
+#: corehq/apps/case_search/endpoint_capability.py
+#: corehq/apps/data_cleaning/models/types.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/case_rule_criteria.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/case_rule_criteria.html
 msgid "equals"
@@ -15603,6 +15892,7 @@ msgstr "से कम या बराबर"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid "on"
 msgstr "पर"
 
@@ -15618,29 +15908,46 @@ msgid "after"
 msgstr "के बाद"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#: corehq/apps/data_cleaning/models/types.py
-msgid "is any"
-msgstr "कोई भी है"
+msgid "on or before"
+msgstr "या उससे पहले"
 
 #: corehq/apps/case_search/endpoint_capability.py
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is all"
-msgstr "सभी हैं"
+msgid "on or after"
+msgstr "उस दिन या उसके बाद"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#: corehq/apps/data_cleaning/models/types.py
-#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
-msgid "is empty"
-msgstr "खाली है"
+msgid "is approximately"
+msgstr "लगभग है"
 
 #: corehq/apps/case_search/endpoint_capability.py
-#| msgid "Instance"
 msgid "within distance"
 msgstr "दूरी के भीतर"
 
+#: corehq/apps/case_search/endpoint_query_spec.py
+msgid "Searching for blank values is not supported for '{}'"
+msgstr "'{}' के लिए खाली मानों की खोज समर्थित नहीं है"
+
+#: corehq/apps/case_search/endpoint_query_spec.py
+msgid "Only one value may be given for '{}'"
+msgstr "'{}' के लिए केवल एक मान दिया जा सकता है"
+
+#: corehq/apps/case_search/endpoint_query_spec.py
+#| msgid "Dates are presented in YYYY-MM-DD format"
+msgid "'{}' must be a date in YYYY-MM-DD format"
+msgstr "'{}' एक तारीख होनी चाहिए, फॉर्मेट YYYY-MM-DD में"
+
+#: corehq/apps/case_search/endpoint_query_spec.py
+#| msgid "'name' must be unique"
+msgid "'{}' must be a number"
+msgstr "'{}' एक संख्या होनी चाहिए"
+
+#: corehq/apps/case_search/endpoint_query_spec.py
+msgid "'{}' must be given as a date range"
+msgstr "'{}' को एक तारीख सीमा के रूप में दिया जाना चाहिए"
+
 #: corehq/apps/case_search/endpoint_views.py
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/tabs/tabclasses.py
 msgid "Case Search Endpoints"
 msgstr "केस सर्च एंडपॉइंट्स"
 
@@ -15723,23 +16030,6 @@ msgstr "प्रोजेक्ट डेटाबेस"
 #: corehq/apps/case_search/models.py
 msgid "Elastic Search"
 msgstr "इलास्टिक सर्च"
-
-#: corehq/apps/case_search/models.py
-#: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr "निष्क्रिय करें"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
 #, python-format
@@ -15835,6 +16125,7 @@ msgid "results"
 msgstr "परिणाम"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html
+#: corehq/apps/public_webforms/models.py
 #: corehq/apps/userreports/reports/builder/forms.py
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Closed"
@@ -15928,18 +16219,13 @@ msgid "Endpoint Details"
 msgstr "एंडपॉइंट विवरण"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Enter report name here"
 msgid "Enter endpoint name"
 msgstr "एंडपॉइंट नाम दर्ज करें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "Target Type"
-msgstr "लक्ष्य प्रकार"
-
-#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-msgid "-- Select a case type --"
-msgstr "-- एक केस प्रकार चुनें --"
+msgid "Endpoint Type"
+msgstr "एंडपॉइंट प्रकार"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Parameters"
@@ -15950,7 +16236,6 @@ msgid "Name cannot be empty or only whitespace"
 msgstr "नाम खाली या केवल व्हाइटस्पेस नहीं हो सकता"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Parameters"
 msgid "parameter name"
 msgstr "पैरामीटर नाम"
 
@@ -15959,7 +16244,6 @@ msgid "text"
 msgstr "पाठ"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Number"
 msgid "number"
 msgstr "संख्या"
 
@@ -15969,7 +16253,20 @@ msgid "date"
 msgstr "तारीख"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Remove Characters"
+#| msgid "Date range"
+msgid "date range"
+msgstr "तारीख सीमा"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+#| msgid "Select"
+msgid "select"
+msgstr "चुनें"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "geopoint"
+msgstr "जियोपॉइंट"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 msgid "Remove parameter"
 msgstr "पैरामीटर हटाएँ"
 
@@ -15979,19 +16276,30 @@ msgid "Add Parameter"
 msgstr "पैरामीटर जोड़ें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "SQL"
+msgstr "SQL"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
+msgid "-- Select a case type --"
+msgstr "-- एक केस प्रकार चुनें --"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_edit.html
 #: corehq/apps/case_search/templates/case_search/partials/query_tester.html
-#| msgid "Test API Key"
 msgid "Test query"
 msgstr "क्वेरी का परीक्षण करें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Deactivate Endpoint"
 msgid "Create Endpoint"
 msgstr "एंडपॉइंट बनाएँ"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-msgid "New Endpoint"
-msgstr "नया एंडपॉइंट"
+#, python-format
+msgid "New Endpoint (%(label)s)"
+msgstr "नया एंडपॉइंट (%(label)s)"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+msgid "Toggle Dropdown"
+msgstr "ड्रॉपडाउन टॉगल करें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Updated On"
@@ -16000,6 +16308,28 @@ msgstr "अपडेट किया गया"
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Updated By"
 msgstr "द्वारा अपडेट किया गया"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#| msgid "Pull content from an upstream project space"
+msgid "Linked from an upstream project space"
+msgstr "एक अपस्ट्रीम प्रोजेक्ट स्पेस से लिंक किया गया"
+
+#: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/hqadmin/offboarding/clients.py
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr "निष्क्रिय करें"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 msgid "Deactivate Endpoint"
@@ -16017,26 +16347,26 @@ msgid "No endpoints configured."
 msgstr "कोई एंडपॉइंट कॉन्फ़िगर नहीं किया गया है।"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Add Field"
-msgid "-- Field --"
-msgstr "-- फ़ील्ड --"
+msgid "Field"
+msgstr "फ़ील्ड"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "-- Operation --"
 msgstr "-- ऑपरेशन --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "Parameter"
 msgstr "पैरामीटर"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Parameters"
 msgid "-- Parameter --"
 msgstr "-- पैरामीटर --"
 
 #: corehq/apps/case_search/templates/case_search/partials/condition_row.html
-#| msgid "Remove Action"
+msgid "Copy condition"
+msgstr "शर्त कॉपी करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/condition_row.html
 msgid "Remove condition"
 msgstr "शर्त हटाएँ"
 
@@ -16045,7 +16375,6 @@ msgid "ALL"
 msgstr "सभी"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "AND"
 msgid "ANY"
 msgstr "कोई भी"
 
@@ -16054,22 +16383,22 @@ msgid "NONE"
 msgstr "कोई नहीं"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match all of the following"
 msgstr "निम्न में से सभी से मेल खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match any of the following"
 msgstr "निम्न में से किसी से भी मेल खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "format must be one of the following: {}"
 msgid "match none of the following"
 msgstr "निम्न में से किसी से भी मेल नहीं खाता है"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_header.html
-#| msgid "Remove User"
+msgid "Copy group"
+msgstr "समूह कॉपी करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_header.html
 msgid "Remove group"
 msgstr "समूह हटाएँ"
 
@@ -16078,13 +16407,34 @@ msgid "No conditions yet. Add a condition or group below."
 msgstr "अभी तक कोई शर्त नहीं है। नीचे एक शर्त या समूह जोड़ें।"
 
 #: corehq/apps/case_search/templates/case_search/partials/group_node.html
-#| msgid "Conditions"
 msgid "Add Condition"
 msgstr "शर्त जोड़ें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Condition"
+msgstr "शर्त पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Paste Group"
+msgstr "समूह पेस्ट करें"
+
+#: corehq/apps/case_search/templates/case_search/partials/group_node.html
+msgid "Copied group is nested too deeply to paste here"
+msgstr "कॉपी किया गया समूह यहाँ चिपकाने के लिए बहुत गहराई में नेस्टेड है"
 
 #: corehq/apps/case_search/templates/case_search/partials/query_builder.html
 msgid "Show query JSON"
 msgstr "क्वेरी JSON दिखाएँ"
+
+#: corehq/apps/case_search/templates/case_search/partials/query_tester.html
+#: corehq/apps/reports/templates/reports/standard/bootstrap3/base_template.html
+#: corehq/apps/reports/templates/reports/standard/bootstrap5/base_template.html
+msgid "to"
+msgstr "को"
+
+#: corehq/apps/case_search/templates/case_search/partials/query_tester.html
+msgid "value1, value2, ..."
+msgstr "value1, value2, ..."
 
 #: corehq/apps/case_search/utils.py
 msgid "Configurable Endpoints are not available"
@@ -16095,9 +16445,13 @@ msgid "Endpoint '{}' not found"
 msgstr "एंडपॉइंट '{}' नहीं मिला"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' not found"
 msgid "Endpoint '{}' query is invalid"
 msgstr "एंडपॉइंट '{}' क्वेरी अमान्य है"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' query is invalid"
+msgid "Endpoint '{}' parameters are invalid"
+msgstr "एंडपॉइंट '{}' के पैरामीटर अमान्य हैं"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -16556,6 +16910,7 @@ msgstr "कोई हाल की क्वेरी नहीं"
 #: corehq/apps/data_cleaning/templates/data_cleaning/tables/bulk_edit_session.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/domain/forms.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/sms/templates/sms/chat_contacts.html
 msgid "Clear"
 msgstr "साफ़ करें"
@@ -16780,6 +17135,44 @@ msgstr "संगठन प्रकार"
 msgid "Date Registered"
 msgstr "पंजीकरण तिथि"
 
+#: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
+#| msgid "# Forms Submitted"
+msgid "Form Submitted"
+msgstr "फॉर्म सबमिट किया गया"
+
+#: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
+#| msgid "Message received!"
+msgid "Response Received"
+msgstr "रिस्पॉन्स प्राप्त हुआ"
+
+#: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
+#| msgid ""
+#| "\n"
+#| "              Thank you for your feedback! We appreciate it.\n"
+#| "            "
+msgid ""
+"\n"
+"              Thank you. Your response has been submitted.\n"
+"            "
+msgstr ""
+"\n"
+"              धन्यवाद। आपकी प्रतिक्रिया सबमिट कर दी गई है।\n"
+"            "
+
+#: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
+#| msgid ""
+#| "\n"
+#| "              Not Active\n"
+#| "            "
+msgid ""
+"\n"
+"              You can close this page.\n"
+"            "
+msgstr ""
+"\n"
+"              आप इस पेज को बंद कर सकते हैं।\n"
+"            "
+
 #: corehq/apps/cloudcare/templates/cloudcare/web_apps_disabled.html
 msgid "Functionality Disabled"
 msgstr "फंक्शनैलिटी अक्षम है"
@@ -16975,7 +17368,7 @@ msgid "Default consumption values updated"
 msgstr "डिफ़ॉल्ट खपत मान अपडेट किए गए"
 
 #: corehq/apps/commtrack/views.py corehq/apps/domain/forms.py
-#: corehq/apps/reminders/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/messaging/bootstrap3/survey_detail.html
 #: corehq/apps/reports/templates/reports/messaging/bootstrap5/survey_detail.html
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/forms.py
@@ -17451,6 +17844,10 @@ msgstr "HQ डैशबोर्ड"
 msgid "Build, update, and deploy applications"
 msgstr "एप्लिकेशन बनाएं, अपडेट करें और डिप्लॉय करें"
 
+#: corehq/apps/dashboard/views.py corehq/tabs/tabclasses.py
+msgid "New Application"
+msgstr "नया एप्लिकेशन"
+
 #: corehq/apps/dashboard/views.py
 msgid "View worker monitoring reports and inspect project data"
 msgstr "वर्कर मॉनिटरिंग रिपोर्ट देखें और प्रोजेक्ट डेटा जांचें"
@@ -17836,6 +18233,11 @@ msgid "Multiple Choice"
 msgstr "बहुविकल्पी"
 
 #: corehq/apps/data_cleaning/models/types.py
+#: corehq/apps/styleguide/examples/bootstrap5/htmx_alpine_form_demo.py
+msgid "is empty"
+msgstr "खाली है"
+
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not empty"
 msgstr "खाली नहीं है"
 
@@ -17852,24 +18254,24 @@ msgid "does not start with"
 msgstr "से शुरू नहीं होता है"
 
 #: corehq/apps/data_cleaning/models/types.py
-msgid "is like"
-msgstr "जैसा है"
-
-#: corehq/apps/data_cleaning/models/types.py
 msgid "is not like"
 msgstr "जैसा नहीं है"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "sounds like"
-msgstr "जैसी आवाज़ है"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "does not sound like"
 msgstr "जैसा नहीं लगता"
 
 #: corehq/apps/data_cleaning/models/types.py
+msgid "is any"
+msgstr "कोई भी है"
+
+#: corehq/apps/data_cleaning/models/types.py
 msgid "is not any"
 msgstr "कोई भी नहीं है"
+
+#: corehq/apps/data_cleaning/models/types.py
+msgid "is all"
+msgstr "सभी हैं"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "is not all"
@@ -17878,10 +18280,6 @@ msgstr "सभी नहीं हैं"
 #: corehq/apps/data_cleaning/models/types.py
 msgid "before or on"
 msgstr "से पहले या उसी दिन"
-
-#: corehq/apps/data_cleaning/models/types.py
-msgid "on or after"
-msgstr "उस दिन या उसके बाद"
 
 #: corehq/apps/data_cleaning/models/types.py
 msgid "Find & Replace"
@@ -18007,6 +18405,7 @@ msgstr "प्रत्येक केस प्रकार के लिए �
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_methods.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -18278,16 +18677,18 @@ msgstr "परिवर्तन लागू किए गए"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
-msgid ""
-"\n"
-"    Finished processing changes, updated 1 case.\n"
-"  "
-msgid_plural ""
-"\n"
-"    Finished processing changes, updated %(count)s cases.\n"
-"  "
-msgstr[0] ""
-msgstr[1] ""
+#| msgid ""
+#| "\n"
+#| "    Finished processing changes, updated 1 case.\n"
+#| "  "
+#| msgid_plural ""
+#| "\n"
+#| "    Finished processing changes, updated %(count)s cases.\n"
+#| "  "
+msgid "Finished processing changes, updated %(count)s case."
+msgid_plural "Finished processing changes, updated %(count)s cases."
+msgstr[0] "परिवर्तनों की प्रोसेसिंग पूरी हुई, %(count)s केस अपडेट किया गया।"
+msgstr[1] "परिवर्तनों की प्रोसेसिंग पूरी हुई, %(count)s केस अपडेट किए गए।"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
@@ -18373,16 +18774,18 @@ msgstr "इस सत्र को पुनः आरंभ करें"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
-msgid ""
-"\n"
-"      One edit will be applied.\n"
-"    "
-msgid_plural ""
-"\n"
-"      A total of %(count)s edits will be applied.\n"
-"    "
-msgstr[0] ""
-msgstr[1] ""
+#| msgid ""
+#| "\n"
+#| "      One edit will be applied.\n"
+#| "    "
+#| msgid_plural ""
+#| "\n"
+#| "      A total of %(count)s edits will be applied.\n"
+#| "    "
+msgid "%(count)s edit will be applied."
+msgid_plural "A total of %(count)s edits will be applied."
+msgstr[0] "%(count)s संपादन लागू किया जाएगा।"
+msgstr[1] "कुल %(count)s संपादन लागू किए जाएंगे।"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 msgid ""
@@ -18396,16 +18799,18 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 #, python-format
-msgid ""
-"\n"
-"      One edit will be cleared.\n"
-"    "
-msgid_plural ""
-"\n"
-"      A total of %(count)s edits will be cleared.\n"
-"    "
-msgstr[0] ""
-msgstr[1] ""
+#| msgid ""
+#| "\n"
+#| "      One edit will be cleared.\n"
+#| "    "
+#| msgid_plural ""
+#| "\n"
+#| "      A total of %(count)s edits will be cleared.\n"
+#| "    "
+msgid "%(count)s edit will be cleared."
+msgid_plural "A total of %(count)s edits will be cleared."
+msgstr[0] "%(count)s संपादन क्लियर किया जाएगा।"
+msgstr[1] "कुल %(count)s संपादन क्लियर किए जाएंगे।"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 msgid ""
@@ -19606,6 +20011,7 @@ msgstr "रुका हुआ"
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 #: corehq/apps/integration/kyc/models.py
 #: corehq/apps/integration/payments/const.py
 #: corehq/apps/integration/templates/kyc/partials/kyc_verify_status.html
@@ -19966,6 +20372,7 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
 msgid "Select all"
 msgstr "सभी चुनें"
 
@@ -20369,6 +20776,39 @@ msgstr ""
 "    <span>इसे पलटने के लिए <a href=\"%(form_management_url)s\">फॉर्म प्रबंधन</a> पर लौटें।</span>\n"
 "  "
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+msgid "The job failed. Please try again."
+msgstr "कार्य असफल रहा। कृपया पुनः प्रयास करें।"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+#| msgid "Form processed successfully."
+msgid "%(counter)s form processed successfully"
+msgid_plural "%(counter)s forms processed successfully"
+msgstr[0] "%(counter)s फॉर्म सफलतापूर्वक प्रोसेस किया गया"
+msgstr[1] "%(counter)s फॉर्म्स सफलतापूर्वक प्रोसेस किए गए"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+msgid "Some forms were skipped:"
+msgstr "कुछ फ़ॉर्म छोड़ दिए गए:"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#, python-format
+msgid ""
+"\n"
+"    <span\n"
+"      >Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse\n"
+"      this.</span\n"
+"    >\n"
+"  "
+msgstr ""
+"\n"
+"    <span\n"
+"      >वापस जाएं <a href=\"%(form_management_url)s\">फॉर्म प्रबंधित करें</a> पर\n"
+"      इसे पलटने के लिए।</span\n"
+"    >\n"
+"  "
+
 #: corehq/apps/data_interfaces/utils.py
 msgid "The case group was not found."
 msgstr "केस समूह नहीं मिला।"
@@ -20391,8 +20831,8 @@ msgstr "'{}' पहचानकर्ता वाला केस इस सम
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "XForm {form_id} does not belong to domain {domain}"
-msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
+msgid "Could not find XForm {form_id}"
+msgstr "XForm {form_id} नहीं मिला"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20411,13 +20851,13 @@ msgstr "{form} को सफलतापूर्वक अनआर्काइ
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not archive {form}: {error}"
-msgstr "{form} को आर्काइव नहीं किया जा सका: {error}"
+msgid "Could not archive {form}"
+msgstr "{form} को आर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "XForm {form_id} नहीं मिला"
+msgid "Could not unarchive {form}"
+msgstr "{form} को अनआर्काइव नहीं किया जा सका"
 
 #: corehq/apps/data_interfaces/utils.py
 #, python-brace-format
@@ -20549,6 +20989,10 @@ msgstr "केस जोड़ा गया"
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Management"
 msgstr "फ़ॉर्म प्रबंधन"
+
+#: corehq/apps/data_interfaces/views.py
+msgid "No forms were supplied."
+msgstr "कोई फ़ॉर्म प्रदान नहीं किया गया।"
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Form Status"
@@ -21346,6 +21790,8 @@ msgstr "कृपया OData फ़ीड्स के लिए एक सी�
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/modal_report_issue.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/modal_report_issue.html
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/templates/registration/confirmation_resend.html
 #: corehq/apps/reports/standard/sms.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py
@@ -22072,13 +22518,13 @@ msgstr "जोड़ने वाले"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "Activate Alert"
-msgstr "अलर्ट सक्रिय करें"
+msgid "De-activate Alert"
+msgstr "अलर्ट निष्क्रिय करें"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-msgid "De-activate Alert"
-msgstr "अलर्ट निष्क्रिय करें"
+msgid "Activate Alert"
+msgstr "अलर्ट सक्रिय करें"
 
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 msgid "No alerts added yet for the project."
@@ -22586,7 +23032,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
 msgid "— which matches your current feature usage."
-msgstr " जो आपकी वर्तमान फीचर उपयोग से मेल खाता है।"
+msgstr "— जो आपकी वर्तमान फीचर उपयोगिता से मेल खाता है।"
 
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_subscription_renewal.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_subscription_renewal.html
@@ -24194,28 +24640,25 @@ msgstr "कुल क्रेडिट्स"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment Start Date"
-msgstr "प्रीपेमेंट प्रारंभ तिथि"
+msgid "Leave blank to send now."
+msgstr "अभी भेजने के लिए खाली छोड़ें।"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Prepayment End Date"
-msgstr "प्रीपेमेंट समाप्ति तिथि"
+msgid ""
+"\n"
+"    Generate Prepayment Invoice for\n"
+"    <span data-bind=\"text: $root.domain\"></span>\n"
+"  "
+msgstr ""
+"\n"
+"    <span data-bind=\"text: $root.domain\"></span> के लिए अग्रिम भुगतान इनवॉइस जनरेट करें\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Credit Label"
-msgstr "क्रेडिट लेबल"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Unit Cost"
-msgstr "यूनिट लागत"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Quantity"
-msgstr "मात्रा"
+msgid "Scheduled. It will be generated and emailed on"
+msgstr "अनुसूचित। यह तिथि पर जेनरेट और ईमेल किया जाएगा"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -24258,17 +24701,6 @@ msgstr ""
 "                  >अधिक जानकारी...</a\n"
 "                >\n"
 "              "
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-msgid "Email To"
-msgstr "ईमेल प्राप्तकर्ता"
-
-#: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
-#: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
-#: corehq/apps/reports/forms.py
-msgid "Additional Recipients"
-msgstr "अतिरिक्त प्राप्तकर्ता"
 
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/payment_modal.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/payment_modal.html
@@ -24427,19 +24859,23 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/enable_auto_renew.html
-#, python-format
 msgid ""
 "\n"
 "    For more information about CommCare software plans, visit\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\"\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
 "      target=\"_blank\"\n"
-"      >our help site</a\n"
+"      >our pricing page</a\n"
 "    >.\n"
 "  "
 msgstr ""
 "\n"
-"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए, <a href=\\\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2420015134/CommCare+Pricing+Overview#Detailed-Software-Plan-%%26-Feature-Comparisons\\\" target=\\\"_blank\\\">हमारी सहायता साइट</a> देखें।\n"
+"    CommCare सॉफ़्टवेयर प्लान के बारे में अधिक जानकारी के लिए,\n"
+"    <a\n"
+"      href=\"https://commcare.dimagi.com/pricing/#plans\"\n"
+"      target=\"_blank\"\n"
+"      >हमारे मूल्य निर्धारण पृष्ठ</a\n"
+"    > पर जाएँ।\n"
 "  "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -24467,7 +24903,7 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        ब्राउज़र के फ़ाइल मेनू पर क्लिक करें (जैसे, फ़ाइल 2 सहेजें रूप में026)।\n"
+"        ब्राउज़र के ऊपर फ़ाइल मेनू पर क्लिक करें (जैसे फ़ाइल → ऐसे सहेजें...)।\n"
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
@@ -25452,16 +25888,18 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
 #, python-format
-msgid ""
-"\n"
-"            You have only one backup token remaining.\n"
-"          "
-msgid_plural ""
-"\n"
-"            You have %(counter)s backup tokens remaining.\n"
-"          "
-msgstr[0] ""
-msgstr[1] ""
+#| msgid ""
+#| "\n"
+#| "            You have only one backup token remaining.\n"
+#| "          "
+#| msgid_plural ""
+#| "\n"
+#| "            You have %(counter)s backup tokens remaining.\n"
+#| "          "
+msgid "You have only %(counter)s backup token remaining."
+msgid_plural "You have %(counter)s backup tokens remaining."
+msgstr[0] "आपके पास केवल %(counter)s बैकअप टोकन शेष है।"
+msgstr[1] "आपके पास %(counter)s बैकअप टोकन शेष हैं।"
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
@@ -25631,30 +26069,6 @@ msgstr ""
 "समस्या को जल्द से जल्द देख रहे हैं। असुविधा के लिए क्षमा करें।"
 
 #: corehq/apps/domain/views/accounting.py
-msgid ""
-"The following e-mail addresses contain invalid characters, or are missing "
-"required characters: "
-msgstr ""
-"निम्नलिखित ई-मेल पतों में अमान्य अक्षर हैं, या आवश्यक अक्षर गायब हैं: "
-
-#: corehq/apps/domain/views/accounting.py
-msgid "There was an error processing your request. Please try again."
-msgstr ""
-"आपके अनुरोध को संसाधित करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।"
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Prepayment end date must be after start date."
-msgstr "प्रीपेमेंट की समाप्ति तिथि प्रारंभ तिथि के बाद होनी चाहिए।"
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unit cost must be a decimal number greater than 0."
-msgstr "यूनिट लागत 0 से अधिक दशमलव संख्या होनी चाहिए।"
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Quantity must be a whole number greater than 0."
-msgstr "मात्रा 0 से अधिक पूर्णांक होनी चाहिए।"
-
-#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr "Dimagi आंतरिक सदस्यता प्रबंधन"
 
@@ -25747,6 +26161,14 @@ msgstr "2. विराम की पुष्टि करें"
 #: corehq/apps/domain/views/accounting.py
 msgid "2. Confirm Subscription"
 msgstr "2. सदस्यता की पुष्टि करें"
+
+#: corehq/apps/domain/views/accounting.py
+msgid ""
+"Your annual subscription only allows upgrades. You cannot downgrade, pause, "
+"or switch to the same edition during your annual commitment."
+msgstr ""
+"आपकी वार्षिक सदस्यता केवल अपग्रेड की अनुमति देती है। आप अपनी वार्षिक "
+"प्रतिबद्धता के दौरान डाउनग्रेड, पॉज़ या उसी संस्करण पर स्विच नहीं कर सकते।"
 
 #: corehq/apps/domain/views/accounting.py corehq/apps/users/forms.py
 #: corehq/apps/users/views/mobile/users.py
@@ -26246,6 +26668,7 @@ msgstr "उपलब्ध OData फीड्स"
 
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqwebapp/forms.py
 #: corehq/apps/integration/payments/tables.py
+#: corehq/apps/public_webforms/public/forms.py
 #: corehq/apps/registration/forms.py corehq/apps/reports/standard/sms.py
 #: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/bootstrap3/web_users.html
@@ -27891,6 +28314,7 @@ msgstr ""
 "समस्या रिपोर्ट करें"
 
 #: corehq/apps/export/templates/export/dialogs/process_deleted_questions.html
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
 msgid "Process"
 msgstr "प्रोसेस करें"
 
@@ -29151,10 +29575,6 @@ msgid "Export De-Identified Dashboard Feeds"
 msgstr "पहचानरहित डैशबोर्ड फ़ीड्स निर्यात करें"
 
 #: corehq/apps/export/views/list.py
-msgid "Export not found"
-msgstr "निर्यात नहीं मिला"
-
-#: corehq/apps/export/views/list.py
 msgid "The form did not validate."
 msgstr "फ़ॉर्म सत्यापित नहीं हुआ।"
 
@@ -29301,10 +29721,6 @@ msgstr "<strong>{}</strong> {}{} हटाया गया।"
 #: corehq/apps/export/views/new.py
 msgid "Export <strong>{}</strong> was deleted."
 msgstr "निर्यात <strong>{}</strong> हटाया गया।"
-
-#: corehq/apps/export/views/new.py
-msgid "You can only copy new exports."
-msgstr "आप केवल नए निर्यात की प्रतिलिपि बना सकते हैं।"
 
 #: corehq/apps/export/views/new.py
 msgid "Export <strong>{}</strong> created."
@@ -29904,8 +30320,10 @@ msgstr ""
 " करें। लेकिन पंक्ति सफलतापूर्वक जोड़ दी गई है"
 
 #: corehq/apps/fixtures/views.py
-msgid "Table ID must be between 1 and 31 characters."
-msgstr "टेबल आईडी 1 से 31 अक्षरों के बीच होना चाहिए।"
+#, python-format
+#| msgid "Table ID must be between 1 and 31 characters."
+msgid "Table ID must be between 1 and %(max_length)s characters."
+msgstr "टेबल आईडी 1 से %(max_length)s अक्षरों के बीच होना चाहिए।"
 
 #: corehq/apps/fixtures/views.py
 msgid ""
@@ -31430,6 +31848,51 @@ msgstr ""
 "पालन करने के लिए बाध्य किया जाएगा। इसका उपयोग तब करें जब संदेह हो कि पासवर्ड"
 " से समझौता किया गया है।"
 
+#: corehq/apps/hqadmin/offboarding/clients.py
+#, python-brace-format
+#| msgid "Disable auto update"
+msgid "Disabled Datadog user {label}"
+msgstr "डिसेबल्ड Datadog उपयोगकर्ता {label}"
+
+#: corehq/apps/hqadmin/offboarding/clients.py
+#, python-brace-format
+#| msgid "Remove Mobile Workers From Organizations"
+msgid "Removed {label} from the Sentry organization"
+msgstr "{label} को Sentry संगठन से हटाया गया"
+
+#: corehq/apps/hqadmin/offboarding/clients.py
+#, python-brace-format
+msgid "Deactivated Sumo Logic user {label}"
+msgstr "Sumo Logic उपयोगकर्ता {label} को निष्क्रिय किया गया"
+
+#: corehq/apps/hqadmin/offboarding/clients.py
+#, python-brace-format
+msgid "Removed HubSpot user {label}"
+msgstr "HubSpot उपयोगकर्ता {label} को हटाया गया"
+
+#: corehq/apps/hqadmin/offboarding/views.py
+#| msgid "Please enter a valid email address."
+msgid "Enter a valid email address."
+msgstr "मान्य ईमेल पता दर्ज करें।"
+
+#: corehq/apps/hqadmin/offboarding/views.py corehq/tabs/tabclasses.py
+msgid "Offboard staff from external platforms"
+msgstr "बाहरी प्लेटफार्मों से स्टाफ को ऑफबोर्ड करें"
+
+#: corehq/apps/hqadmin/offboarding/views.py
+#| msgid "A send date is required."
+msgid "An email address is required."
+msgstr "एक ईमेल पता आवश्यक है।"
+
+#: corehq/apps/hqadmin/offboarding/views.py
+msgid "'{}' is protected and cannot be offboarded with this tool."
+msgstr "'{}' संरक्षित है और इस टूल के साथ ऑफबोर्ड नहीं किया जा सकता।"
+
+#: corehq/apps/hqadmin/offboarding/views.py
+#| msgid "Unknown command: '{0}'"
+msgid "Unknown platform '{}'."
+msgstr "अज्ञात प्लेटफॉर्म '{}'।"
+
 #: corehq/apps/hqadmin/reports.py
 msgid "ADMINREPORT"
 msgstr "प्रशासन रिपोर्ट"
@@ -31694,6 +32157,158 @@ msgstr ""
 "कृपया एक माह दर्ज करें ताकि उस माह के लिए सभी MALT डेटा को CSV के रूप में "
 "डाउनलोड किया जा सके"
 
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+msgid ""
+"\n"
+"      Look up a departing staff member's accounts on external platforms and\n"
+"      deactivate or remove them.\n"
+"    "
+msgstr ""
+"\n"
+"      किसी प्रस्थान करने वाले स्टाफ सदस्य के खातों को बाहरी प्लेटफार्मों पर खोजें और\n"
+"      उन्हें निष्क्रिय या हटा दें।\n"
+"    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+msgid ""
+"\n"
+"      This only covers platforms with a user-management API. Every other step in\n"
+"      the offboarding checklist remains a manual one. Removals on Sentry and\n"
+"      HubSpot cannot be undone from here.\n"
+"    "
+msgstr ""
+"\n"
+"      यह केवल उन्हीं प्लेटफार्मों को कवर करता है जिनमें यूज़र-मैनेजमेंट API है। ऑफबोर्डिंग चेकलिस्ट के अन्य सभी चरण मैन्युअल रहेंगे। Sentry और\n"
+"      HubSpot पर हटाने की प्रक्रिया यहाँ से पूर्ववत नहीं की जा सकती।\n"
+"    "
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "Email Address"
+msgid "Email address"
+msgstr "ईमेल पता"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "Lookup Tables"
+msgid "Look up accounts"
+msgstr "खाते खोजें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#, python-format
+msgid ""
+"\n"
+"        <strong>%(email)s</strong> is on the protected list and cannot be\n"
+"        offboarded with this tool.\n"
+"      "
+msgstr ""
+"\n"
+"        <strong>%(email)s</strong> संरक्षित सूची में है और इसे\n"
+"        इस टूल के साथ ऑफबोर्ड नहीं किया जा सकता।\n"
+"      "
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#, python-format
+msgid ""
+"\n"
+"            <strong>%(email)s</strong> is not a dimagi.com address. Reach out\n"
+"            to TechOps or Support to confirm it before deactivating anything.\n"
+"          "
+msgstr ""
+"\n"
+"            <strong>%(email)s</strong> dimagi.com पता नहीं है। कुछ भी निष्क्रिय करने से पहले TechOps या Support से पुष्टि करें।\n"
+"          "
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "Select a Form"
+msgid "Select all platforms"
+msgstr "सभी प्लेटफार्म चुनें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "form"
+msgid "Platform"
+msgstr "प्लेटफॉर्म"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "De-activate Alert"
+msgid "Deactivate selected…"
+msgstr "चयनित को निष्क्रिय करें…"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+msgid "Working…"
+msgstr "काम कर रहा है…"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "Confirm Plan"
+msgid "Confirm offboarding"
+msgstr "ऑफबोर्डिंग की पुष्टि करें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid "You are about to delete"
+msgid "You are about to:"
+msgstr "आप निम्नलिखित करने वाले हैं:"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "Whenever Possible"
+msgid "irreversible"
+msgstr "अपरिवर्तनीय"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
+#| msgid ""
+#| "\n"
+#| "                    List of devices used to access CommCare applications, with\n"
+#| "                    approximate last-use dates.\n"
+#| "                  "
+msgid ""
+"\n"
+"                    This is not a dimagi.com address. Only continue once TechOps\n"
+"                    or Support has confirmed it.\n"
+"                  "
+msgstr ""
+"\n"
+"                    यह कोई dimagi.com पता नहीं है। केवल तभी आगे बढ़ें जब TechOps\n"
+"                    या Support ने इसकी पुष्टि कर दी हो।\n"
+"                  "
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+msgid "Looking up account…"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "No endpoints configured."
+msgid "Not configured"
+msgstr "कॉन्फ़िगर नहीं किया गया"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "FCM is not setup on this environment!"
+msgid "Credentials are not configured on this environment."
+msgstr "इस वातावरण में क्रेडेंशियल्स कॉन्फ़िगर नहीं हैं।"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "No transaction found"
+msgid "No account found"
+msgstr "कोई खाता नहीं मिला"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "Only Deactivated"
+msgid "Already deactivated"
+msgstr "पहले ही निष्क्रिय किया जा चुका है"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#| msgid "Lookup Table"
+msgid "Lookup failed:"
+msgstr "खोज विफल रही:"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+msgid "Retry"
+msgstr "पुनः प्रयास करें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
+#, python-format
+#| msgid "Request failed"
+msgid "%(verb)s failed:"
+msgstr "%(verb)s विफल रहा:"
+
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 msgid ""
 "Please type comma or new-line separated email addresses from the official "
@@ -31841,22 +32456,12 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-msgid ""
-"\n"
-"                    %(count)s domain membership\n"
-"                  "
-msgid_plural ""
-"\n"
-"                    %(count)s domain memberships\n"
-"                  "
-msgstr[0] ""
-"\n"
-"                        %(count)s सहायता\n"
-"                    "
-msgstr[1] ""
-"\n"
-"                        %(count)s सहायता\n"
-"                    "
+#| msgid "{count} domain membership"
+#| msgid_plural "{count} domain memberships"
+msgid "%(count)s domain membership"
+msgid_plural "%(count)s domain memberships"
+msgstr[0] "%(count)s डोमेन सदस्यता"
+msgstr[1] "%(count)s डोमेन सदस्यताएँ"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Superuser access"
@@ -31954,8 +32559,8 @@ msgstr "यूज़र '{username}' नहीं मिला।"
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{count} डोमेन सदस्यता"
+msgstr[1] "{count} डोमेन सदस्यताएँ"
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
@@ -32311,16 +32916,10 @@ msgstr ""
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
 #, python-format
-msgid ""
-"\n"
-"        One match found.\n"
-"      "
-msgid_plural ""
-"\n"
-"        %(matched_count)s matches found.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
+msgid "%(matched_count)s match found."
+msgid_plural "%(matched_count)s matches found."
+msgstr[0] "%(matched_count)s मेल मिला।"
+msgstr[1] "%(matched_count)s मेल मिले।"
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
@@ -32769,6 +33368,14 @@ msgstr "एप्लिकेशन बिल्ड"
 msgid "Case Group"
 msgstr "केस समूह"
 
+#: corehq/apps/hqwebapp/fields.py
+msgid "Please confirm that you are not a robot."
+msgstr "कृपया पुष्टि करें कि आप रोबोट नहीं हैं।"
+
+#: corehq/apps/hqwebapp/fields.py
+msgid "We could not confirm that you are not a robot. Please try again."
+msgstr "हम पुष्टि नहीं कर सके कि आप रोबोट नहीं हैं। कृपया पुनः प्रयास करें।"
+
 #: corehq/apps/hqwebapp/forms.py
 msgid ""
 "Sorry - you have attempted to login with an incorrect password too many "
@@ -32808,6 +33415,22 @@ msgstr ""
 "अब भी समस्या आ रही है?<div class='spacer'></div>सुनिश्चित करें कि आपने ऊपर "
 "दिए गए मेनू से सही क्लाउड स्थान चुना है। आपका खाता और प्रोजेक्ट किसी अन्य "
 "स्थान पर हो सकता है।"
+
+#: corehq/apps/hqwebapp/forms.py
+msgid "On the project space:"
+msgid_plural "On the project spaces:"
+msgstr[0] "आपकी प्रोजेक्ट स्पेसेस:"
+msgstr[1] "आपकी प्रोजेक्ट स्पेसेस:"
+
+#: corehq/apps/hqwebapp/forms.py
+msgid "Choose project space"
+msgid_plural "Choose project spaces"
+msgstr[0] "आपकी प्रोजेक्ट स्पेसेस:"
+msgstr[1] "आपकी प्रोजेक्ट स्पेसेस:"
+
+#: corehq/apps/hqwebapp/forms.py
+msgid "Choose at least one project space."
+msgstr "कम से कम एक प्रोजेक्ट स्पेस चुनें।"
 
 #: corehq/apps/hqwebapp/management/commands/generate_widget_translations.py
 msgid "Open chat"
@@ -32939,6 +33562,26 @@ msgstr "यूएस"
 #: corehq/apps/hqwebapp/models.py
 msgid "Staging"
 msgstr "स्टेजिंग"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Access CommCare API data"
+msgstr "CommCare API डेटा एक्सेस करें"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "View and download report data"
+msgstr "रिपोर्ट डेटा देखें और डाउनलोड करें"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Allow access to mobile sync and submit endpoints"
+msgstr "मोबाइल सिंक और सबमिट एंडपॉइंट्स तक एक्सेस की अनुमति दें"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "(Deprecated, do not use) Allow access to mobile endpoints"
+msgstr "(डिप्रिकेटेड, उपयोग न करें) मोबाइल एंडपॉइंट्स तक एक्सेस की अनुमति दें"
+
+#: corehq/apps/hqwebapp/oauth_scopes.py
+msgid "Access data in the \"{}\" project space only"
+msgstr "केवल \"{}\" प्रोजेक्ट स्पेस में डेटा एक्सेस करें"
 
 #: corehq/apps/hqwebapp/tables/elasticsearch/records.py
 msgid "users"
@@ -33251,16 +33894,17 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/downgrade_modal.html
 #, python-format
 msgid ""
-"\n"
-"            You're at risk of losing access to your project space if your\n"
-"            invoice isn't paid in 1 day. "
+"You're at risk of losing access to your project space if your invoice isn't "
+"paid in %(days_until_downgrade)s day."
 msgid_plural ""
-" You're at risk of losing\n"
-"            access to your project space if your invoice isn't paid in\n"
-"            %(days_until_downgrade)s days.\n"
-"          "
+"You're at risk of losing access to your project space if your invoice isn't "
+"paid in %(days_until_downgrade)s days."
 msgstr[0] ""
+"यदि आपका इनवॉइस %(days_until_downgrade)s दिन में भुगतान नहीं किया गया तो आप "
+"अपने प्रोजेक्ट स्पेस की पहुँच खो सकते हैं।"
 msgstr[1] ""
+"यदि आपका इनवॉइस %(days_until_downgrade)s दिनों में भुगतान नहीं किया गया तो "
+"आप अपने प्रोजेक्ट स्पेस की पहुँच खो सकते हैं।"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/downgrade_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
@@ -33335,16 +33979,23 @@ msgstr "OAuth एप्लिकेशन पंजीकृत करें"
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
 #, python-format
-msgid ""
-"\n"
-"            Your prepaid credits will run out in 1 week!\n"
-"          "
+#| msgid ""
+#| "\n"
+#| "            Your prepaid credits will run out in 1 week!\n"
+#| "          "
+#| msgid_plural ""
+#| "\n"
+#| "            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
+#| "          "
+msgid "Your prepaid credits will run out in %(prepaid_weeks_remaining)s week!"
 msgid_plural ""
-"\n"
-"            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
-"          "
+"Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!"
 msgstr[0] ""
+"आपके प्रीपेड क्रेडिट्स %(prepaid_weeks_remaining)s सप्ताह में समाप्त हो "
+"जाएंगे!"
 msgstr[1] ""
+"आपके प्रीपेड क्रेडिट्स %(prepaid_weeks_remaining)s सप्ताहों में समाप्त हो "
+"जाएंगे!"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
@@ -33412,6 +34063,33 @@ msgstr ""
 "            </div>\n"
 "          </div>\n"
 "        "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "Authorize Application"
+msgstr "एप्लिकेशन अधिकृत करें"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+#, python-format
+msgid ""
+"\n"
+"            Authorize %(application_name)s?\n"
+"          "
+msgstr ""
+"\n"
+"            %(application_name)s को अधिकृत करें?\n"
+"          "
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application is requesting permission to:"
+msgstr "यह एप्लिकेशन निम्नलिखित की अनुमति मांग रही है:"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "This application will have access to data on all your project spaces."
+msgstr "इस एप्लिकेशन को आपके सभी प्रोजेक्ट स्पेस के डेटा तक एक्सेस मिलेगा।"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_authorize.html
+msgid "Authorize"
+msgstr "अधिकृत करें"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/rollout_revert_modal.html
 #, python-format
@@ -34543,6 +35221,38 @@ msgstr ""
 "  अधिक जानने के लिए हमसे <a href=\"mailto:%(SALES_EMAIL)s\">%(SALES_EMAIL)s</a>\n"
 "  पर संपर्क करें!\n"
 
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/lockout_banner.html
+#, python-format
+msgid ""
+"New sign-ins to your account are blocked after too many failed attempts. You"
+" can keep working in this session, but integrations using your email address"
+" will stop working. <a href=\"%(url_change_password)s\">Change your "
+"password</a> to remove the block, then make sure each integration uses valid"
+" credentials (such as API keys and passwords)."
+msgstr ""
+"आपके खाते में बहुत अधिक असफल प्रयासों के बाद नए साइन-इन अवरुद्ध कर दिए गए "
+"हैं। आप इस सत्र में काम जारी रख सकते हैं, लेकिन आपके ईमेल पते का उपयोग करने "
+"वाले इंटीग्रेशन काम करना बंद कर देंगे। <a "
+"href=\"%(url_change_password)s\">अपना पासवर्ड बदलें</a> ताकि अवरोध हट जाए, "
+"फिर सुनिश्चित करें कि प्रत्येक इंटीग्रेशन में मान्य क्रेडेंशियल्स (जैसे API "
+"की और पासवर्ड) का उपयोग हो।"
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/lockout_banner.html
+msgid ""
+"New sign-ins to your account are blocked after too many failed attempts. You"
+" can keep working in this session, but integrations using your email address"
+" will stop working. <button type=\"submit\" form=\"lockout-banner-logout\" "
+"class=\"btn btn-link\"> Log out </button> and log back in to remove the "
+"block, then make sure each integration uses valid credentials (such as API "
+"keys)."
+msgstr ""
+"आपके खाते में बहुत अधिक असफल प्रयासों के बाद नए साइन-इन अवरुद्ध कर दिए गए "
+"हैं। आप इस सत्र में काम जारी रख सकते हैं, लेकिन आपके ईमेल पते का उपयोग करने "
+"वाले इंटीग्रेशन काम करना बंद कर देंगे। <button type=\"submit\" "
+"form=\"lockout-banner-logout\" class=\"btn btn-link\"> लॉग आउट </button> "
+"करें और फिर से लॉग इन करें ताकि अवरोध हट जाए, फिर सुनिश्चित करें कि प्रत्येक"
+" इंटीग्रेशन में मान्य क्रेडेंशियल्स (जैसे API की) का उपयोग हो।"
+
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/pending_plan_notice.html
 msgid "Permanently dismiss this alert"
 msgstr "इस अलर्ट को स्थायी रूप से बंद करें"
@@ -35523,6 +36233,26 @@ msgstr "बायोमेट्रिक एकीकरण सेटिंग�
 #: corehq/apps/ip_access/middleware.py
 msgid "You cannot access this page from your current IP address"
 msgstr "आप अपने वर्तमान IP पते से इस पृष्ठ तक पहुँच नहीं सकते"
+
+#: corehq/apps/linked_domain/case_search_endpoints.py
+#| msgid ""
+#| "Linking expressions to a remote link is not currently supported"
+msgid ""
+"Linking case search endpoints to a remote link is not currently supported"
+msgstr ""
+"केस सर्च एंडपॉइंट्स को रिमोट लिंक से जोड़ना वर्तमान में समर्थित नहीं है"
+
+#: corehq/apps/linked_domain/case_search_endpoints.py
+#| msgid "Expression does not exist in the upstream domain"
+msgid ""
+"Endpoint does not exist in the upstream domain. Maybe it has been deleted?"
+msgstr "अपस्ट्रीम डोमेन में एंडपॉइंट मौजूद नहीं है। शायद इसे हटा दिया गया है?"
+
+#: corehq/apps/linked_domain/case_search_endpoints.py
+#, python-brace-format
+#| msgid "Profile conflicts with existing data"
+msgid "Endpoint {name} conflicts with an existing endpoint in {domain}"
+msgstr "एंडपॉइंट {name} का {domain} में पहले से मौजूद एंडपॉइंट से टकराव है"
 
 #: corehq/apps/linked_domain/const.py
 msgid "Lookup Table"
@@ -37312,8 +38042,8 @@ msgstr "अमान्य उपयोगकर्ता {} के रूप �
 #, python-brace-format
 msgid "'{params}' is a required parameter"
 msgid_plural "'{params}' are required parameters"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "'{params}' एक आवश्यक पैरामीटर है"
+msgstr[1] "'{params}' आवश्यक पैरामीटर हैं"
 
 #: corehq/apps/products/bulk.py
 #, python-brace-format
@@ -37654,6 +38384,568 @@ msgstr "प्रोग्राम सहेजा गया!"
 #: corehq/apps/programs/views.py
 msgid "Edit Program"
 msgstr "प्रोग्राम संपादित करें"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Translated SQL"
+msgstr "अनुवादित SQL"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Try it out"
+msgstr "इसे आज़माएं"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "Run"
+msgstr "चलाएँ"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#| msgid "Query"
+msgid "Query plan"
+msgstr "क्वेरी प्लान"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+msgid "Evaluated in %(duration)s seconds"
+msgstr "%(duration)s सेकंड में मूल्यांकन किया गया"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+#| msgid "This report's timezone is %(timezone)s."
+msgid "Datetimes are in %(timezone)s"
+msgstr "दिनांक-समय %(timezone)s में हैं"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+#, python-format
+msgid "Showing the first %(max_rows)s rows."
+msgstr "पहली %(max_rows)s पंक्तियाँ दिखाई जा रही हैं।"
+
+#: corehq/apps/project_db/templates/project_db/partials/query_results.html
+msgid "No results"
+msgstr "कोई परिणाम नहीं"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+#: corehq/apps/project_db/views.py
+msgid "Query ProjectDB"
+msgstr "प्रोजेक्टDB क्वेरी करें"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "Tables"
+msgstr "टेबल्स"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "This project has no ProjectDB tables yet."
+msgstr "इस प्रोजेक्ट में अभी तक कोई ProjectDB टेबल नहीं है।"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "Show query plan (EXPLAIN ANALYZE)"
+msgstr "क्वेरी प्लान दिखाएँ (EXPLAIN ANALYZE)"
+
+#: corehq/apps/project_db/templates/project_db/query_project_db.html
+msgid "Copy DB Context"
+msgstr "DB संदर्भ कॉपी करें"
+
+#: corehq/apps/public_webforms/form_paths.py
+msgid "(Deleted)"
+msgstr "(हटाया गया)"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Search labels"
+msgstr "लेबल खोजें"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Any status"
+msgstr "कोई भी स्थिति"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Any type"
+msgstr "कोई भी प्रकार"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Identifies this public webform. Respondents will see the form's name."
+msgstr ""
+"यह सार्वजनिक वेबफॉर्म की पहचान करता है। उत्तरदाता फॉर्म का नाम देखेंगे।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Close Requests At"
+msgstr "अनुरोध बंद करें"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"The public request page closes at this time. One-time links already sent can"
+" be used until they expire."
+msgstr ""
+"सार्वजनिक अनुरोध पृष्ठ इस समय बंद हो जाएगा। पहले से भेजे गए एक-बार के लिंक "
+"उनकी समाप्ति तक उपयोग किए जा सकते हैं।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "How Respondents Receive Their One-time Link"
+msgstr "उत्तरदाता अपना एक-बार का लिंक कैसे प्राप्त करते हैं"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open to Requests"
+msgstr "अनुरोधों के लिए खुला"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Immediately open this public webform to one-time link requests."
+msgstr "इस सार्वजनिक वेबफॉर्म को तुरंत एक-बार लिंक अनुरोधों के लिए खोलें।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a single-use link."
+msgstr "एक ब्रांडेड ईमेल जिसमें एक सिंगल-यूज़ लिंक है।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+"एक छोटा टेक्स्ट जिसमें एक छोटा लिंक है। भेजे गए प्रत्येक संदेश के लिए बिल "
+"किया जाएगा।"
+
+#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py
+msgid "New Public Webform"
+msgstr "नया सार्वजनिक वेबफॉर्म"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Create Public Webform"
+msgstr "सार्वजनिक वेबफॉर्म बनाएं"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Please select an application, menu, and form."
+msgstr "कृपया एक एप्लिकेशन, मेनू और फॉर्म चुनें।"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "The selected form can't be used for a public webform."
+msgstr "चयनित फॉर्म को सार्वजनिक वेबफॉर्म के लिए उपयोग नहीं किया जा सकता।"
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
+msgid "Edit Public Webform"
+msgstr "पब्लिक वेबफॉर्म संपादित करें"
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/userreports/ui/forms.py
+#: corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
+#: corehq/motech/openmrs/forms.py
+msgid "Save Changes"
+msgstr "परिवर्तन सहेजें"
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+msgid "Your one-time link for {form_name}"
+msgstr "{form_name} के लिए आपकी एक बार की लिंक"
+
+#: corehq/apps/public_webforms/messaging.py
+#, python-brace-format
+#| msgid "Your one-time link for {form_name} is: {url}"
+msgid ""
+"Your one-time link for {form_name}:\n"
+"{url}"
+msgstr ""
+"{form_name} के लिए आपकी एक बार की लिंक:\n"
+"{url}"
+
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "खोलें"
+
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/settings/templates/settings/user_api_keys.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap3/web_users.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/web_users.html
+msgid "Expired"
+msgstr "समाप्त हो गया"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "How would you like to receive your link?"
+msgstr "आप अपनी लिंक कैसे प्राप्त करना चाहेंगे?"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Text Message"
+msgstr "टेक्स्ट संदेश"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the email address to send your link to."
+msgstr "अपनी लिंक भेजने के लिए ईमेल पता दर्ज करें।"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Please wait a moment before trying again."
+msgstr "कृपया पुनः प्रयास करने से पहले कुछ समय प्रतीक्षा करें।"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter the phone number to send your link to."
+msgstr "अपना लिंक भेजने के लिए फ़ोन नंबर दर्ज करें।"
+
+#: corehq/apps/public_webforms/public/forms.py
+msgid "Enter a valid phone number."
+msgstr "कृपया एक मान्य फ़ोन नंबर दर्ज करें।"
+
+#: corehq/apps/public_webforms/public/views.py
+#| msgid "Webforms"
+msgid "Webform Request"
+msgstr "वेबफॉर्म अनुरोध"
+
+#: corehq/apps/public_webforms/tables.py
+msgid "Submissions"
+msgstr "सबमिशन"
+
+#: corehq/apps/public_webforms/tables.py
+msgid "Expires"
+msgstr "समाप्ति"
+
+#: corehq/apps/public_webforms/tables.py
+msgid "Delivery"
+msgstr "डिलीवरी"
+
+#: corehq/apps/public_webforms/tables.py
+msgid "Public URL"
+msgstr "सार्वजनिक URL"
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"    Your one-time link for %(form_name)s\n"
+"  "
+msgstr ""
+"\n"
+"    %(form_name)s के लिए आपका वन-टाइम लिंक\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    Your link is ready\n"
+"  "
+msgstr ""
+"\n"
+"    आपका लिंक तैयार है\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    Open the form\n"
+"  "
+msgstr ""
+"\n"
+"    फॉर्म खोलें\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"    You asked for a link to complete %(form_name)s.\n"
+"  "
+msgstr ""
+"\n"
+"    आपने %(form_name)s पूरा करने के लिए लिंक मांगा था।\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"      Click the button or copy and paste the link below.\n"
+"    "
+msgstr ""
+"\n"
+"      बटन पर क्लिक करें या नीचे दिया गया लिंक कॉपी और पेस्ट करें।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+#, python-format
+msgid ""
+"\n"
+"      This link expires in %(expires_in)s and can only be used once. If you\n"
+"      didn't request this, you can ignore this email.\n"
+"    "
+msgstr ""
+"\n"
+"      यह लिंक %(expires_in)s में समाप्त हो जाएगा और केवल एक बार ही इस्तेमाल किया जा सकता है। यदि आपने यह अनुरोध नहीं किया है, तो आप इस ईमेल को अनदेखा कर सकते हैं।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
+msgid ""
+"\n"
+"    You received this message because a one-time link was requested\n"
+"  "
+msgstr ""
+"\n"
+"    आपको यह संदेश इसलिए मिला है क्योंकि एक वन-टाइम लिंक का अनुरोध किया गया था\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid "You asked for a link to complete %(form_name)s."
+msgstr "आपने %(form_name)s पूरा करने के लिए लिंक मांगा था।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+msgid "Copy and paste the link below."
+msgstr "नीचे दिया गया लिंक कॉपी और पेस्ट करें।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.txt
+#, python-format
+msgid ""
+"This link expires in %(expires_in)s and can only be used once. If you "
+"received this by mistake, you can ignore this email."
+msgstr ""
+"यह लिंक %(expires_in)s में समाप्त हो जाएगा और केवल एक बार ही इस्तेमाल किया "
+"जा सकता है। यदि आपको यह गलती से मिला है, तो आप इस ईमेल को अनदेखा कर सकते "
+"हैं।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+#: corehq/apps/public_webforms/views.py corehq/privileges.py
+#: corehq/tabs/tabclasses.py
+msgid "Public Webforms"
+msgstr "सार्वजनिक वेबफॉर्म्स"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid ""
+"\n"
+"      Publish a registration or survey form to a public URL. Respondents request\n"
+"      a one-time link, pass a bot check, and complete the form once — no\n"
+"      CommCare account needed. Manage which forms are open, when they close, and\n"
+"      revoke access at any time.\n"
+"    "
+msgstr ""
+"\n"
+"      एक पंजीकरण या सर्वेक्षण फॉर्म को सार्वजनिक URL पर प्रकाशित करें। उत्तरदाता एक-बार लिंक का अनुरोध करते हैं, बॉट चेक पास करते हैं, और फॉर्म एक बार पूरा करते हैं — CommCare खाता आवश्यक नहीं है। यह प्रबंधित करें कि कौन से फॉर्म खुले हैं, वे कब बंद होते हैं, और कभी भी एक्सेस रद्द करें।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid "How public forms work"
+msgstr "सार्वजनिक फॉर्म कैसे काम करते हैं"
+
+#: corehq/apps/public_webforms/templates/public_webforms/manage.html
+msgid "Webforms"
+msgstr "वेबफॉर्म्स"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/create_form_choices.html
+msgid ""
+"\n"
+"          Only <strong>registration</strong> and <strong>survey</strong> forms\n"
+"          are eligible. Forms that update existing cases can't be made public.\n"
+"        "
+msgstr ""
+"\n"
+"          केवल <strong>पंजीकरण</strong> और <strong>सर्वेक्षण</strong> फॉर्म पात्र हैं। जो फॉर्म मौजूदा केस अपडेट करते हैं, उन्हें सार्वजनिक नहीं किया जा सकता।\n"
+"        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid "Public URL QR Code"
+msgstr "सार्वजनिक URL क्यूआर कोड"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
+msgid ""
+"\n"
+"            Respondents who scan this code open the same page as the public URL,\n"
+"            where they can request a one-time link.\n"
+"          "
+msgstr ""
+"\n"
+"            जो उत्तरदाता इस कोड को स्कैन करते हैं, वे उसी पेज को खोलते हैं जैसा सार्वजनिक URL,\n"
+"            जहाँ वे एक बार उपयोग होने वाला लिंक अनुरोध कर सकते हैं।\n"
+"          "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid "Open Public Webform"
+msgstr "पब्लिक वेबफॉर्म खोलें"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid "Close Public Webform"
+msgstr "पब्लिक वेबफॉर्म बंद करें"
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid ""
+"\n"
+"              Respondents will be able to request a one-time link to complete\n"
+"              this form.\n"
+"            "
+msgstr ""
+"\n"
+"              उत्तरदाता इस फॉर्म को पूरा करने के लिए वन-टाइम लिंक का अनुरोध कर सकेंगे।\n"
+"            "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+msgid ""
+"\n"
+"              Respondents will no longer be able to request a one-time link to\n"
+"              complete this form. Links already sent can be used until they\n"
+"              expire.\n"
+"            "
+msgstr ""
+"\n"
+"              उत्तरदाता अब इस फॉर्म को पूरा करने के लिए वन-टाइम लिंक का अनुरोध नहीं कर सकेंगे। पहले से भेजे गए लिंक उनकी समाप्ति तक उपयोग किए जा सकते हैं।\n"
+"            "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid ""
+"\n"
+"      Information you submit will be used in accordance with Dimagi's\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"        >Privacy Policy</a\n"
+"      >,\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"        >Terms of Service</a\n"
+"      >, and\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"        >Business Agreement</a\n"
+"      >.\n"
+"    "
+msgstr ""
+"\n"
+"      आप जो जानकारी जमा करेंगे, वह Dimagi की\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"        >गोपनीयता नीति</a\n"
+"      >,\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"        >सेवा की शर्तें</a\n"
+"      >, और\n"
+"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"        >व्यावसायिक समझौता</a\n"
+"      > के अनुसार उपयोग की जाएगी।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid "Message and data rates may apply."
+msgstr "संदेश और डेटा दरें लागू हो सकती हैं।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
+msgid "Send my link"
+msgstr "मेरा लिंक भेजें"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+#| msgid "Webforms"
+msgid "Webform Closed"
+msgstr "वेबफॉर्म बंद हुआ"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid "Requests Closed"
+msgstr "अनुरोध बंद हैं"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
+msgid ""
+"\n"
+"      This form is not currently accepting submissions.\n"
+"    "
+msgstr ""
+"\n"
+"      यह फॉर्म वर्तमान में सबमिशन स्वीकार नहीं कर रहा है।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid "Check Your Messages"
+msgstr "अपने संदेश जांचें"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"      We sent a link using the contact information you provided.\n"
+"    "
+msgstr ""
+"\n"
+"      हमने आपके द्वारा दी गई संपर्क जानकारी का उपयोग करके एक लिंक भेजा है।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "      The link expires in %(link_lifespan)s and only works once.\n"
+#| "    "
+msgid ""
+"\n"
+"      The link expires %(link_lifespan)s after it was created and only works\n"
+"      once.\n"
+"    "
+msgstr ""
+"\n"
+"      लिंक इसके बनाए जाने के %(link_lifespan)s बाद समाप्त हो जाती है और केवल एक बार ही काम करती है।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid "Request another link"
+msgstr "एक और लिंक का अनुरोध करें"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
+#| msgid "Unavailable"
+msgid "Form Link Unavailable"
+msgstr "फॉर्म लिंक उपलब्ध नहीं है"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
+#| msgid "No longer available"
+msgid "Link No Longer Available"
+msgstr "लिंक अब उपलब्ध नहीं है"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
+#| msgid ""
+#| "\n"
+#| "      The link expires in %(link_lifespan)s and only works once.\n"
+#| "    "
+msgid ""
+"\n"
+"      One-time links expire after a short time, and can only be used once.\n"
+"    "
+msgstr ""
+"\n"
+"      एक बार की लिंक थोड़े समय बाद समाप्त हो जाती है, और केवल एक बार ही उपयोग की जा सकती है।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
+#| msgid ""
+#| "\n"
+#| "      Please start a new bulk edit session above.\n"
+#| "    "
+msgid ""
+"\n"
+"      Request a new link to fill out this form.\n"
+"    "
+msgstr ""
+"\n"
+"      इस फॉर्म को भरने के लिए एक नई लिंक का अनुरोध करें।\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_request.html
+msgid ""
+"\n"
+"        We'll send a private, single-use link to complete the form using the\n"
+"        contact information you provide below.\n"
+"      "
+msgstr ""
+"\n"
+"        हम नीचे दी गई आपकी संपर्क जानकारी का उपयोग करके फॉर्म पूरा करने के लिए एक निजी, एक-बार उपयोग होने वाला लिंक भेजेंगे।\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+msgid "No public webforms match these filters."
+msgstr "इन फ़िल्टरों से कोई सार्वजनिक वेबफॉर्म मेल नहीं खाता।"
+
+#: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
+msgid "No public webforms have been created yet."
+msgstr "अभी तक कोई सार्वजनिक वेबफॉर्म नहीं बनाया गया है।"
+
+#: corehq/apps/public_webforms/views.py corehq/tabs/tabclasses.py
+msgid "Manage Public Webforms"
+msgstr "सार्वजनिक वेबफॉर्म प्रबंधित करें"
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform created."
+msgstr "सार्वजनिक वेबफॉर्म बनाया गया।"
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform updated."
+msgstr "पब्लिक वेबफॉर्म अपडेट किया गया।"
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform closed to new requests."
+msgstr "पब्लिक वेबफॉर्म नए अनुरोधों के लिए बंद कर दिया गया है।"
+
+#: corehq/apps/public_webforms/views.py
+msgid "Public webform opened to new requests."
+msgstr "पब्लिक वेबफॉर्म नए अनुरोधों के लिए खोल दिया गया है।"
 
 #: corehq/apps/registration/forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -39391,8 +40683,8 @@ msgstr "कोई प्रोजेक्ट स्पेस निर्दि
 #, python-brace-format
 msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "{count} निमंत्रण भेजा गया"
+msgstr[1] "{count} निमंत्रण भेजे गए"
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -40158,6 +41450,10 @@ msgstr "रीपीटर चुनने के लिए क्लिक क�
 #: corehq/apps/reports/filters/select.py
 msgid "Record Status"
 msgstr "रिकॉर्ड स्थिति"
+
+#: corehq/apps/reports/filters/select.py
+msgid "Payload Error"
+msgstr "पेलोड त्रुटि"
 
 #: corehq/apps/reports/filters/select.py
 msgid "Rebuild restriction feature flag status"
@@ -43001,11 +44297,6 @@ msgstr "ईमेल रिपोर्ट:"
 
 #: corehq/apps/reports/templates/reports/standard/bootstrap3/base_template.html
 #: corehq/apps/reports/templates/reports/standard/bootstrap5/base_template.html
-msgid "to"
-msgstr "को"
-
-#: corehq/apps/reports/templates/reports/standard/bootstrap3/base_template.html
-#: corehq/apps/reports/templates/reports/standard/bootstrap5/base_template.html
 msgid "Notice"
 msgstr "सूचना"
 
@@ -43596,14 +44887,6 @@ msgstr "नया प्रोजेक्ट बनाएँ"
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Copy Full Key"
 msgstr "पूर्ण कुंजी कॉपी करें"
-
-#: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap3/web_users.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/web_users.html
-msgid "Expired"
-msgstr "समाप्त हो गया"
 
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 msgid "Delete Key"
@@ -47558,6 +48841,12 @@ msgstr "सक्रिय डोमेन"
 msgid "Last Usage"
 msgstr "अंतिम उपयोग"
 
+#: corehq/apps/translations/app_translations/ai_translator.py
+#: corehq/apps/translations/app_translations/upload_module.py
+#, python-format
+msgid "You must provide at least one translation of the case property '%s'"
+msgstr "आपको केस प्रॉपर्टी '%s' के लिए कम से कम एक अनुवाद प्रदान करना होगा"
+
 #: corehq/apps/translations/app_translations/upload_app.py
 msgid "Issues found. You should receive an email shortly."
 msgstr "समस्याएँ मिलीं। आपको शीघ्र ही एक ईमेल प्राप्त होगा।"
@@ -47773,11 +49062,6 @@ msgstr ""
 "मिली। मेनू {1} के लिए कोई बदलाव नहीं किया गया।"
 
 #: corehq/apps/translations/app_translations/upload_module.py
-#, python-format
-msgid "You must provide at least one translation of the case property '%s'"
-msgstr "आपको केस प्रॉपर्टी '%s' के लिए कम से कम एक अनुवाद प्रदान करना होगा"
-
-#: corehq/apps/translations/app_translations/upload_module.py
 #, python-brace-format
 msgid ""
 "A row for menu {index} has an unexpected case property \"{field}\". Case "
@@ -47787,6 +49071,47 @@ msgstr ""
 "मेनू {index} के लिए एक पंक्ति में एक अप्रत्याशित केस प्रॉपर्टी \"{field}\" "
 "है। केस प्रॉपर्टीज को उसी क्रम में होना चाहिए जैसा कि बल्क ऐप अनुवाद डाउनलोड"
 " में है। इस पंक्ति के लिए कोई अनुवाद अपडेट नहीं किया गया।"
+
+#: corehq/apps/translations/tasks.py
+#| msgid "The deposit transaction could not be performed."
+msgid "The translation couldn't be queued. Run it again."
+msgstr "अनुवाद कतार में नहीं लगाया जा सका। फिर से चलाएँ।"
+
+#: corehq/apps/translations/tasks.py
+#| msgid "Source lang selected not available for the project"
+msgid "AI translation is no longer available for this project."
+msgstr "इस प्रोजेक्ट के लिए AI अनुवाद अब उपलब्ध नहीं है।"
+
+#: corehq/apps/translations/tasks.py
+msgid ""
+"The app kept being saved while the translations were being applied, so none "
+"were saved. Run it again."
+msgstr ""
+"ऐप को सेव करते समय अनुवाद लागू किए जा रहे थे, इसलिए कोई भी सेव नहीं हुआ। फिर"
+" से चलाएँ।"
+
+#: corehq/apps/translations/tasks.py
+msgid "Other translations of this app took too long to finish. Run it again."
+msgstr "इस ऐप के अन्य अनुवादों को पूरा होने में बहुत समय लगा। फिर से चलाएँ।"
+
+#: corehq/apps/translations/tasks.py
+#| msgid "Something went wrong. Please reload the page and try again."
+msgid ""
+"Something went wrong while translating the app. Review its translations and "
+"run it again."
+msgstr ""
+"ऐप का अनुवाद करते समय कुछ गलत हो गया। इसके अनुवाद की समीक्षा करें और फिर से "
+"चलाएँ।"
+
+#: corehq/apps/translations/tasks.py
+msgid "No strings could be translated."
+msgstr "कोई भी स्ट्रिंग अनुवादित नहीं की जा सकी।"
+
+#: corehq/apps/translations/tasks.py
+#, python-format, python-brace-format
+msgid ""
+"More than {percent}% of translations failed validation and were skipped."
+msgstr ""
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
@@ -49559,12 +50884,6 @@ msgstr "कृपया मान्य JSON दर्ज करें। यह
 #: corehq/apps/userreports/ui/fields.py
 msgid "Expected {} but was {}"
 msgstr "अपेक्षित {} लेकिन था {}"
-
-#: corehq/apps/userreports/ui/forms.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#: corehq/motech/openmrs/forms.py
-msgid "Save Changes"
-msgstr "परिवर्तन सहेजें"
 
 #: corehq/apps/userreports/ui/forms.py
 msgid "all users"
@@ -53378,15 +54697,27 @@ msgstr ""
 
 #: corehq/apps/users/views/role.py
 #, python-brace-format
+#| msgid ""
+#| "Unable to delete role '{role}'. It has one user and/or invitation still "
+#| "assigned to it. Remove all users assigned to the role before deleting it."
+#| msgid_plural ""
+#| "Unable to delete role '{role}'. It has {user_count} users and/or invitations"
+#| " still assigned to it. Remove all users assigned to the role before deleting"
+#| " it."
 msgid ""
-"Unable to delete role '{role}'. It has one user and/or invitation still "
-"assigned to it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} user and/or invitation "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgid_plural ""
 "Unable to delete role '{role}'. It has {user_count} users and/or invitations"
 " still assigned to it. Remove all users assigned to the role before deleting"
 " it."
 msgstr[0] ""
+"रोल '{role}' को हटाया नहीं जा सका। इसमें अभी भी {user_count} उपयोगकर्ता "
+"और/या निमंत्रण असाइन हैं। हटाने से पहले सभी उपयोगकर्ताओं को रोल से हटा दें।"
 msgstr[1] ""
+"रोल '{role}' को हटाया नहीं जा सका। इसमें अभी भी {user_count} उपयोगकर्ता "
+"और/या निमंत्रण असाइन हैं। हटाने से पहले सभी उपयोगकर्ताओं को रोल से हटा दें।"
 
 #: corehq/apps/users/views/role.py corehq/tabs/tabclasses.py
 msgid "Create Role"
@@ -53525,10 +54856,6 @@ msgstr "खोला गया"
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py
 msgid "Empty Case"
 msgstr "खाली केस"
-
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "खोलें"
 
 #: corehq/ex-submodules/casexml/apps/case/views.py
 msgid "Modified On"
@@ -56589,10 +57916,6 @@ msgid "Processing Attempts"
 msgstr "प्रोसेसिंग प्रयास"
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-msgid "Retry"
-msgstr "पुनः प्रयास करें"
-
-#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Reverting API Requests"
 msgstr "API अनुरोधों को पलटना"
 
@@ -57082,6 +58405,14 @@ msgstr "अज्ञात केस-प्रकार"
 msgid "Unknown user"
 msgstr "अनजान उपयोगकर्ता"
 
+#: corehq/motech/repeaters/models.py
+msgid "Form {} is not found"
+msgstr "फ़ॉर्म {} नहीं मिला"
+
+#: corehq/motech/repeaters/models.py
+msgid "Case {} is not found"
+msgstr "केस {} नहीं मिला"
+
 #: corehq/motech/repeaters/models.py corehq/tabs/tabclasses.py
 msgid "Forward Forms"
 msgstr "फ़ॉर्म फॉरवर्ड करें"
@@ -57398,8 +58729,12 @@ msgid "Delivery Attempts"
 msgstr "डिलीवरी प्रयास"
 
 #: corehq/motech/repeaters/views/repeat_records.py
-msgid "View Responses"
-msgstr "प्रतिक्रियाएँ देखें"
+msgid "Preview Payloads"
+msgstr "प्रीव्यू पेलोड्स"
+
+#: corehq/motech/repeaters/views/repeat_records.py
+msgid "The payload could not be found."
+msgstr "पेलोड नहीं मिल सका।"
 
 #: corehq/motech/repeaters/views/repeat_records.py
 msgid ""
@@ -57812,9 +59147,9 @@ msgid "Save to Case"
 msgstr "केस में सहेजें"
 
 #: corehq/privileges.py
-#| msgid "Public Name"
-msgid "Public Webforms"
-msgstr "सार्वजनिक वेबफॉर्म्स"
+#| msgid "App Translations"
+msgid "AI App Translations"
+msgstr "AI ऐप अनुवाद"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -57889,8 +59224,8 @@ msgid "My Applications"
 msgstr "मेरे एप्लिकेशन"
 
 #: corehq/tabs/tabclasses.py
-msgid "New Application"
-msgstr "नया एप्लिकेशन"
+msgid "Create and manage public webforms."
+msgstr "सार्वजनिक वेबफॉर्म बनाएं और प्रबंधित करें।"
 
 #: corehq/tabs/tabclasses.py
 msgid "Test Inbound SMS"
@@ -58799,6 +60134,95 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
 
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            %(counter)s form processed successfully\n"
+#~ "          "
+#~ msgid_plural ""
+#~ "\n"
+#~ "            %(counter)s forms processed successfully\n"
+#~ "          "
+#~ msgstr[0] ""
+#~ "\n"
+#~ "            %(counter)s फॉर्म सफलतापूर्वक प्रोसेस किया गया\n"
+#~ "          "
+#~ msgstr[1] ""
+#~ "\n"
+#~ "            %(counter)s फॉर्म्स सफलतापूर्वक प्रोसेस किए गए\n"
+#~ "          "
+
+#~ msgid "Export not found"
+#~ msgstr "निर्यात नहीं मिला"
+
+#~ msgid "You can only copy new exports."
+#~ msgstr "आप केवल नए निर्यात की प्रतिलिपि बना सकते हैं।"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                    %(count)s domain membership\n"
+#~ "                  "
+#~ msgid_plural ""
+#~ "\n"
+#~ "                    %(count)s domain memberships\n"
+#~ "                  "
+#~ msgstr[0] ""
+#~ "\n"
+#~ "                        %(count)s सहायता\n"
+#~ "                    "
+#~ msgstr[1] ""
+#~ "\n"
+#~ "                        %(count)s सहायता\n"
+#~ "                    "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        One match found.\n"
+#~ "      "
+#~ msgid_plural ""
+#~ "\n"
+#~ "        %(matched_count)s matches found.\n"
+#~ "      "
+#~ msgstr[0] ""
+#~ "\n"
+#~ "        एक मेल मिला।\n"
+#~ "      "
+#~ msgstr[1] ""
+#~ "\n"
+#~ "        %(matched_count)s मेल मिले।\n"
+#~ "      "
+
+#~ msgid "One-Time Link Request"
+#~ msgstr "वन-टाइम लिंक अनुरोध"
+
+#~ msgid "Case list used by Select Parent First in '{}' not found"
+#~ msgstr "‘{}’ में Select Parent First द्वारा उपयोग की गई केस सूची नहीं मिली"
+
+#~ msgid "There was an error processing your request. Please try again."
+#~ msgstr ""
+#~ "आपके अनुरोध को संसाधित करते समय एक त्रुटि हुई। कृपया पुनः प्रयास करें।"
+
+#~ msgid "Unit cost must be a decimal number greater than 0."
+#~ msgstr "यूनिट लागत 0 से अधिक दशमलव संख्या होनी चाहिए।"
+
+#~ msgid "Quantity must be a whole number greater than 0."
+#~ msgstr "मात्रा 0 से अधिक पूर्णांक होनी चाहिए।"
+
+#~ msgid "Target Type"
+#~ msgstr "लक्ष्य प्रकार"
+
+#~ msgid "-- Field --"
+#~ msgstr "-- फ़ील्ड --"
+
+#~ msgid "View Responses"
+#~ msgstr "प्रतिक्रियाएँ देखें"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} does not belong to domain {domain}"
+#~ msgstr "XForm {form_id} डोमेन {domain} से संबंधित नहीं है"
+
 #~ msgid ""
 #~ "\n"
 #~ "    Statement From: CommCare and the corporation Dimagi, Inc. 585\n"
@@ -58872,9 +60296,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ msgid "Logs"
 #~ msgstr "लॉग्स"
 
-#~ msgid "Run"
-#~ msgstr "चलाएँ"
-
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -58911,10 +60332,6 @@ msgstr "मान्य JSON दर्ज करें"
 #, python-format
 #~ msgid "Ended: %(date_ended)s"
 #~ msgstr "समाप्त: %(date_ended)s"
-
-#, python-format
-#~ msgid "Duration: %(duration)s"
-#~ msgstr "अवधि: %(duration)s"
 
 #~ msgid "Status:"
 #~ msgstr "स्थिति:"
@@ -59038,9 +60455,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ msgid "One of the fields from 'title, body, data' is required!"
 #~ msgstr "'शीर्षक, मुख्य भाग, डेटा' में से किसी एक फ़ील्ड की आवश्यकता है!"
 
-#~ msgid "FCM is not setup on this environment!"
-#~ msgstr "इस वातावरण में FCM सेटअप नहीं है!"
-
 #~ msgid "Background Sync"
 #~ msgstr "पृष्ठभूमि सिंक"
 
@@ -59053,9 +60467,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ msgid "User data profile not found"
 #~ msgstr "उपयोगकर्ता डेटा प्रोफ़ाइल नहीं मिली"
 
-#~ msgid "Please enter client secret again."
-#~ msgstr "कृपया क्लाइंट सीक्रेट फिर से दर्ज करें।"
-
 #~ msgid "Please enter API password again."
 #~ msgstr "कृपया API पासवर्ड फिर से दर्ज करें।"
 
@@ -59064,9 +60475,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "Normal Case List"
 #~ msgstr "सामान्य केस सूची"
-
-#~ msgid "Search Filter"
-#~ msgstr "खोज फ़िल्टर"
 
 #~ msgid "Copy case list filter"
 #~ msgstr "केस सूची फ़िल्टर कॉपी करें"
@@ -59886,9 +61294,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ "Confirm that resources are completely translated before performing request"
 #~ msgstr "अनुरोध करने से पहले पुष्टि करें कि संसाधन पूरी तरह से अनुवादित हैं"
 
-#~ msgid "Please confirm that you want to proceed?"
-#~ msgstr "कृपया पुष्टि करें कि आप आगे बढ़ना चाहते हैं?"
-
 #~ msgid "Version not available for app"
 #~ msgstr "ऐप के लिए संस्करण उपलब्ध नहीं है"
 
@@ -59980,9 +61385,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ msgid "Blacklist Translations"
 #~ msgstr "ब्लैकलिस्ट अनुवाद"
 
-#~ msgid "App Translations"
-#~ msgstr "ऐप अनुवाद"
-
 #~ msgid "Successfully enqueued request to submit files for translations"
 #~ msgstr ""
 #~ "अनुवाद के लिए फ़ाइलें सबमिट करने के अनुरोध को सफलतापूर्वक कतारबद्ध किया गया"
@@ -60019,9 +61421,6 @@ msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid "Successfully enqueued request to delete resources."
 #~ msgstr "संसाधनों को हटाने के लिए अनुरोध को सफलतापूर्वक कतारबद्ध किया गया।"
-
-#~ msgid "Source lang selected not available for the project"
-#~ msgstr "चयनित स्रोत भाषा प्रोजेक्ट के लिए उपलब्ध नहीं है"
 
 #~ msgid "Create or Update Translations"
 #~ msgstr "अनुवाद बनाएँ या अपडेट करें"
@@ -61267,9 +62666,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ "\n"
 #~ "    %(inviter)s ने आपको CommCare HQ में %(domain)s प्रोजेक्ट से जुड़ने के लिए आमंत्रित किया है।\n"
 #~ "    यह निमंत्रण %(days)s दिन में समाप्त हो जाएगा।\n"
-
-#~ msgid "-The CommCare HQ team"
-#~ msgstr "-CommCare HQ टीम"
 
 #~ msgid "Thank you for using CommCare HQ."
 #~ msgstr "CommCare HQ का उपयोग करने के लिए धन्यवाद।"

@@ -10,6 +10,10 @@ class DataRegistryCaseUpdateError(Exception):
     pass
 
 
+class PayloadNotFoundError(Exception):
+    """Raised when the doc a payload is generated from is deleted or missing."""
+
+
 class UnknownRepeater(Exception):
     """Exception raised when an Unknown Repeater type's instance is created.
 

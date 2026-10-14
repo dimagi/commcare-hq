@@ -4,7 +4,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -13,13 +12,13 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     ALL_CASE_TYPE_EXPORT,
 )
-from corehq.apps.export.models import ExportInstance, CaseExportInstance
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
+from corehq.apps.export.models import CaseExportInstance
 from corehq.apps.export.views.new import BaseExportView
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
     DashboardFeedMixin,
     ODataFeedMixin,
-    clean_odata_columns,
     trigger_update_case_instance_tables_task
 )
 from corehq.apps.locations.permissions import location_safe
@@ -34,7 +33,7 @@ class BaseEditNewCustomExportView(BaseExportView):
     @property
     @memoized
     def new_export_instance(self):
-        return self.export_instance_cls.get(self.export_id)
+        return get_export_instance_or_404(self.domain, self.export_id)
 
     def get_export_instance(self, schema, original_export_instance):
         load_deprecated = self.request.GET.get('load_deprecated', 'False') == 'True'
@@ -51,13 +50,7 @@ class BaseEditNewCustomExportView(BaseExportView):
         return reverse(self.urlname, args=[self.domain, self.export_id])
 
     def get(self, request, *args, **kwargs):
-        try:
-            export_instance = self.new_export_instance
-        except ResourceNotFound:
-            raise Http404()
-
-        if export_instance.domain != self.domain:
-            raise Http404()
+        export_instance = self.new_export_instance
 
         schema = None
         if (
@@ -78,19 +71,13 @@ class BaseEditNewCustomExportView(BaseExportView):
 
     @method_decorator(login_and_domain_required)
     def post(self, request, *args, **kwargs):
-        try:
-            new_export_instance = self.new_export_instance
-            if (
-                isinstance(new_export_instance, CaseExportInstance)
-                and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
-            ):
-                trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
-        except ResourceNotFound:
-            new_export_instance = None
+        new_export_instance = self.new_export_instance
         if (
-            new_export_instance
-            and not new_export_instance.can_edit(request.couch_user)
+            isinstance(new_export_instance, CaseExportInstance)
+            and new_export_instance.case_type == ALL_CASE_TYPE_EXPORT
         ):
+            trigger_update_case_instance_tables_task(request.domain, new_export_instance._id)
+        if not new_export_instance.can_edit(request.couch_user):
             raise Http404
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 
@@ -160,7 +147,7 @@ class EditExportAttrView(BaseEditNewCustomExportView):
     @property
     @memoized
     def export_type(self):
-        return ExportInstance.get(self.export_id).type
+        return get_export_instance_or_404(self.domain, self.export_id).type
 
     def get(self, request, *args, **kwargs):
         raise Http404

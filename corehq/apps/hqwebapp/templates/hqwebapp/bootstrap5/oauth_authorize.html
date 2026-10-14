@@ -1,0 +1,137 @@
+{% extends "hqwebapp/bootstrap5/base_page.html" %}
+{% load i18n %}
+{% load compress %}
+{% load static %}
+{% load hq_shared_tags %}
+{% js_entry "hqwebapp/js/oauth_authorize" %}
+
+{% block stylesheets %}
+  {% compress css %}
+    <link
+      type="text/scss"
+      rel="stylesheet"
+      media="all"
+      href="{% static 'registration/scss/registration.scss' %}"
+    />
+  {% endcompress %}
+{% endblock stylesheets %}
+
+{% block background_content %}
+  <div class="bg-container">
+    <div class="bg-overlay"></div>
+  </div>
+{% endblock background_content %}
+
+{% block navigation %}
+  <nav
+    id="hq-navigation"
+    class="navbar navbar-expand-lg bg-light border-bottom-1 navbar-hq-main-menu"
+  >
+    <div class="container-fluid">
+      <div class="navbar-header hq-header">
+        <a
+          href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
+          class="navbar-brand"
+        >
+          {% if CUSTOM_LOGO_URL %}
+            <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+          {% else %}
+            <!-- _navbar.scss supplies the default logo -->
+            <div></div>
+          {% endif %}
+        </a>
+      </div>
+    </div>
+  </nav>
+{% endblock navigation %}
+
+{% block title %}{% trans "Authorize Application" %}{% endblock title %}
+
+{% block content %}
+  <div class="reg-form-container">
+    {% if error %}
+      <div class="alert alert-danger">
+        <h2 class="h5">{% trans "Error" %}: {{ error.error }}</h2>
+        <p class="mb-0">{{ error.description }}</p>
+      </div>
+    {% else %}
+      <div class="form-bubble form-bubble-lg">
+        <h2 class="text-center mt-3">
+          {% blocktrans with application_name=application.name %}
+            Authorize {{ application_name }}?
+          {% endblocktrans %}
+        </h2>
+
+        <form method="post" action="" x-data="consentForm">
+          {% csrf_token %}
+          {% for field in form %}
+            {% if field.is_hidden %}{{ field }}{% endif %}
+          {% endfor %}
+
+          <p class="mt-3">
+            {% trans "This application is requesting permission to:" %}
+          </p>
+          <ul>
+            {% for description in scopes_descriptions %}
+              <li>{{ description }}</li>
+            {% endfor %}
+          </ul>
+
+          {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">{{ error }}</div>
+          {% endfor %}
+
+          <div class="mb-3" x-cloak>
+            <label class="form-label" for="{{ form.domains.id_for_label }}">
+              {{ form.domains.label }}
+            </label>
+            <div class="mb-2 float-end">
+              <button
+                type="button"
+                class="btn btn-sm btn-link p-0"
+                x-show="domainCount > 1"
+                @click="setAllDomains(true)"
+                :disabled="allDomainsSelected"
+              >
+                {% trans "Select all" %}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-link p-0 ms-3"
+                @click="setAllDomains(false)"
+                :disabled="selectedDomains.length === 0"
+              >
+                {% trans "Clear" %}
+              </button>
+            </div>
+            {{ form.domains }}
+            {% for error in form.domains.errors %}
+              <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+            <div
+              class="alert alert-info mt-2 mb-0 py-2"
+              x-show="allDomainsSelected && domainCount > 1"
+            >
+              {% trans "This application will have access to data on all your project spaces." %}
+            </div>
+          </div>
+          <div class="d-flex justify-content-center gap-2">
+            <input
+              type="submit"
+              class="btn btn-outline-primary btn-lg"
+              value="{% trans 'Cancel' %}"
+            />
+            <input
+              type="submit"
+              class="btn btn-primary btn-lg"
+              name="allow"
+              value="{% trans 'Authorize' %}"
+              :disabled="selectedDomains.length === 0"
+              disabled
+            />
+          </div>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+{% endblock content %}

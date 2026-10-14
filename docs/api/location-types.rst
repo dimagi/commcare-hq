@@ -53,7 +53,7 @@ Retrieves details for a specific location type.
 
 .. code-block:: text
 
-    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]
+    GET https://www.commcarehq.org/a/[domain]/api/location_type/v1/[id]/
 
 
 **Sample JSON Output**

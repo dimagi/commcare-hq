@@ -1,18 +1,34 @@
 import datetime
+import math
+from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import Text
+from jsonobject.exceptions import BadValueError
+from sqlalchemy import ARRAY, Text
 from sqlalchemy.dialects.postgresql import insert
 
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.chunked import chunked
 
 from corehq.apps.data_dictionary.models import CaseProperty
+from corehq.util.metrics import metrics_histogram_timer
 
 from .table_ddl import CaseTable, get_project_db_engine, property_column
 
 
-def send_to_project_db(domain, case_type, cases):
-    """Bulk upsert CommCareCases of a single case type"""
+def send_cases_to_project_db(domain, cases):
+    """Bulk upsert CommCareCases"""
+    metric = 'commcare.project_db.populate.duration'
+    with metrics_histogram_timer(metric, timing_buckets=(.1, .5, 1, 2, 5), tags={'domain': domain}):
+        cases_by_type = defaultdict(list)
+        for case in cases:
+            cases_by_type[case.type].append(case)
+        for case_type, case_type_cases in cases_by_type.items():
+            populate_case_type(domain, case_type, case_type_cases)
+
+
+def populate_case_type(domain, case_type, cases):
+    """Chunked upsert CommCareCases of a single case type"""
     engine = get_project_db_engine()
     table = CaseTable(domain, case_type).reflect()
     if table is not None:
@@ -41,8 +57,11 @@ def _normalize(row, columns):
     filled = {}  # Row with all columns present
     for column in columns:
         value = row.get(column.name)
-        if value is None and not column.nullable and isinstance(column.type, Text):
-            value = ''
+        if value is None and not column.nullable:
+            if isinstance(column.type, ARRAY):
+                value = []
+            elif isinstance(column.type, Text):
+                value = ''
         filled[column.name] = value
     return filled
 
@@ -54,12 +73,12 @@ def case_to_row(case, table_columns):
         'case_id': case.case_id,
         'owner_id': case.owner_id,
         'case_name': case.name,
-        'opened_on': case.opened_on,
-        'closed_on': case.closed_on,
-        'modified_on': case.modified_on,
+        'opened_on': _as_utc(case.opened_on),
+        'closed_on': _as_utc(case.closed_on),
+        'modified_on': _as_utc(case.modified_on),
         'closed': case.closed,
         'external_id': case.external_id,
-        'server_modified_on': case.server_modified_on,
+        'server_modified_on': _as_utc(case.server_modified_on),
         'parent_id': ids_by_identifier.get('parent'),
         'host_id': ids_by_identifier.get('host'),
     }
@@ -72,6 +91,11 @@ def case_to_row(case, table_columns):
                 if typed_col in table_columns:
                     row[typed_col] = coerce_fn(value)
     return row
+
+
+def _as_utc(value):
+    """Attach explicit UTC timezone to naive datetime values"""
+    return value.replace(tzinfo=datetime.timezone.utc) if value else None
 
 
 def coerce_to_date(value):
@@ -92,8 +116,34 @@ def coerce_to_number(value):
         return None
 
 
+def coerce_to_select(value):
+    """Split a space-separated multi-select value into a list of choices"""
+    if value is None:
+        return []
+    return [x for x in str(value).split(' ') if x]
+
+
+def coerce_to_gps(value):
+    """Parse a GPS case property into an earthdistance ``earth`` cube literal."""
+    try:
+        point = GeoPoint.from_string(str(value), flexible=True)
+    except BadValueError:
+        return None
+
+    # Mirrors `ll_to_earth(lat, lon)` from the earthdistance extension
+    lat = math.radians(point.latitude)
+    lon = math.radians(point.longitude)
+    EARTH_RADIUS = 6378168.0  # In meters, from earthdistance
+    x = EARTH_RADIUS * math.cos(lat) * math.cos(lon)
+    y = EARTH_RADIUS * math.cos(lat) * math.sin(lon)
+    z = EARTH_RADIUS * math.sin(lat)
+    return f'({x}, {y}, {z})'
+
+
 # Parallels CaseTable.COERCED_PROPERTY_TYPES
 _TYPED_COERCIONS = [
     (CaseProperty.DataType.DATE, coerce_to_date),
     (CaseProperty.DataType.NUMBER, coerce_to_number),
+    (CaseProperty.DataType.SELECT, coerce_to_select),
+    (CaseProperty.DataType.GPS, coerce_to_gps),
 ]

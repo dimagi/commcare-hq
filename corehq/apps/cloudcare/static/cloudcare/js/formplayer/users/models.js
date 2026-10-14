@@ -87,6 +87,7 @@ self.setCurrentUser = function (options) {
     );
     userInstance.displayOptions = _.defaults(savedDisplayOptions, {
         singleAppMode: options.singleAppMode,
+        publicFormMode: options.publicFormMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
         language: options.language,

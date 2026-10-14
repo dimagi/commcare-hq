@@ -1,8 +1,8 @@
 --- 
 +++ 
-@@ -3,8 +3,9 @@
+@@ -2,8 +2,9 @@
+ import ko from "knockout";
  import _ from "underscore";
- import modernizr from "hqwebapp/js/lib/modernizr";
  import initialPageData from "hqwebapp/js/initial_page_data";
 -import alertUser from "hqwebapp/js/bootstrap3/alert_user";
 +import alertUser from "hqwebapp/js/bootstrap5/alert_user";
@@ -11,7 +11,7 @@
  import "hqwebapp/js/hq_extensions.jquery";
  import "jquery.cookie/jquery.cookie";
  import "jquery-textchange/jquery.textchange";
-@@ -34,11 +35,11 @@
+@@ -33,11 +34,11 @@
      wrap = wrap === undefined ? true : wrap;
      var el = $(
          '<div class="hq-help">' +
@@ -25,7 +25,7 @@
      });
      if (wrap) {
          el.hqHelp();
-@@ -93,6 +94,7 @@
+@@ -92,6 +93,7 @@
  ko.virtualElements.allowedBindings.allowDescendantBindings = true;
  
  var initBlock = function ($elem) {
@@ -33,7 +33,7 @@
      $('.submit').click(function (e) {
          var $form = $(this).closest('.form, form'),
              data = $form.find('[name]').serialize(),
-@@ -102,8 +104,6 @@
+@@ -101,8 +103,6 @@
          $.postGo(action, $.unparam(data));
      });
  
@@ -42,7 +42,7 @@
      $("input[type='text'], input[type='password'], textarea", $elem);
      $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
  
-@@ -146,7 +146,7 @@
+@@ -145,7 +145,7 @@
                  }).addClass(cssClass),
                  $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-primary disabled'),
                  $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-primary disabled'),
@@ -51,7 +51,7 @@
                  setStateWhenReady: function (state) {
                      if (this.state === 'saving') {
                          this.nextState = state;
-@@ -242,9 +242,7 @@
+@@ -241,9 +241,7 @@
                  if (lastParent) {
                      var stillAttached = lastParent.tagName.toLowerCase() === 'html';
                      if (button.state !== 'saved' && stillAttached) {
@@ -62,7 +62,7 @@
                          return options.unsavedMessage || "";
                      }
                  }
-@@ -354,7 +352,12 @@
+@@ -353,7 +351,12 @@
  $(function () {
      initBlock($("body"));
  
@@ -76,7 +76,7 @@
  
      $(document).on('click', '.track-usage-link', function (e) {
          var $link = $(e.currentTarget),
-@@ -421,8 +424,14 @@
+@@ -425,8 +428,14 @@
      // EULA modal
      var eulaCookie = "tos2025";
      if (!$.cookie(eulaCookie)) {
@@ -93,7 +93,7 @@
              $("body").addClass("has-eula");
              $("#eula-agree").click(function () {
                  $(this).disableButton();
-@@ -430,7 +439,7 @@
+@@ -434,7 +443,7 @@
                      url: initialPageData.reverse("agree_to_eula"),
                      method: "POST",
                      success: function () {
@@ -102,7 +102,7 @@
                          $("body").removeClass("has-eula");
                      },
                      error: function (xhr) {
-@@ -446,21 +455,22 @@
+@@ -450,21 +459,22 @@
                      },
                  });
              });

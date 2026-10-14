@@ -34,7 +34,7 @@ from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
 
 from corehq.apps.es.es_query import ScanResult
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_in_domain
 from corehq.apps.export.export import (
     get_export_documents,
     get_export_size,
@@ -118,10 +118,10 @@ class OutputPaginator(object):
         return RetryResult(self.page, self.path, self.page_size, 0)
 
 
-def rebuild_export_mutiprocess(export_id, num_processes, page_size=100000):
+def rebuild_export_mutiprocess(domain, export_id, num_processes, page_size=100000):
     assert num_processes > 0
 
-    export_instance = get_properly_wrapped_export_instance(export_id)
+    export_instance = get_export_instance_in_domain(domain, export_id)
     filters = export_instance.get_filters()
     total_docs = get_export_size(export_instance, filters)
     exporter = MultiprocessExporter(export_instance, total_docs, num_processes)

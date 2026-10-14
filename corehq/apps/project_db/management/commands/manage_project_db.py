@@ -1,16 +1,17 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
-import sqlalchemy
-from sqlalchemy.schema import CreateIndex, CreateTable
 
 from corehq.apps.data_dictionary.models import CaseType
-from corehq.apps.project_db.populate import send_to_project_db
+from corehq.apps.project_db.describe import describe_project_db
+from corehq.apps.project_db.populate import populate_case_type
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
     get_project_db_engine,
     preview_drop,
+    setup_project_db,
 )
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
@@ -54,29 +55,30 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, sync, drop, populate, since, describe, **options):
-        if drop and (sync or populate):
-            raise CommandError("--drop cannot be combined with --sync or --populate.")
         if since and not populate:
             raise CommandError("--since is only used in conjunction with --populate.")
 
+        if drop:
+            _drop(domain, self.stdout)
         if sync:
+            if settings.DEBUG:
+                setup_project_db()
             create_or_update_project_db(domain)
             self.stdout.write("Synced ProjectDB table definition")
         if populate:
             _populate(domain, since)
             self.stdout.write("Populated ProjectDB")
-        if drop:
-            _drop(domain, self.stdout)
         if describe:
-            _describe(domain)
+            self.stdout.write(describe_project_db(domain))
 
 
 def _drop(domain, stdout):
     schema = DomainSchema(domain)
     engine = get_project_db_engine()
-    if schema.name not in sqlalchemy.inspect(engine).get_schema_names():
-        stdout.write(f"No ProjectDB schema found for domain '{domain}'")
-        return
+    with engine.connect() as conn:
+        if not schema.exists(conn):
+            stdout.write(f"No ProjectDB schema found for domain '{domain}'")
+            return
 
     stdout.write("The following objects will be dropped:")
     for notice in preview_drop(domain):
@@ -105,25 +107,4 @@ def _populate_case_type(domain, case_type, start_date, prefix):
     total = sum(accessor.query(db).count() for db in accessor.sql_db_aliases)
     cases = with_progress_bar(iter_all_rows(accessor), length=total,
                               oneline='concise', prefix=f"{prefix}: {case_type}")
-    send_to_project_db(domain, case_type, cases)
-
-
-def _describe(domain):
-    engine = get_project_db_engine()
-    metadata = sqlalchemy.MetaData()
-    metadata.reflect(bind=engine, schema=DomainSchema(domain).name)
-    if not metadata.tables:
-        raise CommandError(f"No project DB tables found for domain '{domain}'")
-
-    print(f"-- Project DB schema for domain: {domain}")
-    with engine.connect() as conn:
-        for table in sorted(metadata.tables.values(), key=lambda t: t.name):
-            row_count = conn.execute(
-                sqlalchemy.select([sqlalchemy.func.count()]).select_from(table)
-            ).scalar()
-            ddl = str(CreateTable(table).compile(dialect=engine.dialect)).strip()
-            print(f"\n-- {row_count} rows")
-            print(f"{ddl};")
-            for index in table.indexes:
-                idx_ddl = str(CreateIndex(index).compile(dialect=engine.dialect)).strip()
-                print(f"{idx_ddl};")
+    populate_case_type(domain, case_type, cases)

@@ -91,7 +91,25 @@ var handleAjaxAppChange = function (callback) {
     });
 };
 
+var versionGE = function (commcareVersion1, commcareVersion2) {
+    function parse(version) {
+        version = version.split('.');
+        version = [parseInt(version[0]), parseInt(version[1])];
+        return version;
+    }
+    commcareVersion1 = parse(commcareVersion1);
+    commcareVersion2 = parse(commcareVersion2);
+    if (commcareVersion1[0] > commcareVersion2[0]) {
+        return true;
+    } else if (commcareVersion1[0] === commcareVersion2[0]) {
+        return commcareVersion1[1] >= commcareVersion2[1];
+    } else {
+        return false;
+    }
+};
+
 export default {
     bitlyNatoPhonetic: bitlyNatoPhonetic,
     handleAjaxAppChange: handleAjaxAppChange,
+    versionGE: versionGE,
 };

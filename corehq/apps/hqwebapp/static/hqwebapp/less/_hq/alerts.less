@@ -12,11 +12,24 @@
 }
 
 .alert-maintenance,
-.alert-trial {
+.alert-trial,
+.alert-lockout {
   z-index: @zindex-navbar;
   position: relative;
   text-align: center;
   margin-bottom: 0;
+}
+
+.alert-lockout {
+  form {
+    display: none;
+  }
+
+  .btn-link {
+    padding: 0;
+    border: 0;
+    vertical-align: baseline;
+  }
 }
 
 .alert-setting {

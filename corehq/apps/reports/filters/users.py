@@ -5,6 +5,8 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from memoized import memoized
 
+from corehq import privileges, toggles
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.feature_previews import USE_LOCATION_DISPLAY_NAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.enterprise.models import EnterprisePermissions
@@ -16,7 +18,7 @@ from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, UserHistory, WebUser
-from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.apps.users.util import PUBLIC_USER_ID, cached_user_id_to_user_display
 from corehq.const import USER_DATETIME_FORMAT
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.conversions import ServerTime
@@ -182,6 +184,20 @@ class EmwfUtils(object):
                 ret = (ret[0], 'Deleted - ' + ret[1])
 
         return ret
+
+
+class SubmittedByEmwfUtils(EmwfUtils):
+
+    @property
+    @memoized
+    def static_options(self):
+        options = super().static_options
+        if (
+            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
+            and toggles.PUBLIC_WEBFORMS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN)
+        ):
+            options = options + [self.user_type_tuple(HQUserType.PUBLIC)]
+        return options
 
 
 class UsersUtils(EmwfUtils):
@@ -459,7 +475,24 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
 
-class SubmittedByExpandedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+class FormSubmitterFilter(ExpandedMobileWorkerFilter):
+    options_url = 'submitted_by_options'
+
+    @property
+    @memoized
+    def utils(self):
+        return SubmittedByEmwfUtils(self.domain)
+
+    @classmethod
+    def submitter_ids(cls, domain, mobile_user_and_group_slugs, request_user):
+        user_ids = (cls.user_es_query(domain, mobile_user_and_group_slugs, request_user)
+                    .values_list('_id', flat=True))
+        if HQUserType.PUBLIC in cls.selected_user_types(mobile_user_and_group_slugs):
+            user_ids.append(PUBLIC_USER_ID)
+        return user_ids
+
+
+class SubmittedByExpandedMobileWorkerFilter(FormSubmitterFilter):
     label = gettext_lazy("Submitted By")
 
 

@@ -3,7 +3,7 @@
 import datetime
 from django.db import migrations, models
 
-from corehq.apps.tombstones.models import ModelClassField
+from corehq.sql_db.fields import ModelClassField
 
 SLUG_BY_DJANGO_PATH = {
     'form_processor.CommCareCase': 'case',

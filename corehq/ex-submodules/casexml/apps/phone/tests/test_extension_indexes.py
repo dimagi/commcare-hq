@@ -3,12 +3,18 @@ import os.path
 import re
 import uuid
 from itertools import count
+from unittest import mock
+
+from django.test import TestCase
+
 from corehq.tests.tools import nottest
 
-from casexml.apps.case.mock import CaseIndex, CaseStructure
+from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from casexml.apps.phone.data_providers.case.livequery import get_live_case_ids_and_indices
 from casexml.apps.phone.tests.test_sync_mode import BaseSyncTest
 from corehq.form_processor.tests.utils import sharded
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import flag_enabled, softer_assert
+from corehq.util.timer import TimingContext
 
 
 @nottest
@@ -185,3 +191,40 @@ class IndexTreeTest(BaseSyncTest, metaclass=SequenceTestMeta):
             ))
 
         self.device.post_changes(case_structures)
+
+
+@flag_enabled('CHUNKED_LIVEQUERY')
+class ChunkedLiveQueryIndexTreeTest(IndexTreeTest):
+    pass
+
+
+class ChunkedLiveQueryDuplicateIndexTest(TestCase):
+
+    domain = 'test-chunked-livequery-duplicate-index'
+
+    @flag_enabled('CHUNKED_LIVEQUERY')
+    def test_no_duplicate_index_across_chunk_boundary(self):
+        owner_id = uuid.uuid4().hex
+        host_id = uuid.uuid4().hex
+        ext_id = uuid.uuid4().hex
+        CaseFactory(domain=self.domain).create_or_update_case(CaseStructure(
+            case_id=ext_id,
+            attrs={'create': True, 'owner_id': owner_id},
+            indices=[CaseIndex(
+                related_structure=CaseStructure(
+                    case_id=host_id,
+                    attrs={'create': True, 'owner_id': owner_id},
+                ),
+                relationship='extension',
+                identifier='host',
+            )],
+        ))
+
+        # Force each case id into its own chunk so the host and the
+        # extension case are queried by two separate get_related_indices
+        # calls, causing the second call to return a duplicate.
+        with mock.patch('casexml.apps.phone.data_providers.case.livequery.MAX_RELATED_CHUNK', 1):
+            live_ids, indices = get_live_case_ids_and_indices(
+                self.domain, {host_id, ext_id}, TimingContext())
+
+        assert len(indices[ext_id]) == 1

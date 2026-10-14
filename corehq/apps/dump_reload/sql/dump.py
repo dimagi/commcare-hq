@@ -236,6 +236,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
     UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('translations.AITranslation', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('translations.AITranslationUsage', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('translations.AITranslationConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.AllowedUCRExpressionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.DomainAuditRecordEntry', SimpleFilter('domain')),
@@ -264,6 +267,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('dhis2.SQLDataSetMap', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('dhis2.SQLDataValueMap', SimpleFilter('dataset_map__domain')),
     FilteredModelIteratorBuilder('export.DeIdHash', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicWebform', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('public_webforms.PublicFormSession', SimpleFilter('public_webform__domain'),
+                                 pagination_key=('public_webform_id', 'pk')),
 ]]
 
 

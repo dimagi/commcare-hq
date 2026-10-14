@@ -1,0 +1,203 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{# open by default only when there are languages to translate #}
+<div class="accordion-item">
+  <h5 class="accordion-header">
+    <a
+      href="#ai-translations"
+      class="accordion-button fs-5 {% if not ai_translation.languages %}collapsed{% endif %}"
+      data-bs-toggle="collapse"
+      data-bs-target="#ai-translations"
+      >{% trans "Translate with AI" %}
+      <span class="badge text-bg-primary ms-2">{% trans "NEW" %}</span>
+    </a>
+  </h5>
+  <div
+    class="accordion-collapse collapse {% if ai_translation.languages %}show{% endif %}"
+    id="ai-translations"
+    data-bs-parent="#language-settings-options"
+  >
+    <div class="accordion-body">
+      <p class="text-body-secondary">
+        {% blocktrans trimmed %}
+          AI fills in missing translations when you click AI Translate. Manual
+          edits are kept. Review AI translations before releasing your app.
+        {% endblocktrans %}
+        <a
+          href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/4408934402/Automatic+AI+Translations"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="{% trans "Learn more about AI translations" %}"
+          ><i class="fa-solid fa-circle-info" aria-hidden="true"></i
+          ><span class="visually-hidden"
+            >{% trans "Learn more about AI translations" %}</span
+          ></a
+        >
+      </p>
+
+      {% if not ai_translation.has_privilege %}
+        <div class="alert alert-info mb-0">
+          <p>
+            {% trans "AI translations are available on Standard plans and above." %}
+          </p>
+          <a
+            class="btn btn-outline-primary"
+            style="--bsbtn-bg: #fff"
+            href="{% url 'domain_select_plan' domain %}"
+            >{% trans "Compare plans" %}</a
+          >
+        </div>
+      {% elif ai_translation.is_linked_app %}
+        <p class="mb-0">
+          {% blocktrans trimmed %}
+            Linked apps get their translations from their upstream app.
+            Translate the upstream app instead.
+          {% endblocktrans %}
+          {% if upstream_url %}
+            <a href="{{ upstream_url }}"
+              >{% trans "Go to the upstream app" %}</a
+            >
+          {% endif %}
+        </p>
+      {% elif not ai_translation.languages %}
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          <span>
+            {% trans "Add a language in the Language List below, then refresh to translate it with AI." %}
+          </span>
+          {# an empty href reloads the page #}
+          <a href="" class="btn btn-outline-primary btn-sm ms-auto"
+            >{% trans "Refresh" %}</a
+          >
+        </div>
+      {% else %}
+        {% initial_page_data 'ai_translation_languages' ai_translation.languages %}
+        {% initial_page_data 'ai_translation_active_states' ai_translation.active_states %}
+        {% initial_page_data 'ai_translation_limit_reached' ai_translation.limit_reached %}
+        {% registerurl "start_ai_translation" domain app.id %}
+        {% registerurl "ai_translation_status" domain app.id %}
+        {% if ai_translation.limit_reached %}
+          <div class="alert alert-warning">
+            {% blocktrans trimmed %}
+              This project has reached its monthly AI translation limit. Contact
+              support to raise it.
+            {% endblocktrans %}
+          </div>
+        {% endif %}
+        <div id="ai-translations-panel">
+          <div
+            class="alert alert-info align-items-center gap-3"
+            data-bind="visible: languagesChanged, css: {'d-flex': languagesChanged}"
+            style="display: none"
+          >
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <span>
+              {% trans "The language list has changed. Refresh to update the languages below." %}
+            </span>
+            {# an empty href reloads the page #}
+            <a href="" class="btn btn-outline-primary btn-sm ms-auto"
+              >{% trans "Refresh" %}</a
+            >
+          </div>
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th class="col-2">{% trans "Language" %}</th>
+                <th class="col-6">{% trans "Status" %}</th>
+                <th class="col-2">{% trans "Last AI translated" %}</th>
+                <th class="col-2 text-end">{% trans "Actions" %}</th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: languages">
+              <tr>
+                <td data-bind="text: label"></td>
+                <td>
+                  <span
+                    class="badge mb-1"
+                    style="font-size: 0.75rem"
+                    data-bind="css: display().labelClass"
+                  >
+                    <i
+                      aria-hidden="true"
+                      data-bind="class: 'fa-solid ' + display().icon"
+                    ></i>
+                    <span data-bind="text: display().label"></span>
+                  </span>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: display().detail"
+                  ></div>
+                  <div
+                    class="small mt-2"
+                    data-bind="visible: display().share, text: display().share"
+                  ></div>
+                  <!-- ko if: display().progress !== null -->
+                  <div
+                    class="progress mt-1"
+                    role="progressbar"
+                    aria-label="{% trans "Translation progress" %}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    data-bind="attr: {'aria-valuenow': display().progress}"
+                  >
+                    <div
+                      class="progress-bar"
+                      data-bind="style: {width: display().progress + '%'}"
+                    ></div>
+                  </div>
+                  <!-- /ko -->
+                  <div class="small" data-bind="visible: display().partial">
+                    {% blocktrans trimmed %}
+                      To translate the remaining labels yourself, use
+                      <a
+                        href="#bulk-application-translations"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#bulk-application-translations"
+                        >Bulk Application Translations</a
+                      >.
+                    {% endblocktrans %}
+                  </div>
+                  <div
+                    class="small text-warning-emphasis"
+                    data-bind="visible: display().warning, text: display().warning"
+                  ></div>
+                  <div
+                    class="small text-danger"
+                    data-bind="visible: startError, text: startError"
+                  ></div>
+                </td>
+                <td class="text-nowrap">
+                  <div data-bind="text: lastRun().date"></div>
+                  <div
+                    class="small text-body-secondary"
+                    data-bind="text: lastRun().version"
+                  ></div>
+                </td>
+                <td class="text-end text-nowrap">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    data-bind="click: start, disable: !canStart()"
+                  >
+                    {% trans "AI Translate" %}
+                    <span class="visually-hidden" data-bind="text: code"></span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small text-body-secondary mb-0">
+          {% blocktrans trimmed %}
+            Status reflects the last AI Translate run; the percentage is how
+            much of the whole app is AI translated as of that run. Labels you
+            add or change afterwards are translated the next time you run AI
+            Translate. Translations are applied to the current draft; make a new
+            version to release them.
+          {% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
