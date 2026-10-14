@@ -37,17 +37,17 @@ def _patch_released_build(app, live_app_ids=('app-1',)):
     """Serve ``app`` as the latest released build for a single app id."""
     return patch.multiple(
         form_choices,
-        get_app_ids_in_domain=lambda domain: list(live_app_ids),
+        get_live_app_ids=lambda domain: set(live_app_ids),
         get_latest_released_build_ids_by_app_id=lambda domain: {'app-1': 'build-1'},
         iter_docs=lambda db, build_ids: [app.to_json() for __ in build_ids],
     )
 
 
-def _patch_released_app(app, live_app_ids=('app-1',)):
+def _patch_released_app(app, is_app_live=True):
     """Serve ``app`` as the latest released build of any app id."""
     return patch.multiple(
         form_choices,
-        get_app_ids_in_domain=lambda domain: list(live_app_ids),
+        is_app_live=lambda domain, app_id: is_app_live,
         get_latest_released_app=lambda domain, app_id: app,
     )
 
@@ -114,7 +114,7 @@ def test_eligible_form_rejects_invalid_selection(form_id_or_attr):
 
 
 def test_eligible_form_rejects_app_without_released_build():
-    with _patch_released_app(None, live_app_ids=('unreleased-app',)):
+    with _patch_released_app(None):
         form = form_choices.get_public_webform_eligible_form(
             'pwf-test', 'unreleased-app', 'any-form')
     assert form is None
@@ -122,7 +122,7 @@ def test_eligible_form_rejects_app_without_released_build():
 
 def test_eligible_form_rejects_deleted_app():
     data = _build_app()
-    with _patch_released_app(data.app, live_app_ids=()):
+    with _patch_released_app(data.app, is_app_live=False):
         form = form_choices.get_public_webform_eligible_form(
             data.domain, 'app-1', data.survey_form_id)
     assert form is None

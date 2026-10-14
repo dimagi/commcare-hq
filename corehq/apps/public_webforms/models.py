@@ -8,8 +8,8 @@ from django.utils.translation import gettext_lazy as _
 from casexml.apps.phone.models import OTARestoreUser
 from dimagi.utils.web import get_url_base
 
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.utils import is_app_live
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.util.models import GetOrNoneManager
 
@@ -98,7 +98,7 @@ class PublicWebform(models.Model):
         return not self.is_disabled and not self.is_expired
 
     def set_disabled(self, is_disabled):
-        if not is_disabled and self.app_id not in get_app_ids_in_domain(self.domain):
+        if not is_disabled and not is_app_live(self.domain, self.app_id):
             raise PublicWebformAppDeleted
         self.is_disabled = is_disabled
 

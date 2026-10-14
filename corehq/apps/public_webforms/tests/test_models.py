@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -12,6 +13,7 @@ from casexml.apps.phone.xml import get_registration_element_data
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
+from corehq.apps.public_webforms import models
 from corehq.apps.public_webforms.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
@@ -20,12 +22,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebformAppDeleted,
     PublicWebformStatus,
 )
-from corehq.apps.public_webforms.tests.utils import (
-    DOMAIN,
-    create_session,
-    create_webform,
-    saved_app,
-)
+from corehq.apps.public_webforms.tests.utils import create_session, create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -88,27 +85,26 @@ def test_with_submissions_count(submitted_at, expected_submissions):
     assert annotated.submissions == expected_submissions
 
 
-@use(saved_app)
 @pytest.mark.parametrize('was_disabled, is_disabled', [
     (True, False),
     (False, True),
 ], ids=['opens', 'closes'])
 def test_set_disabled(was_disabled, is_disabled):
-    webform = PublicWebform(domain=DOMAIN, app_id=saved_app()._id, is_disabled=was_disabled)
+    webform = PublicWebform(is_disabled=was_disabled)
 
-    webform.set_disabled(is_disabled)
+    with patch.object(models, 'is_app_live', return_value=True):
+        webform.set_disabled(is_disabled)
 
     assert webform.is_disabled is is_disabled
 
 
-@use(saved_app)
 def test_set_disabled_refuses_to_open_a_webform_whose_app_is_deleted():
-    app = saved_app()
-    app.delete_app()
-    app.save()
-    webform = PublicWebform(domain=DOMAIN, app_id=app._id, is_disabled=True)
+    webform = PublicWebform(is_disabled=True)
 
-    with pytest.raises(PublicWebformAppDeleted):
+    with (
+        patch.object(models, 'is_app_live', return_value=False),
+        pytest.raises(PublicWebformAppDeleted),
+    ):
         webform.set_disabled(False)
 
     assert webform.is_disabled
