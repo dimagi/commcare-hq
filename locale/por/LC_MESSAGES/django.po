@@ -1280,14 +1280,6 @@ msgstr[2] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_roles)d Custom Role configured for your project. If you "
-#| "select this plan, all users with that role will change to having the Read "
-#| "Only role."
-#| msgid_plural ""
-#| "You have %(num_roles)d Custom Roles configured for your project . If you "
-#| "select this plan, all users with these roles will change to having the Read "
-#| "Only role."
 msgid ""
 "You have %(num_roles)d Custom Role configured for your project. If you "
 "select this plan, all users with that role will change to having the Read "
@@ -1389,12 +1381,6 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_apps)d application that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
-#| msgid_plural ""
-#| "You have %(num_apps)d applications that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
 msgid ""
 "You have %(num_apps)d application that has a practice mobile worker "
 "configured, it will be unset on downgrade."
@@ -6206,7 +6192,6 @@ msgid "Remote Application"
 msgstr "Aplicativo Remoto"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid ""
 "Application successfully copied. The following lookup tables were also "
 "copied: {}."
@@ -6215,7 +6200,6 @@ msgstr ""
 " copiadas: {}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid "Application successfully copied."
 msgstr "Aplicação copiada com sucesso."
 
@@ -6226,7 +6210,6 @@ msgstr ""
 "origem: {}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "An error occurred during the download."
 msgid "An error occurred while copying the following lookup tables: {}."
 msgstr "Ocorreu um erro ao copiar as seguintes tabelas de consulta: {}."
 
@@ -12582,7 +12565,6 @@ msgstr "Subtítulo da Tela de Pesquisa"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Display Condition"
 msgid "Search Button Display Condition"
 msgstr "Condição de Exibição do Botão de Pesquisa"
 
@@ -16311,12 +16293,10 @@ msgid "Only one value may be given for '{}'"
 msgstr "Apenas um valor pode ser fornecido para '{}'"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "Dates are presented in YYYY-MM-DD format"
 msgid "'{}' must be a date in YYYY-MM-DD format"
 msgstr "'{}' deve ser uma data no formato AAAA-MM-DD"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "'name' must be unique"
 msgid "'{}' must be a number"
 msgstr "'{}' deve ser um número"
 
@@ -16633,12 +16613,10 @@ msgid "date"
 msgstr "data"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Date range"
 msgid "date range"
 msgstr "intervalo de datas"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Select"
 msgid "select"
 msgstr "selecionar"
 
@@ -16690,7 +16668,6 @@ msgid "Updated By"
 msgstr "Atualizado por"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Pull content from an upstream project space"
 msgid "Linked from an upstream project space"
 msgstr "Vinculado a partir de um espaço de projeto upstream"
 
@@ -16829,7 +16806,6 @@ msgid "Endpoint '{}' query is invalid"
 msgstr "A consulta do endpoint '{}' é inválida"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "Os parâmetros do endpoint '{}' são inválidos"
 
@@ -17531,20 +17507,14 @@ msgid "Date Registered"
 msgstr "Data do Registo"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "# Forms Submitted"
 msgid "Form Submitted"
 msgstr "Formulário Enviado"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "Message received!"
 msgid "Response Received"
 msgstr "Resposta Recebida"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Thank you for your feedback! We appreciate it.\n"
-#| "            "
 msgid ""
 "\n"
 "              Thank you. Your response has been submitted.\n"
@@ -17555,10 +17525,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Not Active\n"
-#| "            "
 msgid ""
 "\n"
 "              You can close this page.\n"
@@ -19205,7 +19171,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 #, python-format
-#| msgid "Sending will be retried."
 msgid "%(count)s edit will be cleared."
 msgid_plural "A total of %(count)s edits will be cleared."
 msgstr[0] "%(count)s edição será removida."
@@ -20435,10 +20400,6 @@ msgstr "Parado"
 msgid "Error"
 msgstr "Erro"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "Nenhum formulário fornecido"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -21111,7 +21072,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -21177,34 +21137,22 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "Falha na reatribuição do caso! Detalhes:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>Retorne para <a href=\"%(form_management_url)s\">Gerenciar Formulários</a> para reverter isso.</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "The job failed. Please try again."
 msgstr "O trabalho falhou. Por favor, tente novamente."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
-#| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
 msgid_plural "%(counter)s forms processed successfully"
 msgstr[0] "%(counter)s formulário processado com sucesso"
 msgstr[1] "%(counter)s formulários processados com sucesso"
 msgstr[2] "%(counter)s formulários processados com sucesso"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 msgid "Some forms were skipped:"
 msgstr "Alguns formulários foram ignorados:"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
 msgid ""
 "\n"
@@ -21241,41 +21189,6 @@ msgstr "Um caso com o identificador '{}' já existe neste grupo."
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "Caso com o identificador '{}' foi adicionado a este grupo."
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Não foi possível encontrar o XForm {form_id}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "XForm {form_id} para o domínio {domain} pelo usuário '{username}'"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "{form} arquivado com sucesso"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "{form} desarquivado com sucesso"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not archive {form}"
-msgstr "Não foi possível arquivar {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not unarchive {form}"
-msgstr "Não foi possível desarquivar {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} formulário(s)"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -30900,7 +30813,6 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py
 #, python-format
-#| msgid "Table ID must be between 1 and 31 characters."
 msgid "Table ID must be between 1 and %(max_length)s characters."
 msgstr "O ID da tabela deve ter entre 1 e %(max_length)s caracteres."
 
@@ -32445,13 +32357,11 @@ msgstr ""
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Disable auto update"
 msgid "Disabled Datadog user {label}"
 msgstr "Usuário Datadog desativado {label}"
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Remove Mobile Workers From Organizations"
 msgid "Removed {label} from the Sentry organization"
 msgstr "{label} removido(a) da organização Sentry"
 
@@ -32466,7 +32376,6 @@ msgid "Removed HubSpot user {label}"
 msgstr "Usuário HubSpot removido {label}"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Please enter a valid email address."
 msgid "Enter a valid email address."
 msgstr "Digite um endereço de e-mail válido."
 
@@ -32475,7 +32384,6 @@ msgid "Offboard staff from external platforms"
 msgstr "Desligar equipe de plataformas externas"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "A send date is required."
 msgid "An email address is required."
 msgstr "Um endereço de e-mail é obrigatório."
 
@@ -32484,7 +32392,6 @@ msgid "'{}' is protected and cannot be offboarded with this tool."
 msgstr "'{}' é protegido e não pode ser desligado com esta ferramenta."
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Unknown command: '{0}'"
 msgid "Unknown platform '{}'."
 msgstr "Plataforma desconhecida '{}'."
 
@@ -32779,12 +32686,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Email Address"
 msgid "Email address"
 msgstr "Endereço de e-mail"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Lookup Tables"
 msgid "Look up accounts"
 msgstr "Pesquisar contas"
 
@@ -32815,47 +32720,36 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Select a Form"
 msgid "Select all platforms"
 msgstr "Selecionar todas as plataformas"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "form"
 msgid "Platform"
 msgstr "Plataforma"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#, fuzzy
 #| msgid "De-activate Alert"
 msgid "Deactivate selected…"
-msgstr "Desativar Alerta"
+msgstr "Desativar selecionados…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid "Working…"
-msgstr ""
+msgstr "Trabalhando…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Confirm Plan"
 msgid "Confirm offboarding"
 msgstr "Confirmar desligamento"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "You are about to delete"
 msgid "You are about to:"
 msgstr "Você está prestes a:"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Whenever Possible"
 msgid "irreversible"
 msgstr "irreversível"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid ""
-#| "\n"
-#| "                    List of devices used to access CommCare applications, with\n"
-#| "                    approximate last-use dates.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    This is not a dimagi.com address. Only continue once TechOps\n"
@@ -32872,27 +32766,22 @@ msgid "Looking up account…"
 msgstr "Procurando conta…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No endpoints configured."
 msgid "Not configured"
 msgstr "Não configurado"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "FCM is not setup on this environment!"
 msgid "Credentials are not configured on this environment."
 msgstr "As credenciais não estão configuradas neste ambiente."
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No transaction found"
 msgid "No account found"
 msgstr "Nenhuma conta encontrada"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Only Deactivated"
 msgid "Already deactivated"
 msgstr "Já desativado"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Lookup Table"
 msgid "Lookup failed:"
 msgstr "Falha na busca:"
 
@@ -32903,7 +32792,6 @@ msgstr "Tentar Novamente"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 #, python-format
-#| msgid "Request failed"
 msgid "%(verb)s failed:"
 msgstr "%(verb)s falhou:"
 
@@ -33056,8 +32944,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "{count} domain membership"
-#| msgid_plural "{count} domain memberships"
 msgid "%(count)s domain membership"
 msgid_plural "%(count)s domain memberships"
 msgstr[0] "%(count)s associação de domínio"
@@ -36518,12 +36404,19 @@ msgstr ""
 "suporte se o problema persistir."
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+"Não foi possível obter o status do pagamento. A tentativa será feita "
+"automaticamente novamente."
+
+#: corehq/apps/integration/payments/const.py
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "Número máximo de tentativas excedido devido a erro na solicitação."
 
 #: corehq/apps/integration/payments/const.py
-msgid "Maximum retry attempts exceeded with pending status"
-msgstr "Número máximo de tentativas excedido com status pendente"
+#| msgid "Maximum retry attempts exceeded with pending status"
+msgid "Maximum retry attempts exceeded with pending status."
+msgstr "Número máximo de tentativas excedido com status pendente."
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -36587,6 +36480,16 @@ msgstr "Falha na solicitação de pagamento"
 #: corehq/apps/integration/payments/services.py
 msgid "Verification"
 msgstr "Verificação"
+
+#: corehq/apps/integration/payments/services.py
+#| msgid ""
+#| "Only payments with '{}' set to 'true' are eligible for verification."
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
+"Apenas pagamentos com usuários que possuem o status KYC '{}' são elegíveis "
+"para verificação."
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -36894,8 +36797,6 @@ msgid "You cannot access this page from your current IP address"
 msgstr "Você não pode acessar esta página a partir do seu endereço IP atual"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid ""
-#| "Linking expressions to a remote link is not currently supported"
 msgid ""
 "Linking case search endpoints to a remote link is not currently supported"
 msgstr ""
@@ -36903,7 +36804,6 @@ msgstr ""
 "atualmente"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid "Expression does not exist in the upstream domain"
 msgid ""
 "Endpoint does not exist in the upstream domain. Maybe it has been deleted?"
 msgstr ""
@@ -36911,7 +36811,6 @@ msgstr ""
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
 #, python-brace-format
-#| msgid "Profile conflicts with existing data"
 msgid "Endpoint {name} conflicts with an existing endpoint in {domain}"
 msgstr "O endpoint {name} conflita com um endpoint já existente em {domain}"
 
@@ -39098,7 +38997,6 @@ msgid "Run"
 msgstr "Executar"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "Query"
 msgid "Query plan"
 msgstr "Plano de consulta"
 
@@ -39109,7 +39007,6 @@ msgstr "Avaliado em %(duration)s segundos"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "This report's timezone is %(timezone)s."
 msgid "Datetimes are in %(timezone)s"
 msgstr "Datas e horários estão em %(timezone)s"
 
@@ -39236,7 +39133,6 @@ msgstr "Seu link único para {form_name}"
 
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
-#| msgid "Your one-time link for {form_name} is: {url}"
 msgid ""
 "Your one-time link for {form_name}:\n"
 "{url}"
@@ -39285,7 +39181,6 @@ msgid "Enter a valid phone number."
 msgstr "Digite um número de telefone válido."
 
 #: corehq/apps/public_webforms/public/views.py
-#| msgid "Webforms"
 msgid "Webform Request"
 msgstr "Solicitação de Webformulário"
 
@@ -39527,7 +39422,6 @@ msgid "Send my link"
 msgstr "Enviar meu link"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid "Webforms"
 msgid "Webform Closed"
 msgstr "Webformulário Fechado"
 
@@ -39561,10 +39455,6 @@ msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      The link expires %(link_lifespan)s after it was created and only works\n"
@@ -39581,20 +39471,14 @@ msgid "Request another link"
 msgstr "Solicitar outro link"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "Unavailable"
 msgid "Form Link Unavailable"
 msgstr "Link do Formulário Indisponível"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "No longer available"
 msgid "Link No Longer Available"
 msgstr "Link Não Está Mais Disponível"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      One-time links expire after a short time, and can only be used once.\n"
@@ -39605,10 +39489,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      Please start a new bulk edit session above.\n"
-#| "    "
 msgid ""
 "\n"
 "      Request a new link to fill out this form.\n"
@@ -41983,6 +41863,11 @@ msgid "Current Indian Financial Year"
 msgstr "Ano Financeiro Indiano Atual"
 
 #: corehq/apps/reports/display.py
+#| msgid "Public Name"
+msgid "public user"
+msgstr "usuário público"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "Sem dados para nome de usuário"
 
@@ -42555,6 +42440,11 @@ msgstr "Usuários Web Ativos"
 #: corehq/apps/reports/models.py
 msgid "Deactivated Web Users"
 msgstr "Usuários Web Desativados"
+
+#: corehq/apps/reports/models.py
+#| msgid "Public Webforms"
+msgid "Public Users"
+msgstr "Usuários Públicos"
 
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
@@ -49892,12 +49782,10 @@ msgstr ""
 "atualizada para essa linha."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "The deposit transaction could not be performed."
 msgid "The translation couldn't be queued. Run it again."
 msgstr "A tradução não pôde ser enfileirada. Execute novamente."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Source lang selected not available for the project"
 msgid "AI translation is no longer available for this project."
 msgstr "A tradução por IA não está mais disponível para este projeto."
 
@@ -49916,7 +49804,6 @@ msgstr ""
 "novamente."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Something went wrong. Please reload the page and try again."
 msgid ""
 "Something went wrong while translating the app. Review its translations and "
 "run it again."
@@ -60094,7 +59981,6 @@ msgid "Save to Case"
 msgstr "Salvar no Caso"
 
 #: corehq/privileges.py
-#| msgid "App Translations"
 msgid "AI App Translations"
 msgstr "Traduções de Aplicativos por IA"
 
@@ -61092,6 +60978,47 @@ msgstr "Colunas obrigatórias são {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Insira um JSON válido"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "Nenhum formulário fornecido"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>Retorne para <a href=\"%(form_management_url)s\">Gerenciar Formulários</a> para reverter isso.</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "Não foi possível encontrar o XForm {form_id}"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr "XForm {form_id} para o domínio {domain} pelo usuário '{username}'"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "{form} arquivado com sucesso"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "{form} desarquivado com sucesso"
+
+#, python-brace-format
+#~ msgid "Could not archive {form}"
+#~ msgstr "Não foi possível arquivar {form}"
+
+#, python-brace-format
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "Não foi possível desarquivar {form}"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} formulário(s)"
 
 #, python-format
 #~ msgid ""

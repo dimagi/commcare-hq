@@ -22804,10 +22804,6 @@ msgstr "Зупинено"
 msgid "Error"
 msgstr "Помилка"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "Форми не надано"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -23526,7 +23522,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -23601,25 +23596,12 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "Не вдалося перепризначити справу! Деталі:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to "
-"reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>Повернутися до <a href=\"%(form_management_url)s\">Управління "
-"формами</a>, щоб скасувати це.</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 #, fuzzy
 #| msgid "Please try again."
 msgid "The job failed. Please try again."
 msgstr "Будь ласка, спробуйте ще раз."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy, python-format
 #| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
@@ -23629,13 +23611,13 @@ msgstr[1] "Форму успішно оброблено."
 msgstr[2] "Форму успішно оброблено."
 msgstr[3] "Форму успішно оброблено."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy
 #| msgid "No Forms are supplied"
 msgid "Some forms were skipped:"
 msgstr "Форми не надано"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -23675,43 +23657,6 @@ msgstr "Справу з ідентифікатором '{}' вже додано 
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "Справу з ідентифікатором '{}' додано до цієї групи."
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Не вдалося знайти XForm {form_id}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "XForm {form_id} для домену {domain} користувачем '{username}'"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "Успішно заархівовано {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "Успішно розархівовано {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, fuzzy, python-brace-format
-#| msgid "Could not archive {form}: {error}"
-msgid "Could not archive {form}"
-msgstr "Не вдалося заархівувати {form}: {error}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, fuzzy, python-brace-format
-#| msgid "Could not archive {form}: {error}"
-msgid "Could not unarchive {form}"
-msgstr "Не вдалося заархівувати {form}: {error}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} форма(и)"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -40285,6 +40230,10 @@ msgstr ""
 "служби підтримки, якщо проблема не зникає."
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
 #, fuzzy
 #| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
@@ -40293,7 +40242,7 @@ msgstr "Перевищено максимальну кількість спро�
 #: corehq/apps/integration/payments/const.py
 #, fuzzy
 #| msgid "maximum password attempts exceeded"
-msgid "Maximum retry attempts exceeded with pending status"
+msgid "Maximum retry attempts exceeded with pending status."
 msgstr "Перевищено максимальну кількість спроб введення пароля"
 
 #: corehq/apps/integration/payments/filters.py
@@ -40368,6 +40317,12 @@ msgstr "Запит на платіж не виконано"
 #| msgid "Phone Verification"
 msgid "Verification"
 msgstr "Підтвердження телефону"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -46231,6 +46186,12 @@ msgid "Current Indian Financial Year"
 msgstr "Поточний фінансовий рік Індії"
 
 #: corehq/apps/reports/display.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "public user"
+msgstr "Публічна назва"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "Немає даних для імені користувача"
 
@@ -46824,6 +46785,12 @@ msgstr "# Активних користувачів"
 #| msgid "Show Deactivated Mobile Workers"
 msgid "Deactivated Web Users"
 msgstr "Показати деактивованих мобільних працівників"
+
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public Users"
+msgstr "Публічна назва"
 
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
@@ -66527,6 +66494,51 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "Форми не надано"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> "
+#~ "to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>Повернутися до <a href=\"%(form_management_url)s\">Управління "
+#~ "формами</a>, щоб скасувати це.</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "Не вдалося знайти XForm {form_id}"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr "XForm {form_id} для домену {domain} користувачем '{username}'"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "Успішно заархівовано {form}"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "Успішно розархівовано {form}"
+
+#, fuzzy, python-brace-format
+#~| msgid "Could not archive {form}: {error}"
+#~ msgid "Could not archive {form}"
+#~ msgstr "Не вдалося заархівувати {form}: {error}"
+
+#, fuzzy, python-brace-format
+#~| msgid "Could not archive {form}: {error}"
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "Не вдалося заархівувати {form}: {error}"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} форма(и)"
 
 #, fuzzy, python-format
 #~| msgid ""
