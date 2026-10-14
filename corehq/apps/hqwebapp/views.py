@@ -211,9 +211,9 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
-@login_required
+@login_and_domain_required
 @require_http_methods(['GET', 'POST'])
-def chat_quota(request):
+def chat_quota(request, domain):
     couch_user = getattr(request, 'couch_user')
 
     limit = get_chatbot_message_quota(couch_user)
