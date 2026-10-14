@@ -4,7 +4,7 @@ import pytest
 from testil import Config
 from unmagic import fixture
 
-from ..run_pillowtop import run_pillow_by_name
+from ..run_pillowtop import run_pillow_by_name, start_pillows
 
 
 def test_run_pillow_by_name_single_process():
@@ -104,6 +104,32 @@ def test_run_pillow_by_name_with_too_few_gevent_workers(workers):
             processor_chunk_size=100,
         )
     assert not started
+
+
+def test_start_pillows_closes_db_connections_before_forking():
+    events = []
+
+    class FakeProcess:
+        pid = 1
+
+        def __init__(self, target):
+            self.target = target
+
+        def start(self):
+            events.append(f"start {self.target()}")
+
+        def join(self):
+            raise KeyboardInterrupt  # stop start_pillows looping
+
+    pillows = [Config(run=lambda: 'pillow1'), Config(run=lambda: 'pillow2')]
+    with (
+        patch('pillowtop.run_pillowtop.multiprocessing.Process', FakeProcess),
+        patch('pillowtop.run_pillowtop.close_db_connections', lambda: events.append('close')),
+        pytest.raises(SystemExit),
+    ):
+        start_pillows(pillows)
+
+    assert events == ['close', 'start pillow1', 'close', 'start pillow2']
 
 
 @fixture

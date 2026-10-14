@@ -2,10 +2,11 @@ import multiprocessing
 import sys
 
 import gevent
+from django.db import connections
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.sql_db.connections import cleanup_connections
+from corehq.sql_db.connections import cleanup_connections, connection_manager
 
 from pillowtop import get_all_pillow_instances
 from pillowtop.utils import get_pillow_by_name
@@ -92,6 +93,9 @@ def start_pillows(pillows=None):
             jobs = []
             print("[pillowtop] Starting pillow processes")
             for pillow_class in run_pillows:
+                # Pillow instances can open DB connections when they are
+                # created. A forked process must not share them.
+                close_db_connections()
                 p = multiprocessing.Process(target=pillow_class.run)
                 p.start()
                 jobs.append(p)
@@ -101,6 +105,11 @@ def start_pillows(pillows=None):
             print("[pillowtop] All processes complete, restarting")
     except KeyboardInterrupt:
         sys.exit()
+
+
+def close_db_connections():
+    connections.close_all()
+    connection_manager.dispose_all()
 
 
 def start_pillow(pillow_instance):
