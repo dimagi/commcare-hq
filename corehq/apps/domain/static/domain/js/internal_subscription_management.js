@@ -1,10 +1,9 @@
 import "commcarehq";
-import $ from "jquery";
 import Alpine from "alpinejs";
 import "hqwebapp/js/bootstrap5/widgets";
 
 Alpine.data("subscriptionManagement", () => ({
-    subscriptionType: $("#id_subscription_type").val() || null,
+    subscriptionType: document.getElementById("id_subscription_type")?.value || null,
     trialLength: 90,
     get endDate() {
         const date = new Date();
