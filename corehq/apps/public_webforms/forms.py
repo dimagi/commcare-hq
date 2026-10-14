@@ -11,8 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
 from corehq.apps.public_webforms.app_builds import (
@@ -32,6 +30,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
 )
+from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
 
@@ -124,7 +123,7 @@ class BasePublicWebformForm(forms.Form):
                 _("A branded email with a single-use link.")
             ),
         )]
-        if domain_has_privilege(domain, privileges.OUTBOUND_SMS):
+        if domain_can_send_sms(domain):
             link_choices.append((
                 'allow_sms',
                 format_html(
