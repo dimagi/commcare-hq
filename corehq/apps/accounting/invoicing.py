@@ -35,6 +35,7 @@ from corehq.apps.accounting.models import (
     CustomerBillingRecord,
     CustomerInvoice,
     DomainUserHistory,
+    DomainWebUserHistory,
     EntryPoint,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
@@ -64,6 +65,7 @@ from corehq.apps.domain.utils import (
     get_serializable_wire_invoice_prepaid_item,
 )
 from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.users.util import is_dimagi_email
 from corehq.util.dates import (
     get_first_last_days,
     get_previous_month_date_range,
@@ -807,13 +809,29 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 class WebUserLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
-        try:
-            history = BillingAccountWebUserHistory.objects.get(
-                billing_account=self.subscription.account, record_date=date)
-            total_users = history.num_users
-        except BillingAccountWebUserHistory.DoesNotExist:
-            raise
-        return total_users
+        histories = list(DomainWebUserHistory.objects.filter(
+            domain__in=self.subscribed_domains, record_date=date,
+        ))
+        if not histories:
+            # fallback to legacy BillingAccountWebUserHistory rows
+            # which count web users across all domains in an account,
+            # not just self.subscribed_domains
+            return BillingAccountWebUserHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date,
+            ).num_users
+
+        recorded_domains = {history.domain for history in histories}
+        for domain in self.subscribed_domains:
+            if domain not in recorded_domains and not deleted_domain_exists(domain):
+                raise DomainWebUserHistory.DoesNotExist(f"No web user history for {domain} on {date}")
+
+        usernames = {
+            username
+            for history in histories
+            for username in history.usernames
+            if not is_dimagi_email(username)
+        }
+        return len(usernames)
 
     @property
     def unit_description(self):
