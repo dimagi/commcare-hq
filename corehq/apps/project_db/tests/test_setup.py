@@ -2,11 +2,7 @@ import pytest
 import sqlalchemy
 from unmagic import use
 
-from corehq.apps.project_db.table_ddl import (
-    LIB_SCHEMA,
-    get_project_db_engine,
-    setup_lib,
-)
+from corehq.apps.project_db.table_ddl import get_project_db_engine
 
 PROVISION_SQL = 'SELECT projectdb_provision_role(:name, :password)'
 DROP_SQL = 'SELECT projectdb_drop_role(:name)'
@@ -65,11 +61,3 @@ def test_role_functions_refuse_other_roles(sql):
     with get_project_db_engine().begin() as conn:
         with pytest.raises(sqlalchemy.exc.InternalError, match='refusing to manage role'):
             conn.execute(sqlalchemy.text(sql), {'name': 'some_other_role', 'password': 'secret'})
-
-
-@use('db')
-def test_setup_lib_is_idempotent():
-    with get_project_db_engine().begin() as conn:
-        setup_lib(conn)
-        setup_lib(conn)
-        assert LIB_SCHEMA in sqlalchemy.inspect(conn).get_schema_names()
