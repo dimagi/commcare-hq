@@ -24,11 +24,11 @@
     </h3>
   {% endblocktrans %}
 
-  <div id="subscription_management">
+  <div id="subscription_management" x-data="subscriptionManagement">
     {% crispy select_subscription_type_form %}
 
     {% for form in subscription_management_forms %}
-      <div data-bind="visible: subscriptionType() == '{{ form.slug }}'">
+      <div x-show="subscriptionType === '{{ form.slug }}'" x-cloak>
         {% crispy form %}
       </div>
     {% endfor %}
