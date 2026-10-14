@@ -299,7 +299,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka garage formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka kafka-tests garage formplayer
     ```
 
    **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
@@ -410,6 +410,8 @@ Populate your database:
 ```sh
 ./manage.py sync_couch_views
 ./manage.py create_kafka_topics
+# Create the topics on the Kafka broker used by tests (see Running Tests)
+CCHQ_TESTING=1 ./manage.py create_kafka_topics
 env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 
@@ -901,6 +903,32 @@ If you are on arm64 architecture using a non-Dimagi Docker Postgres image:
 USE_PARTITIONED_DATABASE = False
 ```
 
+
+
+### Kafka
+
+Tests use their own Kafka broker, the `kafka-tests` Docker service on port
+9093, so that tests and your dev environment do not consume each other's
+changes. `./scripts/docker up` starts it with the other services. Before
+running tests that use Kafka for the first time, create its topics:
+
+```sh
+CCHQ_TESTING=1 ./manage.py create_kafka_topics
+```
+
+If tests fail to connect to `localhost:9093`, check that the `kafka-tests`
+container is running, and that its topics have been created.
+
+This is configured in `dev_settings.py`. To use a different broker for tests,
+set `KAFKA_BROKERS` in your `localsettings.py`, after `from dev_settings import *`,
+e.g.:
+
+```python
+import os
+
+if os.environ.get("CCHQ_TESTING") == "1":
+    KAFKA_BROKERS = ["localhost:9092"]
+```
 
 
 ### REUSE DB
