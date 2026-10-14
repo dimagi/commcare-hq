@@ -205,6 +205,20 @@ class CreatePublicWebformForm(BasePublicWebformForm):
     app_id = forms.CharField(required=False, widget=forms.HiddenInput)
     form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
 
+    def __init__(self, domain, timezone, *args, initial=None, **kwargs):
+        # resolved before super(), which lays out the dropdowns from initial
+        initial = initial or {}
+        self.has_ineligible_prefill = False
+        if initial.get('app_id') and initial.get('form_unique_id'):
+            form = get_public_webform_eligible_form(
+                domain, initial['app_id'], initial['form_unique_id'])
+            if form:
+                initial = {**initial, 'menu_id': form.get_module().unique_id}
+            else:
+                initial = {}
+                self.has_ineligible_prefill = True
+        super().__init__(domain, timezone, *args, initial=initial, **kwargs)
+
     def initial_expires_at(self):
         return (
             ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90))
@@ -213,10 +227,16 @@ class CreatePublicWebformForm(BasePublicWebformForm):
         )
 
     def fieldset_fields(self):
+        form_choices = {
+            'apps': get_public_webform_choices(self.domain),
+            'appId': self.initial.get('app_id', ''),
+            'menuId': self.initial.get('menu_id', ''),
+            'formId': self.initial.get('form_unique_id', ''),
+        }
         return [
             crispy.HTML(render_to_string(
                 'public_webforms/partials/create_form_choices.html',
-                context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
+                context={'form_choices': json.dumps(form_choices)},
             )),
             *super().fieldset_fields(),
         ]
