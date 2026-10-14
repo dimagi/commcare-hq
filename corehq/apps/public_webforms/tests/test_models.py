@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -12,17 +13,16 @@ from casexml.apps.phone.xml import get_registration_element_data
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import is_new_user
+from corehq.apps.public_webforms import models
 from corehq.apps.public_webforms.models import (
     OTARestorePublicFormUser,
     PublicFormSession,
     PublicFormUser,
     PublicWebform,
+    PublicWebformAppDeleted,
     PublicWebformStatus,
 )
-from corehq.apps.public_webforms.tests.utils import (
-    create_session,
-    create_webform,
-)
+from corehq.apps.public_webforms.tests.utils import create_session, create_webform
 from corehq.apps.users.util import PUBLIC_USER_ID
 
 
@@ -83,6 +83,31 @@ def test_with_submissions_count(submitted_at, expected_submissions):
 
     annotated = PublicWebform.objects.with_submissions_count().get(pk=webform.pk)
     assert annotated.submissions == expected_submissions
+
+
+@pytest.mark.parametrize('was_disabled, is_disabled', [
+    (True, False),
+    (False, True),
+], ids=['opens', 'closes'])
+def test_set_disabled(was_disabled, is_disabled):
+    webform = PublicWebform(is_disabled=was_disabled)
+
+    with patch.object(models, 'is_app_live', return_value=True):
+        webform.set_disabled(is_disabled)
+
+    assert webform.is_disabled is is_disabled
+
+
+def test_set_disabled_refuses_to_open_a_webform_whose_app_is_deleted():
+    webform = PublicWebform(is_disabled=True)
+
+    with (
+        patch.object(models, 'is_app_live', return_value=False),
+        pytest.raises(PublicWebformAppDeleted),
+    ):
+        webform.set_disabled(False)
+
+    assert webform.is_disabled
 
 
 @use('db')

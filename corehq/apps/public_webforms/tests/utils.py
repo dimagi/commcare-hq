@@ -8,6 +8,7 @@ from unmagic import fixture, use
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.origin_token import ORIGIN_TOKEN_SLUG
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
@@ -71,6 +72,17 @@ def create_session(webform, **kwargs):
         'expires_at': timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
         **kwargs,
     })
+
+
+@use('db')
+@fixture
+def saved_app():
+    app = Application.new_app(DOMAIN, 'Antenatal')
+    app.save()
+    try:
+        yield app
+    finally:
+        Application.get_db().delete_doc(app._id)
 
 
 @use('db')

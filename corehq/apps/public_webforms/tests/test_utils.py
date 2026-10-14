@@ -1,7 +1,14 @@
 from unmagic import use
 
-from corehq.apps.public_webforms.tests.utils import webform_domain
-from corehq.apps.public_webforms.utils import public_webforms_enabled
+from corehq.apps.public_webforms.tests.utils import (
+    DOMAIN,
+    saved_app,
+    webform_domain,
+)
+from corehq.apps.public_webforms.utils import (
+    is_app_live,
+    public_webforms_enabled,
+)
 from corehq.privileges import PUBLIC_WEBFORMS
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -30,3 +37,17 @@ class TestPublicWebformsEnabled:
         domain_obj.save()
 
         assert not public_webforms_enabled(domain_obj.name)
+
+
+@use(saved_app)
+def test_a_saved_app_is_live():
+    assert is_app_live(DOMAIN, saved_app()._id)
+
+
+@use(saved_app)
+def test_a_deleted_app_is_not_live():
+    app = saved_app()
+    app.delete_app()
+    app.save()
+
+    assert not is_app_live(DOMAIN, app._id)

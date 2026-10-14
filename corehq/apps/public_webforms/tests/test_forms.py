@@ -217,7 +217,7 @@ def _webform(**kwargs):
     })
 
 
-def _edit_form(webform, data=None, has_sms_privilege=False):
+def _edit_form(webform, data=None, has_sms_privilege=False, is_app_deleted=False):
     """Stubs the build read that names the app, menu, and form."""
     args = [data] if data is not None else []
     with patch.multiple(
@@ -228,6 +228,7 @@ def _edit_form(webform, data=None, has_sms_privilege=False):
             'app_version': '12',
             'menu_name': 'Registration',
             'form_name': 'Cohort Registration',
+            'is_app_deleted': is_app_deleted,
         }}),
     ):
         form = forms.EditPublicWebformForm(
@@ -262,6 +263,14 @@ def test_edit_drops_a_delivery_option_the_project_can_no_longer_use():
     form = _edit_form(_webform(allow_sms=True), has_sms_privilege=False)
 
     assert form.initial['link_choices'] == ['allow_email']
+
+
+def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
+    form = _edit_form(_webform(is_disabled=False), is_app_deleted=True)
+
+    rendered = str(form['open_to_requests'])
+    assert 'disabled' in rendered
+    assert 'checked' not in rendered
 
 
 @use('db')

@@ -4,10 +4,12 @@ import pytz
 from time_machine import travel
 from unmagic import use
 
+from django.contrib.messages import ERROR, get_messages
 from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
@@ -108,9 +110,16 @@ class TestPublicWebformQrCode(PublicWebformViewTestCase):
 @privilege_enabled(PUBLIC_WEBFORMS)
 class TestSetPublicWebformStatus(PublicWebformViewTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.app = Application.new_app(DOMAIN, 'Antenatal')
+        cls.app.save()
+        cls.addClassCleanup(cls.app.delete)
+
     def setUp(self):
         super().setUp()
-        self.webform = create_webform(is_disabled=True)
+        self.webform = create_webform(app_id=self.app._id, is_disabled=True)
 
     def post(self, is_disabled, webform=None, domain=DOMAIN, query=''):
         webform = webform or self.webform
@@ -131,6 +140,18 @@ class TestSetPublicWebformStatus(PublicWebformViewTestCase):
 
         self.webform.refresh_from_db()
         assert self.webform.is_disabled
+
+    def test_a_webform_whose_app_is_deleted_cannot_be_opened(self):
+        deleted_app = Application.new_app(DOMAIN, 'Deleted')
+        deleted_app.delete_app()
+        deleted_app.save()
+        self.addCleanup(deleted_app.delete)
+        webform = create_webform(app_id=deleted_app._id, is_disabled=True)
+
+        response = self.post(is_disabled='false', webform=webform)
+
+        assert [m.level for m in get_messages(response.wsgi_request)] == [ERROR]
+        assert response.url == reverse('manage_public_webforms', args=[DOMAIN])
 
     def test_the_dashboard_is_returned_to_as_it_was_left(self):
         """Closing a webform from a filtered page shouldn't reset the filters."""

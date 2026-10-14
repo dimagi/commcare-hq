@@ -8,15 +8,21 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms.models import PublicWebformType
+from corehq.apps.public_webforms.utils import get_live_app_ids, is_app_live
 from corehq.util.quickcache import quickcache
 
 
 def get_public_webform_choices(domain):
     """Return the drilldown tree of applications, menus, and eligible forms
-    from latest released app builds. Menus and applications with no eligible
-    forms are omitted.
+    from latest released app builds. Deleted applications, and menus and
+    applications with no eligible forms, are omitted.
     """
-    build_ids = set(get_latest_released_build_ids_by_app_id(domain).values())
+    live_app_ids = get_live_app_ids(domain)
+    build_ids = {
+        build_id
+        for app_id, build_id in get_latest_released_build_ids_by_app_id(domain).items()
+        if app_id in live_app_ids
+    }
     return _get_choices_for_builds(build_ids)
 
 
@@ -65,6 +71,8 @@ def _get_build_choice(app):
 
 
 def get_public_webform_eligible_form(domain, app_id, form_unique_id):
+    if not is_app_live(domain, app_id):
+        return None
     app = get_latest_released_app(domain, app_id)
     if app is None:
         return None
