@@ -67,7 +67,7 @@
         "marionette.approuter": "^1.0.2",
         "marionette.templatecache": "^1.0.0",
         "markdown-it": "14.2.0",
-        "moment": "2.29.4",
+        "moment": "2.31.0",
         "multiselect": "0.9.12",
         "npm": "11.6.2",
         "nprogress": "0.2.0",
