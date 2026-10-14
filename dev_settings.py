@@ -171,6 +171,10 @@ if settingshelper.is_testing():
             "response_checksum_validation": "when_required",
         },
     }
+    # Tests use their own Kafka broker, so that tests and the dev
+    # environment do not consume each other's changes. See the
+    # kafka-tests service in docker/hq-compose-services.yml.
+    KAFKA_BROKERS = ['localhost:9093']
 
 # LOG FILES
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
