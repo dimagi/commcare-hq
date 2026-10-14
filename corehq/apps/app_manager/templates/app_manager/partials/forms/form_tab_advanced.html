@@ -9,9 +9,7 @@
         action="{% url "copy_form" domain app.id form.unique_id %}"
       >
         {% csrf_token %}
-        <h5 class="card-header">
-          {% trans "Copy Form" %}
-        </h5>
+        <h5 class="card-header">{% trans "Copy Form" %}</h5>
         <div class="card-body row align-items-center g-2">
           {% if request|toggle_enabled:"COPY_FORM_TO_APP" %}
             <div class="col-auto" id="app-module-selection">
@@ -70,9 +68,7 @@
     <fieldset></fieldset>
   {% endif %}
   <div class="card card-modern-gray mb-3">
-    <h5 class="card-header">
-      {% trans "XForm" %}
-    </h5>
+    <h5 class="card-header">{% trans "XForm" %}</h5>
     <div class="card-body">
       <ul class="nav nav-pills flex-column">
         {% if allow_xform_upload %}
@@ -106,4 +102,19 @@
       </ul>
     </div>
   </div>
+  {% if create_public_webform_url %}
+    <div class="card card-modern-gray mb-3">
+      <h5 class="card-header">{% trans "Public Webform" %}</h5>
+      <div class="card-body">
+        <ul class="nav nav-pills flex-column">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ create_public_webform_url }}">
+              <i class="fa fa-plus"></i>
+              {% trans "Create public webform from latest released version" %}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  {% endif %}
 </div>
