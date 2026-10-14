@@ -2401,7 +2401,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper = hqcrispy.HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
-            crispy.Field('emails', css_class='input-xxlarge'),
+            crispy.Field('emails'),
             crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.Div(
                 crispy.Div(
@@ -2411,9 +2411,9 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
                         'On <span data-bind="text: end_date"></span> '
                         'the project space will be automatically paused.</p>'
                     )),
-                    css_class='col-sm-offset-3 col-md-offset-2'
+                    css_class='field-control-offset'
                 ),
-                css_class='form-group'
+                css_class='mb-3'
             ),
             *self.form_actions
         )
@@ -2556,9 +2556,9 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                               'need to set up a non-standard plan, '
                               'please email {}.</p>').format(settings.ACCOUNTS_EMAIL)
                         ),
-                        css_class='col-sm-offset-3 col-md-offset-2'
+                        css_class='field-control-offset'
                     ),
-                    css_class='form-group'
+                    css_class='mb-3'
                 ),
                 *self.form_actions
             )
