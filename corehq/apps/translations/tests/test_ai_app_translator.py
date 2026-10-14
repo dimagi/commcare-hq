@@ -873,9 +873,13 @@ class TestRunAppTranslation(TestCase):
         summary = run_app_translation(
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt), chunk_size=2)
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert summary == {
+            'total_app_strings': usage.total_app_strings,
+            'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
             'total': 5, 'translated': 5, 'skipped': 0, 'changed': 0, 'failed': 0,
             'app_version': app.version, 'errors': []}
+        assert usage.total_app_strings_ai_translated == 5
         assert app.get_module(0).name['fra'] == 'FR:register module'
 
     def test_partial_apply_on_batch_failure(self):
@@ -923,6 +927,9 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app)
 
         assert summary['total'] == 1
+        # this run translated 1 string; the app holds 4 AI translations,
+        # the first run's 5 less the edited module name
+        assert (summary['translated'], summary['total_app_strings_ai_translated']) == (1, 4)
         assert app.get_module(0).name['fra'] == 'mon module'
         assert app.get_module(0).get_form(0).name['fra'] == 'FR:enrol form'
 
@@ -930,7 +937,6 @@ class TestRunAppTranslation(TestCase):
         # Only the form's name was retranslated;
         # the module's name was skipped because it was manually edited
         assert (usage.strings_attempted, usage.strings_translated, usage.model) == (1, 1, 'fake-model')
-        # the first run's 5, less the edited module name
         assert usage.total_app_strings_ai_translated == 4
 
         statuses = dict(
@@ -971,5 +977,6 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app, fail_all=True)
 
         assert summary['translated'] == 0
+        assert 'total_app_strings' not in summary
         assert not AITranslationUsage.objects.filter(app_id=app.get_id).exists()
         assert not AITranslation.objects.filter(app_id=app.get_id).exists()

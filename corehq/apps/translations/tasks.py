@@ -112,9 +112,9 @@ def run_message(message_code):
         WAITED_TOO_LONG: _(
             "Other translations of this app took too long to finish. Run it again."),
         FAILED: _(
-            "Something went wrong while translating the app. Review its "
-            "translations and run it again."),
-        NO_STRINGS_TRANSLATED: _("No strings could be translated."),
+            "Something went wrong and the translation didn't finish. Run it "
+            "again, and contact support if it keeps failing."),
+        NO_STRINGS_TRANSLATED: _("No labels could be translated."),
         MANY_SKIPPED: _(
             "More than {percent}% of translations failed validation and were "
             "skipped.").format(percent=round(HIGH_SKIP_RATE * 100)),
