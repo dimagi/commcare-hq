@@ -208,6 +208,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
     submit_label = gettext_lazy("Create Public Webform")
 
     app_id = forms.CharField(required=False, widget=forms.HiddenInput)
+    menu_id = forms.CharField(required=False, widget=forms.HiddenInput)
     form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, domain, timezone, *args, initial=None, **kwargs):
@@ -234,9 +235,9 @@ class CreatePublicWebformForm(BasePublicWebformForm):
     def fieldset_fields(self):
         form_choices = {
             'apps': get_public_webform_choices(self.domain),
-            'appId': self.initial.get('app_id', ''),
-            'menuId': self.initial.get('menu_id', ''),
-            'formId': self.initial.get('form_unique_id', ''),
+            'appId': self['app_id'].value() or '',
+            'menuId': self['menu_id'].value() or '',
+            'formId': self['form_unique_id'].value() or '',
         }
         return [
             crispy.HTML(render_to_string(
