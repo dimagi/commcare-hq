@@ -240,7 +240,7 @@ var _finishedRunDisplay = function (display, status) {
         var parts = [interpolate(gettext("%(translated)s of %(total)s labels translated (%(percent)s%)"), {
             translated: _number(status.translated),
             total: _number(status.total),
-            percent: Math.round(100 * status.translated / status.total),
+            percent: _percent(status.translated, status.total),
         }, true)];
         if (status.skipped) {
             parts.push(interpolate(gettext("%(count)s skipped"), {count: _number(status.skipped)}, true));
@@ -302,7 +302,7 @@ var _appShare = function (run) {
         return "";
     }
     return interpolate(gettext("AI translated %(percent)s% of the Application (%(translated)s of %(total)s labels)"), {
-        percent: Math.round(100 * run.total_app_strings_ai_translated / run.total_app_strings),
+        percent: _percent(run.total_app_strings_ai_translated, run.total_app_strings),
         translated: _number(run.total_app_strings_ai_translated),
         total: _number(run.total_app_strings),
     }, true);
@@ -312,6 +312,18 @@ var _versionLine = function (inVersion) {
     return inVersion
         ? interpolate(gettext("In version %(version)s"), {version: inVersion}, true)
         : gettext("Not in a version yet");
+};
+
+// 100% and 0% only when it's all or nothing: 1,359 of 1,360 is 99%, not 100%
+var _percent = function (part, whole) {
+    var percent = Math.round(100 * part / whole);
+    if (part < whole) {
+        percent = Math.min(percent, 99);
+    }
+    if (part > 0) {
+        percent = Math.max(percent, 1);
+    }
+    return percent;
 };
 
 var _number = function (value) {
