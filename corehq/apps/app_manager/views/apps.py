@@ -22,7 +22,6 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_layout,
@@ -570,10 +569,6 @@ def app_exchange(request, domain):
             continue
         results.reverse()
         first = results[0]
-
-        required_privileges = str(obj.required_privileges or '').split()
-        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
-            continue
 
         def _version_text(result):
             if result['_id'] == first['_id']:
