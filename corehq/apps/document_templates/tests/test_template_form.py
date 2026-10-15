@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 
 from corehq.apps.document_templates.views import TemplateForm
@@ -87,3 +89,13 @@ def test_unknown_variable_fields_are_ignored():
     )
     assert form.is_valid()
     assert form.get_variables() == {'var1': {'type': 'markdown', 'value': 'Hi'}}
+
+
+def test_initial_from_template_uses_saved_values():
+    template = SimpleNamespace(
+        name='Welcome',
+        slug='welcome',
+        variables={'body': {'type': 'markdown', 'value': 'Hi'}},
+    )
+    initial = TemplateForm.initial_from_template(template, ['body', 'footer'])
+    assert initial == {'name': 'Welcome', 'slug': 'welcome', 'var_body': 'Hi', 'var_footer': ''}

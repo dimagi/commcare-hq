@@ -24,11 +24,79 @@
           <tr>
             <td>{{ template.name }}</td>
             <td>{{ template.slug }}</td>
-            <td></td>
+            <td>
+              <a
+                class="btn btn-sm btn-outline-primary"
+                href="{% url 'edit_document_template' domain template.pk %}"
+                >{% trans "Edit" %}</a
+              >
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#delete-template-{{ template.pk }}"
+              >
+                {% trans "Delete" %}
+              </button>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
+
+    {% for template in templates %}
+      <div
+        class="modal fade"
+        id="delete-template-{{ template.pk }}"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="delete-template-{{ template.pk }}-title"
+      >
+        <div class="modal-dialog">
+          <form
+            class="modal-content"
+            method="post"
+            action="{% url 'delete_document_template' domain template.pk %}"
+          >
+            {% csrf_token %}
+            <div class="modal-header">
+              <h5
+                class="modal-title"
+                id="delete-template-{{ template.pk }}-title"
+              >
+                {% trans "Delete Document Template" %}
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="{% trans 'Close' %}"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <p>
+                {% blocktrans with name=template.name %}
+                  Are you sure you want to delete the document template
+                  "{{ name }}"? This cannot be undone.
+                {% endblocktrans %}
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-bs-dismiss="modal"
+              >
+                {% trans "Cancel" %}
+              </button>
+              <button type="submit" class="btn btn-danger">
+                {% trans "Delete" %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
   {% else %}
     <p class="text-muted">{% trans "No document templates configured." %}</p>
   {% endif %}
