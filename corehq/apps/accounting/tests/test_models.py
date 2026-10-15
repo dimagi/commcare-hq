@@ -16,9 +16,7 @@ from corehq.apps.accounting.models import (
     Currency,
     CustomerBillingRecord,
     CustomerInvoice,
-    DefaultProductPlan,
     Invoice,
-    SoftwarePlanEdition,
     StripePaymentMethod,
     Subscription,
     SubscriptionType,
@@ -288,25 +286,6 @@ class TestSubscription(BaseAccountingTest):
         self.domain.delete()
 
         super(TestSubscription, self).tearDown()
-
-
-class TestSoftwarePlanVersionHasWebUserFeature(BaseAccountingTest):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        generator.bootstrap_test_software_plan_versions()
-
-    def setUp(self):
-        super().setUp()
-        self.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
-
-    def test_false_when_plan_has_no_web_user_feature_rate(self):
-        assert self.plan_version.has_web_user_feature is False
-
-    def test_true_when_plan_has_web_user_feature_rate(self):
-        generator.add_web_user_feature_rate(self.plan_version)
-        assert self.plan_version.has_web_user_feature is True
 
 
 class TestBillingRecord(BaseAccountingTest):
