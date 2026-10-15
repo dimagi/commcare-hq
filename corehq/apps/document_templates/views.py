@@ -1,9 +1,12 @@
-from corehq.apps.document_templates.models import Template
+from django import forms
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext_lazy
+from django.utils.functional import cached_property
+from django.utils.translation import gettext, gettext_lazy
 
 from corehq import toggles
+from corehq.apps.document_templates.models import Template
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -27,3 +30,82 @@ class DocumentTemplatesView(BaseMessagingSectionView):
             )
             .order_by('name')
         }
+
+
+VARIABLE_FIELD_PREFIX = 'var_'
+
+
+def get_variable_names():
+    # TODO: replace with the real list of variable names
+    return ['var1', 'var2']
+
+
+class TemplateForm(forms.Form):
+    name = forms.CharField(max_length=255)
+    slug = forms.SlugField(max_length=50)
+
+    def __init__(self, *args, variable_names, existing_slugs=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.variable_names = variable_names
+        self.existing_slugs = set(existing_slugs)
+        for variable_name in variable_names:
+            self.fields[self._field_name(variable_name)] = forms.CharField(
+                label=variable_name,
+                required=False,
+                widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            )
+
+    def clean_slug(self):
+        slug = self.cleaned_data['slug']
+        if slug in self.existing_slugs:
+            raise forms.ValidationError(gettext('A template with this slug already exists.'))
+        return slug
+
+    @staticmethod
+    def _field_name(variable_name):
+        return f'{VARIABLE_FIELD_PREFIX}{variable_name}'
+
+    def variable_fields(self):
+        return [self[self._field_name(name)] for name in self.variable_names]
+
+    def get_variables(self):
+        return {
+            variable_name: {
+                'type': 'markdown',
+                'value': self.cleaned_data[self._field_name(variable_name)],
+            }
+            for variable_name in self.variable_names
+        }
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class NewDocumentTemplateView(BaseMessagingSectionView):
+    urlname = 'new_document_template'
+    page_title = gettext_lazy('New Template')
+    template_name = 'document_templates/template_form.html'
+
+    @cached_property
+    def form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        existing_slugs = Template.objects.filter(domain=self.domain).values_list('slug', flat=True)
+        return TemplateForm(data, variable_names=get_variable_names(), existing_slugs=existing_slugs)
+
+    @property
+    def page_context(self):
+        return {'form': self.form}
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+
+        name = self.form.cleaned_data['name']
+        Template.objects.create(
+            domain=self.domain,
+            name=name,
+            slug=self.form.cleaned_data['slug'],
+            variables=self.form.get_variables(),
+        )
+        return HttpResponseRedirect(
+            reverse(DocumentTemplatesView.urlname, args=[self.domain])
+        )
