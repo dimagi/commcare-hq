@@ -1,11 +1,15 @@
+from unittest.mock import Mock, patch
+
 from unmagic import use
 
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
     saved_app,
     webform_domain,
 )
 from corehq.apps.public_webforms.utils import (
+    get_create_public_webform_url,
     is_app_live,
     public_webforms_enabled,
 )
@@ -51,3 +55,31 @@ def test_a_deleted_app_is_not_live():
     app.save()
 
     assert not is_app_live(DOMAIN, app._id)
+
+
+@patch('corehq.apps.public_webforms.utils.can_access_public_webforms', new=lambda request, domain: True)
+def test_create_url_preselects_the_form():
+    factory = AppFactory(domain='pwf-test', build_version='2.51.0')
+    factory.app._id = 'app-1'
+    __, form = factory.new_basic_module('survey', 'patient')
+
+    url = get_create_public_webform_url(Mock(), form)
+
+    assert url == f'/a/pwf-test/public_webforms/create/?app_id=app-1&form_unique_id={form.unique_id}'
+
+
+@patch('corehq.apps.public_webforms.utils.can_access_public_webforms', new=lambda request, domain: True)
+def test_create_url_is_not_offered_for_an_ineligible_form():
+    factory = AppFactory(domain='pwf-test', build_version='2.51.0')
+    __, form = factory.new_basic_module('followup', 'patient')
+    factory.form_requires_case(form)
+
+    assert get_create_public_webform_url(Mock(), form) is None
+
+
+@patch('corehq.apps.public_webforms.utils.can_access_public_webforms', new=lambda request, domain: True)
+def test_create_url_is_not_offered_below_commcare_2_51():
+    factory = AppFactory(domain='pwf-test', build_version='2.50.0')
+    __, form = factory.new_basic_module('survey', 'patient')
+
+    assert get_create_public_webform_url(Mock(), form) is None
