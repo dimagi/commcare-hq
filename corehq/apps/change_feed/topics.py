@@ -1,22 +1,28 @@
 from kafka import TopicPartition
 
+import settingshelper
 from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.form_processor.models import XFormInstance
 
-DOMAIN = 'domain'
-META = 'meta'
-APP = 'app'
-CASE_SQL = 'case-sql'
-FORM_SQL = 'form-sql'
-SMS = 'sms'
-LEDGER = 'ledger'
-COMMCARE_USER = 'commcare-user'
-GROUP = 'group'
-WEB_USER = 'web-user'
-LOCATION = 'location'
-SYNCLOG_SQL = 'synclog-sql'
+# Tests use their own topics, so that pillows running in a dev
+# environment do not process changes published by tests, and tests do
+# not process changes published by the dev environment.
+_PREFIX = 'test-' if settingshelper.is_testing() else ''
+
+DOMAIN = _PREFIX + 'domain'
+META = _PREFIX + 'meta'
+APP = _PREFIX + 'app'
+CASE_SQL = _PREFIX + 'case-sql'
+FORM_SQL = _PREFIX + 'form-sql'
+SMS = _PREFIX + 'sms'
+LEDGER = _PREFIX + 'ledger'
+COMMCARE_USER = _PREFIX + 'commcare-user'
+GROUP = _PREFIX + 'group'
+WEB_USER = _PREFIX + 'web-user'
+LOCATION = _PREFIX + 'location'
+SYNCLOG_SQL = _PREFIX + 'synclog-sql'
 
 
 CASE_TOPICS = (CASE_SQL, )

@@ -16,3 +16,7 @@ class TopicTests(SimpleTestCase):
 def test_get_topic_for_doc_type(self, doc_type, data_source, expected_topic):
     topic = get_topic_for_doc_type(doc_type, data_source)
     self.assertEqual(topic, expected_topic)
+
+
+def test_tests_use_test_topics():
+    assert all(topic.startswith('test-') for topic in topics.ALL), topics.ALL
