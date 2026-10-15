@@ -1,0 +1,81 @@
+# Copy this file to schemathesis.toml to set defaults for `schemathesis run`.
+# The copy is gitignored. See "Checking an API against its OpenAPI spec" in
+# DEV_SETUP.md.
+#
+# Some vocabulary, because the rest of this file uses it. Schemathesis reads an
+# OpenAPI spec, turns each documented endpoint into an "operation", and runs
+# those operations in stages it calls "phases". The examples, coverage and
+# fuzzing phases test one operation at a time; the stateful phase strings
+# several together into a scenario. Requests are "positive" when they carry
+# data the spec calls valid, and "negative" when they carry data it calls
+# invalid.
+#
+# Schemathesis looks for schemathesis.toml in the directory you run it from and
+# in each parent, stopping at the first one holding a .git folder, so this file
+# never reaches past the repository root. Run it from the root. Schemathesis
+# refuses to start if either environment variable named below is unset.
+#
+# The examples, coverage and fuzzing phases reuse values from successful
+# responses in later requests, so an id from one response can turn up in the
+# next.
+#
+# Several of the settings below work around specs that document less than what the
+# API supports. Each one says what would let it be relaxed. The ones that need a
+# domain it is safe to write to are marked "ONCE WRITES ARE SAFE:".
+
+# Where to send the requests, normally your local dev server.
+base-url = "http://localhost:8000"
+
+# Back off when the API throttles instead of hammering it. "auto" waits for the
+# period given in the Retry-After header of a 429, at most three times per
+# request, so a persistent 429 still gets reported.
+#
+# Without this, HQ's own rate limiting answers 429, and because no spec
+# documents that status, a check called status_code_conformance reports every
+# one of them as a failure.
+rate-limit = "auto"
+
+# Who the requests come from. Generate an API key from your account settings.
+#
+# It also feeds the ignored_auth check, which re-sends a request with the
+# credentials stripped and expects the endpoint to refuse it.
+[headers]
+Authorization = "ApiKey ${CCHQ_API_KEY}"
+
+# Which project space to test against. Every API path contains {domain}, and a
+# made-up value would only ever 404. Schemathesis has no command-line flag for
+# path parameters, so this file is the only place to set it, which makes this
+# setting permanent too.
+[parameters]
+domain = "${CCHQ_DOMAIN}"
+
+# Never test the write operations. Generated requests are real requests, and
+# they go to the project space named above. This deselects the write operations
+# but does not stop the coverage probe below, so both settings are needed.
+#
+# ONCE WRITES ARE SAFE: drop this block.
+[[operations]]
+include-method-regex = "POST|PUT|PATCH|DELETE"
+enabled = false
+
+# Do not probe each path with the methods it does not document. That probe means
+# sending, say, a DELETE at a path that only declares a GET, to see whether the
+# API answers instead of refusing.
+#
+# The probe only runs when negative data is being generated, so -m positive
+# already turns it off. This empty list keeps it off if you drop that flag. The
+# [[operations]] block will not: the probe honours only exclude rules, and
+# Schemathesis records that block as an include rule.
+#
+# ONCE WRITES ARE SAFE: restore the probe, provided every path by then documents
+# every method it accepts.
+[phases.coverage]
+unexpected-methods = []
+
+# Skip the phase that chains requests into scenarios. With writes disabled above
+# there is nothing to chain: no request creates a resource for a later one to
+# fetch or delete.
+#
+# ONCE WRITES ARE SAFE: enable this phase.
+[phases.stateful]
+enabled = false

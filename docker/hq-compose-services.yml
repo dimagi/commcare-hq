@@ -64,3 +64,10 @@ services:
     ports:
       - "9980:9980"
       - "9981:9981"
+
+  garage:
+    extends:
+      file: hq-compose.yml
+      service: garage
+    ports:
+      - "3900:3900"

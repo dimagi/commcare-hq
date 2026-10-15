@@ -3,9 +3,10 @@ from django.urls import reverse
 from testil import assert_raises
 
 from corehq import privileges
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater
 from corehq.util.test_utils import privilege_enabled
 
 
@@ -81,3 +82,35 @@ class TestRepeaterViews(BaseViewTest):
         }
         response = self.client.get(reverse('edit_repeater', kwargs=url_kwargs))
         assert response.status_code == 404
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_cannot_claim_repeater_from_another_domain_via_post(self):
+        victim_domain = create_domain('victim-domain')
+        self.addCleanup(victim_domain.delete)
+        victim_conn = ConnectionSettings.objects.create(
+            domain=victim_domain.name,
+            name='victim_conn',
+            url='https://example.com/api/',
+        )
+        victim_repeater = ShortFormRepeater.objects.create(
+            domain=victim_domain.name,
+            connection_settings=victim_conn,
+        )
+        url = reverse('edit_repeater', kwargs={
+            'domain': self.domain.name,  # Attacker's domain
+            'repeater_type': victim_repeater.repeater_type,
+            'repeater_id': victim_repeater.repeater_id,
+        })
+        post_data = {
+            'request_method': 'POST',
+            # Attacker's ConnectionSettings instance
+            'connection_settings_id': self.connection_setting.id,
+        }
+
+        response = self.client.post(url, post_data)
+        assert response.status_code == 404
+
+        # Verify that the repeater remains untouched
+        victim_repeater.refresh_from_db()
+        assert victim_repeater.domain == victim_domain.name
+        assert victim_repeater.connection_settings_id == victim_conn.id

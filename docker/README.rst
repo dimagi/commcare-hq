@@ -38,7 +38,7 @@ etc.), you should stop them now.
 
 Run ::
 
-    $ scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio
+    $ scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka garage
 
 to build and start those Docker services in the background. (Omit ``-d``
 to run them in the foreground.)
@@ -125,7 +125,8 @@ so you can connect to them directly.
 * Redis (6397)
 * Zookeeper (2181)
 * Kafka (9092)
-* MinIO (9980)
+* Garage (S3 API, 3900)
+* MinIO (9980), only needed to migrate old blobs; see below
 
 CommCare HQ and the services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,6 +148,22 @@ the place to do it.
 .. NOTE::
    You can destabilize your system if you manually edit data in this
    directory, so do so with care!
+
+Migrating blobs from MinIO to Garage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+HQ now stores blobs in Garage instead of MinIO, whose community edition
+is no longer maintained. To keep blobs you stored in MinIO, copy them
+across once::
+
+    $ ./scripts/docker up -d garage
+    $ ./docker/garage/copy-from-minio.sh
+
+The script can be rerun safely and doesn't delete anything from MinIO. If
+the MinIO container isn't running, it starts a temporary one on your old
+MinIO data. If you point your own ``localsettings.py`` at MinIO, switch
+``S3_BLOB_DB_SETTINGS`` to match ``docker/localsettings.py``, which
+includes checksum options Garage needs.
 
 Travis
 ------

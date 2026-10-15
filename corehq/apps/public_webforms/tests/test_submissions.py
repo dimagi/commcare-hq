@@ -19,6 +19,7 @@ from corehq.apps.public_webforms.submissions import (
     public_form_session_already_submitted,
     validate_public_form_submission,
 )
+from corehq.apps.public_webforms.tests.utils import create_session
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.form_processor.utils.xform import convert_xform_to_json
@@ -158,10 +159,7 @@ def consumable_session():
         allow_email=True,
         expires_at=future_expiration,
     )
-    yield PublicFormSession.objects.create(
-        public_webform=webform,
-        expires_at=future_expiration,
-    )
+    yield create_session(webform, expires_at=future_expiration)
 
 
 @use(consumable_session)
@@ -243,8 +241,10 @@ class TestPublicFormReceiverIntegration:
     session on success."""
 
     def _session(self):
-        return PublicFormSession.objects.create(
-            public_webform=receiver_webform(), expires_at=datetime.datetime.today() + datetime.timedelta(days=30))
+        return create_session(
+            receiver_webform(),
+            expires_at=datetime.datetime.today() + datetime.timedelta(days=30),
+        )
 
     def _submit(self, session, case_block_xml=''):
         form_xml = (

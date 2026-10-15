@@ -1,17 +1,25 @@
+import doctest
 import json
 import os
 import subprocess
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import polib
 import pytest
+from unmagic import fixture, use
 
-from corehq.apps.translations.management.commands.translate_po_files import (
+from corehq.apps.translations.integrations.llm import (
     LLMTranslator,
     OpenaiTranslator,
-    PoTranslationFormat,
     TranslationFormat,
+)
+from corehq.apps.translations.management.commands import translate_po_files
+from corehq.apps.translations.management.commands.translate_po_files import (
+    PoTranslationFormat,
+    counts_by_plural_index_from_header,
+    entry_has_control_chars,
 )
 from corehq.tests.tools import nottest
 
@@ -59,13 +67,9 @@ def test_llm_translator_base_prompt():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.management.commands.translate_po_files.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "French" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "French" in prompt
 
 
 def test_llm_translator_base_prompt_with_unsupported_lang():
@@ -77,13 +81,9 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
         translation_format=translation_format
     )
 
-    with patch(
-        'corehq.apps.translations.management.commands.translate_po_files.langcode_to_langname_map'
-    ) as mock_lang_map:
-        mock_lang_map.return_value = {"fra": "French"}
-        prompt = translator.base_prompt()
-        assert "professional translator" in prompt
-        assert "some_lang_code" in prompt
+    prompt = translator.base_prompt()
+    assert "professional translator" in prompt
+    assert "some_lang_code" in prompt
 
 
 def test_openai_translator_supported_models():
@@ -132,7 +132,7 @@ def test_openai_translator_call_llm():
         translator.client.chat.completions.create.assert_called_once()
 
 
-@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+@patch('corehq.apps.translations.integrations.llm.requests.post')
 def test_openai_translator_call_llm_http(mock_post):
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
@@ -154,7 +154,7 @@ def test_openai_translator_call_llm_http(mock_post):
     mock_post.assert_called_once()
 
 
-@patch('corehq.apps.translations.management.commands.translate_po_files.requests.post')
+@patch('corehq.apps.translations.integrations.llm.requests.post')
 def test_openai_translator_client_fallback_to_http(mock_post):
     translation_format = MockTranslationFormat()
     translator = OpenaiTranslator(
@@ -179,6 +179,97 @@ def test_openai_translator_client_fallback_to_http(mock_post):
     mock_post.assert_called_once()
 
 
+def test_doctests():
+    results = doctest.testmod(translate_po_files)
+    assert results.failed == 0
+
+
+# Plural-Forms headers from locale/<lang>/LC_MESSAGES/django.po
+ENGLISH_PLURAL_FORMS = "nplurals=2; plural=(n != 1);"
+FRENCH_PLURAL_FORMS = "nplurals=2; plural=(n > 1);"
+SPANISH_PLURAL_FORMS = "nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
+UKRAINIAN_PLURAL_FORMS = (
+    "nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 ? 0 : n % 1 == 0 && "
+    "n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 1 : n % 1 == 0 && "
+    "(n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % 100 >=11 && n % 100 <=14 )) ? 2: 3);"
+)
+ARABIC_PLURAL_FORMS = (
+    "nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : "
+    "n%100>=11 && n%100<=99 ? 4 : 5;"
+)
+
+
+def _po_header(plural_forms):
+    return (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        f'"Plural-Forms: {plural_forms}\\n"\n'
+    )
+
+
+# One empty plural entry, one with too few plural indices for nplurals=3, one translated
+SPANISH_PLURAL_PO = _po_header(SPANISH_PLURAL_FORMS) + """
+#, python-format
+msgid "%(count)s case"
+msgid_plural "%(count)s cases"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#, python-format
+msgid "%(count)s file"
+msgid_plural "%(count)s files"
+msgstr[0] "%(count)s fileulario"
+msgstr[1] "%(count)s fileularios"
+
+#, python-format
+msgid "%(count)s user"
+msgid_plural "%(count)s users"
+msgstr[0] "%(count)s usuario"
+msgstr[1] "%(count)s de usuarios"
+msgstr[2] "%(count)s usuarios"
+"""
+
+
+# Valid translations for the two untranslated entries in SPANISH_PLURAL_PO
+SPANISH_PLURAL_LLM_OUTPUT = {
+    "0:0": "%(count)s caso", "0:1": "%(count)s de casos", "0:2": "%(count)s casos",
+    "1:0": "%(count)s fileulario", "1:1": "%(count)s de archivos", "1:2": "%(count)s fileularios",
+}
+
+
+@fixture
+def po_dir():
+    with tempfile.TemporaryDirectory() as tmp:
+        yield Path(tmp)
+
+
+def _write_po(content):
+    path = po_dir() / "django.po"
+    path.write_text(content, encoding="utf-8")
+    return str(path)
+
+
+def _po_format(content):
+    return PoTranslationFormat(_write_po(content))
+
+
+@pytest.mark.parametrize("header, expected", [
+    pytest.param(ENGLISH_PLURAL_FORMS, {0: [1], 1: [0, 2, 3]}, id="english"),
+    pytest.param(FRENCH_PLURAL_FORMS, {0: [0, 1], 1: [2, 3, 4]}, id="french"),
+    pytest.param(SPANISH_PLURAL_FORMS, {0: [1], 1: [1000000, 2000000], 2: [0, 2, 3]}, id="spanish"),
+    pytest.param(UKRAINIAN_PLURAL_FORMS, {0: [1, 21, 31], 1: [2, 3, 4], 2: [0, 5, 6], 3: []}, id="ukrainian"),
+    pytest.param(ARABIC_PLURAL_FORMS, {0: [0], 1: [1], 2: [2], 3: [3, 4, 5], 4: [11, 12, 13], 5: [100, 101, 102]},
+                 id="arabic"),
+    pytest.param("", {0: [1], 1: [0, 2, 3]}, id="missing-header"),
+])
+def test_counts_by_plural_index_from_header(header, expected):
+    counts = counts_by_plural_index_from_header(header)
+
+    assert {plural_index: n[:3] for plural_index, n in counts.items()} == expected
+
+
 class TestPoTranslationFormat:
 
     def test_init(self):
@@ -188,75 +279,181 @@ class TestPoTranslationFormat:
 
     def test_untranslated_messages(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="", fuzzy=False)
-        mock_entry2 = MagicMock(msgid="World", msgstr="Mundo", fuzzy=False)
-        po_format.all_message_objects = [mock_entry1, mock_entry2]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="Mundo")
+        po_format.all_message_objects = [entry1, entry2]
 
         result = po_format.untranslated_messages
 
         assert len(result) == 1
-        assert result[0] == mock_entry1
+        assert result[0] == entry1
 
     def test_untranslated_messages_includes_fuzzy(self):
         po_format = PoTranslationFormat("test_file.po")
 
-        mock_empty = MagicMock(msgid="Empty message", msgstr="", fuzzy=False)
-        mock_translated = MagicMock(msgid="Translated message", msgstr="Mensaje traducido", fuzzy=False)
-        mock_fuzzy = MagicMock(msgid="Fuzzy message", msgstr="Mensaje difuso", fuzzy=True)
+        empty_entry = polib.POEntry(msgid="Empty message", msgstr="")
+        translated_entry = polib.POEntry(msgid="Translated message", msgstr="Mensaje traducido")
+        fuzzy_entry = polib.POEntry(msgid="Fuzzy message", msgstr="Mensaje difuso", flags=["fuzzy"])
 
-        po_format.all_message_objects = [mock_empty, mock_translated, mock_fuzzy]
+        po_format.all_message_objects = [empty_entry, translated_entry, fuzzy_entry]
 
         result = po_format.untranslated_messages
 
         assert len(result) == 2
-        assert mock_empty in result
-        assert mock_fuzzy in result
-        assert mock_translated not in result
+        assert empty_entry in result
+        assert fuzzy_entry in result
+        assert translated_entry not in result
 
-    def test_untranslated_messages_plural(self):
+    def test_untranslated_messages_includes_control_chars(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="One item", msgid_plural="Many items", msgstr_plural={0: ""})
-        mock_entry2 = MagicMock(msgid="One world", msgid_plural="Many worlds", msgstr_plural={0: "Un mundo"})
-        po_format.all_message_objects = [mock_entry1, mock_entry2]
+        corrupted = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \x14 maintenant")
+        clean = polib.POEntry(msgid="Save \u2014 now", msgstr="Enregistrer \u2014 maintenant")
+        po_format.all_message_objects = [corrupted, clean]
 
-        result = po_format.untranslated_messages_plural
+        assert po_format.untranslated_messages == [corrupted]
 
-        assert len(result) == 1
-        assert result[0] == mock_entry1
+    @use(po_dir)
+    def test_untranslated_messages_plural(self):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+
+        result = po_format.untranslated_messages
+
+        assert [msg.msgid for msg in result] == ["%(count)s case", "%(count)s file"]
+
+    @pytest.mark.parametrize("header, plural_index, expected", [
+        pytest.param(SPANISH_PLURAL_FORMS, 1, "used when n is 1000000, 2000000", id="few-counts"),
+        pytest.param(
+            UKRAINIAN_PLURAL_FORMS, 1, "used when n is 2, 3, 4, 22, 23, 24, 32, 33, ...", id="truncated",
+        ),
+        pytest.param(
+            UKRAINIAN_PLURAL_FORMS, 3, "not used for whole numbers (e.g. fractions); use the general plural",
+            id="fractions-only",
+        ),
+    ])
+    @use(po_dir)
+    def test_plural_index_description(self, header, plural_index, expected):
+        po_format = _po_format(_po_header(header))
+
+        assert po_format._plural_index_description(plural_index) == expected
+
+    @use(po_dir)
+    def test_format_input_plural(self):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+        entry = po_format.all_message_objects.find("%(count)s case")
+
+        result = json.loads(po_format.format_input({"0": entry}))
+
+        assert result == {"0": {
+            "singular": "%(count)s case",
+            "plural": "%(count)s cases",
+            "forms": {
+                "0": "used when n is 1",
+                "1": "used when n is 1000000, 2000000",
+                "2": "used when n is 0, 2, 3, 4, 5, 6, 7, 8, ...",
+            },
+        }}
+
+    @use(po_dir)
+    def test_parse_output_plural(self):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+        po_format.load_input()
+
+        result = po_format.parse_output(json.dumps(SPANISH_PLURAL_LLM_OUTPUT))
+
+        assert result == {
+            "0": {0: "%(count)s caso", 1: "%(count)s de casos", 2: "%(count)s casos"},
+            "1": {0: "%(count)s fileulario", 1: "%(count)s de archivos", 2: "%(count)s fileularios"},
+        }
+
+    @use(po_dir)
+    def test_parse_output_plural_saves_msgstr_plural(self):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+        po_format.load_input()
+
+        po_format.parse_output(json.dumps(SPANISH_PLURAL_LLM_OUTPUT))
+        po_format.save_output()
+
+        entry = polib.pofile(po_format.file_path).find("%(count)s file")
+        assert entry.msgstr_plural == {
+            0: "%(count)s fileulario", 1: "%(count)s de archivos", 2: "%(count)s fileularios",
+        }
+
+    @use(po_dir)
+    def test_parse_output_plural_saved_file_compiles(self):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+        po_format.load_input()
+
+        po_format.parse_output(json.dumps(SPANISH_PLURAL_LLM_OUTPUT))
+        po_format.save_output()
+
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_format.file_path))
+
+    @pytest.mark.parametrize("llm_output", [
+        pytest.param({"0:0": "%(count)s caso", "0:2": "%(count)s casos"}, id="missing-index"),
+        pytest.param({"0:0": "%(count)s caso", "0:1": "", "0:2": "%(count)s casos"}, id="empty-msgstr"),
+        pytest.param(
+            {"0:0": "%(count)s caso", "0:1": "%(cuenta)s de casos", "0:2": "%(count)s casos"},
+            id="bad-placeholder",
+        ),
+        pytest.param({"0": "%(count)s casos"}, id="plain-key"),
+    ])
+    @use(po_dir)
+    def test_parse_output_plural_invalid(self, llm_output):
+        po_format = _po_format(SPANISH_PLURAL_PO)
+        po_format.load_input()
+
+        result = po_format.parse_output(json.dumps(llm_output))
+
+        assert "0" not in result
+        assert po_format.translation_obj_map["0"].msgstr_plural == {0: "", 1: "", 2: ""}
+
+    @use(po_dir)
+    def test_parse_output_plural_singular_index_checked_against_msgid(self):
+        po_format = _po_format(_po_header(ENGLISH_PLURAL_FORMS) + """
+msgid "One case"
+msgid_plural "%(count)s cases"
+msgstr[0] ""
+msgstr[1] ""
+""")
+        po_format.load_input()
+
+        result = po_format.parse_output(json.dumps({"0:0": "Un caso", "0:1": "%(count)s casos"}))
+
+        assert result == {"0": {0: "Un caso", 1: "%(count)s casos"}}
 
     def test_build_translation_obj_map(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        translations = [mock_entry1, mock_entry2]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        translations = [entry1, entry2]
 
         po_format.load_input(translations)
 
-        assert po_format.translation_obj_map == {"0": mock_entry1, "1": mock_entry2}
+        assert po_format.translation_obj_map == {"0": entry1, "1": entry2}
 
     def test_fuzzy_flag_removed_after_translation(self):
         po_format = PoTranslationFormat("test_file.po")
 
-        mock_fuzzy = MagicMock()
-        mock_fuzzy.msgid = "Fuzzy message"
-        mock_fuzzy.msgstr = "Old fuzzy translation"
-        mock_fuzzy.fuzzy = True
-        mock_fuzzy.flags = ['fuzzy', 'python-format']
+        fuzzy_entry = polib.POEntry(
+            msgid="Fuzzy message",
+            msgstr="Old fuzzy translation",
+            flags=['fuzzy', 'python-format'],
+        )
 
-        po_format.translation_obj_map = {"0": mock_fuzzy}
+        po_format.translation_obj_map = {"0": fuzzy_entry}
 
         llm_output = {"0": "New AI translation"}
         po_format.fill_translations(llm_output)
 
-        assert mock_fuzzy.msgstr == "New AI translation"
-        assert 'fuzzy' not in mock_fuzzy.flags
-        assert 'python-format' in mock_fuzzy.flags
+        assert fuzzy_entry.msgstr == "New AI translation"
+        assert 'fuzzy' not in fuzzy_entry.flags
+        assert 'python-format' in fuzzy_entry.flags
 
     def test_format_input(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        msg_id_batch = {"0": mock_entry1, "1": mock_entry2}
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        msg_id_batch = {"0": entry1, "1": entry2}
 
         result = po_format.format_input(msg_id_batch)
 
@@ -264,23 +461,23 @@ class TestPoTranslationFormat:
 
     def test_create_batches(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        mock_entry3 = MagicMock(msgid="Test", msgstr="")
-        input_data = [mock_entry1, mock_entry2, mock_entry3]
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        entry3 = polib.POEntry(msgid="Test", msgstr="")
+        input_data = [entry1, entry2, entry3]
 
         result = po_format.create_batches(input_data, batch_size=2)
 
         assert len(result) == 2
-        assert result[0] == {"0": mock_entry1, "1": mock_entry2}
-        assert result[1] == {"2": mock_entry3}
+        assert result[0] == {"0": entry1, "1": entry2}
+        assert result[1] == {"2": entry3}
 
     def test_parse_output_valid_json(self):
         po_format = PoTranslationFormat("test_file.po")
         output_data = json.dumps({"0": "Hola", "1": "Mundo"})
         po_format.translation_obj_map = {
-            "0": MagicMock(msgid="Hello", msgstr=""),
-            "1": MagicMock(msgid="World", msgstr="")
+            "0": polib.POEntry(msgid="Hello", msgstr=""),
+            "1": polib.POEntry(msgid="World", msgstr="")
         }
         result = po_format.parse_output(output_data)
 
@@ -296,15 +493,30 @@ class TestPoTranslationFormat:
 
     def test_fill_translations(self):
         po_format = PoTranslationFormat("test_file.po")
-        mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-        mock_entry2 = MagicMock(msgid="World", msgstr="")
-        po_format.translation_obj_map = {"0": mock_entry1, "1": mock_entry2}
+        entry1 = polib.POEntry(msgid="Hello", msgstr="")
+        entry2 = polib.POEntry(msgid="World", msgstr="")
+        po_format.translation_obj_map = {"0": entry1, "1": entry2}
 
         llm_output = {"0": "Hola", "1": "Mundo"}
         po_format.fill_translations(llm_output)
 
-        assert mock_entry1.msgstr == "Hola"
-        assert mock_entry2.msgstr == "Mundo"
+        assert entry1.msgstr == "Hola"
+        assert entry2.msgstr == "Mundo"
+
+    def test_fill_translations_plural_replaces_fuzzy_forms(self):
+        po_format = PoTranslationFormat("test_file.po")
+        entry = polib.POEntry(
+            msgid="%(count)s file",
+            msgid_plural="%(count)s files",
+            msgstr_plural={0: "old 0", 1: "old 1"},
+            flags=["fuzzy"],
+        )
+        po_format.translation_obj_map = {"0": entry}
+
+        po_format.fill_translations({"0": {0: "AI 0", 1: "AI 1"}})
+
+        assert entry.msgstr_plural == {0: "AI 0", 1: "AI 1"}
+        assert not entry.fuzzy
 
     @patch('corehq.apps.translations.management.commands.translate_po_files.polib.pofile')
     def test_save_output(self, mock_pofile):
@@ -321,7 +533,7 @@ class TestPoTranslationFormat:
         result = po_format.format_input_description()
 
         assert "Ensure that translations are gender neutral" in result
-        assert "Input: JSON array of objects" in result
+        assert "Input: a JSON object mapping a key to the message" in result
         assert "Special characters like double quotes" in result
 
     def test_format_output_description(self):
@@ -349,6 +561,8 @@ class TestPoTranslationFormat:
         ("Hello &amp; World", "Hola et Mundo"),  # msgstr with HTML entity but msgid is not
         ("Hello ", "Hola "),  # msgstr preserves whitespace
         ("  Hello  ", "  Hola  "),  # msgstr preserves whitespace
+        ("Hello\tWorld", "Hola\tMundo"),  # tab is not a control character we reject
+        ("Save \u2014 now", "Guardar \u2014 ahora"),  # non-ASCII punctuation
     ])
     def test_is_valid_msgstr(self, msgid, msgstr):
         assert PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
@@ -362,39 +576,67 @@ class TestPoTranslationFormat:
         ("<a>Hello</a>", "<b>Hola</b>"),  # Different tags
         ("<a>Hello</a>", "<a>Hola"),  # Missing tags
         ("<a>Hello</a>", "Hola"),  # Missing tags
+        ("Save \u2014 now", "Guardar \x14 ahora"),  # "\u2014" mangled to "\u0014"
+        ("U\u200bI translation", "Traduction U\x0bI"),  # "\u200b" mangled to "\u000b"
     ])
     def test_is_valid_msgstr_invalid(self, msgid, msgstr):
         assert not PoTranslationFormat.is_valid_msgstr(msgid, msgstr)
 
 
-@patch('corehq.apps.translations.management.commands.translate_po_files.polib')
-def test_end_to_end_flow(mock_polib):
-    mock_entry1 = MagicMock(msgid="Hello", msgstr="")
-    mock_entry2 = MagicMock(msgid="World", msgstr="")
-    mock_po_file = MagicMock()
-    mock_po_file.__iter__.return_value = [mock_entry1, mock_entry2]
-    mock_polib.pofile.return_value = mock_po_file
+@use(po_dir)
+def test_end_to_end_flow():
+    po_format = _po_format(_po_header(SPANISH_PLURAL_FORMS) + """
+msgid "Hello"
+msgstr ""
 
-    translation_format = PoTranslationFormat("test_file.po")
+#, python-format
+msgid "%(count)s case"
+msgid_plural "%(count)s cases"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+""")
     translator = OpenaiTranslator(
         api_key="test-api-key",
         model="gpt-4",
         lang="es",
-        translation_format=translation_format
+        translation_format=po_format
     )
     translator.openai = MagicMock()
     translator.openai.RateLimitError = Exception
 
     with patch.object(translator, 'client') as mock_client:
-        mock_client.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.choices[0].message.content = json.dumps({"0": "Hola", "1": "Mundo"})
+        mock_response.choices[0].message.content = json.dumps({
+            "0": "Hola",
+            "1:0": "%(count)s caso", "1:1": "%(count)s de casos", "1:2": "%(count)s casos",
+        })
         mock_client.chat.completions.create.return_value = mock_response
 
-        to_be_translated = translation_format.create_batches(batch_size=2)
-        translation = translator.translate(to_be_translated[0])
+        batches = po_format.create_batches(batch_size=2)
+        translation = translator.translate(batches[0])
+        po_format.save_output()
 
-        assert translation == {"0": "Hola", "1": "Mundo"}
+    user_message = mock_client.chat.completions.create.call_args.kwargs["messages"][-1]["content"]
+    assert json.loads(user_message) == {
+        "0": "Hello",
+        "1": {
+            "singular": "%(count)s case",
+            "plural": "%(count)s cases",
+            "forms": {
+                "0": "used when n is 1",
+                "1": "used when n is 1000000, 2000000",
+                "2": "used when n is 0, 2, 3, 4, 5, 6, 7, 8, ...",
+            },
+        },
+    }
+    assert translation == {
+        "0": "Hola",
+        "1": {0: "%(count)s caso", 1: "%(count)s de casos", 2: "%(count)s casos"},
+    }
+    saved = polib.pofile(po_format.file_path)
+    assert saved.find("Hello").msgstr == "Hola"
+    assert saved.find("%(count)s case").msgstr_plural == translation["1"]
 
 
 def test_extract_errored_msgstr_ids():
@@ -412,7 +654,7 @@ def test_extract_errored_msgstr_ids():
     assert 15 not in result
     assert result[10] == "some error message"
     assert result[20] == "another error message"
-    assert result[25] == "yet another error message : with a reason"
+    assert result[25] == "yet another error message :with a reason"
 
 
 def test_run_msgfmt_returns_stderr():
@@ -483,6 +725,18 @@ def test_extract_errored_msgstr_ids_skips_lines_without_line_number():
     assert list(result.keys()) == [42]
 
 
+def test_extract_errored_msgstr_ids_ignores_non_po_lines():
+    po_format = PoTranslationFormat("test_file.po")
+    error_output = (
+        "thread 'tokio-rt-worker' panicked at /Users/x/.cargo/registry/src/tokio-1.50.0/"
+        "src/runtime/io/driver.rs:196:23:\n"
+        "unexpected error when polling the I/O driver: Os { code: 9 }\n"
+        "locale/fra/LC_MESSAGES/django.po:32940: 'msgid' and 'msgstr' entries do not both end with '\\n'\n"
+    )
+    result = po_format._extract_errored_msgstr_ids(error_output)
+    assert list(result.keys()) == [32940]
+
+
 def test_remove_errored_translations_clears_plural_forms():
     # A Plural-Forms header is the minimum needed for msgfmt to parse the plural
     # entry and reach the format-placeholder check.
@@ -512,6 +766,64 @@ def test_remove_errored_translations_clears_plural_forms():
         assert all(v == "" for v in entry.msgstr_plural.values())
         # No compile errors remain
         assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+    finally:
+        os.remove(po_file_path)
+
+
+@pytest.mark.parametrize("entry, expected", [
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \x14 ahora"), True),
+    (polib.POEntry(msgid="Save \u2014 now", msgstr="Guardar \u2014 ahora"), False),
+    # A control character that is already in the msgid is allowed
+    (polib.POEntry(msgid="Page\x0cbreak", msgstr="Salto\x0cde p\u00e1gina"), False),
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\u00f3n", 1: "{count} invitaciones"},
+    ), False),
+    # One broken plural form is enough
+    (polib.POEntry(
+        msgid="{count} invitation", msgid_plural="{count} invitations",
+        msgstr_plural={0: "{count} invitaci\x13n", 1: "{count} invitaciones"},
+    ), True),
+    # The source of a plural form is both msgid and msgid_plural
+    (polib.POEntry(
+        msgid="{count} page", msgid_plural="{count}\x0cpages",
+        msgstr_plural={0: "{count} p\u00e1gina", 1: "{count}\x0cp\u00e1ginas"},
+    ), False),
+])
+def test_entry_has_control_chars(entry, expected):
+    assert entry_has_control_chars(entry) is expected
+
+
+def test_check_and_remove_errored_messages_clears_control_chars():
+    po_content = (
+        'msgid ""\n'
+        'msgstr ""\n'
+        '"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        '"Plural-Forms: nplurals=2; plural=(n > 1);\\n"\n\n'
+        'msgid "Save — now"\n'
+        'msgstr "Enregistrer \x14 maintenant"\n\n'
+        'msgid "Cancel — later"\n'
+        'msgstr "Annuler — plus tard"\n\n'
+        'msgid "{count} page — done"\n'
+        'msgid_plural "{count} pages — done"\n'
+        'msgstr[0] "{count} page \x14 termin\u00e9e"\n'
+        'msgstr[1] "{count} pages — termin\u00e9es"\n'
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".po", delete=False, encoding="utf-8") as tmp:
+        tmp.write(po_content)
+        po_file_path = tmp.name
+
+    try:
+        po_format = PoTranslationFormat(po_file_path)
+        # Sanity check: msgfmt alone doesn't catch the control character.
+        assert not po_format._extract_errored_msgstr_ids(po_format._run_msgfmt(po_file_path))
+
+        po_format.check_and_remove_errored_messages(po_file_path)
+
+        updated = polib.pofile(po_file_path)
+        assert updated.find("Save — now").msgstr == ""
+        assert updated.find("Cancel — later").msgstr == "Annuler — plus tard"
+        assert updated.find("{count} page — done").msgstr_plural == {0: "", 1: ""}
     finally:
         os.remove(po_file_path)
 

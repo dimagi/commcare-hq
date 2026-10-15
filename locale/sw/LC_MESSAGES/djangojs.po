@@ -20,6 +20,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr "Kusitisha kiotomatiki kutarukwa bila kikomo"
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr "Kusitisha kiotomatiki kutaendelea tena tarehe %(date)s"
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Mradi wangu umeisha"
@@ -58,6 +66,15 @@ msgstr "Nahitaji vipengele vya ziada/mahususi"
 #: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
 msgid "Other"
 msgstr "Nyingine"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+msgid "Generate Invoice"
+msgstr "Tengeneza Ankara"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Panga Ankara"
 
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
@@ -2665,6 +2682,31 @@ msgstr "Ongeza Vyote"
 msgid "Remove All"
 msgstr "Ondoa Vyote"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "Companion ya CommCare haijajumuishwa katika usajili wako wa sasa."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Umefikia kikomo chako cha gumzo kwa mwezi huu. Fungu lako litaanza upya "
+"tarehe 1 ya mwezi ujao (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr ""
+"Umetumia asilimia %(percent)s ya jumla ya ujumbe wako wa gumzo mwezi huu."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"Hatukuweza kukagua fungu lako la gumzo. Tafadhali funga na fungua tena gumzo"
+" ili ujaribu tena."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "Nenosiri lako ni dhaifu sana! Jaribu kuongeza nambari au alama."
@@ -2990,26 +3032,26 @@ msgstr "Matendo Yote"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekubaliwa"
+msgstr[1] "%(count)s Mialiko Imekubaliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Unasubiri"
+msgstr[1] "%(count)s Mialiko Inasubiri"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekataliwa"
+msgstr[1] "%(count)s Mialiko Imekataliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Nafasi ya Mradi Inashiriki"
+msgstr[1] "%(count)s Nafasi za Miradi Zinashiriki"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

@@ -22,6 +22,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;\n"
 
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will be skipped indefinitely"
+msgstr "La pausa automática se omitirá indefinidamente"
+
+#: corehq/apps/accounting/static/accounting/js/base_subscriptions_main.js
+msgid "Auto-pause will resume on %(date)s"
+msgstr "La pausa automática se reanudará el %(date)s"
+
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js
 msgid "My project ended"
 msgstr "Mi proyecto terminó"
@@ -60,6 +68,15 @@ msgstr "Necesito funciones adicionales/personalizadas"
 #: corehq/apps/reports/static/reports/js/bootstrap5/maps_utils.js
 msgid "Other"
 msgstr "Otro"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+msgid "Generate Invoice"
+msgstr "Generar factura"
+
+#: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
+#: corehq/apps/domain/static/domain/js/current_subscription.js
+msgid "Schedule Invoice"
+msgstr "Programar factura"
 
 #: corehq/apps/accounting/static/accounting/js/payment_method_handler.js
 msgid "Response from Stripe did not complete properly."
@@ -2689,6 +2706,30 @@ msgstr "Agregar Todos"
 msgid "Remove All"
 msgstr "Eliminar Todos"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "CommCare Companion no está incluido en tu suscripción actual."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Has alcanzado tu límite de chats para este mes. Tu cuota se restablece el "
+"día 1 del próximo mes (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "Has usado el %(percent)s% de tus mensajes de chat este mes."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"No pudimos verificar tu cuota de chat. Por favor, cierra y vuelve a abrir el"
+" chat para intentarlo de nuevo."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "¡Su contraseña es muy débil! Intente agregar números o símbolos."
@@ -3018,30 +3059,30 @@ msgstr "Todas las acciones"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s invitación aceptada"
+msgstr[1] "%(count)s invitaciones aceptadas"
+msgstr[2] "%(count)s invitaciones aceptadas"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s invitación pendiente"
+msgstr[1] "%(count)s invitaciones pendientes"
+msgstr[2] "%(count)s invitaciones pendientes"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s invitación rechazada"
+msgstr[1] "%(count)s invitaciones rechazadas"
+msgstr[2] "%(count)s invitaciones rechazadas"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(count)s espacio de proyecto participando"
+msgstr[1] "%(count)s espacios de proyecto participando"
+msgstr[2] "%(count)s espacios de proyecto participando"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"

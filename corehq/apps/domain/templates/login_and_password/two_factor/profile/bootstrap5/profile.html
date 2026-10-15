@@ -46,8 +46,8 @@
         <p>
           {% blocktrans %}If you don't have any device with you, you can access
             your account using backup tokens.{% endblocktrans %}
-          {% blocktrans count counter=backup_tokens %}
-            You have only one backup token remaining.
+          {% blocktrans trimmed count counter=backup_tokens %}
+            You have only {{ counter }} backup token remaining.
           {% plural %}
             You have {{ counter }} backup tokens remaining.
           {% endblocktrans %}

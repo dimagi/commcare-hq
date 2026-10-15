@@ -9,7 +9,7 @@ from corehq.apps.api.fields import UUIDField
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj, object_does_not_exist
+from corehq.apps.api.util import get_obj, not_found, object_does_not_exist
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
     Field,
@@ -209,10 +209,10 @@ class LookupTableResource(HqBaseResource):
         try:
             bundle.obj = LookupTable.objects.get(id=kwargs['pk'])
         except LookupTable.DoesNotExist:
-            raise NotFound('Lookup table not found')
+            raise not_found('Lookup table not found')
 
         if bundle.obj.domain != kwargs['domain']:
-            raise NotFound('Lookup table not found')
+            raise not_found('Lookup table not found')
 
         if bundle.obj.tag != bundle.data['tag']:
             raise BadRequest("Lookup table tag cannot be changed")
@@ -394,10 +394,10 @@ class LookupTableItemResource(HqBaseResource):
         try:
             bundle.obj = LookupTableRow.objects.get(id=kwargs['pk'])
         except LookupTableRow.DoesNotExist:
-            raise NotFound('Lookup table item not found')
+            raise not_found('Lookup table item not found')
 
         if bundle.obj.domain != kwargs['domain']:
-            raise NotFound('Lookup table item not found')
+            raise not_found('Lookup table item not found')
 
         bundle = self.full_hydrate(bundle)
         if 'fields' in bundle.data or 'item_attributes' in bundle.data:

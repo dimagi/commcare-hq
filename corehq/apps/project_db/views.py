@@ -45,22 +45,26 @@ class QueryProjectDBView(HqHtmxActionMixin, BaseProjectDataView):
 
     def _query_response(self, request, always_run):
         submitted_params = {
-            name.removeprefix('param:'): value
+            name.removeprefix('param:'): value or None
             for name, value in request.POST.items()
             if name.startswith('param:')
         }
+        explain = 'explain' in request.POST
         context = {'max_rows': MAX_ROWS}
-        user_sql = UserSQL(self.domain, request.POST.get('sql', ''))
+        user_sql = UserSQL(self.domain, request.POST.get('sql', ''), MAX_ROWS)
         try:
             context['query'] = user_sql.get_info()
             if always_run or not user_sql.parameters:
-                context['result'] = user_sql.run(submitted_params, MAX_ROWS)
+                if explain:
+                    context['plan'] = user_sql.explain_analyze(submitted_params)
+                else:
+                    context['result'] = user_sql.run(submitted_params)
         except UserSQLValidationError as error:
             context['error'] = error.msg
         else:
             # Re-render parameters with values previously submitted for them
             context['parameters'] = [
-                {'name': name, 'value': submitted_params.get(name, '')}
+                {'name': name, 'value': submitted_params.get(name) or ''}
                 for name in user_sql.parameters
             ]
         return self.render_htmx_partial_response(

@@ -1,0 +1,52 @@
+{% extends "hqwebapp/base.html" %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block head %}
+  {{ block.super }}
+  {% include 'cloudcare/partials/web_apps_head_styles.html' %}
+{% endblock %}
+
+{% block stylesheets %}
+  {% include 'cloudcare/partials/web_apps_stylesheets.html' %}
+{% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  {% include 'cloudcare/partials/dependencies.html' %}
+{% endblock js %}
+
+{% block content %}
+  {% block page_data %}
+  {% endblock page_data %}
+
+  <div id="cloudcare-main" class="cloudcare-home-content">
+    <div id="main-container" class="d-lg-flex flex-column">
+      <section id="formplayer-progress-container"></section>
+      <nav class="navbar navbar-cloudcare">
+        <div class="d-flex container-fluid">
+          <div class="flex-grow-1">
+            <span class="navbar-brand"
+              ><i class="fcc fcc-flower"></i> CommCare</span
+            >
+          </div>
+          {% block navbar_right %}{% endblock navbar_right %}
+        </div>
+      </nav>
+      {% block main_content %}{% endblock main_content %}
+    </div>
+    <div
+      role="region"
+      id="sr-notification-region"
+      class="sr-only"
+      aria-live="assertive"
+      aria-relevant="all"
+    ></div>
+  </div>
+{% endblock content %}
+
+{% block modals %}
+  {% include 'cloudcare/partials/confirmation_modal.html' %}
+  {% include 'cloudcare/partials/all_templates.html' %}
+{% endblock modals %}

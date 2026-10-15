@@ -1,18 +1,21 @@
 import datetime
 import random
-from unittest.mock import patch
+from decimal import Decimal
+from unittest.mock import call, patch
 
-from django.core.exceptions import ValidationError
-from django.test import TestCase
-
+import pytest
 from dateutil.relativedelta import relativedelta
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.test import TestCase
 
 from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
+    GeneratePrepaymentInvoiceForm,
     PlanContactForm,
     SubscriptionForm,
     TriggerInvoiceForm,
+    WirePrepaymentForm,
 )
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -24,9 +27,12 @@ from corehq.apps.accounting.models import (
     FormSubmittingMobileWorkerHistory,
     Invoice,
     PaymentType,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     Subscription,
+    WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tasks import (
     calculate_users_in_all_domains,
@@ -34,6 +40,10 @@ from corehq.apps.accounting.tasks import (
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.accounting.tests.utils import in_days
+from corehq.apps.accounting.tests.wire_invoice_base import (
+    WirePrepaymentTestCase,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
@@ -65,10 +75,10 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -91,14 +101,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -121,14 +131,14 @@ class TestAdjustBalanceForm(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_invoice(self.invoice)
-        ))
+        )
 
 
 class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
@@ -159,10 +169,10 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
+        assert original_balance - adjustment_amount == self.invoice.balance
 
     def test_transfer_credit_with_credit(self):
         original_credit_balance = random.randint(5, 10)
@@ -184,14 +194,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance - adjustment_amount, self.invoice.balance)
-        self.assertEqual(original_credit_balance - adjustment_amount, sum(
+        assert original_balance - adjustment_amount == self.invoice.balance
+        assert original_credit_balance - adjustment_amount == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
     def test_transfer_credit_without_credit(self):
         original_credit_balance = 0
@@ -213,14 +223,14 @@ class TestAdjustBalanceFormForCustomerAccount(BaseInvoiceTestCase):
                 'invoice_id': self.invoice.id,
             }
         )
-        self.assertTrue(adjust_balance_form.is_valid())
+        assert adjust_balance_form.is_valid()
 
         adjust_balance_form.adjust_balance()
-        self.assertEqual(original_balance, self.invoice.balance)
-        self.assertEqual(original_credit_balance, sum(
+        assert original_balance == self.invoice.balance
+        assert original_credit_balance == sum(
             credit_line.balance
             for credit_line in CreditLine.get_credits_for_customer_invoice(self.invoice)
-        ))
+        )
 
 
 class TestSubscriptionForm(BaseAccountingTest):
@@ -278,7 +288,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_customer_plan_not_added_to_regular_account(self):
         subscription = Subscription.new_domain_subscription(
@@ -296,7 +307,8 @@ class TestSubscriptionForm(BaseAccountingTest):
             **self.shared_keywords(),
         }
 
-        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+        with pytest.raises(ValidationError):
+            subscription_form.clean_active_accounts()
 
     def test_form_data_create_subscription(self):
         required_args = {
@@ -322,8 +334,13 @@ class TestSubscriptionForm(BaseAccountingTest):
         )
         assert kwargs['web_user'] == self.web_user
         assert kwargs['internal_change']
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
 
     def test_form_data_update_subscription(self):
         subscription = Subscription.new_domain_subscription(
@@ -343,8 +360,88 @@ class TestSubscriptionForm(BaseAccountingTest):
             kwargs = update_subscription.call_args.kwargs
 
         assert kwargs['web_user'] == self.web_user
-        for k, v in self.shared_keywords().items():
+        expected = self.shared_keywords()
+        expected_days = expected.pop('skip_auto_downgrade_days')
+        for k, v in expected.items():
             assert kwargs[k] == v
+        assert kwargs['skip_auto_downgrade_until'] == datetime.date.today() + datetime.timedelta(
+            days=expected_days
+        )
+
+    def test_shared_keywords_computes_skip_auto_downgrade_until_from_days(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': 5}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] == (
+            datetime.date.today() + datetime.timedelta(days=5)
+        )
+
+    def test_shared_keywords_blank_skip_auto_downgrade_days_means_no_expiration(self):
+        subscription_form = SubscriptionForm(
+            subscription=None,
+            account_id=self.plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {**self.shared_keywords(), 'skip_auto_downgrade_days': None}
+
+        assert subscription_form.shared_keywords['skip_auto_downgrade_until'] is None
+
+    def test_editing_subscription_prefills_skip_auto_downgrade_days_remaining(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() + datetime.timedelta(days=10)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is True
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial == 10
+
+    def test_editing_subscription_with_expired_skip_auto_downgrade_unchecks_checkbox(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+        subscription.skip_auto_downgrade = True
+        subscription.skip_auto_downgrade_until = datetime.date.today() - datetime.timedelta(days=3)
+        subscription.save()
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade'].initial is False
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
+
+    def test_editing_subscription_with_no_expiration_leaves_skip_auto_downgrade_days_blank(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.plan,
+            account=self.account,
+        )
+
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.account.id,
+            web_user=self.web_user,
+        )
+
+        assert subscription_form.fields['skip_auto_downgrade_days'].initial is None
 
     @staticmethod
     def shared_keywords():
@@ -364,6 +461,7 @@ class TestSubscriptionForm(BaseAccountingTest):
             'funding_source': 'FundingSource',
             'skip_auto_downgrade': True,
             'skip_auto_downgrade_reason': 'You said so',
+            'skip_auto_downgrade_days': 30,
             'auto_renew': True,
         }
 
@@ -399,8 +497,8 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.form.trigger_invoice()
 
         invoice = self.subscription.invoice_set.latest('date_created')
-        self.assertEqual(invoice.date_start, self.statement_start)
-        self.assertEqual(invoice.date_end, self.statement_end)
+        assert invoice.date_start == self.statement_start
+        assert invoice.date_end == self.statement_end
 
     def test_clean_previous_invoices(self):
         prev_invoice = Invoice.objects.create(
@@ -411,18 +509,18 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         self.init_form(self.form_data())
         self.form.full_clean()
 
-        with self.assertRaises(InvoiceError) as e:
+        with pytest.raises(InvoiceError) as e:
             self.form.clean_previous_invoices(self.statement_start, self.statement_end, self.domain.name)
-        self.assertIn(prev_invoice.invoice_number, str(e.exception))
+        assert prev_invoice.invoice_number in str(e.value)
 
     def test_show_testing_options(self):
         self.init_form(self.form_data(), show_testing_options=False)
-        self.assertNotIn('num_mobile_workers', self.form.fields)
-        self.assertNotIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' not in self.form.fields
+        assert 'num_form_submitting_workers' not in self.form.fields
 
         self.init_form(self.form_data(), show_testing_options=True)
-        self.assertIn('num_mobile_workers', self.form.fields)
-        self.assertIn('num_form_submitting_workers', self.form.fields)
+        assert 'num_mobile_workers' in self.form.fields
+        assert 'num_form_submitting_workers' in self.form.fields
 
     def test_num_mobile_workers(self):
         num_users = 10
@@ -436,7 +534,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = DomainUserHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
     def test_num_form_submitting_mobile_workers(self):
         num_users = 5
@@ -450,7 +548,7 @@ class TestTriggerInvoiceForm(BaseInvoiceTestCase):
         user_history = FormSubmittingMobileWorkerHistory.objects.get(
             domain=self.domain.name, record_date=self.statement_end
         )
-        self.assertEqual(user_history.num_users, num_users)
+        assert user_history.num_users == num_users
 
 
 class TestPlanContactForm(TestCase):
@@ -479,5 +577,352 @@ class TestPlanContactForm(TestCase):
         text_content = args[3]
 
         expected_subject = f'[{request_type}] {self.domain.name}'
-        self.assertEqual(subject, expected_subject)
-        self.assertTrue(all(value in text_content for value in data.values()))
+        assert subject == expected_subject
+        assert all(value in text_content for value in data.values())
+
+
+class TestWirePrepaymentForm:
+
+    def test_valid_data(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=365)
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_to='jane@example.com',
+            email_cc='john@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='Annual plan',
+            unit_cost='12.50',
+            quantity='4',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data == {
+            'email_to': 'jane@example.com',
+            'email_cc': ['john@example.com'],
+            'prepay_date_start': date_start,
+            'prepay_date_end': date_end,
+            'credit_label': 'Annual plan',
+            'unit_cost': Decimal('12.50'),
+            'quantity': 4,
+            'amount': Decimal('50.00'),
+            'send_date': None,
+        }
+
+    def test_amount_larger_than_an_invoice_can_hold(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='500000.00', quantity='3'))
+        assert not form.is_valid()
+        assert form.errors[NON_FIELD_ERRORS] == [
+            'The total prepayment amount cannot be more than $999999.99.'
+        ]
+
+    @pytest.mark.parametrize('email_cc, expected', [
+        ('', []),
+        ('john@example.com', ['john@example.com']),
+        ('john@example.com, bob@example.com', ['john@example.com', 'bob@example.com']),
+        ('john@example.com,', ['john@example.com']),
+        (' john@example.com ', ['john@example.com']),
+    ])
+    def test_email_cc_is_cleaned_to_a_list(self, email_cc, expected):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_cc=email_cc))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['email_cc'] == expected
+
+    def test_invalid_email_cc(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_cc='john@example.com, bob@example, carol',
+        ))
+        assert not form.is_valid()
+        assert form.errors['email_cc'] == [
+            'The following e-mail addresses contain invalid characters, or are missing '
+            'required characters: "bob@example", "carol"'
+        ]
+
+    def test_invalid_email_to(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_to='not an email'))
+
+        assert not form.is_valid()
+        assert form.errors['email_to'] == ['Enter a valid email address.']
+
+    def test_negative_unit_cost(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='-5.00'))
+
+        assert not form.is_valid()
+        assert form.errors['unit_cost'] == [
+            'Ensure this value is greater than or equal to 0.'
+        ]
+
+    def test_negative_quantity(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(quantity='-1'))
+
+        assert not form.is_valid()
+        assert form.errors['quantity'] == [
+            'Ensure this value is greater than or equal to 1.'
+        ]
+
+    def test_dates_default_to_today(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start='', prepay_date_end='',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['prepay_date_start'] == datetime.date.today()
+        assert form.cleaned_data['prepay_date_end'] == datetime.date.today()
+
+    def test_end_date_before_start_date(self):
+        start_date = datetime.date.today()
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start=start_date.isoformat(),
+            prepay_date_end=(start_date - datetime.timedelta(days=1)).isoformat(),
+        ))
+        assert not form.is_valid()
+        assert form.errors['prepay_date_end'] == ['Prepayment end date must be after start date.']
+
+    def test_end_date_same_as_start_date(self):
+        start_date = datetime.date.today()
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            prepay_date_start=start_date.isoformat(),
+            prepay_date_end=start_date.isoformat(),
+        ))
+        assert form.is_valid(), form.errors
+
+    def test_create_invoice(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=30)
+        form = WirePrepaymentForm(wire_prepayment_post_data(
+            email_to='jane@example.com',
+            email_cc='john@example.com, bob@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='Annual plan',
+            unit_cost='2.50',
+            quantity='4',
+        ))
+        assert form.is_valid(), form.errors
+
+        with patch('corehq.apps.accounting.forms.DomainWireInvoiceFactory') as factory:
+            form.create_invoice('test-domain')
+
+        # The factory serializes the dates for its celery task
+        assert factory.call_args == call(
+            'test-domain',
+            date_start=date_start.isoformat(),
+            date_end=date_end.isoformat(),
+            contact_emails=['jane@example.com'],
+            cc_emails=['john@example.com', 'bob@example.com'],
+        )
+        assert factory.return_value.create_wire_credits_invoice.call_args == call(
+            Decimal('10.00'), 'Annual plan', Decimal('2.50'), 4,
+        )
+
+    def test_get_error_message_labels_each_field(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(email_to='nope', quantity='0'))
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'Email To: Enter a valid email address. '
+            'Quantity: Ensure this value is greater than or equal to 1.'
+        )
+
+    def test_get_error_message_includes_non_field_errors(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data(unit_cost='500000.00', quantity='3'))
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'The total prepayment amount cannot be more than $999999.99.'
+        )
+
+    def test_get_error_message_when_valid(self):
+        form = WirePrepaymentForm(wire_prepayment_post_data())
+        assert form.is_valid(), form.errors
+        assert form.get_error_message() == ''
+
+
+class TestGeneratePrepaymentInvoiceForm(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain(name='prepayment-invoice', is_active=True)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+
+    def test_valid_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain=self.domain.name)
+        )
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['domain'] == self.domain.name
+
+    def test_unknown_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain='not-a-project-space')
+        )
+        assert not form.is_valid()
+        assert form.errors['domain'] == [
+            "Project space 'not-a-project-space' was not found."
+        ]
+
+    def test_get_error_message_includes_the_project_space(self):
+        form = GeneratePrepaymentInvoiceForm(
+            wire_prepayment_post_data(domain='not-a-project-space', quantity='0')
+        )
+        assert not form.is_valid()
+        assert form.get_error_message() == (
+            'Quantity: Ensure this value is greater than or equal to 1. '
+            "Project Space: Project space 'not-a-project-space' was not found."
+        )
+
+
+def wire_prepayment_post_data(**overrides):
+    """Returns the fields that the payment modal posts, with valid values."""
+    data = {
+        'email_to': 'jane@example.com',
+        'email_cc': 'john@example.com',
+        'prepay_date_start': datetime.date(2027, 1, 1).isoformat(),
+        'prepay_date_end': datetime.date(2028, 1, 1).isoformat(),
+        'credit_label': '12 month prepayment',
+        'unit_cost': '1000.00',
+        'quantity': '12',
+    }
+    data.update(overrides)
+    return data
+
+
+class TestPrepaymentFormSave(WirePrepaymentTestCase):
+    def build_form(self, **overrides):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(**overrides))
+        assert form.is_valid(), form.errors
+        return form
+
+    def test_schedules_the_posted_data(self):
+        form = self.build_form(send_date=in_days(90).isoformat())
+
+        scheduled = form.save(self.domain_obj.name, self.web_user)
+
+        assert scheduled.status == ScheduledPrepaymentInvoiceStatus.PENDING
+        assert scheduled.send_date == in_days(90)
+        assert scheduled.amount == Decimal('12000.0000')
+        assert scheduled.unit_cost == Decimal('1000.0000')
+        assert scheduled.quantity == 12
+        assert scheduled.credit_label == '12 month prepayment'
+        assert scheduled.contact_emails == ['jane@example.com']
+        assert scheduled.cc_emails == ['john@example.com']
+        assert scheduled.date_start == datetime.date(2027, 1, 1)
+        assert scheduled.date_end == datetime.date(2028, 1, 1)
+        assert scheduled.subscription == self.subscription
+        assert scheduled.created_by == self.web_user.username
+        assert not WirePrepaymentInvoice.objects.exists()
+
+    def test_generates_the_invoice_without_a_send_date(self):
+        form = self.build_form(send_date='')
+
+        assert form.save(self.domain_obj.name, self.web_user) is None
+
+        invoice = WirePrepaymentInvoice.objects.get(domain=self.domain_obj.name)
+        assert invoice.balance == Decimal('12000.0000')
+        assert invoice.date_start == datetime.date(2027, 1, 1)
+        assert invoice.date_end == datetime.date(2028, 1, 1)
+        assert not ScheduledPrepaymentInvoice.objects.exists()
+
+
+class TestScheduledPrepaymentForm:
+    def test_valid_data(self):
+        date_start = datetime.date.today()
+        date_end = date_start + datetime.timedelta(days=365)
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(
+            email_to='billing@example.com',
+            email_cc='ap@example.com',
+            prepay_date_start=date_start.isoformat(),
+            prepay_date_end=date_end.isoformat(),
+            credit_label='12 month prepayment',
+            unit_cost='1000.00',
+            quantity='12',
+        ))
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data == {
+            'email_to': 'billing@example.com',
+            'email_cc': ['ap@example.com'],
+            'credit_label': '12 month prepayment',
+            'unit_cost': Decimal(1000.00),
+            'quantity': 12,
+            'amount': Decimal(12000.00),
+            'prepay_date_start': date_start,
+            'prepay_date_end': date_end,
+            'send_date': in_days(90),
+        }
+
+    @pytest.mark.parametrize('days_from_today', [
+        (-1),  # yesterday
+        (0),  # today
+    ])
+    def test_invalid_send_date(self, days_from_today):
+        form = WirePrepaymentForm(
+            scheduled_prepayment_post_data(send_date=in_days(days_from_today).isoformat())
+        )
+
+        assert not form.is_valid()
+        assert form.errors['send_date'] == [
+            'The send date must be in the future.'
+        ]
+
+    def test_accepts_a_send_date_of_tomorrow(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=in_days(1).isoformat()))
+
+        assert form.is_valid(), form.errors
+
+    def test_accepts_a_missing_send_date(self):
+        """A blank send date generates the invoice now instead of scheduling it."""
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=''))
+
+        assert form.is_valid(), form.errors
+        assert form.cleaned_data['send_date'] is None
+
+    def test_save_generates_the_invoice_when_no_send_date(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(send_date=''))
+        assert form.is_valid(), form.errors
+
+        with patch.object(WirePrepaymentForm, 'create_invoice') as create_invoice:
+            assert form.save('test-domain', None) is None
+
+        assert create_invoice.call_args == call('test-domain')
+
+    def test_save_schedules_the_invoice_when_given_a_send_date(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data())
+        assert form.is_valid(), form.errors
+        couch_user = object()
+
+        with patch(
+            'corehq.apps.accounting.forms.Subscription.get_active_subscription_by_domain',
+            return_value='a subscription',
+        ), patch.object(WirePrepaymentForm, 'create_scheduled_invoice') as create_scheduled:
+            form.save('test-domain', couch_user)
+
+        assert create_scheduled.call_args == call('test-domain', 'a subscription', couch_user)
+
+    def test_save_requires_an_active_subscription_to_schedule(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data())
+        assert form.is_valid(), form.errors
+
+        with patch(
+            'corehq.apps.accounting.forms.Subscription.get_active_subscription_by_domain',
+            return_value=None,
+        ):
+            with pytest.raises(InvoiceError, match='no active subscription'):
+                form.save('test-domain', None)
+
+    def test_rejects_credit_label_that_is_too_long(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(credit_label='x' * 257))
+
+        assert not form.is_valid()
+        assert form.errors['credit_label'] == [
+            'The credit label must be 256 characters or fewer.'
+        ]
+
+    def test_accepts_a_credit_label_at_the_limit(self):
+        form = WirePrepaymentForm(scheduled_prepayment_post_data(credit_label='x' * 256))
+
+        assert form.is_valid(), form.errors
+
+
+def scheduled_prepayment_post_data(**overrides):
+    return wire_prepayment_post_data(**{
+        'send_date': in_days(90).isoformat(),
+        **overrides,
+    })

@@ -1,0 +1,7 @@
+{% load i18n %}{% blocktrans %}You asked for a link to complete {{ form_name }}.{% endblocktrans %}
+
+{% blocktrans %}Copy and paste the link below.{% endblocktrans %}
+
+{{ url }}
+
+{% blocktrans %}This link expires in {{ expires_in }} and can only be used once. If you received this by mistake, you can ignore this email.{% endblocktrans %}

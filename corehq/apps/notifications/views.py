@@ -133,14 +133,7 @@ class ManageNotificationView(BasePageView):
     @property
     def page_context(self):
         return {
-            'alerts': [{
-                'content': alert.content,
-                'url': alert.url,
-                'type': alert.get_type_display(),
-                'activated': str(alert.activated),
-                'isActive': alert.is_active,
-                'id': alert.id,
-            } for alert in Notification.objects.order_by('-created').all()],
+            'alerts': Notification.objects.order_by('-created'),
             'form': self.create_form,
         }
 

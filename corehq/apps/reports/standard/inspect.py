@@ -57,10 +57,9 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         ):
             return None
 
-        user_ids = (EMWF.user_es_query(self.domain,
-                                       mobile_user_and_group_slugs,
-                                       self.request.couch_user)
-                    .values_list('_id', flat=True))
+        user_ids = EMWF.submitter_ids(self.domain,
+                                      mobile_user_and_group_slugs,
+                                      self.request.couch_user)
         if HQUserType.UNKNOWN in EMWF.selected_user_types(mobile_user_and_group_slugs):
             user_ids.append(SYSTEM_USER_ID)
 

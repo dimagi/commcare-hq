@@ -6,8 +6,8 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.builds.models import (
     BuildMenuItem,
     BuildSpec,
-    CommCareBuild,
     CommCareBuildConfig,
+    CommCareMobileBuild,
 )
 
 
@@ -38,10 +38,10 @@ class Command(BaseCommand):
             raise CommandError("<latest> or <build_number> not specified!")
 
     def _create_build_with_version(self, version):
-        if any(build.version == version for build in CommCareBuild.all_builds()):
+        if CommCareMobileBuild.objects.filter(version=version).exists():
             self.stdout.write(f"A build for version {version} already exists. You're up-to-date!")
         else:
-            CommCareBuild.create_without_artifacts(version, None)
+            CommCareMobileBuild.objects.create(version=version, build_number=None)
             _update_commcare_build_menu(version)
             self.stdout.write(f"Added build for version {version}.")
 

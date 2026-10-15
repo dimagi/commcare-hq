@@ -1,7 +1,11 @@
+import datetime
 import uuid
 from unittest import mock
 
 from django.test import TestCase
+
+import pytest
+from unmagic import autouse, fixture, use
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -12,7 +16,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import IS_RELATED_CASE
-from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.case_search.exceptions import CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -21,16 +24,21 @@ from corehq.apps.case_search.models import (
     CaseSearchRequestConfig,
     SearchCriteria,
 )
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.tests.utils import (
-    case_search_es_setup,
-    es_test,
-)
+from corehq.apps.es.tests.utils import case_search_es_setup, es_test
+from corehq.apps.project_db.populate import populate_case_type
+from corehq.apps.project_db.tests.util import project_db_table, utc_project
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.tests.util.xml import assert_xml_equal
 from corehq.util.test_utils import flag_enabled
+from corehq.util.xml_utils import safe_fromstring
 
-from ..utils import get_case_search_results
+from ..utils import get_case_search_results, get_project_db_fixture
+
+autouse(utc_project, __file__)
 
 
 @es_test(requires=[case_search_adapter], setup_class=True)
@@ -44,6 +52,12 @@ class TestCaseSearchEndpoint(TestCase):
         CaseSearchConfig.objects.create(domain=cls.domain, enabled=True)
         cls.person_case_type = CaseType.objects.create(domain=cls.domain, name='person')
         cls.addClassCleanup(cls.person_case_type.delete)
+        # the endpoint query builder validates fields against the data dictionary
+        CaseProperty.objects.create(
+            case_type=cls.person_case_type,
+            name='family',
+            data_type=CaseProperty.DataType.PLAIN,
+        )
         cls.household_1 = str(uuid.uuid4())
         case_blocks = [CaseBlock(
             case_id=cls.household_1,
@@ -115,27 +129,269 @@ class TestCaseSearchEndpoint(TestCase):
             ("Villanueva", "true"),
         ])
 
-    @flag_enabled('CASE_SEARCH_ENDPOINTS')
-    def test_endpoint_id_runs_query(self):
+    def _make_es_endpoint(self, query, parameters=None):
         endpoint = CaseSearchEndpoint.objects.create(
-            domain=self.domain, name='people')
+            domain=self.domain,
+            name='people',
+            target_type=CaseSearchEndpoint.TargetType.ELASTICSEARCH,
+        )
         version = CaseSearchEndpointVersion.objects.create(
             endpoint=endpoint,
             version_number=1,
             case_type='person',
-            query={'type': 'all', 'children': []},
-            parameters=[],
+            query=query,
+            parameters=parameters or [],
             action=CaseSearchEndpointVersion.Action.CREATE,
         )
         endpoint.current_version = version
         endpoint.save(update_fields=['current_version'])
-        # TODO: pass criteria once CaseSearchEndpointQueryBuilder applies them.
-        # res = self._run_query(['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
-        # self.assertItemsEqual(["Jane"], [case.name for case in res])
+        return endpoint
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_id_runs_query(self):
+        endpoint = self._make_es_endpoint({'type': 'all', 'children': []})
         res = self._run_query(['person'], [], endpoint_id=endpoint.id)
-        self.assertGreater(len(res), 0)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter(self):
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(
+            ['person'], [SearchCriteria('family', 'Ramos')], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane"], [case.name for case in res])
+
+    @flag_enabled('CASE_SEARCH_ENDPOINTS')
+    def test_endpoint_text_parameter_not_supplied(self):
+        # an unsupplied parameter drops its condition rather than filtering on ''
+        endpoint = self._make_es_endpoint(
+            query={
+                'type': 'all',
+                'children': [{
+                    'type': 'component',
+                    'field': 'family',
+                    'operator': 'equals',
+                    'inputs': {'value': {'type': 'parameter', 'value': 'family'}},
+                }],
+            },
+            parameters=[{'name': 'family', 'type': 'text'}],
+        )
+        res = self._run_query(['person'], [], endpoint_id=endpoint.id)
+        self.assertItemsEqual(["Jane", "Xiomara", "Alba", "Rogelio", "Jane"], [
+            case.name for case in res
+        ])
 
     @flag_enabled('CASE_SEARCH_ENDPOINTS')
     def test_unknown_endpoint_id_raises(self):
         with self.assertRaises(CaseSearchUserError):
             self._run_query(['person'], [], endpoint_id=404)
+
+
+SQL_DOMAIN = 'test-endpoint-sql'
+PET_PROPERTIES = {
+    'color': 'plain',
+    'weight': 'number',
+    'species': 'select',
+    'shot_due': 'date',
+}
+PETS = [
+    ('p1', 'Fido', {'color': 'brown', 'weight': '20',
+                    'species': 'dog', 'shot_due': '2026-08-18'}),
+    ('p2', 'Rex', {'color': 'black', 'weight': '5',
+                   'species': 'cat lion', 'shot_due': '2026-01-05'}),
+]
+
+
+@fixture(scope="module")
+def pet_table():
+    # The pets are read but never written, so the table is built once for
+    # every test in the module rather than per test.
+    with project_db_table(SQL_DOMAIN, 'pet', PET_PROPERTIES):
+        _populate_pets()
+        yield
+
+
+def _make_sql_endpoint(sql, parameters=None):
+    endpoint = CaseSearchEndpoint.objects.create(
+        domain=SQL_DOMAIN,
+        name='pets',
+        target_type=CaseSearchEndpoint.TargetType.PROJECT_DB,
+    )
+    version = CaseSearchEndpointVersion.objects.create(
+        endpoint=endpoint,
+        version_number=1,
+        case_type='pet',
+        dangerous_sql=sql,
+        parameters=parameters or [],
+        action=CaseSearchEndpointVersion.Action.CREATE,
+    )
+    endpoint.current_version = version
+    endpoint.save(update_fields=['current_version'])
+    return endpoint
+
+
+def _populate_pets():
+    populate_case_type(SQL_DOMAIN, 'pet', [
+        CommCareCase(
+            case_id=case_id,
+            domain=SQL_DOMAIN,
+            type='pet',
+            name=name,
+            owner_id='owner1',
+            opened_on=datetime.datetime(2025, 1, 1),
+            modified_on=datetime.datetime(2025, 6, 1),
+            server_modified_on=datetime.datetime(2025, 6, 1),
+            closed=False,
+            external_id='',
+            case_json=properties,
+            indices=[],
+        ) for case_id, name, properties in PETS
+    ])
+
+
+def _run_sql_query(endpoint, criteria):
+    config = CaseSearchRequestConfig(
+        criteria=[SearchCriteria(key, value) for key, value in criteria.items()],
+        case_types=['pet'],
+        endpoint_id=endpoint.id,
+    )
+    return get_project_db_fixture(SQL_DOMAIN, endpoint, config)
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_returns_selected_columns():
+    _populate_pets()
+    endpoint = _make_sql_endpoint(
+        'SELECT case_id, case_name, prop__color AS color FROM pet ORDER BY case_id')
+    fixture = _run_sql_query(endpoint, {})
+    assert_xml_equal("""
+    <results id="case">
+        <case case_id="p1">
+            <case_id>p1</case_id>
+            <case_name>Fido</case_name>
+            <color>brown</color>
+        </case>
+        <case case_id="p2">
+            <case_id>p2</case_id>
+            <case_name>Rex</case_name>
+            <color>black</color>
+        </case>
+    </results>""", fixture)
+
+
+COLOR_SQL = (
+    "SELECT case_id, case_name FROM pet "
+    "WHERE (:color IS NULL OR prop__color = :color)"
+)
+WEIGHT_SQL = (
+    "SELECT case_id, case_name FROM pet "
+    "WHERE (:weight IS NULL OR number_prop__weight > :weight)"
+)
+
+
+@pytest.mark.parametrize('sql, parameters, criteria, expected', [
+    (COLOR_SQL, [{'name': 'color', 'type': 'text'}], {'color': 'brown'}, ['Fido']),
+    (COLOR_SQL, [{'name': 'color', 'type': 'text'}], {'color': 'black'}, ['Rex']),
+    (COLOR_SQL, [{'name': 'color', 'type': 'text'}], {'color': 'chartreuse'}, []),
+    (COLOR_SQL, [{'name': 'color', 'type': 'text'}], {}, ['Fido', 'Rex']),
+    # a blank value is a value someone purposefully supplied, not "unset"
+    (COLOR_SQL, [{'name': 'color', 'type': 'text'}], {'color': ''}, []),
+    (WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}], {'weight': '12'}, ['Fido']),
+    (WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}], {'weight': '1'}, ['Fido', 'Rex']),
+    (WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}], {'weight': '100'}, []),
+    (WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}], {}, ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_text_parameter(sql, parameters, criteria, expected):
+    endpoint = _make_sql_endpoint(sql, parameters)
+    fixture = _run_sql_query(endpoint, criteria)
+    names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
+    assert names == expected
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_blank_numeric_parameter_is_unset():
+    endpoint = _make_sql_endpoint(WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}])
+    fixture = _run_sql_query(endpoint, {'weight': ''})
+    names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
+    assert names == ['Fido', 'Rex']
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_invalid_numeric_parameter_errors():
+    endpoint = _make_sql_endpoint(WEIGHT_SQL, [{'name': 'weight', 'type': 'number'}])
+    with pytest.raises(CaseSearchUserError, match="'weight' must be a number"):
+        _run_sql_query(endpoint, {'weight': 'heavy'})
+
+
+SPECIES_SQL = (
+    "SELECT case_id, case_name FROM pet "
+    "WHERE (:species IS NULL OR select_prop__species && :species)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    # A select parameter is bound as a list however many values were searched
+    ({'species': 'dog'}, ['Fido']),
+    ({'species': ['dog', 'lion']}, ['Fido', 'Rex']),
+    ({'species': 'fish'}, []),
+    ({}, ['Fido', 'Rex']),
+    ({'species': ''}, ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_select_parameter(criteria, expected):
+    endpoint = _make_sql_endpoint(
+        SPECIES_SQL, [{'name': 'species', 'type': 'select'}])
+    fixture = _run_sql_query(endpoint, criteria)
+    names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
+    assert names == expected
+
+
+DUE_SQL = (
+    "SELECT case_id, case_name FROM pet "
+    "WHERE (:due_from IS NULL OR date_prop__shot_due >= :due_from) "
+    "AND (:due_to IS NULL OR date_prop__shot_due <= :due_to)"
+)
+
+
+@pytest.mark.parametrize('criteria, expected', [
+    # One criterion named for the parameter fills both of its placeholders
+    ({'due': '__range__2026-08-03__2026-08-20'}, ['Fido']),
+    ({'due': '__range__2026-01-01__2026-12-31'}, ['Fido', 'Rex']),
+    ({'due': '__range__2020-01-01__2020-12-31'}, []),
+    ({}, ['Fido', 'Rex']),
+])
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_with_daterange_parameter(criteria, expected):
+    endpoint = _make_sql_endpoint(
+        DUE_SQL, [{'name': 'due', 'type': 'daterange'}])
+    fixture = _run_sql_query(endpoint, criteria)
+    names = sorted(case.findtext('case_name') for case in safe_fromstring(fixture))
+    assert names == expected
+
+
+@use('db', pet_table)
+@flag_enabled('CASE_SEARCH_ENDPOINTS')
+def test_sql_endpoint_rejects_multiple_values_for_a_text_parameter():
+    endpoint = _make_sql_endpoint(COLOR_SQL, [{'name': 'color', 'type': 'text'}])
+
+    with pytest.raises(CaseSearchUserError, match="Only one value may be given"):
+        _run_sql_query(endpoint, {'color': ['brown', 'black']})

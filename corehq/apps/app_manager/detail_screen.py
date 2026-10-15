@@ -1,6 +1,5 @@
 import re
 
-from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import const
 from corehq.apps.app_manager.suite_xml import xml_models as sx
@@ -399,15 +398,7 @@ class Enum(FormattedDetailColumn):
     @property
     def _template_xpath(self):
         """The xpath expression to substitute into per-mapping enum templates."""
-        # For calculated-property columns, the ``$calculated_property`` variable is
-        # already defined on the template's xpath text (see ``template``/``sort_node``),
-        # so references to it avoid repeating the (potentially expensive) source
-        # expression once per enum mapping.
-        if (self.column.useXpathExpression  # This is a calculated property
-                # Temporary feature flag for testing purposes:
-                and toggles.ENUM_CALC_VARIABLES.enabled(self.app.domain)):
-            return '$calculated_property'
-        return self.xpath
+        return '$calculated_property' if self.column.useXpathExpression else self.xpath
 
     def _xpath_template(self, type):
         if type == 'sort':
@@ -420,7 +411,7 @@ class Enum(FormattedDetailColumn):
         return lambda item, i: {
             'key': item.key,
             'key_as_var': item.key_as_variable,
-            'xpath': '$calculated_property' if self.column.useXpathExpression else self.xpath,
+            'xpath': self._template_xpath,
             'i': i,
         }
 
@@ -509,8 +500,7 @@ class EnumImage(Enum):
             alt_text = sx.AltText(
                 text=sx.Text(xpath=self.alt_text_xpath)
             )
-            if (self.column.useXpathExpression
-                    and toggles.ENUM_CALC_VARIABLES.enabled(self.app.domain)):
+            if self.column.useXpathExpression:
                 alt_text.text.xpath.variables.node.append(self._calculated_property())
             return alt_text
 

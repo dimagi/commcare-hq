@@ -70,6 +70,13 @@ del key, value
 if "SKIP_TESTS_REQUIRING_EXTRA_SETUP" not in globals():
     SKIP_TESTS_REQUIRING_EXTRA_SETUP = False
 
+# https://docs.djangoproject.com/en/5.2/topics/testing/overview/#password-hashing
+# if modifying, be sure to update
+# corehq.apps.users.tests.test_models.TestCouchUser.test_check_user if needed
+PASSWORD_HASHERS = (
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+) + tuple(PASSWORD_HASHERS)  # noqa: F405
+
 CELERY_TASK_ALWAYS_EAGER = True
 # keep a copy of the original PILLOWTOPS setting around in case other tests want it.
 _PILLOWTOPS = PILLOWTOPS # noqa F405

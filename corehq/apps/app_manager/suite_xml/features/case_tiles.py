@@ -2,7 +2,6 @@ import json
 from dataclasses import dataclass, field as dataclass_field
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from eulxml.xmlmap.core import load_xmlobject_from_string
 from memoized import memoized
 from pathlib import Path
 from typing import List, Dict
@@ -13,6 +12,7 @@ from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, Su
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Detail, DetailVariable, XPathVariable, TileGroup, Style, EndpointAction
 )
+from corehq.util.xml_utils import safe_fromstring
 
 TILE_DIR = Path(__file__).parent.parent / "case_tile_templates"
 
@@ -110,7 +110,7 @@ class CaseTileHelper(object):
 
             # Populate the template
             detail_as_string = self._case_tile_template_string.format(**context)
-            detail = load_xmlobject_from_string(detail_as_string, xmlclass=Detail)
+            detail = Detail(safe_fromstring(detail_as_string))
 
         # Case registration
         # The Person simple template already defines a registration action. Since it is used in production

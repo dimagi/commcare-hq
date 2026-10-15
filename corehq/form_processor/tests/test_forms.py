@@ -16,7 +16,11 @@ from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
-from ..exceptions import AttachmentNotFound, XFormNotFound
+from ..exceptions import (
+    AttachmentNotFound,
+    CannotModifyDeletedForm,
+    XFormNotFound,
+)
 from ..interfaces.processor import ProcessedForms
 from ..models import CaseTransaction, XFormInstance, XFormOperation
 from ..tests.utils import (
@@ -349,6 +353,26 @@ class XFormInstanceManagerTest(TestCase):
         form = manager.get_form('f3')
         self.assertFalse(form.is_deleted)
 
+    def test_get_deleted_form_ids(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        for form_id in ['d1', 'd2', 'not-deleted']:
+            get_simple_wrapped_form(form_id, metadata=meta)
+        other_domain = 'other-forms-manager'
+        get_simple_wrapped_form(
+            'other-domain', metadata=TestFormMetadata(domain=other_domain))
+        self.addCleanup(FormProcessorTestUtils.delete_all_sql_forms, other_domain)
+        manager = XFormInstance.objects
+        manager.soft_delete_forms(DOMAIN, ['d1', 'd2'])
+        manager.soft_delete_forms(other_domain, ['other-domain'])
+
+        deleted_ids = manager.get_deleted_form_ids(
+            DOMAIN, ['d1', 'd2', 'not-deleted', 'other-domain', 'missing'])
+
+        self.assertEqual(sorted(deleted_ids), ['d1', 'd2'])
+
+    def test_get_deleted_form_ids_of_empty_list(self):
+        self.assertEqual(XFormInstance.objects.get_deleted_form_ids(DOMAIN, []), [])
+
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
         self.assertEqual([a.name for a in attachments], ["form.xml"])
@@ -367,6 +391,38 @@ class XFormInstanceManagerTest(TestCase):
         self.assertEqual(DOMAIN, form.domain)
         self.assertEqual('user1', form.user_id)
         return form
+
+
+@sharded
+class TestDeletedFormsCannotBeArchived(TestCase):
+    """A deleted form keeps its ``ARCHIVED`` state, so without a guard
+    ``unarchive`` would rebuild its cases from a form the project space
+    can no longer see.
+    """
+
+    def test_deleted_form_is_still_archived(self):
+        form = self._deleted_form()
+        assert form.is_deleted
+        assert form.is_archived
+
+    def test_archive_raises(self):
+        form = self._deleted_form()
+        with pytest.raises(CannotModifyDeletedForm):
+            form.archive(user_id='user1')
+        with pytest.raises(CannotModifyDeletedForm):
+            form.unarchive(user_id='user1')
+
+    def test_unarchive_raises(self):
+        form = self._deleted_form()
+        with pytest.raises(CannotModifyDeletedForm):
+            form.unarchive(user_id='user1')
+        # ensure form is still archived
+        assert XFormInstance.objects.get_form(form.form_id).is_archived
+
+    def _deleted_form(self):
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        XFormInstance.objects.soft_delete_forms(DOMAIN, [form.form_id])
+        return XFormInstance.objects.get_form(form.form_id)
 
 
 @sharded

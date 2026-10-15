@@ -17,7 +17,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return 'TODO: add once the PR adding this file is merged'
+        return "29d426b919b0c89e9a12d583efaabb4dbe490cdd"
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):

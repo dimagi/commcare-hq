@@ -4,6 +4,7 @@ import "cloudcare/js/formplayer/spec/case_list_pagination_spec";
 import "cloudcare/js/formplayer/spec/debugger_spec";
 import "cloudcare/js/formplayer/spec/hq_events_spec";
 import "cloudcare/js/spec/markdown_spec";
+import "cloudcare/js/formplayer/spec/menu_display_mode_spec";
 import "cloudcare/js/formplayer/spec/menu_list_spec";
 import "cloudcare/js/formplayer/spec/menu_utils_spec";
 import "cloudcare/js/formplayer/spec/query_spec";

@@ -22,9 +22,14 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.const import (
+    PREPAY_SCHEDULE_NOTICE_DAYS,
+    SCHEDULED_PREPAYMENT_MAX_FAILURES,
+)
 from corehq.apps.accounting.emails import (
     send_dimagi_contact_ending_reminder_email,
     send_renewal_reminder_email,
+    send_scheduled_invoice_notice,
     send_subscription_ending_email,
     send_subscription_renewed_email,
 )
@@ -43,6 +48,7 @@ from corehq.apps.accounting.invoicing import (
     DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
+    INACTIVE_SUBSCRIPTION_REASON,
     BillingAccount,
     BillingAccountDomainHistory,
     BillingAccountWebUserHistory,
@@ -52,6 +58,8 @@ from corehq.apps.accounting.models import (
     DomainUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
@@ -83,7 +91,7 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
 )
 from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
@@ -595,6 +603,9 @@ def create_wire_credits_invoice(domain_name,
         record.skipped_email = True
         record.save()
 
+    # useful for non-async callers
+    return wire_invoice.id
+
 
 @task(ignore_result=True, acks_late=True, durable=True)
 def send_purchase_receipt(
@@ -989,3 +1000,101 @@ def calculate_domains_in_customer_billing_accounts(today=None):
                 f"Unable to create BillingAccountDomainHistory for account {account.name}: {e}",
                 show_stack_trace=True,
             )
+
+
+@periodic_task(
+    run_every=crontab(minute=0, hour=6),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+    acks_late=True,
+    durable=True,
+)
+def process_scheduled_prepayment_invoices():
+    for domain in ScheduledPrepaymentInvoice.objects.pending_domains():
+        process_scheduled_prepayment_invoices_for_domain.delay(domain)
+
+
+@serial_task('{domain}', timeout=30 * 60, queue='background_queue', durable=True)
+def process_scheduled_prepayment_invoices_for_domain(domain):
+    """Serial per domain to avoid redelivered invoices"""
+    today = datetime.date.today()
+    cancel_scheduled_invoices_for_inactive_subscriptions(domain)
+    notify_upcoming_scheduled_invoices(today, domain)
+    generate_due_scheduled_invoices(today, domain)
+
+
+def cancel_scheduled_invoices_for_inactive_subscriptions(domain):
+    """Drop scheduled invoices whose subscription has since paused or ended"""
+    pending = ScheduledPrepaymentInvoice.objects.pending(domain).select_related(
+        'subscription__plan_version__plan'
+    )
+    for scheduled in pending:
+        subscription = scheduled.subscription
+        if subscription.is_active and not subscription.plan_version.is_paused:
+            continue
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        scheduled.cancelled_reason = INACTIVE_SUBSCRIPTION_REASON
+        scheduled.save()
+        log_accounting_info(
+            f"Cancelled scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain}: subscription {subscription.id} is paused or "
+            f"no longer active."
+        )
+
+
+def notify_upcoming_scheduled_invoices(today, domain):
+    """Notify accounting before a queued invoice is sent"""
+    # send_date <= the notice date so a missed run still notifies
+    notice_date = today + datetime.timedelta(days=PREPAY_SCHEDULE_NOTICE_DAYS)
+    upcoming = ScheduledPrepaymentInvoice.objects.pending(domain).filter(
+        send_date__lte=notice_date,
+        notified_accounting=False,
+    ).select_related('subscription__plan_version__plan', 'subscription__account')
+    for scheduled in upcoming:
+        send_scheduled_invoice_notice(scheduled)
+        scheduled.notified_accounting = True
+        scheduled.save()
+
+
+def generate_due_scheduled_invoices(today, domain):
+    due = ScheduledPrepaymentInvoice.objects.due(domain, today)
+    for scheduled in due:
+        _send_scheduled_prepayment_invoice(scheduled)
+
+
+def _send_scheduled_prepayment_invoice(scheduled):
+    try:
+        with transaction.atomic():
+            factory = DomainWireInvoiceFactory(
+                scheduled.domain,
+                date_start=scheduled.date_start,
+                date_end=scheduled.date_end,
+                contact_emails=scheduled.contact_emails,
+                cc_emails=scheduled.cc_emails,
+            )
+            scheduled.invoice_id = factory.create_wire_credits_invoice(
+                scheduled.amount,
+                scheduled.credit_label,
+                scheduled.unit_cost,
+                scheduled.quantity,
+                send_async=False,
+            )
+            scheduled.status = ScheduledPrepaymentInvoiceStatus.SENT
+            scheduled.save()
+    except Exception as e:
+        _record_scheduled_invoice_failure(scheduled, e)
+    else:
+        log_accounting_info(
+            f"Sent scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} as invoice {scheduled.invoice_id}."
+        )
+
+
+def _record_scheduled_invoice_failure(scheduled, exception):
+    scheduled.failure_count += 1
+    if scheduled.failure_count >= SCHEDULED_PREPAYMENT_MAX_FAILURES:
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.FAILED
+    scheduled.save()
+    log_error_and_soft_assert(
+        f"Failed to send scheduled prepayment invoice {scheduled.id} for domain "
+        f"{scheduled.domain} (attempt {scheduled.failure_count}): {exception}"
+    )

@@ -246,7 +246,7 @@ class NoCacheMiddleware(MiddlewareMixin):
             content_type, _ = mimetypes.guess_type(request.path)
             response['Cache-Control'] = "max-age={}".format(max_age)
             del response['Vary']
-            del response['Set-Cookie']
+            response.cookies.clear()
             response['Content-Type'] = content_type
             del response['Content-Language']
             response['Content-Length'] = len(response.content)

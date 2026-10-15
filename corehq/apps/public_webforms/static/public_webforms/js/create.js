@@ -3,6 +3,7 @@ import 'hqwebapp/js/htmx_base';
 
 import Alpine from 'alpinejs';
 import 'hqwebapp/js/alpinejs/directives/datepicker';
+import 'hqwebapp/js/alpinejs/directives/select2';
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('formChoices', (initial) => ({

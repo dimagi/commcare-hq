@@ -31,6 +31,8 @@ on:
 
 jobs:
   analyze:
+    # Only run on the canonical repo, not on forks or mirrors
+    if: github.repository == 'dimagi/commcare-hq'
     name: Analyze
     runs-on: ubuntu-latest
 

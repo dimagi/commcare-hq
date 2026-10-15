@@ -693,7 +693,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     "project. If you select this plan, all users with that "
                     "role will change to having the Read Only role.",
                     "You have %(num_roles)d Custom Roles configured for your "
-                    "project . If you select this plan, all users with these "
+                    "project. If you select this plan, all users with these "
                     "roles will change to having the Read Only role.",
                     num_roles
                 ) % {
@@ -804,7 +804,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             ngettext(
                 "You have %(num_apps)d application that has a practice mobile worker "
                 "configured, it will be unset on downgrade.",
-                "You have %(num_apps)d applications that has a practice mobile worker "
+                "You have %(num_apps)d applications that have a practice mobile worker "
                 "configured, it will be unset on downgrade.",
                 len(apps)
             ) % {

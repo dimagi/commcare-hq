@@ -16,6 +16,7 @@ from corehq.apps.accounting.interface import (
     CustomerInvoiceInterface,
     InvoiceInterface,
     PaymentRecordInterface,
+    ScheduledInvoiceInterface,
     SoftwarePlanInterface,
     SubscriptionAdjustmentInterface,
     SubscriptionInterface,
@@ -305,6 +306,7 @@ ACCOUNTING_ADMIN_INTERFACES = (
         PaymentRecordInterface,
         SubscriptionAdjustmentInterface,
         CreditAdjustmentInterface,
+        ScheduledInvoiceInterface,
         IdentityProviderInterface,
     )),
 )

@@ -1,10 +1,7 @@
 from django.utils.translation import gettext as _
 
-from lxml import etree
-
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteValidationError
-from corehq.apps.app_manager.suite_xml.xml_models import Suite
 
 
 def get_select_chain(app, module, include_self=True):
@@ -72,26 +69,6 @@ def get_select_chain_meta(app, module):
         }
         for i, (mod, session_var) in reversed(list(enumerate(select_chain)))
     ]
-
-
-def validate_suite(suite):
-    if isinstance(suite, str):
-        suite = suite.encode('utf-8')
-    if isinstance(suite, bytes):
-        suite = etree.fromstring(suite)
-    if isinstance(suite, etree._Element):
-        suite = Suite(suite)
-    assert isinstance(suite, Suite), \
-        'Could not convert suite to a Suite XmlObject: %r' % suite
-
-    def is_unique_list(things):
-        return len(set(things)) == len(things)
-
-    for detail in suite.details:
-        orders = [field.sort_node.order for field in detail.fields
-                  if field and field.sort_node]
-        if not is_unique_list(orders):
-            raise SuiteValidationError('field/sort/@order must be unique per detail')
 
 
 def _should_use_root_display(module):

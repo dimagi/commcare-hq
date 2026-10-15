@@ -15,6 +15,7 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import user_can_access_other_user
+from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.users.decorators import ensure_active_user_by_username
 from corehq.apps.users.models import CommCareUser
 
@@ -189,7 +190,11 @@ def get_restore_user(domain, couch_user, as_user_obj):
     """
     couch_restore_user = as_user_obj or couch_user
 
-    if couch_restore_user.is_commcare_user() or couch_restore_user.is_web_user():
+    if (
+        couch_restore_user.is_commcare_user()
+        or couch_restore_user.is_web_user()
+        or isinstance(couch_restore_user, PublicFormUser)
+    ):
         return couch_restore_user.to_ota_restore_user(domain, couch_user)
     else:
         return None

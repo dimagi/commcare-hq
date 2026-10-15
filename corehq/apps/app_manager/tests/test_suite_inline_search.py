@@ -128,6 +128,24 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_short']")
         self.assertXmlDoesNotHaveXpath(suite, "./detail[@id='m0_search_long']")
 
+    def test_inline_search_with_case_search_endpoint(self):
+        """An endpoint defines its own results, so they are used unfiltered"""
+        xpath = "./entry[1]/session/datum[@id='case_id']"
+
+        suite = self.app.create_suite()
+        [datum] = parse_normalize(suite, to_string=False).xpath(xpath)
+        self.assertEqual(
+            datum.get('nodeset'),
+            f"instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case']"
+            f"[@status='open']{EXCLUDE_RELATED_CASES_FILTER}",
+        )
+
+        self.module.search_config.case_search_endpoint_id = 42
+        with flag_enabled('CASE_SEARCH_ENDPOINTS'):
+            suite = self.app.create_suite()
+        [datum] = parse_normalize(suite, to_string=False).xpath(xpath)
+        self.assertEqual(datum.get('nodeset'), f"instance('{RESULTS_INSTANCE_INLINE}')/results/case")
+
     def test_inline_search_case_list_item(self):
         self.module.case_list.show = True
         suite = self.app.create_suite()

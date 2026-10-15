@@ -2023,16 +2023,11 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                     self.is_downgrade_from_paid_plan()
                     and self.current_subscription.is_below_minimum_subscription
                 ):
-                    self.current_subscription.update_subscription(
-                        date_start=self.current_subscription.date_start,
-                        date_end=new_sub_date_start
-                    )
-                    Subscription.new_domain_subscription(
-                        account=self.account,
-                        domain=self.domain,
-                        plan_version=self.plan_version,
-                        date_start=new_sub_date_start,
+                    self.current_subscription.change_plan(
+                        self.plan_version,
+                        effective_date=new_sub_date_start,
                         date_end=new_sub_date_end,
+                        account=self.account,
                         web_user=self.creating_user,
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
