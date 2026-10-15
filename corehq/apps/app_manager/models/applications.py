@@ -2147,7 +2147,6 @@ class ExchangeApplication(models.Model):
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
-    changelog_link = models.CharField(max_length=255, null=True)
     required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
                                                                  " strings from corehq.privileges"))
 
@@ -2157,7 +2156,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
+    list_display = ['domain', 'app_id', 'help_link']
     list_filter = ['domain', 'app_id']
 
 

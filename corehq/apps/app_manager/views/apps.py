@@ -585,7 +585,6 @@ def app_exchange(request, domain):
             "id": first['_id'],
             "name": first['name'],
             "help_link": obj.help_link,
-            "changelog_link": obj.changelog_link,
             "last_released": iso_string_to_datetime(first['built_on']).date(),
             "versions": [{
                 "id": r['_id'],
