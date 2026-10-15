@@ -24,45 +24,54 @@ class TestAITranslationPanelContext(TestCase):
     def test_one_row_per_language_ai_could_translate(self, _):
         app = _make_app(langs=['en', 'fra', 'deu', 'xyz'])
 
-        context = get_ai_translation_panel_context(app)
+        context = get_ai_translation_panel_context(app, can_edit=True)
 
         assert context['languages'] == [
             {'code': 'fra', 'name': 'French', 'supported': True, 'last_run': None},
             {'code': 'deu', 'name': 'German', 'supported': True, 'last_run': None},
             {'code': 'xyz', 'name': None, 'supported': False, 'last_run': None},
         ]
+        assert context['can_edit']
         assert not context['limit_reached']
         assert context['active_states'] == ['queued', 'translating', 'applying']
+
+    def test_view_only_user_sees_languages_but_cannot_start(self, _):
+        context = get_ai_translation_panel_context(_make_app(langs=['en', 'fra']), can_edit=False)
+
+        assert not context['can_edit']
+        assert context['languages'] == [
+            {'code': 'fra', 'name': 'French', 'supported': True, 'last_run': None},
+        ]
 
     def test_monthly_limit_reached(self, _):
         AITranslationConfig.objects.create(domain=DOMAIN, monthly_word_limit=0)
 
-        context = get_ai_translation_panel_context(_make_app(langs=['en', 'fra']))
+        context = get_ai_translation_panel_context(_make_app(langs=['en', 'fra']), can_edit=True)
 
         assert context['limit_reached']
 
     def test_without_the_privilege(self, has_privilege):
         has_privilege.return_value = False
 
-        context = get_ai_translation_panel_context(_make_app(langs=['en', 'fra']))
+        context = get_ai_translation_panel_context(_make_app(langs=['en', 'fra']), can_edit=True)
 
         assert context == {'has_privilege': False, 'is_linked_app': False}
 
     def test_linked_app(self, _):
         app = LinkedApplication(domain=DOMAIN, name='linked', langs=['en', 'fra'])
 
-        context = get_ai_translation_panel_context(app)
+        context = get_ai_translation_panel_context(app, can_edit=True)
 
         assert context == {'has_privilege': True, 'is_linked_app': True}
 
     def test_remote_app_has_no_panel(self, _):
         app = RemoteApp(domain=DOMAIN, name='remote', langs=['en', 'fra'])
 
-        assert get_ai_translation_panel_context(app) is None
+        assert get_ai_translation_panel_context(app, can_edit=True) is None
 
     @flag_disabled('AI_APP_TRANSLATION')
     def test_toggle_off(self, _):
-        assert get_ai_translation_panel_context(_make_app(langs=['en', 'fra'])) is None
+        assert get_ai_translation_panel_context(_make_app(langs=['en', 'fra']), can_edit=True) is None
 
 
 def _make_app(langs):

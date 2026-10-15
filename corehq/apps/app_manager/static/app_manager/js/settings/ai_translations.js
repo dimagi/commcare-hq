@@ -34,6 +34,7 @@ var panelModel = function (options) {
     // a poll sent before a run was started may predate it; its response is dropped
     var runsStarted = 0;
 
+    self.canEdit = options.canEdit;
     self.activeStates = options.activeStates;
     self.limitReached = options.limitReached;
     self.languagesChanged = ko.observable(false);
@@ -52,7 +53,8 @@ var panelModel = function (options) {
     };
 
     function pollStatus() {
-        if (document.hidden || requestInFlight) {
+        // the status URL needs edit permission
+        if (!self.canEdit || document.hidden || requestInFlight) {
             return;
         }
         requestInFlight = true;
@@ -148,8 +150,12 @@ var languageModel = function (options, panel) {
                     panel.runStarted();
                     return;
                 }
-                self.startError((xhr.responseJSON || {}).error
-                    || gettext("The translation couldn't be started. Try again."));
+                var error = (xhr.responseJSON || {}).error;
+                if (!error && xhr.status === 403) {
+                    // e.g. the user's permissions changed since the page loaded
+                    error = gettext("You need permission to edit this app to translate it.");
+                }
+                self.startError(error || gettext("The translation couldn't be started. Try again."));
             })
             .always(function () {
                 self.starting(false);
@@ -339,6 +345,7 @@ $(function () {
     var $panel = $("#ai-translations-panel");
     if ($panel.length) {
         $panel.koApplyBindings(panelModel({
+            canEdit: initialPageData.get("ai_translation_can_edit"),
             languages: initialPageData.get("ai_translation_languages"),
             activeStates: initialPageData.get("ai_translation_active_states"),
             limitReached: initialPageData.get("ai_translation_limit_reached"),
