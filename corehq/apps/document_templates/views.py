@@ -7,6 +7,7 @@ from django.utils.translation import gettext, gettext_lazy
 
 from corehq import toggles
 from corehq.apps.document_templates.models import Template
+from corehq.apps.document_templates.rendering import get_variable_names
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -33,11 +34,6 @@ class DocumentTemplatesView(BaseMessagingSectionView):
 
 
 VARIABLE_FIELD_PREFIX = 'var_'
-
-
-def get_variable_names():
-    # TODO: replace with the real list of variable names
-    return ['var1', 'var2']
 
 
 class TemplateForm(forms.Form):
