@@ -18,6 +18,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqwebapp import chat_auth, chat_usage
 from corehq.apps.hqwebapp.chat_quota import CHATBOT_MESSAGE_QUOTA_BY_EDITION
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_disabled, flag_enabled
 
 
 @override_settings(
@@ -26,6 +27,8 @@ from corehq.apps.users.models import WebUser
     OCS_OAUTH_CLIENT_ID='client-id',
     OCS_OAUTH_CLIENT_SECRET='client-secret',
 )
+@flag_disabled('GA_OCS_CHATBOT')
+@flag_enabled('OCS_CHATBOT', is_preview=True)
 class ChatAuthTokenTestCase(TestCase):
 
     @classmethod
@@ -120,7 +123,8 @@ def _subscribe_domain(domain_name, edition):
 
 
 def _call_chat_token(couch_user):
-    request = RequestFactory().post(reverse('chat_token'))
+    domain = couch_user.domains[0]
+    request = RequestFactory().post(reverse('chat_token', args=[domain]))
     request.user = couch_user.get_django_user()
     request.couch_user = couch_user
-    return chat_auth.chat_token(request)
+    return chat_auth.chat_token(request, domain)
