@@ -7,7 +7,7 @@ from corehq.tests.tools import nottest
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent, SMS
+from corehq.apps.sms.models import ConnectMessage, MessagingEvent, MessagingSubEvent, SMS
 from corehq.apps.sms.models import OUTGOING
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.messaging.scheduling.models import ImmediateBroadcast, EmailContent, AlertSchedule
@@ -240,3 +240,45 @@ def make_email_event_for_test(domain, schedule_name, user_ids, utcnow=None):
             subevent.refresh_from_db()
             subevents[subevent.recipient_id] = subevent
     return subevents
+
+
+@nottest
+def make_connect_message_event_for_test(domain, recipient_id, text=None, utcnow=None):
+    """
+    Create a Connect Message event and its subevent.
+
+    `ConnectMessage` is only created, and linked to the subevent, if
+    ``text`` is given. Callers can omit it to simulate a subevent whose message
+    log is missing.
+    """
+    message_date = utcnow or datetime.utcnow()
+    event = MessagingEvent.objects.create(
+        domain=domain,
+        date=message_date,
+        source=MessagingEvent.SOURCE_OTHER,
+        content_type=MessagingEvent.CONTENT_CONNECT,
+        status=MessagingEvent.STATUS_COMPLETED,
+        recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
+        recipient_id=recipient_id,
+    )
+    subevent = MessagingSubEvent.objects.create(
+        parent=event,
+        domain=domain,
+        date=message_date,
+        recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
+        recipient_id=recipient_id,
+        content_type=MessagingEvent.CONTENT_CONNECT,
+        status=MessagingEvent.STATUS_COMPLETED,
+    )
+    message = None
+    if text is not None:
+        message = ConnectMessage.objects.create(
+            domain=domain,
+            date=message_date,
+            couch_recipient_doc_type='CommCareUser',
+            couch_recipient=recipient_id,
+            direction=OUTGOING,
+            text=text,
+            messaging_subevent=subevent,
+        )
+    return event, subevent, message
