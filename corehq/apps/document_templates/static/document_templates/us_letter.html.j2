@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Letter preview</title>
+<style>
+  @page { size: 8.5in 11in; margin: 0.75in; }
+  :root { --footer-height: 1in; }
+
+  body { margin: 0; font: 11pt/1.4 Georgia, serif; }
+  p { orphans: 3; widows: 3; }
+  h1, h2, h3 { break-after: avoid; }
+  tr, img { break-inside: avoid; }
+
+  .letter table { width: 100%; border-collapse: collapse; }
+  .letter td { padding: 0; }
+
+  .letter-header p { margin: 0; }
+  .letter-header img { display: block; width: 100%; }
+  .letter-address { margin: 0.5in 0 0.4in; }
+
+  /* Repeats on every printed page; tfoot spacer keeps body text out from under it */
+  .letter-footer { position: fixed; left: 0; right: 0; bottom: 0; height: var(--footer-height); }
+  .letter-footer p { margin: 0; height: 100%; }
+  .letter-footer img { width: 100%; height: 100%; object-fit: contain; }
+  .footer-spacer { height: var(--footer-height); }
+
+  .blank { display: inline-block; border-bottom: 1px solid #000; }
+
+  /* Screen only: approximate a sheet of paper. Print (Ctrl+P) for real pagination. */
+  @media screen {
+    body { background: #ccc; padding: 0.5in 0; }
+    .letter { background: #fff; width: 8.5in; min-height: 11in; margin: 0 auto; padding: 0.75in; box-sizing: border-box; }
+    .letter-footer { position: static; width: 8.5in; height: auto; margin: 0 auto; padding: 0 0.75in 0.75in; box-sizing: border-box; background: #fff; }
+    .letter-footer p, .letter-footer img { height: auto; }
+    .footer-spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="letter">
+    <table>
+      <tbody>
+        <tr><td>
+          <div class="letter-header">{{ header | safe }}</div>
+          <div class="letter-address">{{ address | safe }}</div>
+          <div class="letter-body">{{ body | safe }}</div>
+        </td></tr>
+      </tbody>
+      <tfoot>
+        <tr><td><div class="footer-spacer"></div></td></tr>
+      </tfoot>
+    </table>
+  </div>
+  <div class="letter-footer">{{ footer | safe }}</div>
+</body>
+</html>
