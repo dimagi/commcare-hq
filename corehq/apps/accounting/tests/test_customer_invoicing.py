@@ -630,18 +630,7 @@ class TestCustomerInvoiceGenerationIsAtomic(BaseCustomerInvoiceCase):
 
     def setUp(self):
         super().setUp()
-        from corehq.apps.accounting.models import Feature, FeatureRate
-        web_user_feature, __ = Feature.objects.get_or_create(
-            name="Web User", defaults={"feature_type": FeatureType.WEB_USER})
-        self.web_user_rate = FeatureRate.objects.create(
-            feature=web_user_feature,
-            monthly_fee=Decimal('0.00'),
-            monthly_limit=1,
-            per_excess_fee=Decimal('10.00'),
-        )
-        self.main_subscription.plan_version.feature_rates.add(self.web_user_rate)
-        self.account.bill_web_user = True
-        self.account.save()
+        generator.add_web_user_feature_rate(self.main_subscription.plan_version)
         self.invoice_date = utils.get_first_day_x_months_later(self.main_subscription.date_start, 5)
         # The default ADVANCED test plan also carries a USER feature rate, so
         # invoice generation needs a DomainUserHistory snapshot to succeed at

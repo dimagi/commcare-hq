@@ -434,6 +434,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
+    # Deprecated: no longer read. Web user billing is determined by the
+    # software plan (SoftwarePlanVersion.has_web_user_feature). Remove this
+    # field in a follow-up after deploy (SAAS-20367).
     bill_web_user = models.BooleanField(default=False)
 
     class Meta(object):
@@ -1009,6 +1012,10 @@ class SoftwarePlanVersion(models.Model):
         if self.user_feature is not None:
             return self.user_feature.monthly_limit
         return UNLIMITED_FEATURE_USAGE
+
+    @property
+    def has_web_user_feature(self):
+        return self.feature_rates.filter(feature__feature_type=FeatureType.WEB_USER).exists()
 
     @property
     def user_fee(self):

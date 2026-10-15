@@ -170,12 +170,6 @@ class BillingAccountBasicForm(forms.Form):
         help_text="Users in any projects connected to this account will not "
                   "have data sent to Hubspot",
     )
-    bill_web_user = forms.BooleanField(
-        label="Bill Web User",
-        required=False,
-        initial=False,
-        help_text="Include Web Users in invoice (requires a subscription with Web User Feature)"
-    )
     require_auto_pay = forms.BooleanField(
         label="Require Autopay",
         required=False,
@@ -202,7 +196,6 @@ class BillingAccountBasicForm(forms.Form):
                 'last_payment_method': account.last_payment_method,
                 'pre_or_post_pay': account.pre_or_post_pay,
                 'block_hubspot_data_for_all_users': account.block_hubspot_data_for_all_users,
-                'bill_web_user': account.bill_web_user,
                 'require_auto_pay': account.require_auto_pay,
             }
         else:
@@ -282,10 +275,6 @@ class BillingAccountBasicForm(forms.Form):
                     hqcrispy.MultiInlineField(
                         'block_hubspot_data_for_all_users',
                     ),
-                ),
-                hqcrispy.B3MultiField(
-                    "Bill Web Users",
-                    hqcrispy.MultiInlineField('bill_web_user'),
                 ),
                 hqcrispy.B3MultiField(
                     "Require Auto Pay",
@@ -430,7 +419,6 @@ class BillingAccountBasicForm(forms.Form):
         account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         account.enterprise_restricted_signup_domains = self.cleaned_data['enterprise_restricted_signup_domains']
         account.block_hubspot_data_for_all_users = self.cleaned_data['block_hubspot_data_for_all_users']
-        account.bill_web_user = self.cleaned_data['bill_web_user']
         account.require_auto_pay = self.cleaned_data['require_auto_pay']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
