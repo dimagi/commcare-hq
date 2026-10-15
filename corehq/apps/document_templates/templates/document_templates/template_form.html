@@ -1,6 +1,7 @@
 {% extends 'hqwebapp/bootstrap5/base_section.html' %}
 {% load hq_shared_tags %}
 {% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block page_content %}
   <form method="post">
@@ -58,11 +59,71 @@
     {# Actions #}
     <div class="mt-3 d-flex gap-2">
       <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#preview-modal"
+        hx-post="{% url 'preview_document_variables' domain %}"
+        hx-target="#preview-modal-body"
+      >
+        {% trans "Preview" %}
+      </button>
       <a
         href="{% url 'document_templates' domain %}"
         class="btn btn-outline-primary"
         >{% trans "Cancel" %}</a
       >
     </div>
+
+    {# The modal sits inside the form so its context textarea is posted with the variable values #}
+    <div
+      class="modal fade"
+      id="preview-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="preview-modal-title"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="preview-modal-title">
+              {% trans "Preview" %}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="{% trans 'Close' %}"
+            ></button>
+          </div>
+          <div class="modal-body" id="preview-modal-body"></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              data-bs-dismiss="modal"
+            >
+              {% trans "Close" %}
+            </button>
+            {# formnovalidate: previewing must not wait for name and slug #}
+            <button
+              type="submit"
+              class="btn btn-primary"
+              formaction="{% url 'preview_document' domain %}"
+              formtarget="_blank"
+              formnovalidate
+            >
+              {% trans "Preview" %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </form>
 {% endblock page_content %}
+
+{% block modals %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
+  {{ block.super }}
+{% endblock modals %}
