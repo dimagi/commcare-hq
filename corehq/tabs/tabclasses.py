@@ -1545,11 +1545,12 @@ class MessagingTab(UITab):
     def document_templates_urls(self):
         from corehq.apps.document_templates.views import DocumentTemplatesView
 
-        document_templates_urls = [{
-            'title': DocumentTemplatesView.page_title,
-            'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
-        }]
-
+        document_templates_urls = []
+        if toggles.DOCUMENT_TEMPLATES.enabled(self.domain):
+            document_templates_urls.append({
+                'title': DocumentTemplatesView.page_title,
+                'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
+            })
         return document_templates_urls
 
     @property
