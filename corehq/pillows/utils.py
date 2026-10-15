@@ -1,4 +1,3 @@
-from couchdbkit.exceptions import ResourceNotFound
 from jsonobject.exceptions import WrappingAttributeError
 
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -59,13 +58,16 @@ def get_user_type(user_id):
         return COMMCARE_SUPPLY_USER_TYPE
     elif user_id:
         try:
-            user = CouchUser.get(user_id)
+            user = CouchUser.get_by_user_id(user_id)
+        except (KeyError, WrappingAttributeError):
+            # Groups share the users db, and case owner ids are often
+            # group ids, so the doc may exist without being a user
+            user = None
+        if user:
             if user.is_web_user():
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
                 return MOBILE_USER_TYPE
-        except (ResourceNotFound, WrappingAttributeError):
-            pass
 
     get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(True)
     return UNKNOWN_USER_TYPE
