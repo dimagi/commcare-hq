@@ -481,12 +481,15 @@ class CCUserRow(BaseUserRow):
             is_new_user = not self.column_values["user_id"]
             was_active = not is_new_user and self.user.is_active
             self._process_simple_fields()
-            if self.user.is_active and not was_active:
+            is_activating = self.user.is_active and not was_active
+            if is_activating:
                 self.mobile_worker_slots.claim()
 
             try:
                 self.user.save(fail_hard=True)
             except Exception as e:
+                if is_activating:
+                    self.mobile_worker_slots.release()
                 # HACK: Catching all exception here is temporary. We believe that user critical sections
                 # are not behaving properly, and this catch-all is here to identify the problem
                 self.status_row['flag'] = str(e)

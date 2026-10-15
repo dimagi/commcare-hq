@@ -1650,6 +1650,23 @@ class TestMobileWorkerLimitBulkUpload(TestCase, DomainSubscriptionMixin):
         assert flags == ['updated', 'created']
         assert self._is_active('three')
 
+    @patch('corehq.apps.user_importer.importer.soft_assert', return_value=lambda *args: None)
+    def test_failed_save_frees_slot(self, _):
+        self._create_user('one')
+        save = CommCareUser.save
+
+        def fail_for_two(user, *args, **kwargs):
+            if user.username == self._username('two'):
+                raise Exception('save failed')
+            return save(user, *args, **kwargs)
+
+        with patch.object(CommCareUser, 'save', autospec=True, side_effect=fail_for_two):
+            flags = self._upload([
+                {'username': 'two', 'password': 'two-Secret-2'},
+                {'username': 'three', 'password': 'three-Secret-3'},
+            ])
+        assert flags == ['save failed', 'created']
+
     def _create_user(self, name, is_active=True):
         user = CommCareUser.create(
             self.domain.name, self._username(name), 'secret', None, None, is_active=is_active,
