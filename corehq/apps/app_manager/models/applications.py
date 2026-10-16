@@ -18,6 +18,7 @@ from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
+from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -2126,6 +2127,20 @@ def overwrite_app_from_source(domain, app_id, source, extra_properties=None, req
                                     "multimedia file(s)."))
 
     return app
+
+
+class TemplateAppSector(models.Model):
+    """A shared sector label for the template app catalog."""
+
+    name = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower('name'), name='unique_template_app_sector_name_ci'),
+        ]
+
+    def __str__(self):
+        return self.name
 
 
 class ExchangeApplication(models.Model):
