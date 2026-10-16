@@ -2144,9 +2144,21 @@ class TemplateAppSector(models.Model):
 
 
 class ExchangeApplication(models.Model):
+    """Catalog entry for a template app.
+    Historically named for the App Exchange page; the feature is now called Template Apps.
+    """
+
+    class Category(models.TextChoices):
+        STARTER_APP = 'starter_app', _('Starter App')
+        FEATURE_TEMPLATE = 'feature_template', _('Feature Template')
+
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
+    category = models.CharField(max_length=32, choices=Category.choices)
+    sectors = models.ManyToManyField(TemplateAppSector, related_name='exchange_applications', blank=True)
+    description = models.TextField(null=True, blank=True)
+    minimum_plan_edition = models.CharField(max_length=25, choices=const.get_template_app_plan_choices)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
@@ -2154,7 +2166,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id', 'help_link']
+    list_display = ['domain', 'app_id', 'category', 'minimum_plan_edition', 'help_link']
     list_filter = ['domain', 'app_id']
 
 
