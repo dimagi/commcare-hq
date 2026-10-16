@@ -64,6 +64,10 @@ class UserSQLProgrammingError(UserSQLValidationError):
     """The SQL was found to be invalid at runtime"""
 
 
+class UserSQLTimeout(UserSQLProgrammingError):
+    """The query exceeded the statement timeout"""
+
+
 LITERAL_PARAM_PREFIX = 'hq_'  # Our reserved namespace for parameters
 STATEMENT_TIMEOUT = '5s'
 
@@ -167,7 +171,7 @@ class UserSQL:
             except OperationalError as e:
                 if e.orig.pgcode == errorcodes.QUERY_CANCELED:
                     msg = f"query cancelled after exceeding the {STATEMENT_TIMEOUT} time limit"
-                    raise UserSQLProgrammingError(msg) from e
+                    raise UserSQLTimeout(msg) from e
                 raise
 
     def _clean_parameters(self, raw_parameters):
