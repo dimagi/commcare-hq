@@ -132,9 +132,9 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
             })
         if progress_callback:
             progress_callback(i + 1, len(batches))
-    # parse_output() records skipped ids on the run's own format; a
+    # parse_output() records skipped units on the run's own format; a
     # rebase carries over only its results
-    skipped = len(fmt.skipped_ids)
+    skipped = len(fmt.skipped)
     applied = _apply_translations(fmt)
     # how much of the whole app is AI translated as of this run
     app_ai_translation_share = {}
@@ -373,7 +373,7 @@ class AppTranslationFormat(TranslationFormat):
         self.units_by_id = {}
         self.units_by_sheet = {}
         self.results = {}
-        self.skipped_ids = set()
+        self.skipped = {}  # unit_id -> why its translation was rejected
 
     def for_app(self, app):
         """A new format with these settings over another copy of the app.
@@ -476,16 +476,16 @@ class AppTranslationFormat(TranslationFormat):
             unit = self.units_by_id.get(unit_id)
             if unit is None:
                 continue
-            if is_valid_app_translation(unit.source_text, translated):
+            problem = translation_problem(unit.source_text, translated)
+            if problem is None:
                 valid[unit_id] = translated
             else:
-                self.skipped_ids.add(unit_id)
-                # a skipped string is otherwise only a count in the summary
+                self.skipped[unit_id] = problem
                 logger.warning(
                     "AI translation failed validation and was skipped: "
-                    "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
+                    "domain=%s app_id=%s lang=%s key=%s problem=%s source=%r translated=%r",
                     self.app.domain, self.app.get_id, self.target_lang,
-                    unit.string_key, unit.source_text[:200], str(translated)[:200])
+                    unit.string_key, problem, unit.source_text[:200], str(translated)[:200])
         missing = allowed_ids - set(llm_output)
         if missing:
             logger.warning(
@@ -715,10 +715,6 @@ PROBLEM_INVALID_CHARACTERS = 'invalid_characters'
 PROBLEM_OUTPUT_CHANGED = 'output_changed'
 PROBLEM_FORMATTING_CHANGED = 'formatting_changed'
 PROBLEM_LINK_CHANGED = 'link_changed'
-
-
-def is_valid_app_translation(source, translated):
-    return translation_problem(source, translated) is None
 
 
 def translation_problem(source, translated):

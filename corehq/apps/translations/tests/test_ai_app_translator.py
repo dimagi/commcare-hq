@@ -397,10 +397,11 @@ def test_parse_output_buffers_valid_and_skips_invalid():
     fmt.load_input()
     batches = fmt.create_batches(chunk_size=2)
     fmt.format_input(batches[0])  # marks batch 0 as the current batch
-    uid = next(iter(batches[0]))
-    parsed = fmt.parse_output(json.dumps({uid: 'traduction', 'bogus': 'x'}))
+    uid, rejected_uid = batches[0]
+    parsed = fmt.parse_output(json.dumps({uid: 'traduction', rejected_uid: '', 'bogus': 'x'}))
     assert parsed == {uid: 'traduction'}
     assert fmt.results == {uid: 'traduction'}
+    assert fmt.skipped == {rejected_uid: PROBLEM_EMPTY}
     assert fmt.parse_output('not json') == {}
 
 
@@ -420,7 +421,7 @@ def test_for_app_copies_settings_not_state():
     assert copy.manually_edited_keys == {'k'}
     assert copy.stale_keys == {'s'}
     assert copy.treat_default_copies_as_missing is False
-    assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
+    assert (copy.units_by_id, copy.results, copy.skipped) == ({}, {}, {})
 
 
 def test_for_app_keeps_subclass():
