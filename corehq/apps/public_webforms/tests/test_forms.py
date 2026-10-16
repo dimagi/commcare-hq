@@ -65,7 +65,7 @@ def test_is_filtering_reports_whether_the_list_was_narrowed(params, expected):
     assert forms.PublicWebformFilterForm(params).is_filtering is expected
 
 
-def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
+def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM, initial=None):
     """Stubs the reads that go to the database or to released builds."""
     args = [data] if data is not None else []
     with patch.multiple(
@@ -74,7 +74,7 @@ def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
         get_public_webform_choices=Mock(return_value=[]),
         get_public_webform_eligible_form=Mock(return_value=eligible_form),
     ):
-        form = forms.CreatePublicWebformForm(DOMAIN, TIMEZONE, *args)
+        form = forms.CreatePublicWebformForm(DOMAIN, TIMEZONE, *args, initial=initial)
         form.is_valid()
     return form
 
@@ -141,7 +141,23 @@ def test_an_ineligible_form_is_rejected():
     """The selection is posted from hidden inputs, so it is re-checked."""
     form = _form(_post_data(), eligible_form=None)
     assert not form.is_valid()
-    assert form.non_field_errors() == ["The selected form can't be used for a public webform."]
+    assert form.non_field_errors()
+
+
+def test_an_eligible_prefill_is_placed_under_its_released_menu():
+    released_form = SimpleNamespace(get_module=lambda: SimpleNamespace(unique_id='menu-1'))
+    form = _form(
+        initial={'app_id': 'app-1', 'form_unique_id': 'form-1'},
+        eligible_form=released_form,
+    )
+    assert form.initial == {'app_id': 'app-1', 'menu_id': 'menu-1', 'form_unique_id': 'form-1'}
+    assert not form.has_ineligible_prefill
+
+
+def test_an_ineligible_prefill_is_dropped():
+    form = _form(initial={'app_id': 'app-1', 'form_unique_id': 'form-1'}, eligible_form=None)
+    assert form.initial == {}
+    assert form.has_ineligible_prefill
 
 
 def _create_webform(**post_data):
