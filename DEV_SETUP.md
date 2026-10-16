@@ -1118,7 +1118,7 @@ Run it with `uvx`, which fetches it into a cache on first use and leaves the
 project virtualenv alone:
 
 ```sh
-uvx schemathesis@4.27.3 --version
+uvx schemathesis@4.31.1 --version
 ```
 
 
@@ -1128,7 +1128,7 @@ endpoints are named after the defects they contain. The run is meant to report
 failures:
 
 ```sh
-uvx schemathesis@4.27.3 --config-file /dev/null \
+uvx schemathesis@4.31.1 --config-file /dev/null \
     run https://example.schemathesis.io/openapi.json \
     --include-path-regex '/response-conformance/' -n 2
 ```
@@ -1144,33 +1144,17 @@ Copy the example config first and add a valid API key and project slug:
 cp schemathesis.toml.example schemathesis.toml
 export CCHQ_API_KEY="me@example.com:<key>"
 export CCHQ_DOMAIN=my-project
-uvx schemathesis@4.27.3 run <spec.json> -m positive
+uvx schemathesis@4.31.1 run <spec.json>
 ```
 
 Schemathesis picks up `schemathesis.toml` from the directory you run it in or
 any parent, stopping at the repository root, so run it from the root.
 
-`-m positive` limits the run to data the spec calls valid. Without it
-Schemathesis also sends data the spec calls invalid, and because the current
-specs document a 200 and nothing else, a correct 400 for an invalid request is
-reported as an undocumented status. Drop the flag once the specs document the
-400, 401, 403 and 404 each resource returns. Most API bugs hide in the invalid
-requests, so this is the restriction worth lifting first.
-
-
 Generated requests are real requests, sent to the project space you name in
 `CCHQ_DOMAIN`.
 
-The example config keeps the run read-only with these settings:
+The example config keeps the run read-only: the `[[operations]]` block with
+`enabled = false` deselects POST, PUT, PATCH and DELETE, so the run never
+sends them.
 
-- The `[[operations]]` block with `enabled = false` deselects POST, PUT, PATCH
-  and DELETE, so none of those operations is ever tested.
-- `unexpected-methods = []` under `[phases.coverage]` turns off the coverage
-  probe, which sends each path the methods it does not document to see whether
-  the API answers instead of refusing. That probe only runs on negative data,
-  so `-m positive` suppresses it as well, and the empty list is the backstop
-  for a run that drops the flag.
-
-Remove the `[[operations]]` block and the run writes to the project space, with
-or without `-m positive`. Remove `unexpected-methods = []` and it writes as soon
-as `-m positive` is missing.
+Remove the `[[operations]]` block and the run writes to the project space.
