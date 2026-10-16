@@ -20,8 +20,10 @@ from corehq.apps.translations.app_translations.ai_translator import (
     PROBLEM_LINK_CHANGED,
     PROBLEM_OUTPUT_CHANGED,
     AppTranslationFormat,
+    AppliedTranslations,
     ChangedAITranslations,
     _apply_translations,
+    _read_saved_app,
     _rebase_results,
     _record_run,
     _refresh_provenance_statuses,
@@ -761,6 +763,14 @@ class TestApplyTranslations(TestCase):
         assert self._current(app).get_module(0).name.get('fra', '') == ''
 
 
+def _applied(fmt):
+    """What ``_apply_translations()`` returns for ``fmt``, as it stands."""
+    saved_app_strings, saved_units = _read_saved_app(fmt)
+    return AppliedTranslations(
+        saved_fmt=fmt, changed=0, errors=[],
+        saved_app_strings=saved_app_strings, saved_units=saved_units)
+
+
 class TestRecordRun(TestCase):
 
     def test_records_provenance_and_usage(self):
@@ -776,7 +786,7 @@ class TestRecordRun(TestCase):
         fmt.save_output()
         self.addCleanup(app.delete)
 
-        _record_run(fmt, strings_attempted=5, model='gpt-4.1')
+        _record_run(_applied(fmt), strings_attempted=5, model='gpt-4.1')
 
         usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert model_to_dict(usage, exclude=['id']) == {
@@ -813,7 +823,7 @@ class TestRecordRun(TestCase):
         fmt.save_output()
         self.addCleanup(app.delete)
 
-        _record_run(fmt, strings_attempted=2, model='gpt-4.1')
+        _record_run(_applied(fmt), strings_attempted=2, model='gpt-4.1')
 
         assert dict(
             AITranslation.objects.filter(app_id=app.get_id).values_list('source_value', 'translated_value')
@@ -844,7 +854,7 @@ class TestRecordRun(TestCase):
         # so the app still holds the old translation
         fmt.results = {uids[MODULE_NAME_KEY]: 'nouveau module'}
 
-        _record_run(fmt, strings_attempted=1, model='gpt-4.1')
+        _record_run(_applied(fmt), strings_attempted=1, model='gpt-4.1')
 
         assert AITranslationUsage.objects.get(app_id=app.get_id).strings_translated == 0
         row = AITranslation.objects.get(app_id=app.get_id, string_key=MODULE_NAME_KEY)

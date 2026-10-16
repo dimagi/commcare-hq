@@ -139,7 +139,7 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     # how much of the whole app is AI translated as of this run
     app_ai_translation_share = {}
     if applied.translated:
-        usage = _record_run(applied.saved_fmt, strings_attempted=len(units), model=translator.model)
+        usage = _record_run(applied, strings_attempted=len(units), model=translator.model)
         app_ai_translation_share = {
             'total_app_strings': usage.total_app_strings,
             'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
@@ -203,12 +203,20 @@ def find_changed_ai_translations(fmt):
     return changed
 
 
-def _record_run(fmt, strings_attempted, model):
-    """Record provenance and usage for a run whose results ``fmt`` saved,
-    and return the usage row."""
+def _read_saved_app(fmt):
+    """The app's strings after ``fmt``'s results were saved, and the units
+    of the results the save applied."""
     # fmt read the app's sheets before the save; a fresh format reads the saved text
     saved_app_strings = fmt.for_app(fmt.app).all_app_strings()
-    saved_units = _saved_units(fmt, saved_app_strings)
+    return saved_app_strings, _saved_units(fmt, saved_app_strings)
+
+
+def _record_run(applied, strings_attempted, model):
+    """Record provenance and usage for a run's saved results, and return
+    the usage row."""
+    fmt = applied.saved_fmt
+    saved_units = applied.saved_units
+    saved_app_strings = applied.saved_app_strings
     with transaction.atomic():
         _upsert_provenance(fmt, saved_units)
         ai_translated = _refresh_provenance_statuses(fmt, saved_app_strings)
@@ -319,6 +327,8 @@ class AppliedTranslations:
     saved_fmt: 'AppTranslationFormat'  # rebased onto a fresh app after a conflict
     changed: int  # results dropped because the app changed under them
     errors: list  # save_output()'s error messages
+    saved_app_strings: dict  # the app's strings as saved
+    saved_units: list  # the units of the results the save applied
 
     @property
     def translated(self):
@@ -334,12 +344,16 @@ def _apply_translations(fmt):
     whenever the save conflicts with someone else's.
     """
     if not fmt.results:
-        return AppliedTranslations(saved_fmt=fmt, changed=0, errors=[])
+        return AppliedTranslations(saved_fmt=fmt, changed=0, errors=[],
+                                   saved_app_strings={}, saved_units=[])
     changed = 0
     for attempt in range(1, AI_TRANSLATION_APPLY_ATTEMPTS + 1):
         try:
             errors = fmt.save_output()
-            return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors)
+            saved_app_strings, saved_units = _read_saved_app(fmt)
+            return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors,
+                                       saved_app_strings=saved_app_strings,
+                                       saved_units=saved_units)
         except ResourceConflict as e:
             if attempt == AI_TRANSLATION_APPLY_ATTEMPTS:
                 raise AppChangedDuringTranslation() from e
