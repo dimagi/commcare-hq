@@ -21,8 +21,8 @@
     <div class="accordion-body">
       <p class="text-body-secondary">
         {% blocktrans trimmed %}
-          AI fills in missing translations when you click AI Translate. Manual
-          edits are kept. Review AI translations before releasing your app.
+          AI fills in missing translations. Manual edits are kept. Review AI
+          translations before releasing your app.
         {% endblocktrans %}
         <a
           href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/4408934402/Automatic+AI+Translations"
@@ -72,12 +72,17 @@
           >
         </div>
       {% else %}
+        {% initial_page_data 'ai_translation_can_edit' ai_translation.can_edit %}
         {% initial_page_data 'ai_translation_languages' ai_translation.languages %}
         {% initial_page_data 'ai_translation_active_states' ai_translation.active_states %}
         {% initial_page_data 'ai_translation_limit_reached' ai_translation.limit_reached %}
         {% registerurl "start_ai_translation" domain app.id %}
         {% registerurl "ai_translation_status" domain app.id %}
-        {% if ai_translation.limit_reached %}
+        {% if not ai_translation.can_edit %}
+          <div class="alert alert-info">
+            {% trans "You need permission to edit this app to translate it." %}
+          </div>
+        {% elif ai_translation.limit_reached %}
           <div class="alert alert-warning">
             {% blocktrans trimmed %}
               This project has reached its monthly AI translation limit. Contact
@@ -106,7 +111,9 @@
                 <th class="col-2">{% trans "Language" %}</th>
                 <th class="col-6">{% trans "Status" %}</th>
                 <th class="col-2">{% trans "Last AI translated" %}</th>
-                <th class="col-2 text-end">{% trans "Actions" %}</th>
+                {% if ai_translation.can_edit %}
+                  <th class="col-2 text-end">{% trans "Actions" %}</th>
+                {% endif %}
               </tr>
             </thead>
             <tbody data-bind="foreach: languages">
@@ -174,16 +181,21 @@
                     data-bind="text: lastRun().version"
                   ></div>
                 </td>
-                <td class="text-end text-nowrap">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm"
-                    data-bind="click: start, disable: !canStart()"
-                  >
-                    {% trans "AI Translate" %}
-                    <span class="visually-hidden" data-bind="text: code"></span>
-                  </button>
-                </td>
+                {% if ai_translation.can_edit %}
+                  <td class="text-end text-nowrap">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary btn-sm"
+                      data-bind="click: start, disable: !canStart()"
+                    >
+                      {% trans "AI Translate" %}
+                      <span
+                        class="visually-hidden"
+                        data-bind="text: code"
+                      ></span>
+                    </button>
+                  </td>
+                {% endif %}
               </tr>
             </tbody>
           </table>
