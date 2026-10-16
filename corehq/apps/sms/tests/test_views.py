@@ -36,6 +36,8 @@ class GatewayViewTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.project = create_domain(DOMAIN_NAME)
+        cls.project.granted_messaging_access = True
+        cls.project.save()
 
         account, __ = BillingAccount.get_or_create_account_by_domain(
             DOMAIN_NAME, created_by=ADMIN_USER

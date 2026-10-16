@@ -47,6 +47,7 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_plaintext_response,
     requires_privilege_with_fallback,
 )
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -156,11 +157,24 @@ class BaseMessagingSectionView(BaseDomainView):
     def is_system_admin(self):
         return is_superuser_or_contractor(self.request.couch_user)
 
+    @property
+    def enable_messaging_context(self):
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        return {
+            'domain_name': self.domain_object.hr_name or self.domain,
+            'billing_account': subscription.account.name,
+            'billing_contacts': subscription.account.billingcontactinfo.email_list,
+            'public_webforms_enabled': (
+                has_privilege(self.request, privileges.PUBLIC_WEBFORMS)
+                and toggles.PUBLIC_WEBFORMS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN)
+            )
+        }
+
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not is_granted_messaging_access(self.domain_object):
-            return render(request, "sms/wall.html", self.main_context)
+            return render(request, "sms/wall.html", self.main_context | self.enable_messaging_context)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
