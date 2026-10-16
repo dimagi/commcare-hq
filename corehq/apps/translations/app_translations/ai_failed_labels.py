@@ -6,6 +6,17 @@ import json
 from datetime import datetime, timezone
 from io import BytesIO
 
+from django.utils.translation import gettext as _
+
+from corehq.apps.translations.app_translations.ai_translator import (
+    PROBLEM_EMPTY,
+    PROBLEM_FORMATTING_CHANGED,
+    PROBLEM_INVALID_CHARACTERS,
+    PROBLEM_LINK_CHANGED,
+    PROBLEM_NO_TRANSLATION,
+    PROBLEM_NOT_APPLIED,
+    PROBLEM_OUTPUT_CHANGED,
+)
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 
@@ -32,6 +43,18 @@ def save_failed_labels(domain, app_id, lang, records):
         name=lang,
         timeout=FAILED_LABELS_TIMEOUT,
     )
+
+
+def failed_label_reason(code):
+    return {
+        PROBLEM_NO_TRANSLATION: _("The AI didn't return a translation."),
+        PROBLEM_NOT_APPLIED: _("The app didn't accept the AI's translation."),
+        PROBLEM_EMPTY: _("The AI returned an empty translation."),
+        PROBLEM_INVALID_CHARACTERS: _("The AI's translation has characters the app can't save."),
+        PROBLEM_OUTPUT_CHANGED: _("The AI changed or left out a value inserted from another question."),
+        PROBLEM_FORMATTING_CHANGED: _("The AI changed the formatting, such as bold text or a list."),
+        PROBLEM_LINK_CHANGED: _("The AI changed a web link."),
+    }.get(code, _("The label couldn't be translated."))
 
 
 def get_failed_labels(app_id, lang):

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from django.test import TestCase
 
 from corehq.apps.translations.app_translations.ai_failed_labels import (
+    failed_label_reason,
     get_failed_labels,
     save_failed_labels,
 )
@@ -56,3 +57,8 @@ class TestFailedLabels(TestCase):
         meta.save()
 
         assert get_failed_labels(APP_ID, 'fra') is None
+
+
+def test_reason_for_a_code_this_release_doesnt_know():
+    # e.g. stored by a later release, or by an earlier one that had it
+    assert failed_label_reason('some_old_code') == "The label couldn't be translated."
