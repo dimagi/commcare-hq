@@ -1,5 +1,6 @@
 """AI translation of app content via the bulk app translation pipeline."""
 import hashlib
+import html
 import json
 import logging
 import re
@@ -55,6 +56,7 @@ logger = logging.getLogger(__name__)
 
 MODULES_AND_FORMS_KEY_PREFIX = 'menus_and_forms'
 MAX_STRING_KEY_LENGTH = 512  # AITranslation.string_key max_length
+FAILED_LABEL_SOURCE_LENGTH = 100  # enough to recognise a label in the list
 
 
 def ai_translation_enabled(domain):
@@ -113,7 +115,8 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
     units = fmt.load_input()
     if not units:
         return {'total': 0, 'translated': 0, 'skipped': 0, 'changed': 0,
-                'failed': 0, 'app_version': app.version, 'errors': []}
+                'failed': 0, 'app_version': app.version, 'errors': [],
+                'failed_labels': []}
     if translator is None:
         factory = translator_factory or get_llm_translator
         translator = factory(target_lang, fmt,
@@ -153,7 +156,28 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
         'failed': len(units) - applied.translated - skipped - applied.changed,
         'app_version': applied.app_version,
         'errors': applied.errors,
+        'failed_labels': _failed_labels(fmt, applied),
     }
+
+
+def _failed_labels(fmt, applied):
+    """A record for each label the run couldn't translate.
+
+    ``fmt`` knows which translations were rejected or never came back.
+    After a conflict, the results were saved from a rebased copy, which
+    knows which of them the save didn't apply. Labels dropped because
+    the app changed under them aren't listed: the next run retranslates
+    them."""
+    records = {}
+    for unit_id, reason in fmt.untranslated().items():
+        unit = fmt.units_by_id[unit_id]
+        records[unit.string_key] = fmt.label_record(unit, reason)
+    saved_fmt = applied.saved_fmt
+    for unit_id, reason in saved_fmt.skipped.items():
+        if reason == PROBLEM_NOT_APPLIED:
+            unit = saved_fmt.units_by_id[unit_id]
+            records[unit.string_key] = saved_fmt.label_record(unit, reason)
+    return list(records.values())
 
 
 def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
@@ -511,6 +535,43 @@ class AppTranslationFormat(TranslationFormat):
         self.results.update(valid)
         return valid
 
+    def untranslated(self):
+        """Why each unit without a result wasn't translated: its translation
+        was rejected, or none came back (its batch failed, or the AI's
+        answer left it out or couldn't be read)."""
+        return {
+            unit_id: self.skipped.get(unit_id, PROBLEM_NO_TRANSLATION)
+            for unit_id in self.units_by_id
+            if unit_id not in self.results
+        }
+
+    def label_record(self, unit, reason):
+        """Where a label is in the app, its English text and why it wasn't
+        translated: what the Languages page shows for it. Built from the
+        sheet row, as ``string_key`` is never parsed."""
+        headers = list(self.headers_by_sheet[unit.sheet_name])
+        row = self.sheets[unit.sheet_name][unit.row_index]
+        record = {'reason': reason, 'source': _readable_label(unit.source_text)}
+        if unit.sheet_name == MODULES_AND_FORMS_SHEET_NAME:
+            record.update(
+                type='menu' if _cell(row, 0) == 'Menu' else 'form',
+                unique_id=_cell(row, headers.index('unique_id')),
+            )
+        elif is_module_sheet(unit.sheet_name):
+            record.update(
+                type='case_property',
+                unique_id=self.sheet_unique_ids[unit.sheet_name],
+                case_property=_cell(row, headers.index('case_property')),
+                list_or_detail=_cell(row, headers.index('list_or_detail')),
+            )
+        else:
+            record.update(
+                type='form_text',
+                unique_id=self.sheet_unique_ids[unit.sheet_name],
+                itext_id=_cell(row, headers.index('label')),
+            )
+        return record
+
     def save_output(self, output_data=None, output_path=None):
         """Rows without buffered results keep their values; the app is
         saved once. Returns error messages, [] on success."""
@@ -674,6 +735,18 @@ def _blank_row_error(case_property):
              " of the case property '%s'") % case_property
 
 
+def _readable_label(source_text):
+    """The start of a label as a user reads it in the app: an inserted
+    value shows as "…" rather than its ``<output/>`` tag, and escaped
+    characters such as ``&lt;`` as themselves.
+
+    >>> _readable_label('Hi <output value="/data/name"/> &amp; welcome')
+    'Hi … & welcome'
+    """
+    text = html.unescape(re.sub(r'<output\b[^>]*/>', '…', source_text))
+    return text[:FAILED_LABEL_SOURCE_LENGTH]
+
+
 def _cell(row, index):
     if len(row) > index and row[index] is not None:
         return str(row[index])
@@ -735,6 +808,7 @@ XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ff
 
 # why a label wasn't translated, stored with each label a run couldn't
 # translate so the Languages page can say why
+PROBLEM_NO_TRANSLATION = 'no_translation'
 PROBLEM_NOT_APPLIED = 'not_applied'
 PROBLEM_EMPTY = 'empty'
 PROBLEM_INVALID_CHARACTERS = 'invalid_characters'

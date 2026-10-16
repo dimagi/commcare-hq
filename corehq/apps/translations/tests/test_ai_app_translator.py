@@ -1,3 +1,4 @@
+import doctest
 import json
 from collections import defaultdict
 from unittest.mock import patch
@@ -18,6 +19,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
     PROBLEM_FORMATTING_CHANGED,
     PROBLEM_INVALID_CHARACTERS,
     PROBLEM_LINK_CHANGED,
+    PROBLEM_NO_TRANSLATION,
     PROBLEM_NOT_APPLIED,
     PROBLEM_OUTPUT_CHANGED,
     AppTranslationFormat,
@@ -425,6 +427,57 @@ def test_for_app_copies_settings_not_state():
     assert copy.stale_keys == {'s'}
     assert copy.treat_default_copies_as_missing is False
     assert (copy.units_by_id, copy.results, copy.skipped) == ({}, {}, {})
+
+
+def test_label_record_says_where_each_kind_of_label_is():
+    fmt = AppTranslationFormat(_make_app(), 'fra')
+    units = fmt.all_app_strings()
+
+    records = {key: fmt.label_record(unit, 'why') for key, unit in units.items()}
+
+    assert records == {
+        MODULE_NAME_KEY: {
+            'reason': 'why', 'source': 'register module',
+            'type': 'menu', 'unique_id': 'register_module',
+        },
+        FORM_NAME_KEY: {
+            'reason': 'why', 'source': 'register form 0',
+            'type': 'form', 'unique_id': 'register_form_0',
+        },
+        CASE_LIST_KEY: {
+            'reason': 'why', 'source': 'Name',
+            'type': 'case_property', 'unique_id': 'register_module',
+            'case_property': 'name', 'list_or_detail': 'list',
+        },
+        CASE_DETAIL_KEY: {
+            'reason': 'why', 'source': 'Name',
+            'type': 'case_property', 'unique_id': 'register_module',
+            'case_property': 'name', 'list_or_detail': 'detail',
+        },
+        QUESTION_KEY: {
+            'reason': 'why', 'source': 'What is the name?',
+            'type': 'form_text', 'unique_id': 'register_form_0', 'itext_id': 'name-label',
+        },
+        SUBMIT_LABEL_KEY: {
+            'reason': 'why', 'source': 'Submit',
+            'type': 'form_text', 'unique_id': 'register_form_0', 'itext_id': 'submit_label',
+        },
+    }
+
+
+def test_label_record_keeps_the_start_of_a_long_label():
+    app = _make_app()
+    app.get_module(0).name['en'] = 'x' * 500
+    fmt = AppTranslationFormat(app, 'fra')
+
+    record = fmt.label_record(fmt.all_app_strings()[MODULE_NAME_KEY], 'why')
+
+    assert record['source'] == 'x' * 100
+
+
+def test_doctests():
+    results = doctest.testmod(ai_translator)
+    assert results.failed == 0
 
 
 def test_for_app_keeps_subclass():
@@ -880,14 +933,16 @@ class TestRecordRun(TestCase):
 
 class _FakeTranslator:
     """Translates every batch by prefixing 'FR:', failing when asked.
-    ``on_translate`` runs before each batch."""
+    ``on_translate`` runs before each batch. Strings in ``blank_keys``
+    get an empty translation, which is rejected."""
     model = 'fake-model'
 
-    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None):
+    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None, blank_keys=()):
         self.fmt = fmt
         self.fail_batches = set(fail_batches)
         self.fail_all = fail_all
         self.on_translate = on_translate
+        self.blank_keys = set(blank_keys)
         self.calls = 0
 
     def translate(self, batch):
@@ -896,8 +951,10 @@ class _FakeTranslator:
             self.on_translate()
         if self.fail_all or self.calls in self.fail_batches:
             raise Exception('LLM exploded')
-        return self.fmt.parse_output(json.dumps(
-            {uid: f'FR:{unit.source_text}' for uid, unit in batch.items()}))
+        return self.fmt.parse_output(json.dumps({
+            uid: '' if unit.string_key in self.blank_keys else f'FR:{unit.source_text}'
+            for uid, unit in batch.items()
+        }))
 
 
 class TestRunAppTranslation(TestCase):
@@ -913,7 +970,7 @@ class TestRunAppTranslation(TestCase):
             'total_app_strings': usage.total_app_strings,
             'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
             'total': 5, 'translated': 5, 'skipped': 0, 'changed': 0, 'failed': 0,
-            'app_version': app.version, 'errors': []}
+            'app_version': app.version, 'errors': [], 'failed_labels': []}
         assert usage.total_app_strings_ai_translated == 5
         assert app.get_module(0).name['fra'] == 'FR:register module'
 
@@ -929,6 +986,25 @@ class TestRunAppTranslation(TestCase):
         assert summary['failed'] == 2
         assert summary['skipped'] == 0
 
+    def test_lists_the_labels_it_couldnt_translate(self):
+        app = _make_app()
+        fmt = AppTranslationFormat(app, 'fra', treat_default_copies_as_missing=False)
+        # the menu and form names' batch fails, the question's translation
+        # is rejected, and the upload drops the case list and detail rows
+        translator = _FakeTranslator(fmt, fail_batches={1}, blank_keys={QUESTION_KEY})
+        with patch.object(AppTranslationFormat, '_save_module_sheet', return_value=[]):
+            summary = run_app_translation(
+                app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+                translator=translator, chunk_size=2)
+
+        assert sorted((r['source'], r['reason']) for r in summary['failed_labels']) == [
+            ('Name', PROBLEM_NOT_APPLIED),  # case list
+            ('Name', PROBLEM_NOT_APPLIED),  # case detail
+            ('What is the name?', PROBLEM_EMPTY),
+            ('register form 0', PROBLEM_NO_TRANSLATION),
+            ('register module', PROBLEM_NO_TRANSLATION),
+        ]
+
     def test_nothing_to_translate(self):
         app = _make_app()
         # first run translates everything ...
@@ -942,6 +1018,7 @@ class TestRunAppTranslation(TestCase):
                                       translation_format=fmt2, translator=translator2)
         assert summary['total'] == 0
         assert summary['translated'] == 0
+        assert summary['failed_labels'] == []
         assert translator2.calls == 0
 
     def _run(self, app, **translator_kwargs):
@@ -1005,6 +1082,27 @@ class TestRunAppTranslation(TestCase):
         assert row.status == AITranslation.STATUS_MANUALLY_EDITED
         # still the earlier AI translation; this run's 'FR:register module' was dropped
         assert row.translated_value == AI_TRANSLATION
+        # and it isn't a failure: the user's text is what they want
+        assert summary['failed_labels'] == []
+
+    def test_lists_the_labels_the_save_drops_after_a_conflict(self):
+        app = _make_app()
+        app.save()
+        self.addCleanup(app.delete)
+
+        def someone_renames_the_app():
+            other = get_app(app.domain, app.get_id)
+            other.name = 'Renamed'
+            other.save()
+
+        # the save that follows the conflict drops the case list and detail rows
+        with patch.object(AppTranslationFormat, '_save_module_sheet', return_value=[]):
+            summary = self._run(app, on_translate=someone_renames_the_app)
+
+        assert sorted((r['source'], r['reason']) for r in summary['failed_labels']) == [
+            ('Name', PROBLEM_NOT_APPLIED),  # case list
+            ('Name', PROBLEM_NOT_APPLIED),  # case detail
+        ]
 
     def test_records_nothing_when_nothing_is_applied(self):
         app = _make_app()
