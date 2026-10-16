@@ -23,6 +23,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
@@ -165,6 +166,18 @@ class BaseMessagingSectionView(BaseDomainView):
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
+
+
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@require_POST
+def enable_messaging(request, domain):
+    domain_obj = Domain.get_by_name(domain)
+    domain_obj.granted_messaging_access = True
+    domain_obj.save()
+    messages.success(request, _("Messaging enabled successfully."))
+    return default(request, domain)
 
 
 class ComposeMessageView(BaseMessagingSectionView):

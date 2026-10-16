@@ -1,16 +1,24 @@
 from contextlib import contextmanager
 
-from django.test import Client, TestCase
+from django.contrib.messages.storage import default_storage
+from django.core.exceptions import PermissionDenied
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 
+import pytest
+from django_prbac.models import Role
+from unmagic import fixture, use
+
+from corehq import privileges
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
 )
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.sms.views import AddDomainGatewayView
+from corehq.apps.sms.views import AddDomainGatewayView, enable_messaging
 from corehq.apps.users.models import WebUser
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -111,7 +119,7 @@ class GatewayViewTests(TestCase):
 def normal_user():
     user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, None, None)
     try:
-        yield
+        yield user
     finally:
         user.delete(DOMAIN_NAME, deleted_by=None)
 
@@ -123,7 +131,7 @@ def domain_admin():
     user.set_role(DOMAIN_NAME, "admin")
     user.save()
     try:
-        yield
+        yield user
     finally:
         user.delete(DOMAIN_NAME, deleted_by=None)
 
@@ -141,3 +149,33 @@ def superuser():
         yield
     finally:
         user.delete(DOMAIN_NAME, deleted_by=None)
+
+
+@use('db')
+@fixture
+def messaging_domain():
+    domain_obj = create_domain(DOMAIN_NAME)
+    yield domain_obj
+    domain_obj.delete()
+
+
+@use(messaging_domain)
+class TestEnableMessaging:
+
+    def test_enable_messaging(self):
+        with domain_admin() as user:
+            enable_messaging(self._request(user), DOMAIN_NAME)
+
+        assert Domain.get_by_name(DOMAIN_NAME).granted_messaging_access
+
+    def test_requires_edit_billing(self):
+        with normal_user() as user, pytest.raises(PermissionDenied):
+            enable_messaging(self._request(user), DOMAIN_NAME)
+
+    def _request(self, user):
+        request = RequestFactory().post('/')
+        request.user = user.get_django_user()
+        request.domain = DOMAIN_NAME
+        request.role = Role.objects.get(slug=privileges.OUTBOUND_SMS)
+        request._messages = default_storage(request)
+        return request
