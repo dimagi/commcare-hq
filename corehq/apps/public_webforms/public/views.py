@@ -56,7 +56,7 @@ class PublicWebformRequestView(BasePublicWebformView):
     template_name = 'public_webforms/public/webform_request.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.webform.is_open:
+        if not (self.webform.is_open and self.form.can_deliver):
             return render(
                 request,
                 'public_webforms/public/webform_closed.html',

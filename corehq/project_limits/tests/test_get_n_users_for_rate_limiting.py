@@ -1,6 +1,7 @@
 from django.test import TestCase
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -76,8 +77,7 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
         self._assert_domain_value_equals(domain, 3)
 
         subscription = Subscription.get_active_subscription_by_domain(domain)
-        subscription.account.bill_web_user = True
-        subscription.account.save()
+        generator.add_web_user_feature_rate(subscription.plan_version)
         self._assert_domain_value_equals(domain, 3 + 2)
 
     def _setup_domain(self, domain, software_plan=SoftwarePlanEdition.ADVANCED):

@@ -69,8 +69,6 @@ PASSWORD_RESET_KWARGS = {
 }
 
 urlpatterns = [
-    url(r'^chat_token/$', chat_token, name='chat_token'),
-    url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
     url(r'^serverup.txt$', server_up),
@@ -129,6 +127,8 @@ urlpatterns = [
 ]
 
 domain_specific = [
+    url(r'^chat_token/$', chat_token, name='chat_token'),
+    url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),

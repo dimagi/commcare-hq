@@ -62,6 +62,17 @@ def test_a_webform_not_accepting_requests_says_so(expires_in, is_disabled):
 
 
 @use('db', webform_domain, public_webforms_available)
+def test_an_sms_only_webform_is_closed_when_the_project_cannot_send_sms():
+    webform = create_webform(allow_email=False, allow_sms=True)
+
+    with mock.patch('corehq.apps.public_webforms.public.forms.domain_can_send_sms', return_value=False):
+        response = _get(webform.public_id)
+
+    assert response.status_code == 404
+    assert b'Requests Closed' in response.content
+
+
+@use('db', webform_domain, public_webforms_available)
 def test_an_unknown_link_is_not_found():
     response = _get(uuid4())
 

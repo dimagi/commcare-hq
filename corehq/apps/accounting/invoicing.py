@@ -499,8 +499,6 @@ def generate_line_items(invoice, subscription):
         feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
             feature_rate.feature.feature_type
         )
-        if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
-            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
