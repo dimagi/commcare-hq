@@ -156,6 +156,20 @@ class BasePublicWebformForm(forms.Form):
         alpine_data_model = {
             'expires_at': self.fields['expires_at'].initial,
         }
+        allow_sms_field = [
+            twbscrispy.InlineField('allow_sms'),
+            crispy.HTML(
+                format_html(
+                    '<div class="form-text">{}</div>',
+                    self.fields['allow_sms'].help_text,
+                ),
+            ),
+        ]
+        if self.fields['allow_sms'].disabled:
+            allow_sms_field.append(
+                crispy.HTML('{% include "public_webforms/partials/enable_messaging.html" %}'),
+            )
+
         return [
             crispy.Field('label'),
             crispy.Div(
@@ -189,13 +203,7 @@ class BasePublicWebformForm(forms.Form):
                             self.fields['allow_email'].help_text,
                         ),
                     ),
-                    twbscrispy.InlineField('allow_sms'),
-                    crispy.HTML(
-                        format_html(
-                            '<div class="form-text">{}</div>',
-                            self.fields['allow_sms'].help_text,
-                        ),
-                    ),
+                    *allow_sms_field,
                     css_class='field-control',
                 ),
                 css_class='row mb-3',
