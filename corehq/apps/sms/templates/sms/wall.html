@@ -1,17 +1,90 @@
 {% extends 'hqwebapp/bootstrap3/base_section.html' %}
 {% load i18n %}
+{% load humanize %}
 
 {% block page_content %}
-  <h2>{% trans "Request Access to Messaging Features" %}</h2>
-  <p>
-    {% blocktrans with next_plan.name as p_name %}
-      To enable messaging features, please request access by sending an email to
-      <a href="mailto:{{ ACCOUNTS_EMAIL }}">{{ ACCOUNTS_EMAIL }}</a> from your
-      work email address containing the following information:
-    {% endblocktrans %}
-  </p>
-  <ul>
-    <li>{% trans 'Your full name' %}</li>
-    <li>{% trans 'The organization you work for' %}</li>
-  </ul>
+  <div class="col-sm-9 col-md-8">
+    <h2>{% trans "Enable Messaging" %}</h2>
+    <p>
+      {% blocktrans %}
+        Messaging lets this project send and receive SMS, including one-time
+        links for public webforms, broadcasts, and conditional alerts.
+      {% endblocktrans %}
+    </p>
+
+    {% if request.couch_user.can_edit_billing %}
+      <div class="alert alert-warning">
+        <h5>
+          <strong>
+            <i class="fa fa-triangle-exclamation"></i>
+            {% trans "Turning on messaging will cost this project money." %}
+          </strong>
+        </h5>
+        <p>
+          {% blocktrans %}
+            This project is charged for every SMS it sends and receives. The
+            price of each SMS depends on the country of the phone number.
+            Charges appear on the project's monthly CommCare invoice.
+          {% endblocktrans %}
+        </p>
+        <p>
+          <a href="{% url 'public_sms_rates_view' %}" class="alert-link"
+            >{% trans "See SMS prices by country" %}</a
+          >
+        </p>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">{% trans "Who is Charged" %}</h3>
+        </div>
+        <div class="panel-body row">
+          <div class="col-xs-6">
+            <h4>{% trans "Project" %}</h4>
+            {{ domain_name }}
+          </div>
+          <div class="col-xs-6">
+            <h4>{% trans "Billing Account" %}</h4>
+            {{ billing_account }}
+          </div>
+          <div class="col-xs-6">
+            <h4>{% trans "Invoices are emailed to" %}</h4>
+            {% for contact in billing_contacts %}
+              {{ contact }}<br />
+            {% endfor %}
+          </div>
+          <div class="col-xs-6">
+            <h4>{% trans "Daily SMS limit" %}</h4>
+            {{ daily_sms_limit|intcomma }}
+          </div>
+        </div>
+      </div>
+
+      <a class="btn btn-default" href="{% url 'homepage' %}"
+        >{% trans "Go Back" %}</a
+      >
+      <button
+        class="btn btn-primary"
+        data-toggle="modal"
+        data-target="#enable-messaging"
+      >
+        {% trans "Enable Messaging" %}
+      </button>
+    {% else %}
+      <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          Messaging is currently disabled for this project space. Please contact
+          your project administrator to enable messaging.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  {% if request.couch_user.can_edit_billing %}
+    {% include "sms/partials/enable_messaging_modal.html" with domain_name=domain_name billing_account=billing_account %}
+  {% endif %}
 {% endblock %}

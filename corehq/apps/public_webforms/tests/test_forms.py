@@ -83,7 +83,7 @@ def _post_data(**kwargs):
     return {
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'allow_email': True,
         'app_id': 'app-1',
         'form_unique_id': 'form-1',
         **kwargs,
@@ -107,17 +107,14 @@ def test_expires_at_defaults_to_the_datepicker_format():
 
 
 def test_a_delivery_option_is_required():
-    form = _form(_post_data(link_choices=[]))
+    form = _form(_post_data(allow_email=False, allow_sms=False))
     assert not form.is_valid()
-    assert 'link_choices' in form.errors
 
 
 @pytest.mark.parametrize('can_send_sms', [True, False])
 def test_sms_is_offered_only_when_the_project_can_send_sms(can_send_sms):
     form = _form(can_send_sms=can_send_sms)
-    rendered = dict(form.fields['link_choices'].widget.choices)
-    assert ('allow_sms' in rendered) == can_send_sms
-    assert 'allow_email' in rendered
+    assert form.fields['allow_sms'].disabled is not can_send_sms
 
 
 @pytest.mark.parametrize('eligible_form, expected_type', [
@@ -207,19 +204,6 @@ def test_create_stores_the_selection_and_generated_endpoint():
     assert webform.is_disabled
 
 
-@use('db')
-@pytest.mark.parametrize('link_choices, allow_email, allow_sms', [
-    (['allow_email'], True, False),
-    (['allow_sms'], False, True),
-    (['allow_email', 'allow_sms'], True, True),
-])
-def test_create_maps_link_choices_to_delivery_options(link_choices, allow_email, allow_sms):
-    webform = _create_webform(link_choices=link_choices)
-
-    assert webform.allow_email == allow_email
-    assert webform.allow_sms == allow_sms
-
-
 def _webform(**kwargs):
     return PublicWebform(**{
         'id': 1,
@@ -257,7 +241,7 @@ def _edit_data(**kwargs):
     return {
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'allow_email': True,
         **kwargs,
     }
 
@@ -271,14 +255,14 @@ def test_edit_prefills():
     assert form.initial['label'] == 'Antenatal visit'
     # stored as UTC, offered back in the project's timezone
     assert form.fields['expires_at'].initial == '2026-09-01 17:00:00'
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.initial['allow_email'] is True
     assert form.initial['open_to_requests'] is True
 
 
 def test_edit_drops_a_delivery_option_the_project_can_no_longer_use():
     form = _edit_form(_webform(allow_sms=True), can_send_sms=False)
 
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.fields['allow_sms'].disabled
 
 
 def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
@@ -297,7 +281,8 @@ def test_edit_updates_the_webform():
         _edit_data(
             label='Antenatal visit, round two',
             expires_at='2026-12-01 17:00:00',
-            link_choices=['allow_sms'],
+            allow_email=False,
+            allow_sms=True,
             is_disabled=True,
         ),
         can_send_sms=True,
