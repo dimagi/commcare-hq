@@ -696,21 +696,39 @@ MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
 # https://www.w3.org/TR/xml/#charsets
 XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
+# why a translation was rejected, stored with each label a run couldn't
+# translate so the Languages page can say why
+PROBLEM_EMPTY = 'empty'
+PROBLEM_INVALID_CHARACTERS = 'invalid_characters'
+PROBLEM_OUTPUT_CHANGED = 'output_changed'
+PROBLEM_FORMATTING_CHANGED = 'formatting_changed'
+PROBLEM_LINK_CHANGED = 'link_changed'
 
 
 def is_valid_app_translation(source, translated):
-    """Check that a translation can be saved and preserves the source's
-    structure: ``<output/>`` references, HTML tags, URLs and markdown
-    markers."""
+    return translation_problem(source, translated) is None
+
+
+def translation_problem(source, translated):
+    """Why a translation can't be saved or doesn't preserve the source's
+    structure (``<output/>`` references, HTML tags, URLs and markdown
+    markers), or None if it's fine."""
     if not translated or not isinstance(translated, str):
-        return False
+        return PROBLEM_EMPTY
     if re.search(XML_INVALID_CHAR_PATTERN, translated):
-        return False
+        return PROBLEM_INVALID_CHARACTERS
 
     source_tags = re.findall(HTML_TAG_PATTERN, source)
     translated_tags = re.findall(HTML_TAG_PATTERN, translated)
+    # <output .../> references must survive byte-for-byte, attributes
+    # included (a changed value breaks the form), but word order
+    # differs between languages, so they may move
+    source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
+    translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
+    if source_outputs != translated_outputs:
+        return PROBLEM_OUTPUT_CHANGED
     if len(source_tags) != len(translated_tags):
-        return False
+        return PROBLEM_FORMATTING_CHANGED
     if source_tags:
         # tags other than <output/> must keep their names, order and
         # open/close structure; attributes are not compared here
@@ -719,23 +737,16 @@ def is_valid_app_translation(source, translated):
                     for tag in tags
                     if re.match(r'<(/?)(\w+)', tag) and not tag.startswith('<output')]
         if tag_info(source_tags) != tag_info(translated_tags):
-            return False
-        # <output .../> references must survive byte-for-byte, attributes
-        # included (a changed value breaks the form), but word order
-        # differs between languages, so they may move
-        source_outputs = Counter(t for t in source_tags if t.startswith('<output'))
-        translated_outputs = Counter(t for t in translated_tags if t.startswith('<output'))
-        if source_outputs != translated_outputs:
-            return False
+            return PROBLEM_FORMATTING_CHANGED
 
     source_urls = re.findall(URL_PATTERN, source)
     if source_urls:
         if set(source_urls) != set(re.findall(URL_PATTERN, translated)):
-            return False
+            return PROBLEM_LINK_CHANGED
 
     if _markdown_signature(source) != _markdown_signature(translated):
-        return False
-    return True
+        return PROBLEM_FORMATTING_CHANGED
+    return None
 
 
 def _markdown_signature(text):

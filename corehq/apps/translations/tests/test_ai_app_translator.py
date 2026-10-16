@@ -14,6 +14,11 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.translations.app_translations import ai_translator
 from corehq.apps.translations.app_translations.ai_translator import (
+    PROBLEM_EMPTY,
+    PROBLEM_FORMATTING_CHANGED,
+    PROBLEM_INVALID_CHARACTERS,
+    PROBLEM_LINK_CHANGED,
+    PROBLEM_OUTPUT_CHANGED,
     AppTranslationFormat,
     ChangedAITranslations,
     _apply_translations,
@@ -23,69 +28,73 @@ from corehq.apps.translations.app_translations.ai_translator import (
     _saved_units,
     _string_key,
     find_changed_ai_translations,
-    is_valid_app_translation,
     prepare_translation_format,
     run_app_translation,
+    translation_problem,
 )
 from corehq.apps.translations.const import MODE_FILL_MISSING, MODE_RETRANSLATE
 from corehq.apps.translations.exceptions import AppChangedDuringTranslation
 from corehq.apps.translations.models import AITranslation, AITranslationUsage
 
 
-@pytest.mark.parametrize("source, translated, valid", [
-    ("Name", "Nom", True),
-    ("Name", "", False),                      # empty output
-    ("Name", None, False),                    # non-string output
+@pytest.mark.parametrize("source, translated, problem", [
+    ("Name", "Nom", None),
+    ("Name", "", PROBLEM_EMPTY),
+    ("Name", None, PROBLEM_EMPTY),            # non-string output
     # characters XML can't hold would fail the app's save
-    ("Name", "N\x0bom", False),
-    ("Name", "N\x00om", False),
-    ("Name", "N\ufffeom", False),
-    ("Name", "Nom\tet\nprénom\r", True),
-    ("Name", "Nom 😀", True),
+    ("Name", "N\x0bom", PROBLEM_INVALID_CHARACTERS),
+    ("Name", "N\x00om", PROBLEM_INVALID_CHARACTERS),
+    ("Name", "N\ufffeom", PROBLEM_INVALID_CHARACTERS),
+    ("Name", "Nom\tet\nprénom\r", None),
+    ("Name", "Nom 😀", None),
     # <output> tags must survive verbatim (count + attrs)
-    ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/name"/>', True),
-    ('Hello <output value="/data/name"/>', 'Bonjour', False),
-    ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/nom"/>', False),
+    ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/name"/>', None),
+    ('Hello <output value="/data/name"/>', 'Bonjour', PROBLEM_OUTPUT_CHANGED),
+    ('Hello <output value="/data/name"/>', 'Bonjour <output value="/data/nom"/>', PROBLEM_OUTPUT_CHANGED),
     # word order differs between languages, so outputs may move, but not repeat
     ('<output value="/data/a"/> on <output value="/data/b"/>',
-     '<output value="/data/b"/>的<output value="/data/a"/>', True),
-    ('<b>Seen</b> <output value="/data/a"/>', '<output value="/data/a"/> <b>Vu</b>', True),
+     '<output value="/data/b"/>的<output value="/data/a"/>', None),
+    ('<b>Seen</b> <output value="/data/a"/>', '<output value="/data/a"/> <b>Vu</b>', None),
     ('<output value="/data/a"/> on <output value="/data/b"/>',
-     '<output value="/data/a"/>的<output value="/data/a"/>', False),
+     '<output value="/data/a"/>的<output value="/data/a"/>', PROBLEM_OUTPUT_CHANGED),
+    # a dropped or added output is reported as one, though it also
+    # changes the tag count
+    ('<b>Seen</b> <output value="/data/a"/>', '<b>Vu</b>', PROBLEM_OUTPUT_CHANGED),
+    ('Hello', 'Bonjour <output value="/data/name"/>', PROBLEM_OUTPUT_CHANGED),
     # HTML tag sequence preserved
-    ("<b>Save</b>", "<b>Enregistrer</b>", True),
-    ("<b>Save</b>", "Enregistrer", False),
+    ("<b>Save</b>", "<b>Enregistrer</b>", None),
+    ("<b>Save</b>", "Enregistrer", PROBLEM_FORMATTING_CHANGED),
     # URLs preserved
-    ("See https://example.com/help", "Voir https://example.com/help", True),
-    ("See https://example.com/help", "Voir https://exemple.fr/aide", False),
+    ("See https://example.com/help", "Voir https://example.com/help", None),
+    ("See https://example.com/help", "Voir https://exemple.fr/aide", PROBLEM_LINK_CHANGED),
     # %/{} have no runtime meaning in app content — free to change
-    ("Hi {name}", "Salut {nom}", True),
-    ("75% complete", "75 % terminé", True),
+    ("Hi {name}", "Salut {nom}", None),
+    ("75% complete", "75 % terminé", None),
     # markdown renders on mobile: marker counts must survive
-    ("**Warning** do not proceed", "**Attention** ne continuez pas", True),
-    ("**Warning** do not proceed", "Attention ne continuez pas", False),
+    ("**Warning** do not proceed", "**Attention** ne continuez pas", None),
+    ("**Warning** do not proceed", "Attention ne continuez pas", PROBLEM_FORMATTING_CHANGED),
     # fill-in-the-blank runs may be resized but not dropped
-    ("Name: ____", "Nom : ______", True),
-    ("Name: ____", "Nom :", False),
+    ("Name: ____", "Nom : ______", None),
+    ("Name: ____", "Nom :", PROBLEM_FORMATTING_CHANGED),
     # list structure must keep the same number of items
-    ("- Wash hands\n- Boil water", "- Lavez les mains\n- Faites bouillir l'eau", True),
-    ("- Wash hands\n- Boil water", "Lavez les mains et faites bouillir l'eau", False),
-    ("1. First\n2. Second", "1. Premier\n2. Deuxième", True),
-    ("1. First\n2. Second", "Premier puis deuxième", False),
+    ("- Wash hands\n- Boil water", "- Lavez les mains\n- Faites bouillir l'eau", None),
+    ("- Wash hands\n- Boil water", "Lavez les mains et faites bouillir l'eau", PROBLEM_FORMATTING_CHANGED),
+    ("1. First\n2. Second", "1. Premier\n2. Deuxième", None),
+    ("1. First\n2. Second", "Premier puis deuxième", PROBLEM_FORMATTING_CHANGED),
     # headings
-    ("# Instructions", "# Instructions traduites", True),
-    ("# Instructions", "Instructions traduites", False),
+    ("# Instructions", "# Instructions traduites", None),
+    ("# Instructions", "Instructions traduites", PROBLEM_FORMATTING_CHANGED),
     # link syntax survives with the label translated
-    ("See [help](https://example.com)", "Voir [aide](https://example.com)", True),
-    ("See [help](https://example.com)", "Voir aide : https://example.com", False),
+    ("See [help](https://example.com)", "Voir [aide](https://example.com)", None),
+    ("See [help](https://example.com)", "Voir aide : https://example.com", PROBLEM_FORMATTING_CHANGED),
     # punctuation right after a URL is not part of it and must not fail it
-    ("Go to (https://example.com/help)", "Aller à https://example.com/help !", True),
+    ("Go to (https://example.com/help)", "Aller à https://example.com/help !", None),
     # natural-language asterisks/hyphens that are not markdown never trip it
-    ("Required *", "Requis", True),
-    ("Follow-up visit", "Visite de suivi", True),
+    ("Required *", "Requis", None),
+    ("Follow-up visit", "Visite de suivi", None),
 ])
-def test_is_valid_app_translation(source, translated, valid):
-    assert is_valid_app_translation(source, translated) is valid
+def test_translation_problem(source, translated, problem):
+    assert translation_problem(source, translated) == problem
 
 
 def _make_app():
