@@ -158,16 +158,17 @@ def _record_ai_translation(app, string_key, source, translated, lang='fra'):
 
 AI_SOURCE = 'register module'
 AI_TRANSLATION = 'module inscription'
-UNCHANGED = ChangedAITranslations(manually_edited=set(), stale=set())
-EDITED = ChangedAITranslations(manually_edited={MODULE_NAME_KEY}, stale=set())
-STALE = ChangedAITranslations(manually_edited=set(), stale={MODULE_NAME_KEY})
+NO_AI_TRANSLATIONS = ChangedAITranslations(manually_edited=set(), stale=set(), previous=set())
+PREVIOUS = ChangedAITranslations(manually_edited=set(), stale=set(), previous={MODULE_NAME_KEY})
+EDITED = ChangedAITranslations(manually_edited={MODULE_NAME_KEY}, stale=set(), previous=set())
+STALE = ChangedAITranslations(manually_edited=set(), stale={MODULE_NAME_KEY}, previous=set())
 
 
 @pytest.mark.parametrize("app_source, app_translation, expected", [
-    pytest.param(AI_SOURCE, AI_TRANSLATION, UNCHANGED, id='unchanged'),
+    pytest.param(AI_SOURCE, AI_TRANSLATION, PREVIOUS, id='previous'),
     pytest.param(AI_SOURCE, 'module enregistrement', EDITED, id='edited'),
     # missing again, so fill_missing translates it like any other
-    pytest.param(AI_SOURCE, '', UNCHANGED, id='cleared'),
+    pytest.param(AI_SOURCE, '', NO_AI_TRANSLATIONS, id='cleared'),
     pytest.param('enrol module', AI_TRANSLATION, STALE, id='source-changed'),
     # the edit wins
     pytest.param('enrol module', 'module enregistrement', EDITED, id='both-changed'),
@@ -189,7 +190,7 @@ def test_find_changed_ai_translations_ignores_strings_gone_from_app():
     _record_ai_translation(
         app, '["deleted_module","name",1]', AI_SOURCE, AI_TRANSLATION)
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == NO_AI_TRANSLATIONS
 
 
 @use('db')
@@ -201,7 +202,7 @@ def test_find_changed_ai_translations_ignores_other_languages():
         app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION, lang='hin')
     app.get_module(0).name['fra'] = 'module enregistrement'
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == NO_AI_TRANSLATIONS
 
 
 def test_saved_units_keeps_result_the_ai_returned_unchanged():
@@ -813,9 +814,10 @@ class TestRecordRun(TestCase):
         }
         usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert usage.total_app_strings_ai_translated == 2
-        # the next run sees them as untouched AI translations
+        # the next run sees them as previous AI translations
         assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
-            ChangedAITranslations(manually_edited=set(), stale=set()))
+            ChangedAITranslations(
+                manually_edited=set(), stale=set(), previous={MODULE_NAME_KEY, QUESTION_KEY}))
 
     def test_unapplied_result_keeps_the_string_stale(self):
         app = _make_app()

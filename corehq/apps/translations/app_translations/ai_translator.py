@@ -175,18 +175,20 @@ def _provenance_rows(fmt):
 
 @dataclass
 class ChangedAITranslations:
-    """Keys of AI-translated strings that changed since the AI wrote them."""
+    """Keys of earlier AI translations, by what has happened to them since."""
     manually_edited: set
     stale: set
+    previous: set
 
 
 def find_changed_ai_translations(fmt):
     """
-    Find translations a user has manually edited, and those whose
-    source text has since changed. A cleared translation is in neither
-    set, so fill_missing translates it again.
+    Group earlier runs' AI translations by what has happened since: a
+    user edited them, their source text changed, or neither. A cleared
+    translation is in none of these sets, so fill_missing translates it
+    again.
     """
-    changed = ChangedAITranslations(manually_edited=set(), stale=set())
+    changed = ChangedAITranslations(manually_edited=set(), stale=set(), previous=set())
     rows = list(
         _provenance_rows(fmt).values_list('string_key', 'source_value', 'translated_value'))
     if not rows:
@@ -200,6 +202,8 @@ def find_changed_ai_translations(fmt):
             changed.manually_edited.add(string_key)
         elif unit.source_text != source_value:
             changed.stale.add(string_key)
+        else:
+            changed.previous.add(string_key)
     return changed
 
 
