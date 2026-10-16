@@ -245,19 +245,23 @@ def test_refresh_provenance_statuses():
 
 
 @use('db')
-def test_prepare_translation_format_finds_edited_and_stale_strings():
+def test_prepare_translation_format_finds_edited_stale_and_previous_strings():
     app = _make_app()
     app._id = 'test-app-id'
     form = app.get_module(0).get_form(0)
+    header = app.get_module(0).case_details.short.columns[0].header
     _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
     _record_ai_translation(app, FORM_NAME_KEY, form.name['en'], 'formulaire')
+    _record_ai_translation(app, CASE_LIST_KEY, 'Name', 'Nom')
     app.get_module(0).name['fra'] = 'mon module'  # a user edited the AI translation
     form.name.update({'en': 'enrol form', 'fra': 'formulaire'})  # its source changed
+    header['fra'] = 'Nom'  # still as the AI wrote it
 
     fmt = prepare_translation_format(app, 'fra', MODE_FILL_MISSING)
 
     assert fmt.manually_edited_keys == {MODULE_NAME_KEY}
     assert fmt.stale_keys == {FORM_NAME_KEY}
+    assert fmt.previous_ai_keys == {CASE_LIST_KEY}
 
 
 def test_string_keys_use_unique_ids_not_sheet_names():
@@ -855,12 +859,13 @@ class TestRecordRun(TestCase):
 
 
 class _FakeTranslator:
-    """Translates every batch by prefixing 'FR:', failing when asked.
+    """Translates every batch by prefixing ``prefix``, failing when asked.
     ``on_translate`` runs before each batch."""
     model = 'fake-model'
 
-    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None):
+    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None, prefix='FR:'):
         self.fmt = fmt
+        self.prefix = prefix
         self.fail_batches = set(fail_batches)
         self.fail_all = fail_all
         self.on_translate = on_translate
@@ -873,7 +878,7 @@ class _FakeTranslator:
         if self.fail_all or self.calls in self.fail_batches:
             raise Exception('LLM exploded')
         return self.fmt.parse_output(json.dumps(
-            {uid: f'FR:{unit.source_text}' for uid, unit in batch.items()}))
+            {uid: f'{self.prefix}{unit.source_text}' for uid, unit in batch.items()}))
 
 
 class TestRunAppTranslation(TestCase):
@@ -919,6 +924,22 @@ class TestRunAppTranslation(TestCase):
         assert summary['total'] == 0
         assert summary['translated'] == 0
         assert translator2.calls == 0
+
+    def test_labels_the_ai_left_unchanged_are_not_sent_again(self):
+        app = _make_app()
+
+        first_run = self._run_with_ai_returning_the_english(app)
+        assert first_run['translated'] == len(ALL_STRING_KEYS)
+        assert app.get_module(0).name['fra'] == 'register module'
+
+        second_run = self._run_with_ai_returning_the_english(app)
+        assert second_run['total'] == 0
+
+    def _run_with_ai_returning_the_english(self, app):
+        fmt = prepare_translation_format(app, 'fra', MODE_FILL_MISSING)
+        return run_app_translation(
+            app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+            translator=_FakeTranslator(fmt, prefix=''), chunk_size=50)
 
     def _run(self, app, **translator_kwargs):
         return run_app_translation(

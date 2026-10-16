@@ -157,14 +157,16 @@ def run_app_translation(app, target_lang, mode, provider=None, model=None,
 
 
 def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
-    """A format for ``app`` that skips AI translations a user has edited
-    and retranslates those whose source text has changed."""
+    """A format for ``app`` that skips AI translations a user has edited,
+    retranslates those whose source text has changed, and keeps those
+    the AI translated as an exact copy of the source."""
     fmt = AppTranslationFormat(
         app, target_lang, mode=mode,
         treat_default_copies_as_missing=treat_default_copies_as_missing)
     changed_strings = find_changed_ai_translations(fmt)
     fmt.manually_edited_keys = changed_strings.manually_edited
     fmt.stale_keys = changed_strings.stale
+    fmt.previous_ai_keys = changed_strings.previous
     return fmt
 
 
