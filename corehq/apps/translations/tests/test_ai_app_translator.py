@@ -383,6 +383,14 @@ def test_treat_default_copies_as_missing():
     assert 'register module' in {u.source_text for u in fmt2.load_input().values()}
 
 
+def test_default_copies_the_ai_wrote_are_not_missing():
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'register module'
+    fmt = AppTranslationFormat(app, 'fra', previous_ai_keys={MODULE_NAME_KEY})
+
+    assert MODULE_NAME_KEY not in {u.string_key for u in fmt.load_input().values()}
+
+
 def test_parse_output_buffers_valid_and_skips_invalid():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra')
@@ -400,7 +408,7 @@ def test_for_app_copies_settings_not_state():
     app = _make_app()
     fmt = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
-        stale_keys={'s'}, treat_default_copies_as_missing=False)
+        stale_keys={'s'}, previous_ai_keys={'a'}, treat_default_copies_as_missing=False)
     fmt.load_input()
     fmt.results = {'0': 'traduction'}
     other_app = _make_app()
@@ -411,6 +419,7 @@ def test_for_app_copies_settings_not_state():
     assert (copy.target_lang, copy.mode) == ('fra', MODE_RETRANSLATE)
     assert copy.manually_edited_keys == {'k'}
     assert copy.stale_keys == {'s'}
+    assert copy.previous_ai_keys == {'a'}
     assert copy.treat_default_copies_as_missing is False
     assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
 
