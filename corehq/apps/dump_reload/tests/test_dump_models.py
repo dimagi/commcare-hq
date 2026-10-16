@@ -48,6 +48,7 @@ IGNORE_MODELS = {
     "analytics.PartnerAnalyticsReport",
     "api.ApiUser",
     "app_manager.ExchangeApplication",
+    'app_manager.TemplateAppSector',
     "auth.Group",
     "auth.Permission",
     "blobs.BlobMigrationState",
