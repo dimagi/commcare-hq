@@ -17,6 +17,7 @@ from corehq.apps.hqwebapp.tables.pagination import (
     SelectablePaginatedTableView,
 )
 from corehq.apps.public_webforms.forms import (
+    INELIGIBLE_FORM_MESSAGE,
     CreatePublicWebformForm,
     EditPublicWebformForm,
     PublicWebformFilterForm,
@@ -122,6 +123,11 @@ class CreatePublicWebformView(BasePublicWebformsView):
     template_name = 'public_webforms/create.html'
     page_title = _("New Public Webform")
 
+    def get(self, request, *args, **kwargs):
+        if self.form.has_ineligible_prefill:
+            messages.warning(request, INELIGIBLE_FORM_MESSAGE)
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
@@ -141,9 +147,13 @@ class CreatePublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
-        data = self.request.POST if self.request.method == 'POST' else None
-        return CreatePublicWebformForm(
-            self.domain, self.domain_object.get_default_timezone(), data)
+        timezone = self.domain_object.get_default_timezone()
+        if self.request.method == 'POST':
+            return CreatePublicWebformForm(self.domain, timezone, self.request.POST)
+        return CreatePublicWebformForm(self.domain, timezone, initial={
+            'app_id': self.request.GET.get('app_id'),
+            'form_unique_id': self.request.GET.get('form_unique_id'),
+        })
 
 
 class EditPublicWebformView(BasePublicWebformsView):
