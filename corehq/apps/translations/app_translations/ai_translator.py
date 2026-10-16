@@ -351,6 +351,7 @@ def _apply_translations(fmt):
         try:
             errors = fmt.save_output()
             saved_app_strings, saved_units = _read_saved_app(fmt)
+            fmt.drop_unapplied_results(saved_units)
             return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors,
                                        saved_app_strings=saved_app_strings,
                                        saved_units=saved_units)
@@ -387,7 +388,7 @@ class AppTranslationFormat(TranslationFormat):
         self.units_by_id = {}
         self.units_by_sheet = {}
         self.results = {}
-        self.skipped = {}  # unit_id -> why its translation was rejected
+        self.skipped = {}  # unit_id -> why its translation was rejected or not applied
 
     def for_app(self, app):
         """A new format with these settings over another copy of the app.
@@ -567,6 +568,16 @@ class AppTranslationFormat(TranslationFormat):
             row[f'default_{self.target_lang}'] = translated
         return row
 
+    def drop_unapplied_results(self, saved_units):
+        """Move the results the save didn't apply to ``skipped``. The upload
+        can reject or drop a row without an error message, and those
+        mustn't be counted as translated."""
+        saved_keys = {unit.string_key for unit in saved_units}
+        for unit_id in list(self.results):
+            if self.units_by_id[unit_id].string_key not in saved_keys:
+                del self.results[unit_id]
+                self.skipped[unit_id] = PROBLEM_NOT_APPLIED
+
     def applied_units(self):
         return {
             uid: (self.units_by_id[uid], translated)
@@ -722,8 +733,9 @@ MARKDOWN_LINK_PATTERN = r'\[[^\]]*\]\([^)]*\)'
 # https://www.w3.org/TR/xml/#charsets
 XML_INVALID_CHAR_PATTERN = r'[^\t\n\r\x20-\ud7ff\ue000-\ufffd\U00010000-\U0010ffff]'
 
-# why a translation was rejected, stored with each label a run couldn't
+# why a label wasn't translated, stored with each label a run couldn't
 # translate so the Languages page can say why
+PROBLEM_NOT_APPLIED = 'not_applied'
 PROBLEM_EMPTY = 'empty'
 PROBLEM_INVALID_CHARACTERS = 'invalid_characters'
 PROBLEM_OUTPUT_CHANGED = 'output_changed'

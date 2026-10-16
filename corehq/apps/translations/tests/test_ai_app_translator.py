@@ -18,6 +18,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
     PROBLEM_FORMATTING_CHANGED,
     PROBLEM_INVALID_CHARACTERS,
     PROBLEM_LINK_CHANGED,
+    PROBLEM_NOT_APPLIED,
     PROBLEM_OUTPUT_CHANGED,
     AppTranslationFormat,
     AppliedTranslations,
@@ -705,6 +706,20 @@ class TestApplyTranslations(TestCase):
         assert applied.changed == 0
         assert applied.translated == len(fmt.results)
         assert self._current(app).get_module(0).name['fra'] == 'FR:register module'
+
+    def test_results_the_save_drops_are_skipped_not_counted(self):
+        app = self._saved_app()
+        fmt = self._translated_fmt(app)
+
+        # the upload drops the case list and detail rows without an error
+        with patch.object(fmt, '_save_module_sheet', return_value=[]):
+            applied = _apply_translations(fmt)
+
+        assert {fmt.units_by_id[uid].string_key: why for uid, why in fmt.skipped.items()} == {
+            CASE_LIST_KEY: PROBLEM_NOT_APPLIED,
+            CASE_DETAIL_KEY: PROBLEM_NOT_APPLIED,
+        }
+        assert applied.translated == len(ALL_STRING_KEYS) - 2
 
     def test_conflict_with_unrelated_edit_keeps_both(self):
         app = self._saved_app()
