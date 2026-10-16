@@ -36,6 +36,7 @@ from corehq.apps.project_db.user_sql import (
     UnsupportedSQL,
     UserSQL,
     UserSQLProgrammingError,
+    UserSQLTimeout,
     _bind_literal,
     _set_timezone,
     translate,
@@ -676,11 +677,11 @@ def test_queries_have_a_statement_timeout():
 
 @use('db', project_db_table('test-query-timeout', 'patient', {'name': 'plain'}))
 @patch('corehq.apps.project_db.user_sql.STATEMENT_TIMEOUT', '20ms')
-def test_a_timeout_is_reported_as_a_programming_error():
+def test_a_timeout_is_reported():
     user_sql = UserSQL('test-query-timeout', 'SELECT case_id FROM patient')
     # Can't do this in UserSQL, so just hardcode it for the test
     user_sql.query = select([func.pg_sleep(1)])
-    with pytest.raises(UserSQLProgrammingError) as error:
+    with pytest.raises(UserSQLTimeout) as error:
         user_sql.run({})
     assert 'query cancelled' in error.value.msg
 
