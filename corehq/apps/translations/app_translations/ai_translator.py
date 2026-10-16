@@ -459,11 +459,16 @@ class AppTranslationFormat(TranslationFormat):
         return f'{header}\n{payload}'
 
     def parse_output(self, output_data):
+        allowed_ids = getattr(self, '_current_batch_ids', None) or set(self.units_by_id)
         try:
             llm_output = json.loads(output_data)
         except (json.JSONDecodeError, TypeError):
+            logger.warning(
+                "AI translation answer isn't JSON, so its batch wasn't translated: "
+                "domain=%s app_id=%s lang=%s units=%d output=%r",
+                self.app.domain, self.app.get_id, self.target_lang,
+                len(allowed_ids), str(output_data)[:200])
             return {}
-        allowed_ids = getattr(self, '_current_batch_ids', None) or set(self.units_by_id)
         valid = {}
         for unit_id, translated in llm_output.items():
             if unit_id not in allowed_ids:
@@ -481,6 +486,13 @@ class AppTranslationFormat(TranslationFormat):
                     "domain=%s app_id=%s lang=%s key=%s source=%r translated=%r",
                     self.app.domain, self.app.get_id, self.target_lang,
                     unit.string_key, unit.source_text[:200], str(translated)[:200])
+        missing = allowed_ids - set(llm_output)
+        if missing:
+            logger.warning(
+                "AI translation answer left out some of its batch: "
+                "domain=%s app_id=%s lang=%s keys=%r",
+                self.app.domain, self.app.get_id, self.target_lang,
+                sorted(self.units_by_id[uid].string_key for uid in missing)[:20])
         self.results.update(valid)
         return valid
 
