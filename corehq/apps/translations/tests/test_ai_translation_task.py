@@ -8,6 +8,9 @@ from django.test import TestCase
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.celery.tests.utils import run_with_lock_patch
+from corehq.apps.translations.app_translations.ai_failed_labels import (
+    get_failed_labels,
+)
 from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
@@ -25,6 +28,7 @@ from corehq.apps.translations.tasks import (
     run_message,
     translate_app_task,
 )
+from corehq.blobs.tests.fixtures import blob_db
 from corehq.tests.pytest_plugins.patches import suspend
 
 TASKS_PATH = 'corehq.apps.translations.tasks'
@@ -77,6 +81,7 @@ def test_queue_app_translation_records_a_failure_to_queue():
 class TestTranslateAppTask(TestCase):
 
     def setUp(self):
+        blob_db()
         self.app = AppFactory(build_version='2.40.0').app
         self.app.save()
         self.addCleanup(self.app.delete)
@@ -87,7 +92,6 @@ class TestTranslateAppTask(TestCase):
         self.addCleanup(enabled.stop)
 
     def test_successful_run(self):
-        summary = _summary(translated=7, skipped=3)
         states_seen = []
 
         def fake_run_app_translation(app, target_lang, mode, progress_callback,
@@ -99,7 +103,7 @@ class TestTranslateAppTask(TestCase):
             states_seen.append(self.status.get()['state'])
             progress_callback(2, 2)
             states_seen.append(self.status.get()['state'])
-            return summary
+            return _summary(translated=7, skipped=3)
 
         with patch(f'{TASKS_PATH}.run_app_translation', fake_run_app_translation):
             self._run_task()
@@ -108,7 +112,38 @@ class TestTranslateAppTask(TestCase):
         status = self.status.get()
         assert status['state'] == DONE
         assert status['message_code'] == MANY_SKIPPED
-        assert summary.items() <= status.items()
+        # the summary is kept in the status, with the list's count in its place
+        assert (status['total'], status['translated'], status['skipped']) == (10, 7, 3)
+        assert status['failed_label_count'] == 0
+        assert 'failed_labels' not in status
+
+    def test_failed_labels_are_kept_out_of_the_status(self):
+        record = {'reason': 'empty', 'source': 'Name', 'type': 'menu', 'unique_id': 'module-id'}
+        summary = {**_summary(translated=9), 'failed_labels': [record]}
+
+        with patch(f'{TASKS_PATH}.run_app_translation', return_value=summary):
+            self._run_task()
+
+        status = self.status.get()
+        assert 'failed_labels' not in status
+        assert status['failed_label_count'] == 1
+        assert get_failed_labels(self.app.get_id, 'fra') == [record]
+
+    def test_failing_to_save_the_list_doesnt_fail_the_run(self):
+        record = {'reason': 'empty', 'source': 'Name', 'type': 'menu', 'unique_id': 'module-id'}
+        summary = {**_summary(translated=9), 'failed_labels': [record]}
+
+        with (
+            patch(f'{TASKS_PATH}.run_app_translation', return_value=summary),
+            patch(f'{TASKS_PATH}.save_failed_labels', side_effect=Exception('S3 is down')),
+            patch(f'{TASKS_PATH}.notify_exception') as notify_exception,
+        ):
+            self._run_task()
+
+        assert notify_exception.called
+        status = self.status.get()
+        assert status['state'] == DONE
+        assert status['failed_label_count'] == 1
 
     def test_no_skip_warning_for_a_small_run(self):
         with patch(f'{TASKS_PATH}.run_app_translation',
@@ -203,4 +238,5 @@ def _summary(total=10, translated=0, skipped=0, changed=0):
         'failed': total - translated - skipped - changed,
         'app_version': 2,
         'errors': [],
+        'failed_labels': [],
     }

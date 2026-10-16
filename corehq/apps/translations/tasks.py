@@ -7,6 +7,9 @@ from django.utils.translation import gettext as _
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.celery import serial_task
 from corehq.apps.celery.locking import CouldNotAcquireLockError
+from corehq.apps.translations.app_translations.ai_failed_labels import (
+    save_failed_labels,
+)
 from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
@@ -78,6 +81,16 @@ def translate_app_task(domain, app_id, target_lang, mode):
             'domain': domain, 'app_id': app_id, 'target_lang': target_lang})
         status.finish(AITranslationStatus.STATE_ERROR, message_code=FAILED)
         return
+    # the status keeps only the count: the page polls it, and fetches the
+    # list itself when someone asks to see it
+    failed_labels = summary.pop('failed_labels')
+    try:
+        save_failed_labels(domain, app_id, target_lang, failed_labels)
+    except Exception:
+        # the translations are saved; losing their list mustn't fail the run
+        notify_exception(None, 'Saving AI translation failed labels failed', details={
+            'domain': domain, 'app_id': app_id, 'target_lang': target_lang})
+    summary['failed_label_count'] = len(failed_labels)
     state, message_code = _final_state(summary)
     status.finish(state, summary=summary, message_code=message_code)
 
