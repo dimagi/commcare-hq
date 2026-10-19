@@ -147,7 +147,9 @@ def _final_state(summary):
     total = summary['total']
     if not total:
         return AITranslationStatus.STATE_DONE, None
-    if summary['failed'] == total:
+    # labels dropped because the app changed under them aren't failures:
+    # the next run translates them
+    if not summary['translated'] and not summary['changed']:
         return AITranslationStatus.STATE_ERROR, NO_STRINGS_TRANSLATED
 
     skipped_rate = summary['skipped'] / total

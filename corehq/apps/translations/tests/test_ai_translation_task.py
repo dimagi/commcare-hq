@@ -22,8 +22,10 @@ from corehq.apps.translations.tasks import (
     FAILED,
     MANY_SKIPPED,
     NO_LONGER_AVAILABLE,
+    NO_STRINGS_TRANSLATED,
     NOT_QUEUED,
     WAITED_TOO_LONG,
+    _final_state,
     queue_app_translation,
     run_message,
     translate_app_task,
@@ -147,7 +149,7 @@ class TestTranslateAppTask(TestCase):
 
     def test_no_skip_warning_for_a_small_run(self):
         with patch(f'{TASKS_PATH}.run_app_translation',
-                   return_value=_summary(total=1, skipped=1)):
+                   return_value=_summary(total=2, translated=1, skipped=1)):
             self._run_task()
 
         status = self.status.get()
@@ -218,6 +220,18 @@ class TestTranslateAppTask(TestCase):
         status = self.status.get()
         assert status['state'] == ERROR
         assert status['message_code'] == message_code
+
+
+@pytest.mark.parametrize('summary, final_state', [
+    pytest.param(dict(total=0), (DONE, None), id='nothing-to-translate'),
+    pytest.param(dict(translated=9, skipped=1), (DONE, None), id='some-translated'),
+    pytest.param(dict(), (ERROR, NO_STRINGS_TRANSLATED), id='every-label-failed'),
+    pytest.param(dict(skipped=10), (ERROR, NO_STRINGS_TRANSLATED), id='every-translation-rejected'),
+    # the next run translates labels dropped because the app changed
+    pytest.param(dict(skipped=1, changed=9), (DONE, None), id='rest-changed-during-the-run'),
+])
+def test_final_state(summary, final_state):
+    assert _final_state(_summary(**summary)) == final_state
 
 
 def test_run_message():
