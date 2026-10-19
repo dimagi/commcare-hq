@@ -1,7 +1,12 @@
+from unittest.mock import patch
+
+import pytest
 from unmagic import use
 
+from corehq.apps.public_webforms import utils
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
+    build_app,
     saved_app,
     webform_domain,
 )
@@ -51,3 +56,53 @@ def test_a_deleted_app_is_not_live():
     app.save()
 
     assert not is_app_live(DOMAIN, app._id)
+
+
+def _patch_released_app(app, is_app_live=True):
+    """Serve ``app`` as the latest released build of any app id."""
+    return patch.multiple(
+        utils,
+        is_app_live=lambda domain, app_id: is_app_live,
+        get_latest_released_app=lambda domain, app_id: app,
+    )
+
+
+@pytest.mark.parametrize('form_id_attr', ['survey_form_id', 'registration_form_id'])
+def test_eligible_form_resolves_selection(form_id_attr):
+    data = build_app()
+    with _patch_released_app(data.app):
+        form = utils.get_public_webform_eligible_form(
+            data.domain, 'app-1', getattr(data, form_id_attr))
+    assert form is not None
+    assert form.unique_id == getattr(data, form_id_attr)
+
+
+@pytest.mark.parametrize('form_id_or_attr', [
+    'followup_form_id',
+    'advanced_form_id',
+    'missing-form',
+], ids=['requires-case', 'advanced-menu', 'not-in-app'])
+def test_eligible_form_rejects_invalid_selection(form_id_or_attr):
+    data = build_app()
+    # Attribute names resolve to a real form id; anything else is used as-is
+    # (a form id that doesn't exist in the released build).
+    form_unique_id = getattr(data, form_id_or_attr, form_id_or_attr)
+    with _patch_released_app(data.app):
+        form = utils.get_public_webform_eligible_form(
+            data.domain, 'app-1', form_unique_id)
+    assert form is None
+
+
+def test_eligible_form_rejects_app_without_released_build():
+    with _patch_released_app(None):
+        form = utils.get_public_webform_eligible_form(
+            'pwf-test', 'unreleased-app', 'any-form')
+    assert form is None
+
+
+def test_eligible_form_rejects_deleted_app():
+    data = build_app()
+    with _patch_released_app(data.app, is_app_live=False):
+        form = utils.get_public_webform_eligible_form(
+            data.domain, 'app-1', data.survey_form_id)
+    assert form is None

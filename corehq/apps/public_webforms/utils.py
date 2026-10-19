@@ -1,6 +1,10 @@
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_ids_in_domain,
+    get_latest_released_app,
+)
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.utils import is_domain_active
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import HqPermissions
@@ -30,3 +34,18 @@ def is_app_live(domain, app_id):
 
 def get_live_app_ids(domain):
     return set(get_app_ids_in_domain(domain))
+
+
+def get_public_webform_eligible_form(domain, app_id, form_unique_id):
+    if not is_app_live(domain, app_id):
+        return None
+    app = get_latest_released_app(domain, app_id)
+    if app is None:
+        return None
+    try:
+        form = app.get_form(form_unique_id)
+    except FormNotFoundException:
+        return None
+    if form.get_module().module_type != 'basic' or form.requires_case():
+        return None
+    return form

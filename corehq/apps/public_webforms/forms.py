@@ -19,7 +19,6 @@ from corehq.apps.public_webforms.app_builds import (
 )
 from corehq.apps.public_webforms.form_choices import (
     get_public_webform_choices,
-    get_public_webform_eligible_form,
     get_public_webform_type,
 )
 from corehq.apps.public_webforms.form_paths import (
@@ -30,6 +29,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
 )
+from corehq.apps.public_webforms.utils import get_public_webform_eligible_form
 from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
