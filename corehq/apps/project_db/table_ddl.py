@@ -175,6 +175,12 @@ PROJECT_DB_TYPES = [
 ]
 
 
+def get_coercion_fn(column):
+    for type_ in PROJECT_DB_TYPES:
+        if column.comment and column.name == property_column(column.comment, type_.dd_type):
+            return type_.coercion_fn
+
+
 class CaseTable:
     def __init__(self, domain, case_type):
         self.domain = domain
@@ -251,18 +257,23 @@ class CaseTable:
 
 
 def create_or_update_project_db(domain):
+    """Sync a domain's tables with the data dictionary
+
+    Return ``{case_type: [column_name, ...]}`` of new typed columns whose
+    existing rows need backfilling.
+    """
     with metrics_histogram_timer(
         'commcare.project_db.schema_sync.duration',
         timing_buckets=(.5, 1, 5, 20, 60),
         tags={'domain': domain},
     ):
-        _create_or_update_project_db(domain)
+        return _create_or_update_project_db(domain)
 
 
 def _create_or_update_project_db(domain):
     case_types = _get_case_types(domain)
     if not case_types:
-        return
+        return {}
     metadata = sqlalchemy.MetaData()
     case_tables = [
         CaseTable(domain, case_type).build_definition(metadata)
@@ -275,9 +286,12 @@ def _create_or_update_project_db(domain):
         schema = DomainSchema(domain)
         schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
+        to_backfill = {}
         for table in case_tables:
-            update_table(conn, table)
+            if new_typed_cols := update_table(conn, table):
+                to_backfill[table.comment] = new_typed_cols
         schema.grant_role_read_access(conn)
+    return to_backfill
 
 
 def _set_lock_timeout(conn):
@@ -327,6 +341,9 @@ def update_table(conn, table):
 
     This is append-only: columns and indexes that exist in the database
     but not in ``table`` are left in place (never dropped).
+
+    Return the names of new typed columns whose raw column already existed,
+    since their existing rows need backfilling.
     """
     inspector = sqlalchemy.inspect(conn)
     schema = table.schema
@@ -344,7 +361,7 @@ def update_table(conn, table):
     ]
 
     if not new_columns and not new_indexes:
-        return
+        return []
 
     op = Operations(MigrationContext.configure(conn))
     for column in new_columns:
@@ -354,6 +371,11 @@ def update_table(conn, table):
         op.add_column(table.name, detached_col, schema=schema)
     for index in new_indexes:
         index.create(bind=conn)
+
+    return [
+        col.name for col in new_columns if get_coercion_fn(col)  # Is coercible
+        and property_column(col.comment) in existing_columns  # Has existing data
+    ]
 
 
 def _index_name(index, dialect):

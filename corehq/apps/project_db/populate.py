@@ -9,8 +9,8 @@ from dimagi.utils.chunked import chunked
 from corehq.util.metrics import metrics_histogram_timer
 
 from .table_ddl import (
-    PROJECT_DB_TYPES,
     CaseTable,
+    get_coercion_fn,
     get_project_db_engine,
     property_column,
 )
@@ -53,7 +53,7 @@ def upsert_cases(conn, table, cases):
 
 def _insert_values(table):
     """Specify what values to insert and how"""
-    columns = [(col, _get_coercion_fn(col)) for col in table.c]
+    columns = [(col, get_coercion_fn(col)) for col in table.c]
     raw_values = {col.name: bindparam(col.name, type_=col.type) for col, fn in columns if not fn}
     computed_values = {  # for example - date_prop__dob: coerce_to_date(:prop__dob)
         col.name: fn(raw_values[property_column(col.comment)])
@@ -62,17 +62,11 @@ def _insert_values(table):
     return raw_values | computed_values
 
 
-def _get_coercion_fn(column):
-    for type_ in PROJECT_DB_TYPES:
-        if column.comment and column.name == property_column(column.comment, type_.dd_type):
-            return type_.coercion_fn
-
-
 def backfill_typed_columns(table, columns, chunk_size=1000):
     """Populate new typed columns from their raw columns in SQL"""
     values = {}
     for column in columns:
-        if coercion_fn := _get_coercion_fn(column):
+        if coercion_fn := get_coercion_fn(column):
             # Coerce the existing raw property column
             values[column.name] = coercion_fn(table.c[property_column(column.comment)])
         else:
