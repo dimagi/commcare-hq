@@ -1,3 +1,4 @@
+from collections import namedtuple
 import hashlib
 from functools import lru_cache
 
@@ -8,7 +9,7 @@ import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from psycopg2 import errorcodes
-from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
+from sqlalchemy import Column, Table, Text, func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
 
@@ -163,15 +164,17 @@ def _register_earth_type(dialect):
         dialect.ischema_names = {**dialect.ischema_names, 'earth': Earth}
 
 
-class CaseTable:
-    COERCED_PROPERTY_TYPES = {
-        # CaseProperty data_type:  (SQLAlchemy column type, default)
-        CaseProperty.DataType.DATE: (Date, None),
-        CaseProperty.DataType.NUMBER: (Numeric, None),
-        CaseProperty.DataType.SELECT: (ARRAY(Text), '{}'),
-        CaseProperty.DataType.GPS: (Earth, None),
-    }
+_Type = namedtuple('_Type', 'dd_type sql_type coercion_fn default')
+_lib = func.lib_projectdb  # Functions defined in lib_projectdb.sql
+PROJECT_DB_TYPES = [
+    _Type(CaseProperty.DataType.DATE,   sqlalchemy.Date,        _lib.coerce_to_date,   None),
+    _Type(CaseProperty.DataType.NUMBER, sqlalchemy.Numeric,     _lib.coerce_to_number, None),
+    _Type(CaseProperty.DataType.SELECT, sqlalchemy.ARRAY(Text), _lib.coerce_to_array,  '{}'),
+    _Type(CaseProperty.DataType.GPS,    Earth,                  _lib.coerce_to_gps,    None),
+]
 
+
+class CaseTable:
     def __init__(self, domain, case_type):
         self.domain = domain
         self.case_type = case_type
@@ -200,13 +203,13 @@ class CaseTable:
         ``<data_type>_prop__<name>``. The raw property name is stored as a
         postgres comment.
         """
+        coerced_types = {t.dd_type: t for t in PROJECT_DB_TYPES}
         for name, data_type in self._get_dd_properties():
             yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
-            if data_type in self.COERCED_PROPERTY_TYPES:
-                col_type, default = self.COERCED_PROPERTY_TYPES[data_type]
-                yield Column(property_column(name, data_type), col_type, comment=name,
-                             nullable=default is None, server_default=default)
+            if t := coerced_types.get(data_type):
+                yield Column(property_column(name, data_type), t.sql_type, comment=name,
+                             nullable=t.default is None, server_default=t.default)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(
@@ -222,12 +225,12 @@ class CaseTable:
             Column('case_id', Text, primary_key=True),
             Column('owner_id', Text, nullable=False, index=True),
             Column('case_name', Text),
-            Column('opened_on', DateTime(timezone=True)),
-            Column('closed_on', DateTime(timezone=True)),
-            Column('modified_on', DateTime(timezone=True)),
-            Column('closed', Boolean),
+            Column('opened_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed_on', sqlalchemy.DateTime(timezone=True)),
+            Column('modified_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed', sqlalchemy.Boolean),
             Column('external_id', Text, nullable=False, server_default=''),
-            Column('server_modified_on', DateTime(timezone=True)),
+            Column('server_modified_on', sqlalchemy.DateTime(timezone=True)),
             Column('parent_id', Text, index=True),
             Column('host_id', Text, index=True),
         ]
