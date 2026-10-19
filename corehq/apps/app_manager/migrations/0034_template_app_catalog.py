@@ -4,7 +4,7 @@ from django.db.models.functions import Lower
 from corehq.apps.app_manager.const import get_template_app_plan_choices
 
 
-def clear_legacy_exchange_applications(apps, schema_editor):
+def delete_legacy_exchange_applications(apps, schema_editor):
     apps.get_model('app_manager', 'ExchangeApplication').objects.using(
         schema_editor.connection.alias
     ).all().delete()
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
 
     operations = [
         # Existing records lack the required catalog metadata. Intentionally irreversible.
-        migrations.RunPython(clear_legacy_exchange_applications),
+        migrations.RunPython(delete_legacy_exchange_applications),
         migrations.SeparateDatabaseAndState(
             database_operations=[],
             state_operations=[
