@@ -22,7 +22,7 @@ from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import override
+from django.utils.translation import gettext_lazy, override
 
 from couchdbkit import ResourceNotFound
 from looseversion import LooseVersion
@@ -2149,8 +2149,8 @@ class ExchangeApplication(models.Model):
     """
 
     class Category(models.TextChoices):
-        STARTER_APP = 'starter_app', _('Starter App')
-        FEATURE_TEMPLATE = 'feature_template', _('Feature Template')
+        STARTER_APP = 'starter_app', gettext_lazy('Starter App')
+        FEATURE_TEMPLATE = 'feature_template', gettext_lazy('Feature Template')
 
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
