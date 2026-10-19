@@ -40,7 +40,7 @@ def get_public_webform_eligible_form(domain, app_id, form_unique_id):
     if not is_app_live(domain, app_id):
         return None
     app = get_latest_released_app(domain, app_id)
-    if app is None:
+    if app is None or not app.can_generate_session_endpoints:
         return None
     try:
         form = app.get_form(form_unique_id)

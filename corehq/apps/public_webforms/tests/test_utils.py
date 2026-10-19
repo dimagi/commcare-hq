@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from unmagic import use
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms import utils
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
@@ -97,6 +98,17 @@ def test_eligible_form_rejects_app_without_released_build():
     with _patch_released_app(None):
         form = utils.get_public_webform_eligible_form(
             'pwf-test', 'unreleased-app', 'any-form')
+    assert form is None
+
+
+def test_eligible_form_rejects_a_release_that_cannot_generate_session_endpoints():
+    data = build_app()
+    with (
+        _patch_released_app(data.app),
+        patch.object(Application, 'can_generate_session_endpoints', False),
+    ):
+        form = utils.get_public_webform_eligible_form(
+            data.domain, 'app-1', data.survey_form_id)
     assert form is None
 
 
