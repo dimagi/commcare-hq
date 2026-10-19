@@ -243,14 +243,12 @@ class CreatePublicWebformForm(BasePublicWebformForm):
         cleaned_data = super().clean()
         app_id = cleaned_data.get('app_id')
         form_unique_id = cleaned_data.get('form_unique_id')
-        if not app_id or not form_unique_id:
-            raise forms.ValidationError(_("Please select an application, menu, and form."))
-
-        form = get_public_webform_eligible_form(self.domain, app_id, form_unique_id)
+        form = (
+            get_public_webform_eligible_form(self.domain, app_id, form_unique_id)
+            if app_id and form_unique_id else None
+        )
         if not form:
-            raise forms.ValidationError(_(
-                "The selected form can't be used for a public webform."
-            ))
+            raise forms.ValidationError(_("Please select an application, menu, and form."))
 
         cleaned_data['session_type'] = get_public_webform_type(form)
         return cleaned_data
