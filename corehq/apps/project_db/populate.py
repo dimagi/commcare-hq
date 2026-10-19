@@ -8,7 +8,12 @@ from dimagi.utils.chunked import chunked
 
 from corehq.util.metrics import metrics_histogram_timer
 
-from .table_ddl import PROJECT_DB_TYPES, CaseTable, get_project_db_engine, property_column
+from .table_ddl import (
+    CaseTable,
+    get_coercion_fn,
+    get_project_db_engine,
+    property_column,
+)
 
 
 def send_cases_to_project_db(domain, cases):
@@ -48,14 +53,13 @@ def upsert_cases(conn, table, cases):
 
 def _insert_values(table):
     """Specify what values to insert and how"""
-    # Raw values
-    values = {col.name: bindparam(col.name, type_=col.type) for col in table.c}
-    # Values that are coerced to type in SQL
-    for col in table.c:
-        for t in PROJECT_DB_TYPES:
-            if col.comment and col.name == property_column(col.comment, t.dd_type):
-                values[col.name] = t.coercion_fn(values[property_column(col.comment)])
-    return values
+    columns = [(col, get_coercion_fn(col)) for col in table.c]
+    raw_values = {col.name: bindparam(col.name, type_=col.type) for col, fn in columns if not fn}
+    computed_values = {  # for example - date_prop__dob: coerce_to_date(:prop__dob)
+        col.name: fn(raw_values[property_column(col.comment)])
+        for col, fn in columns if fn
+    }
+    return raw_values | computed_values
 
 
 def case_to_row(case, columns):

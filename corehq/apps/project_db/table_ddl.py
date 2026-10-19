@@ -174,6 +174,12 @@ PROJECT_DB_TYPES = [
 ]
 
 
+def get_coercion_fn(column):
+    for type_ in PROJECT_DB_TYPES:
+        if column.comment and column.name == property_column(column.comment, type_.dd_type):
+            return type_.coercion_fn
+
+
 class CaseTable:
     def __init__(self, domain, case_type):
         self.domain = domain
