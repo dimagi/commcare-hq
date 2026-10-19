@@ -20,7 +20,6 @@ from corehq.apps.translations.models import AITranslationConfig
 from corehq.apps.translations.tasks import (
     APP_KEPT_CHANGING,
     FAILED,
-    MANY_SKIPPED,
     NO_LONGER_AVAILABLE,
     NO_STRINGS_TRANSLATED,
     NOT_QUEUED,
@@ -113,7 +112,7 @@ class TestTranslateAppTask(TestCase):
         assert states_seen == [TRANSLATING, TRANSLATING, APPLYING]
         status = self.status.get()
         assert status['state'] == DONE
-        assert status['message_code'] == MANY_SKIPPED
+        assert status['message_code'] is None
         # the summary is kept in the status, with the list's count in its place
         assert (status['total'], status['translated'], status['skipped']) == (10, 7, 3)
         assert status['failed_label_count'] == 0
@@ -146,15 +145,6 @@ class TestTranslateAppTask(TestCase):
         status = self.status.get()
         assert status['state'] == DONE
         assert status['failed_label_count'] == 1
-
-    def test_no_skip_warning_for_a_small_run(self):
-        with patch(f'{TASKS_PATH}.run_app_translation',
-                   return_value=_summary(total=2, translated=1, skipped=1)):
-            self._run_task()
-
-        status = self.status.get()
-        assert status['state'] == DONE
-        assert status['message_code'] is None
 
     def test_error_in_the_run(self):
         with (
@@ -235,12 +225,16 @@ def test_final_state(summary, final_state):
 
 
 def test_run_message():
-    assert run_message(MANY_SKIPPED) == (
-        "More than 20% of translations failed validation and were skipped.")
+    assert run_message(NO_STRINGS_TRANSLATED) == "No labels could be translated."
 
 
 def test_run_message_without_a_code():
     assert run_message(None) is None
+
+
+def test_run_message_for_a_code_an_earlier_release_stored():
+    # e.g. 'many_skipped', in a status cached before the release that dropped it
+    assert run_message('many_skipped') is None
 
 
 def _summary(total=10, translated=0, skipped=0, changed=0):
