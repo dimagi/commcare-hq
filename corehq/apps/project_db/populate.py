@@ -6,10 +6,9 @@ from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.util.metrics import metrics_histogram_timer
 
-from .table_ddl import CaseTable, get_project_db_engine, property_column
+from .table_ddl import PROJECT_DB_TYPES, CaseTable, get_project_db_engine, property_column
 
 
 def send_cases_to_project_db(domain, cases):
@@ -53,9 +52,9 @@ def _insert_values(table):
     values = {col.name: bindparam(col.name, type_=col.type) for col in table.c}
     # Values that are coerced to type in SQL
     for col in table.c:
-        for data_type, coerce in _SQL_COERCIONS:
-            if col.comment and col.name == property_column(col.comment, data_type):
-                values[col.name] = coerce(values[property_column(col.comment)])
+        for t in PROJECT_DB_TYPES:
+            if col.comment and col.name == property_column(col.comment, t.dd_type):
+                values[col.name] = t.coercion_fn(values[property_column(col.comment)])
     return values
 
 
@@ -85,12 +84,3 @@ def case_to_row(case, columns):
 def _as_utc(value):
     """Attach explicit UTC timezone to naive datetime values"""
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
-
-
-# Functions defined in lib_projectdb.sql
-_SQL_COERCIONS = [
-    (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
-    (CaseProperty.DataType.NUMBER, func.lib_projectdb.coerce_to_number),
-    (CaseProperty.DataType.SELECT, func.lib_projectdb.coerce_to_array),
-    (CaseProperty.DataType.GPS, func.lib_projectdb.coerce_to_gps),
-]
