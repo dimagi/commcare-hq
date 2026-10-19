@@ -48,14 +48,19 @@ def upsert_cases(conn, table, cases):
 
 def _insert_values(table):
     """Specify what values to insert and how"""
-    # Raw values
-    values = {col.name: bindparam(col.name, type_=col.type) for col in table.c}
-    # Values that are coerced to type in SQL
-    for col in table.c:
-        for t in PROJECT_DB_TYPES:
-            if col.comment and col.name == property_column(col.comment, t.dd_type):
-                values[col.name] = t.coercion_fn(values[property_column(col.comment)])
-    return values
+    columns = [(col, _get_coercion_fn(col)) for col in table.c]
+    raw_values = {col.name: bindparam(col.name, type_=col.type) for col, fn in columns if not fn}
+    computed_values = {  # for example - date_prop__dob: coerce_to_date(:prop__dob)
+        col.name: fn(raw_values[property_column(col.comment)])
+        for col, fn in columns if fn
+    }
+    return raw_values | computed_values
+
+
+def _get_coercion_fn(column):
+    for type_ in PROJECT_DB_TYPES:
+        if column.comment and column.name == property_column(column.comment, type_.dd_type):
+            return type_.coercion_fn
 
 
 def case_to_row(case, columns):
