@@ -9,6 +9,7 @@ from sqlalchemy import func
 from unmagic import use
 
 from corehq.apps.project_db.populate import (
+    backfill_typed_columns,
     case_to_row,
     populate_case_type,
     send_cases_to_project_db,
@@ -289,3 +290,31 @@ def test_send_cases_to_project_db():
 def test_missing_external_id_is_empty_string():
     case = _make_case(external_id=None)
     assert case_to_row(case, columns=[])['external_id'] == ''
+
+
+@use('db', project_db_table('test-backfill', 'patient', {'dob': 'date', 'weight': 'number'}, (
+    ['case_id', 'owner_id', 'prop__dob', 'prop__weight'], [
+        ('a', 'o', '2020-01-01', '12'),
+        ('b', 'o', '2021-02-02', ''),
+        ('c', 'o', 'not a date', '3.5'),
+        ('d', 'o', '2022-03-03', 'heavy'),
+        ('e', 'o', '', '7'),
+    ])))
+def test_backfill_typed_columns():
+    # A plain insert skips the SQL coercion, leaving the typed columns NULL
+    table = CaseTable('test-backfill', 'patient').reflect()
+    backfill_typed_columns(
+        table, [table.c.date_prop__dob, table.c.number_prop__weight], chunk_size=2)
+
+    with get_project_db_engine().begin() as conn:
+        rows = conn.execute(sqlalchemy.select([
+            table.c.case_id, table.c.date_prop__dob, table.c.number_prop__weight,
+        ]))
+        values = {case_id: (dob, weight) for case_id, dob, weight in rows}
+    assert values == {
+        'a': (datetime.date(2020, 1, 1), Decimal('12')),
+        'b': (datetime.date(2021, 2, 2), None),
+        'c': (None, Decimal('3.5')),
+        'd': (datetime.date(2022, 3, 3), None),
+        'e': (None, Decimal('7')),
+    }
