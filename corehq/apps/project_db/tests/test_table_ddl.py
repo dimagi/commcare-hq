@@ -8,6 +8,7 @@ from psycopg2 import errorcodes
 from sqlalchemy import Table
 from unmagic import fixture, use
 
+from corehq.apps.project_db.models import PendingOperation
 from corehq.apps.project_db.table_ddl import (
     CaseTable,
     DomainSchema,
@@ -406,11 +407,21 @@ def test_create_project_db(get_dd_properties, get_case_types):
         create_or_update_project_db(domain)
     _assert_db_created_as_expected(schema.name)
     assert metrics.list('commcare.project_db.schema_sync.duration', domain=domain), metrics
+    assert _pending_backfills(domain) == []  # A new table has no rows to backfill
 
-    # Drop nickname, make dob a date, add a new prop
-    get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
+    # Drop nickname, make dob a date, add new plain and typed props
+    get_dd_properties.return_value = [
+        ('favorite_color', 'plain'), ('dob', 'date'), ('weight', 'number')]
     create_or_update_project_db(domain)
     _assert_db_updated_as_expected(schema.name)
+    # weight's raw column is new too, so it has nothing to backfill from
+    assert _pending_backfills(domain) == [{'case_type': 'patient', 'columns': ['date_prop__dob']}]
+
+
+def _pending_backfills(domain):
+    return list(PendingOperation.objects.filter(
+        domain=domain, operation=PendingOperation.Operation.BACKFILL,
+    ).values_list('args', flat=True))
 
 
 def _assert_db_created_as_expected(schema):

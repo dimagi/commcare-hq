@@ -21,6 +21,8 @@ from corehq.sql_db.connections import (
     create_engine,
 )
 
+from .models import PendingOperation
+
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
 SCHEMA_SYNC_LOCK_TIMEOUT = '5s'
@@ -257,6 +259,10 @@ class CaseTable:
 
 
 def create_or_update_project_db(domain):
+    """Sync a domain's tables with the data dictionary
+
+    Records pending backfills for new typed columns
+    """
     with metrics_histogram_timer(
         'commcare.project_db.schema_sync.duration',
         timing_buckets=(.5, 1, 5, 20, 60),
@@ -282,8 +288,17 @@ def _create_or_update_project_db(domain):
         schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
-            update_table(conn, table)
+            backfill_columns = update_table(conn, table)
+            if backfill_columns:
+                _record_backfill(domain, table.comment, backfill_columns)
         schema.grant_role_read_access(conn)
+
+
+def _record_backfill(domain, case_type, columns):
+    PendingOperation.objects.create(domain=domain, operation=PendingOperation.Operation.BACKFILL, args={
+        'case_type': case_type,
+        'columns': columns,
+    })
 
 
 def _set_lock_timeout(conn):
@@ -331,8 +346,7 @@ def _get_case_types(domain):
 def update_table(conn, table):
     """Add columns and indexes present in ``table`` but missing from the database.
 
-    This is append-only: columns and indexes that exist in the database
-    but not in ``table`` are left in place (never dropped).
+    Returns the names of new typed columns whose that need backfilling
     """
     inspector = sqlalchemy.inspect(conn)
     schema = table.schema
@@ -350,7 +364,7 @@ def update_table(conn, table):
     ]
 
     if not new_columns and not new_indexes:
-        return
+        return []
 
     op = Operations(MigrationContext.configure(conn))
     for column in new_columns:
@@ -360,6 +374,11 @@ def update_table(conn, table):
         op.add_column(table.name, detached_col, schema=schema)
     for index in new_indexes:
         index.create(bind=conn)
+
+    return [
+        col.name for col in new_columns if get_coercion_fn(col)  # Is coercible
+        and property_column(col.comment) in existing_columns  # Has existing data
+    ]
 
 
 def _index_name(index, dialect):
