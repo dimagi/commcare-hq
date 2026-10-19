@@ -1,14 +1,19 @@
 import datetime
 from collections import defaultdict
 
-from sqlalchemy import bindparam, func
+from sqlalchemy import bindparam, func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
 
 from corehq.util.metrics import metrics_histogram_timer
 
-from .table_ddl import PROJECT_DB_TYPES, CaseTable, get_project_db_engine, property_column
+from .table_ddl import (
+    PROJECT_DB_TYPES,
+    CaseTable,
+    get_project_db_engine,
+    property_column,
+)
 
 
 def send_cases_to_project_db(domain, cases):
@@ -61,6 +66,44 @@ def _get_coercion_fn(column):
     for type_ in PROJECT_DB_TYPES:
         if column.comment and column.name == property_column(column.comment, type_.dd_type):
             return type_.coercion_fn
+
+
+def backfill_typed_columns(table, columns, chunk_size=1000):
+    """Populate new typed columns from their raw columns in SQL"""
+    values = {}
+    for column in columns:
+        if coercion_fn := _get_coercion_fn(column):
+            # Coerce the existing raw property column
+            values[column.name] = coercion_fn(table.c[property_column(column.comment)])
+        else:
+            raise ValueError(f'{column.name} is not a typed property column')
+    stmt = _backfill_chunk_statement(table, values, chunk_size)
+
+    engine = get_project_db_engine()
+    after = ''
+    while after is not None:
+        with engine.begin() as conn:
+            # Update chunk and get last case_id updated
+            after = conn.execute(stmt, {'after': after}).scalar()
+
+
+def _backfill_chunk_statement(table, values, chunk_size):
+    # Paginate through cases, ordered by case_id, return last one
+    chunk = (
+        select([table.c.case_id])
+        .where(table.c.case_id > bindparam('after'))
+        .order_by(table.c.case_id)
+        .limit(chunk_size)
+        .cte('chunk')
+    )
+    updated = (
+        table.update()
+        .values(values)
+        .where(table.c.case_id == chunk.c.case_id)
+        .returning(table.c.case_id)
+        .cte('updated')
+    )
+    return select([func.max(updated.c.case_id)])
 
 
 def case_to_row(case, columns):
