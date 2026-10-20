@@ -273,6 +273,8 @@ FORM = ['register module', 'register form 0']
                  id='case-list'),
     pytest.param(_case_property('detail'), MENU + ['Case detail', 'name'], 'view_module', '',
                  id='case-detail'),
+    pytest.param(_case_property('case_search_display'), MENU + ['Case search', 'name'],
+                 'view_module', '', id='case-search'),
     pytest.param(_form_text('household/head_name-label'), FORM + ['Head of household'],
                  'form_source', '#form/household/head_name', id='question-in-group'),
     pytest.param(_form_text('name-hint'), FORM + ['What is the name? › hint'],

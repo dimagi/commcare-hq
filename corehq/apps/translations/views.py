@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import NoResultFound
@@ -227,6 +228,15 @@ def ai_translation_failed_labels(request, domain, app_id):
     })
 
 
+# which screen of a menu a module-sheet row's ``list_or_detail`` is on
+CASE_PROPERTY_SECTIONS = {
+    'list': gettext_lazy("Case list"),
+    'detail': gettext_lazy("Case detail"),
+    'case_search_display': gettext_lazy("Case search"),
+    'case_search_hint': gettext_lazy("Case search"),
+}
+
+
 def _failed_label_row(app, record, questions_by_form):
     """What the Languages page shows for a label a run couldn't
     translate: where it is in the app as it is now, a link to it, its
@@ -245,10 +255,11 @@ def _failed_label_row(app, record, questions_by_form):
             row['location'] = [module.default_name()]
             row['url'] = reverse('view_module', args=[domain, app_id, module.unique_id])
             if record['type'] == 'case_property':
-                row['location'] += [
-                    _("Case list") if record['list_or_detail'] == 'list' else _("Case detail"),
-                    record['case_property'],
-                ]
+                # a report menu's rows say 'list', but it has no case list
+                section = None if module.module_type == 'report' else (
+                    CASE_PROPERTY_SECTIONS.get(record['list_or_detail']))
+                row['location'] += [str(section), record['case_property']] if section else [
+                    record['case_property']]
         else:
             form = app.get_form(record['unique_id'])
             row['location'] = [form.get_module().default_name(), form.default_name()]
