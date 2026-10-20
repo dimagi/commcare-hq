@@ -183,6 +183,19 @@ class TranslationFormat(abc.ABC):
         pass
 
 
+# These reject a non-default temperature unless reasoning is off.
+# Reasoning gave no measurable translation quality gain for the extra
+# cost and latency.
+REASONING_MODELS = ("gpt-5.6-luna", "gpt-6-luna")
+
+
+def openai_model_params(model):
+    params = {"temperature": 0.2}
+    if model in REASONING_MODELS:
+        params["reasoning_effort"] = "none"
+    return params
+
+
 class OpenaiTranslator(LLMTranslator):
     def __init__(self, api_key, model, lang, translation_format, backup_model=''):
         super().__init__(api_key, model, lang, translation_format, backup_model=backup_model)
@@ -235,8 +248,8 @@ class OpenaiTranslator(LLMTranslator):
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
                     ],
-                    temperature=0.2,
                     response_format=response_format,
+                    **openai_model_params(model),
                 )
 
             try:
@@ -263,7 +276,7 @@ class OpenaiTranslator(LLMTranslator):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
-                "temperature": 0.2,
+                **openai_model_params(self.model),
             }
 
             def post(response_format):
