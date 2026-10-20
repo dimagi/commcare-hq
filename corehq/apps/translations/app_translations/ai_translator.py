@@ -270,7 +270,7 @@ def _saved_units(fmt, all_strings):
         if saved is None or not saved.target_text:
             continue
         value_changed = saved.target_text != unit.target_text
-        ai_returned_same_text = result == unit.target_text
+        ai_returned_same_text = html.unescape(result) == html.unescape(unit.target_text)
         if value_changed or ai_returned_same_text:
             saved_units.append(saved)
     return saved_units
