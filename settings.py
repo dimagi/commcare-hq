@@ -1241,7 +1241,7 @@ OCS_OAUTH_CLIENT_SECRET = None
 # AITranslationConfig row overrides them. Override in localsettings.py.
 AI_TRANSLATION_DEFAULTS = {
     'provider': 'openai',
-    'model': 'gpt-4.1',
+    'model': 'gpt-6-luna',
     'monthly_word_limit': 1_000_000,
 }
 

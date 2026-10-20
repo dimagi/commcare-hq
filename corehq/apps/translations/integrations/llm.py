@@ -337,7 +337,7 @@ def translate_string(text, target_lang, provider='openai', model=None):
 PROVIDERS = {
     'openai': ProviderSpec(
         translator_class=OpenaiTranslator,
-        default_model='gpt-4.1',
-        backup_model='gpt-4o',
+        default_model='gpt-6-luna',
+        backup_model='gpt-5.6-luna',
     ),
 }
