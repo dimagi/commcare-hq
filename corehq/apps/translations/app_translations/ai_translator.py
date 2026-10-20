@@ -181,14 +181,16 @@ def _failed_labels(fmt, applied):
 
 
 def prepare_translation_format(app, target_lang, mode, treat_default_copies_as_missing=True):
-    """A format for ``app`` that skips AI translations a user has edited
-    and retranslates those whose source text has changed."""
+    """A format for ``app`` that skips AI translations a user has edited,
+    retranslates those whose source text has changed, and keeps those
+    the AI translated as an exact copy of the source."""
     fmt = AppTranslationFormat(
         app, target_lang, mode=mode,
         treat_default_copies_as_missing=treat_default_copies_as_missing)
     changed_strings = find_changed_ai_translations(fmt)
     fmt.manually_edited_keys = changed_strings.manually_edited
     fmt.stale_keys = changed_strings.stale
+    fmt.previous_ai_keys = changed_strings.previous
     return fmt
 
 
@@ -199,18 +201,20 @@ def _provenance_rows(fmt):
 
 @dataclass
 class ChangedAITranslations:
-    """Keys of AI-translated strings that changed since the AI wrote them."""
+    """Keys of earlier AI translations, by what has happened to them since."""
     manually_edited: set
     stale: set
+    previous: set
 
 
 def find_changed_ai_translations(fmt):
     """
-    Find translations a user has manually edited, and those whose
-    source text has since changed. A cleared translation is in neither
-    set, so fill_missing translates it again.
+    Group earlier runs' AI translations by what has happened since: a
+    user edited them, their source text changed, or neither. A cleared
+    translation is in none of these sets, so fill_missing translates it
+    again.
     """
-    changed = ChangedAITranslations(manually_edited=set(), stale=set())
+    changed = ChangedAITranslations(manually_edited=set(), stale=set(), previous=set())
     rows = list(
         _provenance_rows(fmt).values_list('string_key', 'source_value', 'translated_value'))
     if not rows:
@@ -224,6 +228,8 @@ def find_changed_ai_translations(fmt):
             changed.manually_edited.add(string_key)
         elif unit.source_text != source_value:
             changed.stale.add(string_key)
+        else:
+            changed.previous.add(string_key)
     return changed
 
 
@@ -397,7 +403,7 @@ class AppTranslationFormat(TranslationFormat):
     """
 
     def __init__(self, app, target_lang, mode=MODE_FILL_MISSING,
-                 manually_edited_keys=None, stale_keys=None,
+                 manually_edited_keys=None, stale_keys=None, previous_ai_keys=None,
                  treat_default_copies_as_missing=True):
         assert mode in (MODE_FILL_MISSING, MODE_RETRANSLATE), mode
         self.app = app
@@ -405,6 +411,7 @@ class AppTranslationFormat(TranslationFormat):
         self.mode = mode
         self.manually_edited_keys = manually_edited_keys or set()
         self.stale_keys = stale_keys or set()
+        self.previous_ai_keys = previous_ai_keys or set()
         self.treat_default_copies_as_missing = treat_default_copies_as_missing
         self.headers_by_sheet = dict(get_bulk_app_sheet_headers(app))
         self.sheets = get_bulk_app_sheets_by_name(app)
@@ -423,6 +430,7 @@ class AppTranslationFormat(TranslationFormat):
             mode=self.mode,
             manually_edited_keys=self.manually_edited_keys,
             stale_keys=self.stale_keys,
+            previous_ai_keys=self.previous_ai_keys,
             treat_default_copies_as_missing=self.treat_default_copies_as_missing,
         )
 
@@ -440,7 +448,10 @@ class AppTranslationFormat(TranslationFormat):
             if unit.string_key in self.manually_edited_keys:
                 continue
             keep_existing = bool(unit.target_text)
-            if self.treat_default_copies_as_missing and unit.target_text == unit.source_text:
+            if (self.treat_default_copies_as_missing
+                    and unit.target_text == unit.source_text
+                    # the AI itself left it unchanged, e.g. a placeholder or a name
+                    and unit.string_key not in self.previous_ai_keys):
                 keep_existing = False
             if unit.string_key in self.stale_keys:
                 keep_existing = False
