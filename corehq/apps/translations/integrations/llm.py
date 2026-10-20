@@ -112,9 +112,6 @@ class LLMTranslator(abc.ABC):
             this model will be used, optional, default is ''
         """
         self.api_key = api_key
-        if model not in self.supported_models:
-            raise LLMTranslatorError(
-                f"Model {model} is not supported by {self.__class__.__name__}.")
         self.model = model
         self.lang = lang
         self.backup_model = backup_model
@@ -133,10 +130,6 @@ class LLMTranslator(abc.ABC):
 
     def output_format_prompt(self):
         return f"Output format: {self.translation_format.format_output_description()}"
-
-    @abc.abstractmethod
-    def supported_models(self):
-        return []
 
     def translate(self, input_data):
         system_prompt = "\n".join([
@@ -191,10 +184,6 @@ class TranslationFormat(abc.ABC):
 
 
 class OpenaiTranslator(LLMTranslator):
-    @property
-    def supported_models(self):
-        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
-
     def __init__(self, api_key, model, lang, translation_format, backup_model=''):
         super().__init__(api_key, model, lang, translation_format, backup_model=backup_model)
         try:
