@@ -17,7 +17,7 @@ from corehq.apps.translations.app_translations.ai_translator import (
     PROBLEM_NOT_APPLIED,
     PROBLEM_OUTPUT_CHANGED,
 )
-from corehq.blobs import CODES, get_blob_db
+from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.blobs.models import BlobMeta
 
 FAILED_LABELS_TIMEOUT = 24 * 60  # minutes
@@ -71,5 +71,9 @@ def get_failed_labels(app_id, lang):
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     if meta.expires_on and meta.expires_on < now:
         return None
-    with db.get(meta=meta) as stream:
-        return json.load(stream)
+    try:
+        with db.get(meta=meta) as stream:
+            return json.load(stream)
+    except NotFound:
+        # a newer run replaced the list after its metadata was read
+        return None
