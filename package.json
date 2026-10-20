@@ -113,7 +113,6 @@
         "dot-prop": "^5.1.1",
         "getobject": "^1.0.0",
         "growl": "^1.10.0",
-        "grunt": "^1.2.0",
         "js-yaml": "^3.15.0",
         "lodash": "^4.17.19",
         "markdown-it": "^14.1.1",
