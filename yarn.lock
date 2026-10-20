@@ -2328,12 +2328,6 @@ At.js@millerdev/At.js#master:
   version "1.5.3"
   resolved "https://codeload.github.com/millerdev/At.js/tar.gz/d1ed42f66d33cdf54b681cb026664d847ca0637d"
 
-Caret.js@INTELOGIE/Caret.js#0.3.1:
-  version "0.3.1"
-  resolved "https://codeload.github.com/INTELOGIE/Caret.js/tar.gz/3bc79e41834fa96b54f52c4276562488de82e581"
-  dependencies:
-    grunt "~0.4.1"
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -4281,7 +4275,7 @@ grunt@1.6.2:
     minimatch "^3.1.5"
     nopt "^5.0.0"
 
-grunt@^1.2.0, grunt@~0.4.1:
+grunt@^1.2.0:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/grunt/-/grunt-1.5.2.tgz#46b014e28d17c85baac19d5e891bb3f04923c098"
   integrity sha512-XCtfaIu72OyDqK24MjWiGC9SwlkuhkS1mrULr1xzuJ2XqAFhP3ZAchZGHJeSCY6mkaOXU4F7SbmmCF7xIVoC9w==
@@ -4808,6 +4802,11 @@ jquery-ui@1.13.2:
   integrity sha512-wBZPnqWs5GaYJmo1Jj0k/mrSkzdQzKDwhXNtHKcBdAcKVxMM3KNYFq+iJ2i1rwiG53Z8M4mTn3Qxrm17uH1D4Q==
   dependencies:
     jquery ">=1.8.0 <4.0.0"
+
+jquery.caret@0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/jquery.caret/-/jquery.caret-0.3.1.tgz#9c093318faf327eff322e826ca9f3241368bc7b8"
+  integrity sha512-nS2mjMZzP4e4tIOgeTLSs+jFhUsUVZUPgkUMpi4DlJq9SgKEg6w2jf7q8joMJp6v+voJHXrH8rzAnbyxWHwAeA==
 
 jquery.cookie@dimagi/jquery-cookie#1.4.1:
   version "1.4.1"
