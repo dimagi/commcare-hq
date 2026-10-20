@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "id": "l:es",
+            "type": "languages",
+            "attributes": {
+                "code": "es",
+                "name": "Spanish",
+                "rtl": false,
+                "plural_equation": "n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2",
+                "plural_rules": {
+                    "one": "n is 1",
+                    "many": "n is not 0 and n mod 1000000 == 0",
+                    "other": "everything else"
+                }
+            },
+            "links": {
+                "self": "https://rest.api.transifex.com/languages/l:es"
+            }
+        },
+        {
+            "id": "l:fr",
+            "type": "languages",
+            "attributes": {
+                "code": "fr",
+                "name": "French",
+                "rtl": false,
+                "plural_equation": "(n == 0 || n == 1) ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2",
+                "plural_rules": {
+                    "one": "n is 0 or n is 1",
+                    "many": "n is not 0 and n mod 1000000 == 0",
+                    "other": "everything else"
+                }
+            },
+            "links": {
+                "self": "https://rest.api.transifex.com/languages/l:fr"
+            }
+        }
+    ]
+}

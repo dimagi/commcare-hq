@@ -1,0 +1,45 @@
+{
+    "data": {
+        "id": "o:test-organization:p:test-project:r:test-resource:l:fr",
+        "type": "resource_language_stats",
+        "attributes": {
+            "untranslated_words": 0,
+            "translated_words": 6,
+            "reviewed_words": 6,
+            "proofread_words": 0,
+            "total_words": 6,
+            "untranslated_strings": 0,
+            "translated_strings": 3,
+            "reviewed_strings": 3,
+            "proofread_strings": 0,
+            "total_strings": 3,
+            "last_translation_update": "2024-03-05T18:15:31Z",
+            "last_review_update": "2024-03-20T18:52:42Z",
+            "last_proofread_update": null,
+            "last_update": "2024-03-20T18:52:42Z"
+        },
+        "relationships": {
+            "resource": {
+                "links": {
+                    "related": "https://rest.api.transifex.com/resources/o:test-organization:p:test-project:r:test-resource"
+                },
+                "data": {
+                    "type": "resources",
+                    "id": "o:test-organization:p:test-project:r:test-resource"
+                }
+            },
+            "language": {
+                "links": {
+                    "related": "https://rest.api.transifex.com/languages/l:fr"
+                },
+                "data": {
+                    "type": "languages",
+                    "id": "l:fr"
+                }
+            }
+        },
+        "links": {
+            "self": "https://rest.api.transifex.com/resource_language_stats/o:test-organization:p:test-project:r:test-resource:l:fr"
+        }
+    }
+}
