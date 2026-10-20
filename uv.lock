@@ -637,7 +637,6 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-django" },
-    { name = "urllib3" },
 ]
 prod = [
     { name = "certifi" },
@@ -801,7 +800,6 @@ docs = [
     { name = "sphinx" },
     { name = "sphinx-rtd-theme" },
     { name = "sphinxcontrib-django" },
-    { name = "urllib3", specifier = "<=2.8.0" },
 ]
 prod = [
     { name = "certifi" },
