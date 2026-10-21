@@ -211,6 +211,7 @@ msgstr "Está Oculto"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -6233,9 +6234,14 @@ msgstr ""
 "multimedia en la aplicación."
 
 #: corehq/apps/app_manager/models/applications.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr ""
-"Lista separada por espacios de cadenas de privilegios de corehq.privileges"
+#| msgid "Started On"
+msgid "Starter App"
+msgstr "Aplicación Inicial"
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid "Feature Type"
+msgid "Feature Template"
+msgstr "Plantilla de Funcionalidad"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -7849,10 +7855,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-msgid "Version History"
-msgstr "Historial de versiones"
-
-#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
 msgid "Import"
 msgstr "Importar"
 
@@ -8016,6 +8018,7 @@ msgstr "Configuración del menú"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
@@ -8558,6 +8561,141 @@ msgstr "Traducciones Generales CommCare"
 msgid "Bulk Application Translations"
 msgstr "Traducciones de Aplicaciones Generales"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translate Me"
+msgid "Translate with AI"
+msgstr "Traducir con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "NUEVO"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"AI fills in missing translations. Manual edits are kept. Review AI "
+"translations before releasing your app."
+msgstr ""
+"La IA completa las traducciones faltantes. Las ediciones manuales se "
+"mantienen. Revisa las traducciones de la IA antes de publicar tu aplicación."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Learn More About Pricing Plans"
+msgid "Learn more about AI translations"
+msgstr "Más información sobre traducciones con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "AI translation is no longer available for this project."
+msgid "AI translations are available on Standard plans and above."
+msgstr ""
+"Las traducciones con IA están disponibles en los planes Estándar y "
+"superiores."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "CommCare plans"
+msgid "Compare plans"
+msgstr "Comparar planes"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Linked apps get their translations from their upstream app. Translate the "
+"upstream app instead."
+msgstr ""
+"Las aplicaciones vinculadas obtienen sus traducciones de su aplicación de "
+"origen. Traduce la aplicación de origen en su lugar."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Please select an upstream app."
+msgid "Go to the upstream app"
+msgstr "Ir a la aplicación de origen"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Add a language in the Language List below, then refresh to translate it with"
+" AI."
+msgstr ""
+"Agrega un idioma en la Lista de Idiomas a continuación y luego actualiza "
+"para traducirlo con IA."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid "Refresh"
+msgstr "Actualizar"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "You do not have permission to edit locations."
+msgid "You need permission to edit this app to translate it."
+msgstr "Necesitas permiso para editar esta aplicación y poder traducirla."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/views.py
+msgid ""
+"This project has reached its monthly AI translation limit. Contact support "
+"to raise it."
+msgstr ""
+"Este proyecto ha alcanzado su límite mensual de traducciones con IA. "
+"Contacta al soporte para aumentarlo."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The language list has changed. Refresh to update the languages below."
+msgstr ""
+"La lista de idiomas ha cambiado. Actualiza para ver los idiomas actualizados"
+" a continuación."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
+#: corehq/apps/reports/forms.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+msgid "Language"
+msgstr "Idioma"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "app translation"
+msgid "Last AI translated"
+msgstr "Última traducción con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translations"
+msgid "Translation progress"
+msgstr "Progreso de traducción"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"To translate the remaining labels yourself, use <a href=\"#bulk-application-"
+"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+"application-translations\" >Bulk Application Translations</a >."
+msgstr ""
+"Para traducir las etiquetas restantes manualmente, utiliza <a href=\"#bulk-"
+"application-translations\" data-bs-toggle=\"collapse\" data-bs-"
+"target=\"#bulk-application-translations\" >Traducción Masiva de la "
+"Aplicación</a >."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translate Me"
+msgid "AI Translate"
+msgstr "Traducir con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Status reflects the last AI Translate run; the percentage is how much of the"
+" whole app is AI translated as of that run. Labels you add or change "
+"afterwards are translated the next time you run AI Translate. Translations "
+"are applied to the current draft; make a new version to release them."
+msgstr ""
+"El estado refleja la última ejecución de Traducción con IA; el porcentaje "
+"indica cuánto de toda la aplicación fue traducido por IA en esa ejecución. "
+"Las etiquetas que agregues o cambies después se traducirán la próxima vez "
+"que ejecutes Traducción con IA. Las traducciones se aplican al borrador "
+"actual; crea una nueva versión para publicarlas."
+
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
@@ -8621,17 +8759,6 @@ msgstr ""
 "\n"
 "    Vinculado desde %(name)s | V%(version)s\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-#: corehq/apps/reports/forms.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-msgid "Language"
-msgstr "Idioma"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -11236,11 +11363,6 @@ msgstr "Habilitar enlace manual"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "Deshabilitar enlace manual "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-msgid "Refresh"
-msgstr "Actualizar"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -21821,6 +21943,18 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> Uso Agregado de Datos</a>"
 
 #: corehq/apps/domain/forms.py
+#| msgid "CommCare Companion (Beta)"
+msgid "Opt out of CommCare Companion"
+msgstr "Darse de baja de CommCare Companion"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Hide the CommCare Companion chatbot for all users in this project space"
+msgstr ""
+"Ocultar el chatbot CommCare Companion para todas las personas usuarias en "
+"este espacio de proyecto"
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Zona horaria por defecto"
 
@@ -22208,16 +22342,21 @@ msgid "Partner Contact Emails"
 msgstr "Correos de Contacto del Socio"
 
 #: corehq/apps/domain/forms.py
+#| msgid ""
+#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
+#| "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
+#| "<span data-bind=\"text: end_date\"></span> the project space will be "
+#| "automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-"hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-"<span data-bind=\"text: end_date\"></span> the project space will be "
-"automatically paused.</p>"
+"hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
+"x-text=\"endDate\"></span> the project space will be automatically "
+"paused.</p>"
 msgstr ""
 "<p><i class=\"fa fa-info-circle\"></i> La prueba comenzará tan pronto como "
-"hagas clic en \"Actualizar\" y finalizará el <span data-bind=\"text: "
-"end_date\"></span>.  El <span data-bind=\"text: end_date\"></span> el "
-"espacio del proyecto se pausará automáticamente.</p>"
+"hagas clic en \"Actualizar\" y finalizará el <span "
+"x-text=\"endDate\"></span>. El <span x-text=\"endDate\"></span> el espacio "
+"de proyecto se pausará automáticamente.</p>"
 
 #: corehq/apps/domain/forms.py
 msgid "Contracted Partner"
@@ -23818,46 +23957,6 @@ msgstr "Lea más sobre nuestros planes"
 msgid "Change My Plan"
 msgstr "Cambiar mi plan"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
-#, python-format
-msgid ""
-"\n"
-"    <p>\n"
-"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
-"      to set up a subscription for this project space.\n"
-"\n"
-"      Use this tool only for projects that are:\n"
-"    <ul>\n"
-"      <li>an internal test project</li>\n"
-"      <li>part of a contracted project</li>\n"
-"      <li>a short term extended trial for biz dev</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Your project is currently subscribed to %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      Esta página solo es visible para empleados de Dimagi (tiene una dirección de correo @dimagi.com). Puede usar esta página\n"
-"      para configurar una suscripción para este espacio de proyecto.\n"
-"\n"
-"      Utilice esta herramienta solo para proyectos que sean:\n"
-"    <ul>\n"
-"      <li>un proyecto de prueba interna</li>\n"
-"      <li>parte de un proyecto contratado</li>\n"
-"      <li>una prueba extendida a corto plazo para desarrollo de negocios</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Su proyecto está actualmente suscrito a %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -24559,6 +24658,45 @@ msgstr "Cargar TODO"
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load Property"
 msgstr "Cargar Propiedad"
+
+#: corehq/apps/domain/templates/domain/internal_subscription_management.html
+#, python-format
+msgid ""
+"\n"
+"    <p>\n"
+"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
+"      to set up a subscription for this project space.\n"
+"\n"
+"      Use this tool only for projects that are:\n"
+"    <ul>\n"
+"      <li>an internal test project</li>\n"
+"      <li>part of a contracted project</li>\n"
+"      <li>a short term extended trial for biz dev</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Your project is currently subscribed to %(plan_name)s.\n"
+"    </h3>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Esta página solo es visible para empleados de Dimagi (tiene una dirección de correo @dimagi.com). Puede usar esta página\n"
+"      para configurar una suscripción para este espacio de proyecto.\n"
+"\n"
+"      Utilice esta herramienta solo para proyectos que sean:\n"
+"    <ul>\n"
+"      <li>un proyecto de prueba interna</li>\n"
+"      <li>parte de un proyecto contratado</li>\n"
+"      <li>una prueba extendida a corto plazo para desarrollo de negocios</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Su proyecto está actualmente suscrito a %(plan_name)s.\n"
+"    </h3>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 msgid "Autopay Terms and Conditions"
@@ -36426,7 +36564,6 @@ msgstr ""
 "solicitud."
 
 #: corehq/apps/integration/payments/const.py
-#| msgid "Maximum retry attempts exceeded with pending status"
 msgid "Maximum retry attempts exceeded with pending status."
 msgstr ""
 "Se superó el número máximo de intentos de reintento con estado pendiente."
@@ -36495,8 +36632,6 @@ msgid "Verification"
 msgstr "Verificación"
 
 #: corehq/apps/integration/payments/services.py
-#| msgid ""
-#| "Only payments with '{}' set to 'true' are eligible for verification."
 msgid ""
 "Only payments with users that have KYC status '{}' are eligible for "
 "verification."
@@ -39146,6 +39281,12 @@ msgstr "Editar formulario web público"
 msgid "Save Changes"
 msgstr "Guardar Cambios"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "This webform's application has been deleted, so it can't be opened."
+msgstr ""
+"La aplicación de este formulario web ha sido eliminada, por lo que no se "
+"puede abrir."
+
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
 msgid "Your one-time link for {form_name}"
@@ -39549,6 +39690,13 @@ msgstr "Formulario web público creado."
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform updated."
 msgstr "Formulario web público actualizado."
+
+#: corehq/apps/public_webforms/views.py
+msgid ""
+"This public webform's application has been deleted, so it can't be opened."
+msgstr ""
+"La aplicación de este formulario web público ha sido eliminada, por lo que "
+"no se puede abrir."
 
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform closed to new requests."
@@ -41888,7 +42036,6 @@ msgid "Current Indian Financial Year"
 msgstr "Año Fiscal Actual de la India"
 
 #: corehq/apps/reports/display.py
-#| msgid "Public Name"
 msgid "public user"
 msgstr "usuario/a público/a"
 
@@ -42470,7 +42617,6 @@ msgid "Deactivated Web Users"
 msgstr "Usuarios web desactivados"
 
 #: corehq/apps/reports/models.py
-#| msgid "Public Webforms"
 msgid "Public Users"
 msgstr "Personas usuarias públicas"
 
@@ -49592,6 +49738,18 @@ msgid "Last Usage"
 msgstr "ÚItimo uso"
 
 #: corehq/apps/translations/app_translations/ai_translator.py
+msgid "Remote apps can't be translated with AI."
+msgstr "Las aplicaciones remotas no pueden ser traducidas con IA."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Only the current version of an app can be translated, not a previous "
+"version."
+msgstr ""
+"Solo se puede traducir la versión actual de una aplicación, no una versión "
+"anterior."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-format
 msgid "You must provide at least one translation of the case property '%s'"
@@ -49859,16 +50017,20 @@ msgstr ""
 "Ejecútala de nuevo."
 
 #: corehq/apps/translations/tasks.py
+#| msgid ""
+#| "Something went wrong while translating the app. Review its translations and "
+#| "run it again."
 msgid ""
-"Something went wrong while translating the app. Review its translations and "
-"run it again."
+"Something went wrong and the translation didn't finish. Run it again, and "
+"contact support if it keeps failing."
 msgstr ""
-"Ocurrió un error al traducir la aplicación. Revisa sus traducciones y "
-"ejecútala de nuevo."
+"Algo salió mal y la traducción no se completó. Ejecútala de nuevo y contacta"
+" al soporte si sigue fallando."
 
 #: corehq/apps/translations/tasks.py
-msgid "No strings could be translated."
-msgstr "No se pudo traducir ninguna cadena."
+#| msgid "No strings could be translated."
+msgid "No labels could be translated."
+msgstr "No se pudo traducir ninguna etiqueta."
 
 #: corehq/apps/translations/tasks.py
 #, python-format, python-brace-format
@@ -49921,6 +50083,29 @@ msgstr "¡Las Traducciones UI han sido actualizadas!"
 #: corehq/apps/translations/views.py
 msgid "Please select language to validate."
 msgstr "Por favor, selecciona un idioma para validar."
+
+#: corehq/apps/translations/views.py
+#| msgid "AI translation is no longer available for this project."
+msgid "AI translation isn't available for this project."
+msgstr "La traducción con IA no está disponible para este proyecto."
+
+#: corehq/apps/translations/views.py
+msgid "This language can't be translated with AI."
+msgstr "Este idioma no puede ser traducido con IA."
+
+#: corehq/apps/translations/views.py
+#| msgid "This user is already an enterprise administrator."
+msgid "This language is already being translated."
+msgstr "Este idioma ya está siendo traducido."
+
+#: corehq/apps/user_importer/exceptions.py
+msgid ""
+"This project has reached the mobile worker limit for its subscription plan. "
+"Deactivate other mobile workers or upgrade the plan to add more."
+msgstr ""
+"Este proyecto ha alcanzado el límite de trabajadores móviles para su plan de"
+" suscripción. Desactiva a otros trabajadores móviles o mejora el plan para "
+"agregar más."
 
 #: corehq/apps/user_importer/helpers.py
 msgid "Double Entry for {}"
@@ -53490,11 +53675,6 @@ msgstr "Nuevos Usuarios Móviles"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Pending..."
 msgstr "Pendiente..."
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "NUEVO"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -61074,6 +61254,13 @@ msgstr "Las columnas requeridas son {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Ingrese un JSON válido"
+
+#~ msgid "Space-separated list of privilege strings from corehq.privileges"
+#~ msgstr ""
+#~ "Lista separada por espacios de cadenas de privilegios de corehq.privileges"
+
+#~ msgid "Version History"
+#~ msgstr "Historial de versiones"
 
 #~ msgid "No Forms are supplied"
 #~ msgstr "No se suministró ningún Formulario"
