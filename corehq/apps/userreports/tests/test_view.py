@@ -11,6 +11,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test, populate_case_search_index
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -48,6 +49,7 @@ from corehq.util.test_utils import flag_enabled
 class ConfigurableReportTestMixin(object):
     domain = "TEST_DOMAIN"
     case_type = "CASE_TYPE"
+    password = "Passw0rd!"
 
     @classmethod
     def _sample_data_source_config(cls):
@@ -109,6 +111,22 @@ class ConfigurableReportTestMixin(object):
         with drop_connected_signals(sql_case_post_save):
             submit_case_blocks(case_block, domain=cls.domain)
         return CommCareCase.objects.get_case(id, cls.domain)
+
+    @classmethod
+    def _create_domain(cls):
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+
+    @classmethod
+    def _create_user(cls, username, can_edit_ucrs=True):
+        role = UserRole.create(
+            domain=cls.domain,
+            name=f'{username}_role',
+            permissions=HqPermissions(edit_ucrs=can_edit_ucrs),
+        )
+        user = WebUser.create(cls.domain, username, cls.password, None, None, role_id=role.get_id)
+        cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
+        return user
 
     @classmethod
     def _delete_everything(cls):
@@ -479,6 +497,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
+    domain = 'ucr-data-source-views'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -492,11 +512,17 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
 
         cls.data_source_config = cls._sample_data_source_config()
         cls.data_source_config.save()
+        cls._create_domain()
+        cls.user = cls._create_user('ucr-editor@example.com')
 
     @classmethod
     def tearDownClass(cls):
         cls._delete_everything()
         super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.user.username, password=self.password)
 
     def _send_data_source_rebuild_request(self):
         path = reverse("rebuild_configurable_data_source", args=(self.domain, self.data_source_config.get_id))
@@ -596,16 +622,24 @@ class TestPrepDataSourceForRebuild(ConfigurableReportTestMixin, TestCase):
 
 
 class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
+    domain = 'ucr-data-source-views'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.data_source_config = cls._sample_data_source_config()
         cls.data_source_config.save()
+        cls._create_domain()
+        cls.user = cls._create_user('ucr-editor@example.com')
 
     @classmethod
     def tearDownClass(cls):
         cls._delete_everything()
         super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.user.username, password=self.password)
 
     def _send_build_data_source_in_place_request(self):
         path = reverse("build_in_place", args=(self.domain, self.data_source_config.get_id))
@@ -628,7 +662,8 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
 
         mock_prep_data_source_for_rebuild.assert_called_once()
         mock_rebuild_indicators_in_place.assert_has_calls([
-            call.delay(self.data_source_config.get_id, '', source='edit_data_source_build_in_place',
+            call.delay(self.data_source_config.get_id, self.user.username,
+                       source='edit_data_source_build_in_place',
                        domain=self.domain)
         ])
         mock_report_ucr_rebuild_metrics.assert_called_once()

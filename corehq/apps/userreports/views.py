@@ -1256,6 +1256,7 @@ class EditDataSourceView(BaseEditDataSourceView):
         return page_context
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
@@ -1296,6 +1297,7 @@ def delete_data_source_shared(domain, config_id, request=None):
         )
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def undelete_data_source(request, domain, config_id):
@@ -1317,6 +1319,7 @@ def undelete_data_source(request, domain, config_id):
     ))
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def rebuild_data_source(request, domain, config_id):
@@ -1445,6 +1448,7 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
     )
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def build_data_source_in_place(request, domain, config_id):
