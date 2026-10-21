@@ -1,4 +1,23 @@
 {% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block page_content %}
+  <button
+    type="button"
+    class="btn btn-outline-primary"
+    data-bs-toggle="modal"
+    data-bs-target="#template-app-modal"
+    hx-get="{% url 'manage_template_app_sectors' %}"
+    hx-target="#manage-sectors-modal-body"
+  >
+    {% trans "Manage sectors" %}
+  </button>
+{% endblock %}
+
+{% block modals %}
+  {{ block.super }}
+  {% include "hqadmin/template_apps/sectors/manage_sector_modal.html" %}
+  {% include "hqwebapp/htmx/error_modal.html" %}
 {% endblock %}

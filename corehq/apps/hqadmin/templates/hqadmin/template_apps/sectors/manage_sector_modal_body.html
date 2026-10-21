@@ -1,0 +1,121 @@
+{% load i18n %}
+<p class="text-body-secondary mb-4">
+  {% trans "Sector labels are shared across template apps. Renaming a label updates every template that uses it." %}
+</p>
+{% if success_message %}
+  <div class="alert alert-success" role="status">{{ success_message }}</div>
+{% endif %}
+<form
+  hq-hx-action="add_sector"
+  hx-post="{{ request.path_info }}"
+  hx-target="#manage-sectors-modal-body"
+  class="mb-4"
+>
+  {% csrf_token %}
+  <label class="form-label" for="{{ add_new_sector_form.name.id_for_label }}">
+    {% trans "New sector label" %}
+  </label>
+  <div class="d-flex flex-column flex-sm-row gap-2">
+    {{ add_new_sector_form.name }}
+    <button type="submit" class="btn btn-primary text-nowrap">
+      <i class="fa fa-plus" aria-hidden="true"></i> {% trans "Add sector" %}
+    </button>
+  </div>
+  <div class="text-danger" role="alert">
+    {% for error in add_new_sector_form.name.errors %}
+      <p class="mb-0">{{ error }}</p>
+    {% endfor %}
+  </div>
+</form>
+<div
+  class="table-responsive border rounded"
+  tabindex="0"
+  role="region"
+>
+  <table class="table align-middle mb-0" style="min-width: 36rem">
+    <thead>
+      <tr>
+        <th scope="col" class="w-50 bg-body-tertiary">
+          {% trans "Sector label" %}
+        </th>
+        <th scope="col" class="text-center text-nowrap bg-body-tertiary">
+          {% trans "Templates using it" %}
+        </th>
+        <th scope="col" class="text-end bg-body-tertiary">
+          <span class="visually-hidden">{% trans "Actions" %}</span>
+        </th>
+      </tr>
+    </thead>
+    {% for sector in sectors %}
+      <tbody>
+        <tr>
+          <td>
+            <form
+              id="sector-form-{{ sector.pk }}"
+              hq-hx-action="rename_sector"
+              hx-post="{{ request.path_info }}"
+              hx-target="#manage-sectors-modal-body"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="sector_id" value="{{ sector.pk }}" />
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                name="name"
+                maxlength="64"
+                required
+                value="{% if rename_sector_id == sector.pk %}{{ rename_sector_form.name.value }}{% else %}{{ sector.name }}{% endif %}"
+              />
+              {% if rename_sector_id == sector.pk %}
+                <div class="text-danger" role="alert">
+                  {% for error in rename_sector_form.name.errors %}
+                    <p class="mb-0">{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </form>
+          </td>
+          <td class="text-center">
+            <span class="badge text-bg-light border rounded-1">
+              {{ sector.template_count }}
+            </span>
+          </td>
+          <td class="text-end text-nowrap">
+            <button
+              type="submit"
+              form="sector-form-{{ sector.pk }}"
+              class="btn btn-sm btn-outline-primary"
+            >
+              {% trans "Save" %}
+            </button>
+            <form
+              id="sector-delete-form-{{ sector.pk }}"
+              hq-hx-action="delete_sector"
+              hx-post="{{ request.path_info }}"
+              hx-target="#manage-sectors-modal-body"
+              class="d-inline"
+            >
+              {% csrf_token %}
+              <input type="hidden" name="sector_id" value="{{ sector.pk }}" />
+              <button
+                type="submit"
+                class="btn btn-sm btn-outline-danger"
+                hx-disabled-elt="this"
+              >
+                <i class="fa fa-trash" aria-hidden="true"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+      {% empty %}
+      <tbody>
+        <tr>
+          <td colspan="3" class="text-body-secondary py-4">
+            {% trans "No sector labels yet. Add the first label above." %}
+          </td>
+        </tr>
+      </tbody>
+    {% endfor %}
+  </table>
+</div>
