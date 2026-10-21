@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-
 import _ from "underscore";
 import sinon from "sinon";
 import moment from "moment";

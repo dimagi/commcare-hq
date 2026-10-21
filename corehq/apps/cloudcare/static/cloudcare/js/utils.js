@@ -51,7 +51,7 @@ var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
     try {
         message = $container.text();  // pull out just the text the user sees
         message = message.replace(/\s+/g, ' ').trim();
-    } catch (e) {
+    } catch {
         // leave the message as at came in if there's an issue parsing text from the container
     }
     if (reportToHq === undefined || reportToHq) {
@@ -95,7 +95,7 @@ var _show = function (message, $el, autoHideTime, classes, isHTML) {
     $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
     try {
         $alertDialog.append($("<button />").addClass("btn-close").attr("data-bs-dismiss", "alert").attr("aria-label", gettext("Close")));
-    } catch (e) {
+    } catch {
         // escaping a DOM-related error from running mocha tests using grunt
         // in the command line. This passes just fine in the browser but
         // breaks only when travis runs it.
