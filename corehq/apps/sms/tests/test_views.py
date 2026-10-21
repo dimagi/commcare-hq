@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from django.contrib.messages.storage import default_storage
 from django.core.exceptions import PermissionDenied
@@ -162,6 +163,7 @@ def messaging_domain():
 
 
 @use(messaging_domain)
+@patch('corehq.apps.sms.views.can_self_enable_messaging', new=lambda *args: True)
 class TestEnableMessaging:
 
     def test_enable_messaging(self):

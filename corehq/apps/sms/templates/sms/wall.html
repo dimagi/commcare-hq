@@ -12,7 +12,11 @@
     </p>
 
     {% if request.couch_user.can_edit_billing %}
-      {% include "sms/partials/wall_enable.html" %}
+      {% if can_self_enable_messaging %}
+        {% include "sms/partials/wall_enable.html" %}
+      {% else %}
+        {% include "sms/partials/wall_action_required.html" %}
+      {% endif %}
     {% else %}
       <div class="alert alert-info">
         <i class="fa fa-info-circle"></i>
@@ -27,7 +31,7 @@
 
 {% block modals %}
   {{ block.super }}
-  {% if request.couch_user.can_edit_billing %}
+  {% if can_self_enable_messaging %}
     {% include "sms/partials/enable_messaging_modal.html" with domain_name=domain_name billing_account=billing_account %}
   {% endif %}
 {% endblock %}
