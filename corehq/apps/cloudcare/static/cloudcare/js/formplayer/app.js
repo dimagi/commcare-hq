@@ -447,7 +447,7 @@ FormplayerFrontend.on('navigation:back', function () {
         if (_.has(options, "endpointId")) {
             return;
         }
-    } catch (e) {
+    } catch {
         // do nothing
     }
     window.history.back();
