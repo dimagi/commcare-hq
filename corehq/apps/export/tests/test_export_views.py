@@ -111,6 +111,35 @@ class DataFileDownloadDetailTest(ViewTestCase):
         resp = self.client.get(self.data_file_url)
         self.assertEqual(resp.status_code, 404)
 
+    def test_data_file_download_suffix_range(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=-500')
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(
+            resp['Content-Range'],
+            'bytes {}-{}/{}'.format(content_length - 500, content_length - 1, content_length),
+        )
+        self.assertEqual(resp['Content-Length'], '500')
+        self.assertEqual(resp.getvalue(), self.content[-500:])
+
+    def test_data_file_download_range_end_beyond_content(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=1000-{}'.format(content_length + 1000))
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(resp['Content-Range'], 'bytes 1000-{}/{}'.format(content_length - 1, content_length))
+        self.assertEqual(resp.getvalue(), self.content[1000:])
+
+    def test_data_file_download_range_not_satisfiable(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}-'.format(content_length))
+        self.assertEqual(resp.status_code, 416)
+        self.assertEqual(resp['Content-Range'], 'bytes */{}'.format(content_length))
+
+    def test_data_file_download_multiple_ranges_ignored(self):
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=0-99,200-299')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.getvalue(), self.content)
+
 
 @generate_cases([
     (0, 999),

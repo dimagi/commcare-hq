@@ -3,7 +3,6 @@ import re
 from wsgiref.util import FileWrapper
 
 from django.http import StreamingHttpResponse, HttpResponse
-from werkzeug.http import parse_range_header
 
 from corehq.util.files import safe_filename_header
 
@@ -57,15 +56,14 @@ def get_download_response(payload, content_length, content_type, download, filen
     :param request: The request. Used to determine if a range response should be given.
     :return: HTTP response
     """
-    ranges = None
+    byte_range = None
     if request and "HTTP_RANGE" in request.META:
         try:
-            ranges = parse_range_header(request.META['HTTP_RANGE'])
-        except ValueError:
-            pass
-
-    if ranges and len(ranges.ranges) != 1:
-        ranges = None
+            byte_range = parse_byte_range(request.META['HTTP_RANGE'], content_length)
+        except RangeNotSatisfiableError:
+            response = HttpResponse(status=416)
+            response["Content-Range"] = "bytes */%d" % content_length
+            return response
 
     response = StreamingHttpResponse(content_type=content_type)
     if download:
@@ -74,16 +72,11 @@ def get_download_response(payload, content_length, content_type, download, filen
     response["Content-Length"] = content_length
     response["Accept-Ranges"] = "bytes"
 
-    if ranges:
-        start, stop = ranges.ranges[0]
-        if stop is not None and stop > content_length:
-            # requested range not satisfiable
-            return HttpResponse(status=416)
-
-        response.streaming_content = RangedFileWrapper(payload, start=start, stop=stop or float("inf"))
-        end = stop or content_length
-        response["Content-Range"] = "bytes %d-%d/%d" % (start, end - 1, content_length)
-        response["Content-Length"] = end - start
+    if byte_range:
+        start, stop = byte_range
+        response.streaming_content = RangedFileWrapper(payload, start=start, stop=stop)
+        response["Content-Range"] = "bytes %d-%d/%d" % (start, stop - 1, content_length)
+        response["Content-Length"] = stop - start
         response.status_code = 206
     else:
         response.streaming_content = FileWrapper(payload)
