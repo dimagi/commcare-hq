@@ -112,7 +112,7 @@ def test_a_delivery_option_is_required():
 
 
 @pytest.mark.parametrize('can_send_sms', [True, False])
-def test_sms_is_offered_only_when_the_project_can_send_sms(can_send_sms):
+def test_sms_is_disabled_when_project_cannot_send_sms(can_send_sms):
     form = _form(can_send_sms=can_send_sms)
     assert form.fields['allow_sms'].disabled is not can_send_sms
 
