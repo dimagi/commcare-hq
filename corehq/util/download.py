@@ -1,4 +1,5 @@
 import itertools
+import re
 from wsgiref.util import FileWrapper
 
 from django.http import StreamingHttpResponse, HttpResponse
@@ -88,3 +89,41 @@ def get_download_response(payload, content_length, content_type, download, filen
         response.streaming_content = FileWrapper(payload)
 
     return response
+
+
+def parse_byte_range(header, content_length):
+    """
+    Parse an HTTP ``Range`` header that requests a single byte range.
+
+    :param header: Value of the ``Range`` request header.
+    :param content_length: Size of the content in bytes.
+    :return: ``(start, stop)`` where ``stop`` is exclusive, or ``None``
+        if the header is malformed or requests multiple ranges, in which
+        case it should be ignored and the full content served.
+    :raises RangeNotSatisfiableError: if the range starts beyond the content.
+    """
+    match = _BYTE_RANGE.match(header.strip())
+    if not match:
+        return None
+    first, last = match.groups()
+    if first:
+        start = int(first)
+        if last and int(last) < start:
+            return None
+        if start >= content_length:
+            raise RangeNotSatisfiableError(header)
+        stop = int(last) + 1 if last else content_length
+        return start, min(stop, content_length)
+    if last:
+        suffix_length = int(last)
+        if suffix_length == 0 or content_length == 0:
+            raise RangeNotSatisfiableError(header)
+        return max(content_length - suffix_length, 0), content_length
+    return None
+
+
+_BYTE_RANGE = re.compile(r'^bytes=([0-9]*)-([0-9]*)$', re.IGNORECASE)
+
+
+class RangeNotSatisfiableError(ValueError):
+    pass
