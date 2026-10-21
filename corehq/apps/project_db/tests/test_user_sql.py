@@ -36,6 +36,7 @@ from corehq.apps.project_db.user_sql import (
     UnsupportedSQL,
     UserSQL,
     UserSQLProgrammingError,
+    UserSQLTimeout,
     _bind_literal,
     _set_timezone,
     translate,
@@ -667,13 +668,31 @@ def test_set_timezone_lasts_for_one_transaction():
         assert conn.execute(text('SHOW TimeZone')).scalar() != 'Asia/Kolkata'
 
 
+@use('db', project_db_table('test-statement-timeout', 'patient', {'name': 'plain'}))
+def test_queries_have_a_statement_timeout():
+    user_sql = UserSQL('test-statement-timeout', 'SELECT case_id FROM patient')
+    with user_sql._connect() as conn:
+        assert conn.execute(text('SHOW statement_timeout')).scalar() == '5s'
+
+
+@use('db', project_db_table('test-query-timeout', 'patient', {'name': 'plain'}))
+@patch('corehq.apps.project_db.user_sql.STATEMENT_TIMEOUT', '20ms')
+def test_a_timeout_is_reported_as_a_programming_error():
+    user_sql = UserSQL('test-query-timeout', 'SELECT case_id FROM patient')
+    # Can't do this in UserSQL, so just hardcode it for the test
+    user_sql.query = select([func.pg_sleep(1)])
+    with pytest.raises(UserSQLTimeout) as error:
+        user_sql.run({})
+    assert 'query cancelled' in error.value.msg
+
+
 @pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
 def test_run_reports_a_database_error(error_class):
     msg = 'column "nope" does not exist\nLINE 1: ...'
     engine = MagicMock()
-    # The first side_effect is from setting the timezone
+    # The first side_effects are from setting the statement timeout and timezone
     engine.begin().__enter__().execute.side_effect = [
-        None, error_class('SELECT 1', {}, Exception(msg))]
+        None, None, error_class('SELECT 1', {}, Exception(msg))]
     user_sql = _user_sql('SELECT * FROM client')
     with patch('corehq.apps.project_db.user_sql.get_domain_query_engine',
                return_value=engine):

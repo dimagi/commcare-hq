@@ -1,3 +1,4 @@
+from collections import namedtuple
 import hashlib
 from functools import lru_cache
 
@@ -8,7 +9,7 @@ import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
 from psycopg2 import errorcodes
-from sqlalchemy import ARRAY, Boolean, Column, Date, DateTime, Numeric, Table, Text
+from sqlalchemy import Column, Table, Text, func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import UserDefinedType
 
@@ -22,6 +23,7 @@ from corehq.sql_db.connections import (
 
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
+SCHEMA_SYNC_LOCK_TIMEOUT = '5s'
 
 
 def truncate_identifier(identifier):
@@ -163,15 +165,23 @@ def _register_earth_type(dialect):
         dialect.ischema_names = {**dialect.ischema_names, 'earth': Earth}
 
 
-class CaseTable:
-    COERCED_PROPERTY_TYPES = {
-        # CaseProperty data_type:  (SQLAlchemy column type, default)
-        CaseProperty.DataType.DATE: (Date, None),
-        CaseProperty.DataType.NUMBER: (Numeric, None),
-        CaseProperty.DataType.SELECT: (ARRAY(Text), '{}'),
-        CaseProperty.DataType.GPS: (Earth, None),
-    }
+_Type = namedtuple('Type', 'dd_type sql_type coercion_fn default')
+_lib = func.lib_projectdb  # Functions defined in lib_projectdb.sql
+PROJECT_DB_TYPES = [
+    _Type(CaseProperty.DataType.DATE,   sqlalchemy.Date,        _lib.coerce_to_date,   None),
+    _Type(CaseProperty.DataType.NUMBER, sqlalchemy.Numeric,     _lib.coerce_to_number, None),
+    _Type(CaseProperty.DataType.SELECT, sqlalchemy.ARRAY(Text), _lib.coerce_to_array,  '{}'),
+    _Type(CaseProperty.DataType.GPS,    Earth,                  _lib.coerce_to_gps,    None),
+]
 
+
+def get_coercion_fn(column):
+    for type_ in PROJECT_DB_TYPES:
+        if column.comment and column.name == property_column(column.comment, type_.dd_type):
+            return type_.coercion_fn
+
+
+class CaseTable:
     def __init__(self, domain, case_type):
         self.domain = domain
         self.case_type = case_type
@@ -200,13 +210,13 @@ class CaseTable:
         ``<data_type>_prop__<name>``. The raw property name is stored as a
         postgres comment.
         """
+        coerced_types = {t.dd_type: t for t in PROJECT_DB_TYPES}
         for name, data_type in self._get_dd_properties():
             yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
-            if data_type in self.COERCED_PROPERTY_TYPES:
-                col_type, default = self.COERCED_PROPERTY_TYPES[data_type]
-                yield Column(property_column(name, data_type), col_type, comment=name,
-                             nullable=default is None, server_default=default)
+            if t := coerced_types.get(data_type):
+                yield Column(property_column(name, data_type), t.sql_type, comment=name,
+                             nullable=t.default is None, server_default=t.default)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(
@@ -222,12 +232,12 @@ class CaseTable:
             Column('case_id', Text, primary_key=True),
             Column('owner_id', Text, nullable=False, index=True),
             Column('case_name', Text),
-            Column('opened_on', DateTime(timezone=True)),
-            Column('closed_on', DateTime(timezone=True)),
-            Column('modified_on', DateTime(timezone=True)),
-            Column('closed', Boolean),
+            Column('opened_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed_on', sqlalchemy.DateTime(timezone=True)),
+            Column('modified_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed', sqlalchemy.Boolean),
             Column('external_id', Text, nullable=False, server_default=''),
-            Column('server_modified_on', DateTime(timezone=True)),
+            Column('server_modified_on', sqlalchemy.DateTime(timezone=True)),
             Column('parent_id', Text, index=True),
             Column('host_id', Text, index=True),
         ]
@@ -247,18 +257,23 @@ class CaseTable:
 
 
 def create_or_update_project_db(domain):
+    """Sync a domain's tables with the data dictionary
+
+    Return ``{case_type: [column_name, ...]}`` of new typed columns whose
+    existing rows need backfilling.
+    """
     with metrics_histogram_timer(
         'commcare.project_db.schema_sync.duration',
         timing_buckets=(.5, 1, 5, 20, 60),
         tags={'domain': domain},
     ):
-        _create_or_update_project_db(domain)
+        return _create_or_update_project_db(domain)
 
 
 def _create_or_update_project_db(domain):
     case_types = _get_case_types(domain)
     if not case_types:
-        return
+        return {}
     metadata = sqlalchemy.MetaData()
     case_tables = [
         CaseTable(domain, case_type).build_definition(metadata)
@@ -267,12 +282,21 @@ def _create_or_update_project_db(domain):
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
+        _set_lock_timeout(conn)
         schema = DomainSchema(domain)
         schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
+        to_backfill = {}
         for table in case_tables:
-            update_table(conn, table)
+            if new_typed_cols := update_table(conn, table):
+                to_backfill[table.comment] = new_typed_cols
         schema.grant_role_read_access(conn)
+    return to_backfill
+
+
+def _set_lock_timeout(conn):
+    """Fail rather than queue behind a long-running query"""
+    conn.execute(sqlalchemy.text(f"SET LOCAL lock_timeout = '{SCHEMA_SYNC_LOCK_TIMEOUT}'"))
 
 
 def get_domain_tables(domain):
@@ -317,6 +341,9 @@ def update_table(conn, table):
 
     This is append-only: columns and indexes that exist in the database
     but not in ``table`` are left in place (never dropped).
+
+    Return the names of new typed columns whose raw column already existed,
+    since their existing rows need backfilling.
     """
     inspector = sqlalchemy.inspect(conn)
     schema = table.schema
@@ -334,7 +361,7 @@ def update_table(conn, table):
     ]
 
     if not new_columns and not new_indexes:
-        return
+        return []
 
     op = Operations(MigrationContext.configure(conn))
     for column in new_columns:
@@ -344,6 +371,11 @@ def update_table(conn, table):
         op.add_column(table.name, detached_col, schema=schema)
     for index in new_indexes:
         index.create(bind=conn)
+
+    return [
+        col.name for col in new_columns if get_coercion_fn(col)  # Is coercible
+        and property_column(col.comment) in existing_columns  # Has existing data
+    ]
 
 
 def _index_name(index, dialect):
