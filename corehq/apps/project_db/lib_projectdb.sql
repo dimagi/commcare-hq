@@ -38,7 +38,7 @@ RETURNS text[]
 LANGUAGE sql
 IMMUTABLE
 AS $$
-  SELECT coalesce(array_remove(string_to_array(value, ' '), ''), '{}')
+  SELECT coalesce(array_remove(string_to_array(value, ' '), ''), '{}'::text[])
 $$;
 
 -- Parse "lat lon ..." into an earth point, ignoring any further values
