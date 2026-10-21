@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
+from dimagi.utils.couch.undo import soft_delete
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
@@ -685,6 +686,98 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
         # reset for other tests
         self.data_source_config.meta.build.awaiting = False
         self.data_source_config.save()
+
+
+@flag_enabled('USER_CONFIGURABLE_REPORTS')
+@patch('corehq.apps.userreports.views.rebuild_indicators_in_place')
+@patch('corehq.apps.userreports.views.rebuild_indicators')
+class TestDataSourceViewsAccess(ConfigurableReportTestMixin, TestCase):
+    """
+    Data source views that change data must not be reachable by
+    anonymous users or by users without the ``edit_ucrs`` permission.
+    """
+    domain = 'ucr-data-source-access'
+    url_names = [
+        'delete_configurable_data_source',
+        'undo_delete_data_source',
+        'rebuild_configurable_data_source',
+        'build_in_place',
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._create_domain()
+        cls.editor = cls._create_user('ucr-editor@example.com')
+        cls.non_editor = cls._create_user('ucr-non-editor@example.com', can_edit_ucrs=False)
+
+    def _create_data_source(self, deleted=False):
+        config = self._sample_data_source_config()
+        config.save()
+        self.addCleanup(config.delete)
+        adapter = get_indicator_adapter(config)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        if deleted:
+            soft_delete(config)
+        return config
+
+    def _post(self, url_name, config):
+        return self.client.post(reverse(url_name, args=(self.domain, config.get_id)))
+
+    def _assert_unchanged(self, config, was_deleted, *task_mocks):
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'].endswith('-Deleted') == was_deleted
+        assert not doc['meta']['build']['awaiting']
+        assert get_indicator_adapter(config).table_exists
+        for task_mock in task_mocks:
+            task_mock.delay.assert_not_called()
+
+    def test_anonymous_user_is_redirected_to_login(self, rebuild_mock, in_place_mock):
+        login_url = reverse('domain_login', kwargs={'domain': self.domain})
+        for url_name in self.url_names:
+            with self.subTest(url_name=url_name):
+                was_deleted = url_name == 'undo_delete_data_source'
+                config = self._create_data_source(deleted=was_deleted)
+
+                response = self._post(url_name, config)
+
+                assert response.status_code == 302
+                assert response.url.startswith(login_url)
+                self._assert_unchanged(config, was_deleted, rebuild_mock, in_place_mock)
+
+    def test_user_without_edit_ucrs_is_forbidden(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.non_editor.username, password=self.password)
+        for url_name in self.url_names:
+            with self.subTest(url_name=url_name):
+                was_deleted = url_name == 'undo_delete_data_source'
+                config = self._create_data_source(deleted=was_deleted)
+
+                response = self._post(url_name, config)
+
+                assert response.status_code == 403
+                self._assert_unchanged(config, was_deleted, rebuild_mock, in_place_mock)
+
+    def test_editor_can_delete(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.editor.username, password=self.password)
+        config = self._create_data_source()
+
+        response = self._post('delete_configurable_data_source', config)
+
+        assert response.status_code == 302
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'] == 'DataSourceConfiguration-Deleted'
+        assert not get_indicator_adapter(config).table_exists
+
+    def test_editor_can_undelete(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.editor.username, password=self.password)
+        config = self._create_data_source(deleted=True)
+
+        response = self._post('undo_delete_data_source', config)
+
+        assert response.status_code == 302
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'] == 'DataSourceConfiguration'
 
 
 class TestSubscribeToDataSource(TestCase):
