@@ -1,12 +1,12 @@
 {% load i18n %}
 
 <div class="alert alert-warning">
-  <h5>
+  <p>
+    <i class="fa fa-triangle-exclamation"></i>
     <strong>
-      <i class="fa fa-triangle-exclamation"></i>
       {% trans "Turning on messaging will cost this project money." %}
     </strong>
-  </h5>
+  </p>
   <p>
     {% blocktrans %}
       This project is charged for every SMS it sends and receives. The price of
@@ -44,7 +44,7 @@
 </div>
 
 <a class="btn btn-default" href="{% url 'homepage' %}"
-  >{% trans "Go Back" %}</a
+  >{% trans "Back to Home" %}</a
 >
 <button
   class="btn btn-primary"

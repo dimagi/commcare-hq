@@ -19,12 +19,21 @@
       {% endif %}
     {% else %}
       <div class="alert alert-info">
-        <i class="fa fa-info-circle"></i>
-        {% blocktrans %}
-          Messaging is currently disabled for this project space. Please contact
-          your project administrator to enable messaging.
-        {% endblocktrans %}
+        <p>
+          <i class="fa fa-info-circle"></i>
+          <strong>
+            {% trans "Messaging is currently disabled for this project space." %}
+          </strong>
+        </p>
+        <p>
+          {% blocktrans %}
+            Please contact your project administrator to enable messaging.
+          {% endblocktrans %}
+        </p>
       </div>
+      <a class="btn btn-default" href="{% url 'homepage' %}"
+        >{% trans "Back to Home" %}</a
+      >
     {% endif %}
   </div>
 {% endblock %}
