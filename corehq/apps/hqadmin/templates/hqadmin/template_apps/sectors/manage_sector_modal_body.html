@@ -1,6 +1,9 @@
 {% load i18n %}
 <p class="text-body-secondary mb-4">
-  {% trans "Sector labels are shared across template apps. Renaming a label updates every template that uses it." %}
+  {% blocktrans trimmed %}
+    Sector labels are shared across template apps.
+    Renaming a label updates every template that uses it.
+  {% endblocktrans %}
 </p>
 {% if success_message %}
   <div class="alert alert-success" role="status">{{ success_message }}</div>
