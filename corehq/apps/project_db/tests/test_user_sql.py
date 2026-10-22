@@ -190,6 +190,16 @@ def _within_distance(coordinates, meters):
     # An explicit NULLS placement overrides the direction's default
     ('SELECT name FROM client ORDER BY name DESC NULLS LAST',
      select([CLIENT.c.name]).order_by(nullslast(CLIENT.c.name.desc()))),
+    # An alias takes precedence over a column of the same name, unless qualified
+    ('SELECT name AS n FROM client ORDER BY n',
+     select([CLIENT.c.name.label('n')]).order_by(nullslast(CLIENT.c.name.asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(CLIENT.c.case_id.asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY client.name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(CLIENT.c.name.asc()))),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name ORDER BY n DESC',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)
+     .order_by(nullsfirst(func.count().desc()))),
 
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
@@ -368,7 +378,7 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
     'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
     'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
-    'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
+    'SELECT name FROM client ORDER BY count(*)',    # ORDER BY an aggregation (needs aliasing)
     'SELECT name FROM client GROUP BY 1',           # GROUP BY an ordinal
     'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
     'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
