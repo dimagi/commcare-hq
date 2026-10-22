@@ -150,6 +150,15 @@ def _within_distance(coordinates, meters):
     ('SELECT DISTINCT ON (case_id, name) name FROM client',
      select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
 
+    # GROUP BY
+    ('SELECT name FROM client GROUP BY name',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)),
+    ('SELECT name FROM client GROUP BY name, case_id',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name, CLIENT.c.case_id)),
+    (f'SELECT visit.name {JOIN_SQL} GROUP BY client.name, visit.name',
+     select([VISIT.c.name]).select_from(CLIENT_VISIT)
+     .group_by(CLIENT.c.name, VISIT.c.name)),
+
     # ORDER BY - each key gets its own direction and default NULLS placement
     ('SELECT * FROM client ORDER BY name, case_id DESC',
      select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
@@ -336,6 +345,9 @@ def _compiled(query):
     'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
     'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
     'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
+    'SELECT name FROM client GROUP BY 1',           # GROUP BY an ordinal
+    'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
+    'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values

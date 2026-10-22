@@ -256,8 +256,8 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, joins, where, distinct, order = _unpack(
-        node, 'expressions', 'from_', 'joins', 'where', 'distinct', 'order')
+    expressions, from_, joins, where, group, distinct, order = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'group', 'distinct', 'order')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
@@ -269,6 +269,8 @@ def _convert_select(node, tables):
     if where is not None:
         predicate, = _unpack(where, 'this')
         query = query.where(_convert_predicate(predicate, selectable.c))
+    if group is not None:
+        query = query.group_by(*_convert_group(group, selectable.c))
     if order is not None:
         query = query.order_by(*_convert_order(order, selectable.c))
     return query
@@ -283,6 +285,12 @@ def _convert_distinct_on(node, columns):
     if not on_expressions:
         raise UnsupportedSQL("DISTINCT ON requires at least one column")
     return [_convert_column(e, columns) for e in on_expressions]
+
+
+def _convert_group(node, columns):
+    """Convert a GROUP BY clause to a list of columns"""
+    group_expressions, = _unpack(node, 'expressions')
+    return [_convert_column(e, columns) for e in group_expressions]
 
 
 def _convert_order(node, columns):
