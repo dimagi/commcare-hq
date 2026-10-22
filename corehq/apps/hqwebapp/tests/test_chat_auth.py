@@ -27,7 +27,7 @@ from corehq.util.test_utils import flag_enabled
     OCS_OAUTH_CLIENT_ID='client-id',
     OCS_OAUTH_CLIENT_SECRET='client-secret',
 )
-@flag_enabled('OCS_CHATBOT_PAGE_CONTEXT')
+@flag_enabled('GA_OCS_CHATBOT')
 class ChatAuthTokenTestCase(TestCase):
 
     @classmethod
@@ -122,7 +122,8 @@ def _subscribe_domain(domain_name, edition):
 
 
 def _call_chat_token(couch_user):
-    request = RequestFactory().post(reverse('chat_token'))
+    domain = couch_user.domains[0]
+    request = RequestFactory().post(reverse('chat_token', args=[domain]))
     request.user = couch_user.get_django_user()
     request.couch_user = couch_user
-    return chat_auth.chat_token(request)
+    return chat_auth.chat_token(request, domain)

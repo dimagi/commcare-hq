@@ -68,7 +68,6 @@ msgid "Other"
 msgstr "Nyingine"
 
 #: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
-#| msgid "Schedule Invoice"
 msgid "Generate Invoice"
 msgstr "Tengeneza Ankara"
 
@@ -1079,6 +1078,151 @@ msgstr "Hakuna mabadiliko mapya!"
 #: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "Una mabadiliko ambayo hujahifadhi kwenye mipangilio ya kidokezo chako"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(name)s (%(code)s)"
+msgstr "%(name)s (%(code)s)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "You need permission to edit this app to translate it."
+msgstr "Unahitaji ruhusa ya kuhariri programu hii ili kuitafsiri."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "The translation couldn't be started. Try again."
+msgstr "Tafsiri haikuweza kuanzishwa. Jaribu tena."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not yet supported"
+msgstr "Bado haijasaidiwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Use the manual translation options below"
+msgstr "Tumia chaguo za kutafsiri kwa mkono zilizo hapa chini"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Settings"
+msgid "Starting…"
+msgstr "Inaanza…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Requeued"
+msgid "Queued"
+msgstr "Imepangwa foleni"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Add Translation"
+msgid "Translating…"
+msgstr "Inatafsiri…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Batch %(batch)s of %(total)s"
+msgstr "Kundi %(batch)s kati ya %(total)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Auto fill translations"
+msgid "Applying translations…"
+msgstr "Inaweka tafsiri…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Saving to the app"
+msgstr "Inaokoa kwenye programu"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed"
+msgstr "Imeshindikana"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Nothing to translate"
+msgstr "Hakuna cha kutafsiri"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Every label already has a translation."
+msgstr "Kila lebo tayari ina tafsiri."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Add Translation"
+msgid "AI translated"
+msgstr "Imetafsiriwa na AI"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in this run"
+msgid_plural "%(count)s labels translated in this run"
+msgstr[0] "Lebo %(count)s imetafsiriwa katika mchakato huu"
+msgstr[1] "Lebo %(count)s zimetafsiriwa katika mchakato huu"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Form submission failed with error"
+msgid "Finished with errors"
+msgstr "Imekamilika na makosa"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
+msgstr "Lebo %(translated)s kati ya %(total)s zimetafsiriwa (%(percent)s%)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s Invitation Accepted"
+#| msgid_plural "%(count)s Invitations Accepted"
+msgid "%(count)s skipped"
+msgstr "%(count)s zimerukwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s Invitation Pending"
+#| msgid_plural "%(count)s Invitations Pending"
+msgid "%(count)s failed"
+msgstr "%(count)s zimefeli"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s changed during the run"
+msgstr "%(count)s zimebadilika wakati wa mchakato"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Run AI Translate again to retry the labels that weren't translated."
+msgstr ""
+"Endesha tena Tafsiri ya AI ili kujaribu tena lebo ambazo hazikutafsiriwa."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "No AI run yet"
+msgstr "Hakuna mchakato wa AI bado"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in the last run"
+msgid_plural "%(count)s labels translated in the last run"
+msgstr[0] "Lebo %(count)s imetafsiriwa katika mchakato uliopita"
+msgstr[1] "Lebo %(count)s zimetafsiriwa katika mchakato uliopita"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Auto fill translations"
+msgid "Partially translated"
+msgstr "Imetafsiriwa sehemu"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"%(translated)s of %(attempted)s labels translated in the last run · "
+"%(missed)s weren't translated"
+msgstr ""
+"Lebo %(translated)s kati ya %(attempted)s zimetafsiriwa katika mchakato "
+"uliopita · %(missed)s hazikutafsiriwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"AI translated %(percent)s% of the Application (%(translated)s of %(total)s "
+"labels)"
+msgstr ""
+"AI imetafsiri %(percent)s% ya Programu (%(translated)s kati ya %(total)s "
+"lebo)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "In version %(version)s"
+msgstr "Katika toleo %(version)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not in a version yet"
+msgstr "Bado haipo kwenye toleo"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
@@ -2683,6 +2827,31 @@ msgstr "Ongeza Vyote"
 msgid "Remove All"
 msgstr "Ondoa Vyote"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "Companion ya CommCare haijajumuishwa katika usajili wako wa sasa."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"Umefikia kikomo chako cha gumzo kwa mwezi huu. Fungu lako litaanza upya "
+"tarehe 1 ya mwezi ujao (UTC)."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr ""
+"Umetumia asilimia %(percent)s ya jumla ya ujumbe wako wa gumzo mwezi huu."
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"Hatukuweza kukagua fungu lako la gumzo. Tafadhali funga na fungua tena gumzo"
+" ili ujaribu tena."
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "Nenosiri lako ni dhaifu sana! Jaribu kuongeza nambari au alama."
@@ -3008,26 +3177,26 @@ msgstr "Matendo Yote"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekubaliwa"
+msgstr[1] "%(count)s Mialiko Imekubaliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Unasubiri"
+msgstr[1] "%(count)s Mialiko Inasubiri"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Mwaliko Umekataliwa"
+msgstr[1] "%(count)s Mialiko Imekataliwa"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s Nafasi ya Mradi Inashiriki"
+msgstr[1] "%(count)s Nafasi za Miradi Zinashiriki"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"
@@ -3301,14 +3470,6 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Success!"
 msgstr "Imefanikiwa!"
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
-#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed"
-msgstr "Imeshindikana"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js

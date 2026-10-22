@@ -68,7 +68,6 @@ msgid "Other"
 msgstr "अन्य"
 
 #: corehq/apps/accounting/static/accounting/js/generate_prepayment_invoice.js
-#| msgid "Schedule Invoice"
 msgid "Generate Invoice"
 msgstr "इनवॉइस जनरेट करें"
 
@@ -1084,6 +1083,153 @@ msgstr "कोई नया परिवर्तन नहीं!"
 #: corehq/apps/app_manager/static/app_manager/js/releases/bootstrap5/update_prompt.js
 msgid "You have unsaved changes to your prompt setting"
 msgstr "आपकी प्रॉम्प्ट सेटिंग में बिना सहेजे गए परिवर्तन हैं"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(name)s (%(code)s)"
+msgstr "%(name)s (%(code)s)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "You need permission to edit this app to translate it."
+msgstr "इस ऐप का अनुवाद करने के लिए आपको संपादन की अनुमति चाहिए।"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "The translation couldn't be started. Try again."
+msgstr "अनुवाद शुरू नहीं किया जा सका। कृपया पुनः प्रयास करें।"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not yet supported"
+msgstr "अभी समर्थित नहीं है"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Use the manual translation options below"
+msgstr "नीचे दिए गए मैन्युअल अनुवाद विकल्पों का उपयोग करें"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#, fuzzy
+#| msgid "Settings"
+msgid "Starting…"
+msgstr "सेटिंग्स"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Requeued"
+msgid "Queued"
+msgstr "कतार में है"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#, fuzzy
+#| msgid "Add Translation"
+msgid "Translating…"
+msgstr "अनुवाद जोड़ें"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Batch %(batch)s of %(total)s"
+msgstr "बैच %(batch)s में से %(total)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#, fuzzy
+#| msgid "Auto fill translations"
+msgid "Applying translations…"
+msgstr "अनुवाद स्वतः भरें"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Saving to the app"
+msgstr "ऐप में सहेजा जा रहा है"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed"
+msgstr "असफल"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Nothing to translate"
+msgstr "अनुवाद के लिए कुछ नहीं है"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Every label already has a translation."
+msgstr "हर लेबल का पहले से ही अनुवाद है।"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Add Translation"
+msgid "AI translated"
+msgstr "एआई द्वारा अनुवादित"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in this run"
+msgid_plural "%(count)s labels translated in this run"
+msgstr[0] "इस रन में %(count)s लेबल का अनुवाद हुआ"
+msgstr[1] "इस रन में %(count)s लेबल्स का अनुवाद हुआ"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Form submission failed with error"
+msgid "Finished with errors"
+msgstr "त्रुटियों के साथ समाप्त हुआ"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
+msgstr "%(total)s में से %(translated)s लेबल्स का अनुवाद हुआ (%(percent)s%)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s Invitation Accepted"
+#| msgid_plural "%(count)s Invitations Accepted"
+msgid "%(count)s skipped"
+msgstr "%(count)s छोड़े गए"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s Invitation Pending"
+#| msgid_plural "%(count)s Invitations Pending"
+msgid "%(count)s failed"
+msgstr "%(count)s असफल रहे"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s changed during the run"
+msgstr "रन के दौरान %(count)s बदले गए"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Run AI Translate again to retry the labels that weren't translated."
+msgstr ""
+"उन लेबल्स को पुनः अनुवादित करने के लिए एआई अनुवाद फिर से चलाएँ जिन्हें "
+"अनुवादित नहीं किया गया था।"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "No AI run yet"
+msgstr "अभी तक कोई एआई रन नहीं हुआ है"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in the last run"
+msgid_plural "%(count)s labels translated in the last run"
+msgstr[0] "पिछले रन में %(count)s लेबल का अनुवाद हुआ"
+msgstr[1] "पिछले रन में %(count)s लेबल्स का अनुवाद हुआ"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Auto fill translations"
+msgid "Partially translated"
+msgstr "आंशिक रूप से अनुवादित"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"%(translated)s of %(attempted)s labels translated in the last run · "
+"%(missed)s weren't translated"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"AI translated %(percent)s% of the Application (%(translated)s of %(total)s "
+"labels)"
+msgstr ""
+"एआई ने एप्लिकेशन के %(percent)s% का अनुवाद किया (%(total)s में से "
+"%(translated)s लेबल्स)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "In version %(version)s"
+msgstr "संस्करण %(version)s में"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not in a version yet"
+msgstr "अभी तक किसी संस्करण में नहीं है"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
@@ -2680,6 +2826,30 @@ msgstr "सभी जोड़ें"
 msgid "Remove All"
 msgstr "सभी हटाएँ"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "CommCare Companion is not included in your current subscription."
+msgstr "CommCare Companion आपकी वर्तमान सदस्यता में शामिल नहीं है।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"You've reached your chat limit for this month. Your allowance resets on the "
+"1st of next month (UTC)."
+msgstr ""
+"आपने इस महीने के लिए अपनी चैट सीमा पूरी कर ली है। आपकी अनुमति अगले महीने की "
+"1 तारीख (UTC) को रीसेट हो जाएगी।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid "You've used %(percent)s% of your chat messages this month."
+msgstr "आपने इस महीने अपनी चैट संदेशों का %(percent)s% उपयोग कर लिया है।"
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ocs_usage_controller.js
+msgid ""
+"We couldn't check your chat allowance. Please close and reopen the chat to "
+"try again."
+msgstr ""
+"हम आपकी चैट अनुमति की जाँच नहीं कर सके। कृपया चैट को बंद करें और फिर से "
+"खोलें, और पुनः प्रयास करें।"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/password_validators.ko.js
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr "आपका पासवर्ड बहुत कमजोर है! कृपया संख्याएँ या प्रतीक जोड़ें।"
@@ -3005,26 +3175,26 @@ msgstr "सभी क्रियाएँ"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण स्वीकार किया गया"
+msgstr[1] "%(count)s निमंत्रण स्वीकार किए गए"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण लंबित है"
+msgstr[1] "%(count)s निमंत्रण लंबित हैं"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s निमंत्रण अस्वीकार किया गया"
+msgstr[1] "%(count)s निमंत्रण अस्वीकार किए गए"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(count)s प्रोजेक्ट स्पेस में भाग लिया जा रहा है"
+msgstr[1] "%(count)s प्रोजेक्ट स्पेस में भाग लिया जा रहा है"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"
@@ -3290,14 +3460,6 @@ msgstr "आपकी रिपोर्ट ईमेल करते समय �
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Success!"
 msgstr "सफलता!"
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
-#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed"
-msgstr "असफल"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js

@@ -923,17 +923,14 @@ PUBLIC_WEBFORMS = FeatureRelease(
     """
 )
 
-OCS_CHATBOT_PAGE_CONTEXT = FeatureRelease(
-    'ocs_chatbot_page_context',
-    'Collect page context for the CommCare Companion AI support bot',
-    TAG_RELEASE,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-    owner='Jing Cheng',
+GA_OCS_CHATBOT = StaticToggle(
+    'ga_ocs_chatbot',
+    'GA CommCare Companion',
+    TAG_GA_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
     description="""
-        Gates client-side collection of page context (URL, app structure, form designer
-        state, and the requesting user's role/permissions) that is sent to the OCS chat
-        widget. Requires the CommCare Companion AI Support Bot (OCS_CHATBOT) preview to be
-        enabled for the widget to be present.
+        Enable to GA the chatbot and hide the OCS_CHATBOT feature preview.
+        Domains can opt out in Project Settings > Basic.
     """,
 )
 

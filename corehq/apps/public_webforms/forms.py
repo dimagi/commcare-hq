@@ -11,8 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
 from corehq.apps.public_webforms.app_builds import (
@@ -32,6 +30,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
 )
+from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
 
@@ -124,7 +123,7 @@ class BasePublicWebformForm(forms.Form):
                 _("A branded email with a single-use link.")
             ),
         )]
-        if domain_has_privilege(domain, privileges.OUTBOUND_SMS):
+        if domain_can_send_sms(domain):
             link_choices.append((
                 'allow_sms',
                 format_html(
@@ -207,7 +206,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
 
     def initial_expires_at(self):
         return (
-            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=30))
+            ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90))
             .user_time(self.timezone)
             .ui_string(fmt='%Y-%m-%d %H:%M:%S')
         )
@@ -282,9 +281,13 @@ class EditPublicWebformForm(BasePublicWebformForm):
         super().__init__(domain, timezone, *args, **kwargs)
         form_paths = get_public_webform_form_paths(
             domain, [webform])[webform.id]
+        if form_paths['is_app_deleted']:
+            self.fields['open_to_requests'].disabled = True
+            self.fields['open_to_requests'].help_text = _(
+                "This webform's application has been deleted, so it can't be opened.")
         self.initial.update({
             'label': webform.label,
-            'open_to_requests': not webform.is_disabled,
+            'open_to_requests': not webform.is_disabled and not form_paths['is_app_deleted'],
             'app_name': f"{form_paths['app_name']} (v{form_paths['app_version']})",
             'menu_name': form_paths['menu_name'],
             'form_name': form_paths['form_name'],
@@ -312,6 +315,6 @@ class EditPublicWebformForm(BasePublicWebformForm):
         self.webform.expires_at = self.cleaned_data['expires_at']
         self.webform.allow_email = 'allow_email' in link_choices
         self.webform.allow_sms = 'allow_sms' in link_choices
-        self.webform.is_disabled = not self.cleaned_data['open_to_requests']
+        self.webform.set_disabled(not self.cleaned_data['open_to_requests'])
         self.webform.save()
         return self.webform

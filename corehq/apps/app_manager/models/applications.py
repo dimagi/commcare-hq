@@ -18,10 +18,11 @@ from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, models
+from django.db.models.functions import Lower
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.utils.translation import override
+from django.utils.translation import gettext_lazy, override
 
 from couchdbkit import ResourceNotFound
 from looseversion import LooseVersion
@@ -129,6 +130,7 @@ from corehq.apps.linked_domain.applications import (
 )
 from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.app_builds import canonical_app_id
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.apps.users.dbaccessors import get_display_name_for_user_id
@@ -447,7 +449,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def origin_id(self):
         # For app builds this is the ID of the app they were built from. Otherwise, it's just the app's ID.
-        return self.copy_of or self._id
+        return canonical_app_id(self.copy_of) if self.copy_of else self._id
 
     def is_deleted(self):
         return self.doc_type.endswith(DELETED_SUFFIX)
@@ -2127,13 +2129,36 @@ def overwrite_app_from_source(domain, app_id, source, extra_properties=None, req
     return app
 
 
+class TemplateAppSector(models.Model):
+    """A shared sector label for the template app catalog."""
+
+    name = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(Lower('name'), name='unique_template_app_sector_name_ci'),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class ExchangeApplication(models.Model):
+    """Catalog entry for a template app.
+    Historically named for the App Exchange page; the feature is now called Template Apps.
+    """
+
+    class Category(models.TextChoices):
+        STARTER_APP = 'starter_app', gettext_lazy('Starter App')
+        FEATURE_TEMPLATE = 'feature_template', gettext_lazy('Feature Template')
+
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
     help_link = models.CharField(max_length=255, null=True)
-    changelog_link = models.CharField(max_length=255, null=True)
-    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
-                                                                 " strings from corehq.privileges"))
+    category = models.CharField(max_length=32, choices=Category.choices)
+    sectors = models.ManyToManyField(TemplateAppSector, related_name='exchange_applications', blank=True)
+    description = models.TextField(null=True, blank=True)
+    minimum_plan_edition = models.CharField(max_length=25, choices=const.get_template_app_plan_choices)
 
     class Meta(object):
         unique_together = ('domain', 'app_id')
@@ -2141,7 +2166,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
+    list_display = ['domain', 'app_id', 'category', 'minimum_plan_edition', 'help_link']
     list_filter = ['domain', 'app_id']
 
 

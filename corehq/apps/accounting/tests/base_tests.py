@@ -8,7 +8,7 @@ from django_prbac.models import Role
 from corehq.apps.accounting import utils
 from corehq.apps.accounting.tasks import (
     calculate_users_in_all_domains,
-    calculate_web_users_in_all_billing_accounts,
+    calculate_web_users_in_all_domains,
     generate_invoices_based_on_date,
 )
 from corehq.apps.accounting.tests import generator
@@ -74,6 +74,6 @@ class BaseInvoiceTestCase(BaseAccountingTest):
             calculate_users_in_all_domains(date)
 
         if calculate_web_users:
-            calculate_web_users_in_all_billing_accounts(date)
+            calculate_web_users_in_all_domains(date)
 
         generate_invoices_based_on_date(date)
