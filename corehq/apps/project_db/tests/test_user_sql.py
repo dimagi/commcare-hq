@@ -159,6 +159,20 @@ def _within_distance(coordinates, meters):
      select([VISIT.c.name]).select_from(CLIENT_VISIT)
      .group_by(CLIENT.c.name, VISIT.c.name)),
 
+    # aggregations
+    ('SELECT count(*) FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count() FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count(name) FROM client', select([func.count(CLIENT.c.name)])),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)),
+    ('SELECT sum(case_id) FROM client', select([func.sum(CLIENT.c.case_id)])),
+    ('SELECT avg(case_id) FROM client', select([func.avg(CLIENT.c.case_id)])),
+    ('SELECT min(case_id) FROM client', select([func.min(CLIENT.c.case_id)])),
+    ('SELECT max(case_id) FROM client', select([func.max(CLIENT.c.case_id)])),
+    ('SELECT name, max(case_id) AS latest FROM client GROUP BY name',
+     select([CLIENT.c.name, func.max(CLIENT.c.case_id).label('latest')])
+     .group_by(CLIENT.c.name)),
+
     # ORDER BY - each key gets its own direction and default NULLS placement
     ('SELECT * FROM client ORDER BY name, case_id DESC',
      select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
@@ -348,6 +362,13 @@ def _compiled(query):
     'SELECT name FROM client GROUP BY 1',           # GROUP BY an ordinal
     'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
     'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
+    'SELECT count(missing) FROM client',            # count an unknown column
+    'SELECT count(DISTINCT name) FROM client',      # count DISTINCT
+    'SELECT count(name, case_id) FROM client',      # count with two arguments
+    "SELECT count(*) FILTER (WHERE name = 'x') FROM client",  # aggregate FILTER
+    'SELECT sum(DISTINCT case_id) FROM client',     # aggregate DISTINCT
+    'SELECT max(name, case_id) FROM client',        # max with two arguments
+    'SELECT sum(missing) FROM client',              # aggregate an unknown column
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
