@@ -256,8 +256,8 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, joins, where, group, distinct, order = _unpack(
-        node, 'expressions', 'from_', 'joins', 'where', 'group', 'distinct', 'order')
+    expressions, from_, joins, where, group, having, distinct, order = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'group', 'having', 'distinct', 'order')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
@@ -271,6 +271,9 @@ def _convert_select(node, tables):
         query = query.where(_convert_predicate(predicate, selectable.c))
     if group is not None:
         query = query.group_by(*_convert_group(group, selectable.c))
+    if having is not None:
+        predicate, = _unpack(having, 'this')
+        query = query.having(_convert_predicate(predicate, selectable.c))
     if order is not None:
         query = query.order_by(*_convert_order(order, selectable.c))
     return query
@@ -557,6 +560,8 @@ def _convert_value(node, columns):
         return _convert_placeholder(node)
     if isinstance(node, (exp.Add, exp.Sub)):
         return _convert_arithmetic(node, columns)
+    if type(node) in AGGREGATES:
+        return _convert_aggregate(node, columns)
     if isinstance(node, exp.Func):
         return _convert_value_function(node, columns)
     return _convert_column(node, columns)
