@@ -334,8 +334,31 @@ def _convert_projection(expressions, columns):
 def _convert_projected_column(node, columns):
     if isinstance(node, exp.Alias):
         expression, alias = _unpack(node, 'this', 'alias')
-        return _convert_column(expression, columns).label(alias.name)
+        return _convert_projected_value(expression, columns).label(alias.name)
+    return _convert_projected_value(node, columns)
+
+
+AGGREGATES = {
+    exp.Count: func.count,
+    exp.Sum: func.sum,
+    exp.Avg: func.avg,
+    exp.Min: func.min,
+    exp.Max: func.max,
+}
+
+
+def _convert_projected_value(node, columns):
+    if type(node) in AGGREGATES:
+        return _convert_aggregate(node, columns)
     return _convert_column(node, columns)
+
+
+def _convert_aggregate(node, columns):
+    aggregate = AGGREGATES[type(node)]
+    expression, _ = _unpack(node, 'this', 'big_int')
+    if expression is None or expression == exp.Star():
+        return aggregate()
+    return aggregate(_convert_column(expression, columns))
 
 
 def _convert_column(node, columns):
