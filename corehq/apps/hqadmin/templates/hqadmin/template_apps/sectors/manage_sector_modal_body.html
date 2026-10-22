@@ -45,8 +45,8 @@
         </th>
       </tr>
     </thead>
-    {% for sector in sectors %}
-      <tbody>
+    <tbody>
+      {% for sector in sectors %}
         <tr>
           <td>
             <form
@@ -106,15 +106,13 @@
             </form>
           </td>
         </tr>
-      </tbody>
       {% empty %}
-      <tbody>
         <tr>
           <td colspan="3" class="text-body-secondary py-4">
             {% trans "No sector labels yet. Add the first label above." %}
           </td>
         </tr>
-      </tbody>
-    {% endfor %}
+      {% endfor %}
+    </tbody>
   </table>
 </div>
