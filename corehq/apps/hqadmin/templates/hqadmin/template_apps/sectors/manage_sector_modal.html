@@ -1,0 +1,37 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<div
+  class="modal fade"
+  id="template-app-modal"
+  tabindex="-1"
+  aria-labelledby="manage-sectors-modal-title"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <p class="text-primary text-uppercase small fw-bold mb-2">
+            {% trans "Template Apps" %}
+          </p>
+          <h2 class="modal-title fs-4" id="manage-sectors-modal-title">
+            {% trans "Manage sectors" %}
+          </h2>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="{% trans_html_attr 'Close' %}"
+        ></button>
+      </div>
+      <div
+        class="modal-body"
+        id="manage-sectors-modal-body"
+        aria-live="polite"
+      >
+        {% trans "Loading..." %}
+      </div>
+    </div>
+  </div>
+</div>
