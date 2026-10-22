@@ -1,10 +1,13 @@
 import json
+from pathlib import Path
 
 from django import forms
 from django.http import (
+    FileResponse,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -230,3 +233,38 @@ class PreviewDocumentView(BaseMessagingSectionView):
         # The document needs no scripts; a sandboxed document cannot run any
         response['Content-Security-Policy'] = 'sandbox'
         return response
+
+
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class RenderDocumentView(BaseMessagingSectionView):
+    urlname = 'render_document'
+
+    def post(self, request, *args, **kwargs):
+        print(request.body)
+        download_url = reverse(DownloadDocumentView.urlname, args=[self.domain])
+
+        return JsonResponse({'url': download_url})
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+
+SAMPLE_PDF = Path(__file__).parent / 'static' / 'document_templates' / 'sample.pdf'
+
+
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class DownloadDocumentView(BaseMessagingSectionView):
+    urlname = 'download_document'
+
+    def get(self, request, *args, **kwargs):
+        return FileResponse(
+            SAMPLE_PDF.open('rb'),
+            content_type='application/pdf',
+            filename='letter.pdf',  # shown in the tab title and as the default save name
+            as_attachment=False,  # inline: the browser shows it in the new tab
+        )
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
