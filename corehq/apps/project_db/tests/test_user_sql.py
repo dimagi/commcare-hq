@@ -173,6 +173,15 @@ def _within_distance(coordinates, meters):
      select([CLIENT.c.name, func.max(CLIENT.c.case_id).label('latest')])
      .group_by(CLIENT.c.name)),
 
+    # HAVING
+    ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count() > _bind_literal('literal', 1))),
+    ('SELECT name FROM client GROUP BY name HAVING max(case_id) > :since AND name <> :n',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(and_(func.max(CLIENT.c.case_id) > bindparam('since'),
+                  CLIENT.c.name != bindparam('n')))),
+
     # ORDER BY - each key gets its own direction and default NULLS placement
     ('SELECT * FROM client ORDER BY name, case_id DESC',
      select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
@@ -369,6 +378,8 @@ def _compiled(query):
     'SELECT sum(DISTINCT case_id) FROM client',     # aggregate DISTINCT
     'SELECT max(name, case_id) FROM client',        # max with two arguments
     'SELECT sum(missing) FROM client',              # aggregate an unknown column
+    'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
+    'SELECT name FROM client GROUP BY name HAVING name LIKE :n',  # unsupported predicate
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
