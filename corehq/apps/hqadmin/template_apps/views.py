@@ -14,16 +14,14 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 
 
-@method_decorator(require_superuser, name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator([require_superuser, use_bootstrap5], name='dispatch')
 class ManageTemplateAppsView(BaseAdminSectionView):
     urlname = 'manage_template_apps'
     page_title = gettext_lazy('Manage Template Apps')
     template_name = 'hqadmin/template_apps/manage_template_apps.html'
 
 
-@method_decorator(require_superuser, name='dispatch')
-@method_decorator(use_bootstrap5, name='dispatch')
+@method_decorator([require_superuser, use_bootstrap5], name='dispatch')
 class TemplateAppSectorsView(HqHtmxActionMixin, View):
     urlname = 'manage_template_app_sectors'
 
