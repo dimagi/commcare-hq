@@ -17,6 +17,9 @@ import requests
 
 from langcodes import get_name as _langcodes_get_name
 
+DEFAULT_MODEL = 'gpt-6-luna'
+BACKUP_MODEL = 'gpt-5.6-luna'
+
 
 class LLMTranslatorError(Exception):
     pass
@@ -337,7 +340,7 @@ def translate_string(text, target_lang, provider='openai', model=None):
 PROVIDERS = {
     'openai': ProviderSpec(
         translator_class=OpenaiTranslator,
-        default_model='gpt-6-luna',
-        backup_model='gpt-5.6-luna',
+        default_model=DEFAULT_MODEL,
+        backup_model=BACKUP_MODEL,
     ),
 }
