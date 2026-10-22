@@ -1,0 +1,54 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div class="modal fade" tabindex="-1" role="dialog" id="enable-messaging">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="{% trans_html_attr 'Close' %}"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">
+          {% blocktrans %}
+            Enable messaging for {{ domain_name }}
+          {% endblocktrans %}
+        </h4>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Please note:" %}</p>
+        <ul>
+          <li>
+            {% blocktrans %}
+              {{ billing_account }}
+              will be charged for every SMS this project sends and receives.
+            {% endblocktrans %}
+          </li>
+          {% if public_webforms_enabled %}
+            <li>
+              {% blocktrans %}
+                A public webform with SMS turned on sends a text to any phone
+                number a respondent enters, and each text is charged.
+              {% endblocktrans %}
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <form action="{% url 'enable_messaging' domain %}" method="post">
+          {% csrf_token %}
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <button class="btn btn-primary">
+            {% trans "Enable Messaging" %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
