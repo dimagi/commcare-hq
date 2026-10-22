@@ -24,6 +24,7 @@ from sqlalchemy import (
     and_,
     bindparam,
     cast,
+    column,
     func,
     literal_column,
     not_,
@@ -38,7 +39,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.base import Executable
-from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.sql.expression import ClauseElement, Label
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -263,7 +264,8 @@ def _convert_select(node, tables):
     selectable = _convert_table_ref(from_.this, tables)
     for join in joins or []:
         selectable = _convert_join(join, selectable, tables)
-    query = select(_convert_projection(expressions, selectable.c)).select_from(selectable)
+    projection = _convert_projection(expressions, selectable.c)
+    query = select(projection).select_from(selectable)
     if distinct is not None:
         query = query.distinct(*_convert_distinct_on(distinct, selectable.c))
     if where is not None:
@@ -275,7 +277,8 @@ def _convert_select(node, tables):
         predicate, = _unpack(having, 'this')
         query = query.having(_convert_predicate(predicate, selectable.c))
     if order is not None:
-        query = query.order_by(*_convert_order(order, selectable.c))
+        aliases = {p.name for p in projection if isinstance(p, Label)}
+        query = query.order_by(*_convert_order(order, selectable.c, aliases))
     return query
 
 
@@ -296,17 +299,14 @@ def _convert_group(node, columns):
     return [_convert_column(e, columns) for e in group_expressions]
 
 
-def _convert_order(node, columns):
-    """Convert an ORDER BY clause to a list of sort keys"""
+def _convert_order(node, columns, aliases):
+    """Convert an ORDER BY clause to yield sort keys"""
     order_expressions, = _unpack(node, 'expressions')
-    return [_convert_sort_key(e, columns) for e in order_expressions]
-
-
-def _convert_sort_key(node, columns):
-    expression, desc, nulls_first = _unpack(node, 'this', 'desc', 'nulls_first')
-    col = _convert_column(expression, columns)
-    sort_key = col.desc() if desc else col.asc()
-    return nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
+    for e in order_expressions:
+        expression, desc, nulls_first = _unpack(e, 'this', 'desc', 'nulls_first')
+        value = _convert_column(expression, columns, aliases)
+        sort_key = value.desc() if desc else value.asc()
+        yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
 
 def _convert_join(node, selectable, tables):
@@ -364,11 +364,13 @@ def _convert_aggregate(node, columns):
     return aggregate(_convert_column(expression, columns))
 
 
-def _convert_column(node, columns):
+def _convert_column(node, columns, aliases=None):
     """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
+    if qualifier is None and aliases and identifier.name in aliases:
+        return column(identifier.name)
     candidates = [col for col in columns
                   if (qualifier is None or col.table.name == qualifier.name)
                   and col.name == identifier.name]
