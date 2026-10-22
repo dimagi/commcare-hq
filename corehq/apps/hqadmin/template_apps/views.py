@@ -1,4 +1,3 @@
-from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
@@ -46,14 +45,9 @@ class TemplateAppSectorsView(HqHtmxActionMixin, View):
     def save_sector(self, request, sector=None):
         form = TemplateAppSectorForm(request.POST, instance=sector)
         if form.is_valid():
-            try:
-                with transaction.atomic():
-                    form.save()
-            except IntegrityError:
-                form.add_error('name', _("A sector with this name already exists."))
-            else:
-                message = _("Sector label saved.") if sector else _("Sector label added.")
-                return self.render_sectors(request, success_message=message)
+            form.save()
+            message = _("Sector label saved.") if sector else _("Sector label added.")
+            return self.render_sectors(request, success_message=message)
         if sector is None:
             return self.render_sectors(request, add_new_sector_form=form)
         return self.render_sectors(request, rename_sector_form=form, rename_sector_id=sector.pk)
