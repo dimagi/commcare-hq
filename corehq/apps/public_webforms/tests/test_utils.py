@@ -72,7 +72,7 @@ def _patch_released_app(app, is_app_live=True):
 def test_eligible_form_resolves_selection(form_id_attr):
     data = build_app()
     with _patch_released_app(data.app):
-        form = utils.get_public_webform_eligible_form(
+        form = utils.get_latest_released_eligible_form(
             data.domain, 'app-1', getattr(data, form_id_attr))
     assert form is not None
     assert form.unique_id == getattr(data, form_id_attr)
@@ -89,15 +89,16 @@ def test_eligible_form_rejects_invalid_selection(form_id_or_attr):
     # (a form id that doesn't exist in the released build).
     form_unique_id = getattr(data, form_id_or_attr, form_id_or_attr)
     with _patch_released_app(data.app):
-        form = utils.get_public_webform_eligible_form(
+        form = utils.get_latest_released_eligible_form(
             data.domain, 'app-1', form_unique_id)
     assert form is None
 
 
 def test_eligible_form_rejects_app_without_released_build():
+    data = build_app()
     with _patch_released_app(None):
-        form = utils.get_public_webform_eligible_form(
-            'pwf-test', 'unreleased-app', 'any-form')
+        form = utils.get_latest_released_eligible_form(
+            data.domain, 'app-1', data.survey_form_id)
     assert form is None
 
 
@@ -107,7 +108,7 @@ def test_eligible_form_rejects_a_release_that_cannot_generate_session_endpoints(
         _patch_released_app(data.app),
         patch.object(Application, 'can_generate_session_endpoints', False),
     ):
-        form = utils.get_public_webform_eligible_form(
+        form = utils.get_latest_released_eligible_form(
             data.domain, 'app-1', data.survey_form_id)
     assert form is None
 

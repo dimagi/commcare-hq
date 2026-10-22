@@ -39,6 +39,10 @@ def get_live_app_ids(domain):
 def get_public_webform_eligible_form(domain, app_id, form_unique_id):
     if not is_app_live(domain, app_id):
         return None
+    return get_latest_released_eligible_form(domain, app_id, form_unique_id)
+
+
+def get_latest_released_eligible_form(domain, app_id, form_unique_id):
     app = get_latest_released_app(domain, app_id)
     if app is None or not app.can_generate_session_endpoints:
         return None
