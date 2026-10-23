@@ -190,6 +190,13 @@ def _within_distance(coordinates, meters):
     ('SELECT max(name + make_interval(days => 30)) FROM client',
      select([func.max(CLIENT.c.name + _interval('days', 30))])),
     ('SELECT count(:p) FROM client', select([func.count(bindparam('p'))]).select_from(CLIENT)),
+    ("SELECT sum(case_id) FILTER (WHERE name = 'x') AS n FROM client",
+     select([func.sum(CLIENT.c.case_id)
+             .filter(CLIENT.c.name == _bind_literal('literal', 'x')).label('n')])),
+    ("SELECT name FROM client GROUP BY name HAVING count(*) FILTER (WHERE name = :n) > 1",
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count().filter(CLIENT.c.name == bindparam('n'))
+             > _bind_literal('literal', 1))),
 
     # HAVING
     ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
@@ -404,7 +411,8 @@ def _compiled(query):
     'SELECT count(missing) FROM client',            # count an unknown column
     'SELECT count(DISTINCT name) FROM client',      # count DISTINCT
     'SELECT count(name, case_id) FROM client',      # count with two arguments
-    "SELECT count(*) FILTER (WHERE name = 'x') FROM client",  # aggregate FILTER
+    "SELECT now() FILTER (WHERE name = 'x') FROM client",  # FILTER on a non-aggregate
+    "SELECT count(*) FILTER (WHERE name LIKE 'x') FROM client",  # unsupported predicate
     'SELECT sum(DISTINCT case_id) FROM client',     # aggregate DISTINCT
     'SELECT max(name, case_id) FROM client',        # max with two arguments
     'SELECT sum(missing) FROM client',              # aggregate an unknown column

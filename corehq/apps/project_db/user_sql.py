@@ -353,6 +353,13 @@ AGGREGATES = {
 
 
 def _convert_aggregate(node, columns):
+    if isinstance(node, exp.Filter):
+        agg, where = _unpack(node, 'this', 'expression')
+        if type(agg) not in AGGREGATES:
+            raise UnsupportedSQL(f"FILTER requires an aggregate, got {str(agg)}")
+        predicate, = _unpack(where, 'this')
+        return (_convert_aggregate(agg, columns)
+                .filter(_convert_predicate(predicate, columns)))
     aggregate = AGGREGATES[type(node)]
     if isinstance(node, exp.GroupConcat):
         expression, separator = _unpack(node, 'this', 'separator')
@@ -562,7 +569,7 @@ def _convert_value(node, columns):
         return _convert_placeholder(node)
     if isinstance(node, (exp.Add, exp.Sub)):
         return _convert_arithmetic(node, columns)
-    if type(node) in AGGREGATES:
+    if type(node) in AGGREGATES or isinstance(node, exp.Filter):
         return _convert_aggregate(node, columns)
     if isinstance(node, exp.Func):
         return _convert_value_function(node, columns)
