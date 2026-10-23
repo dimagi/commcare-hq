@@ -58,8 +58,9 @@ Supported SQL:
  * GROUP BY columns, and HAVING to filter the groups with the same conditions
    as WHERE.
  * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
-   and string_agg(value, '<delimiter>'), each with an optional
-   FILTER (WHERE condition) to aggregate only the matching rows.
+   and string_agg(value, '<delimiter>'). Each may aggregate only DISTINCT
+   values, as in count(DISTINCT value), and take a FILTER (WHERE condition)
+   to aggregate only the matching rows.
  * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
    To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
@@ -67,7 +68,7 @@ Supported SQL:
 
 Not supported:
  * Other function calls and casts (::type).
- * DISTINCT and ORDER BY inside an aggregate.
+ * ORDER BY inside an aggregate.
  * Arithmetic, apart from shifting a date or time by an interval.
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
  * LIMIT, LIKE and BETWEEN.
