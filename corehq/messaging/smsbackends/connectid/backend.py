@@ -5,9 +5,11 @@ from Crypto.Cipher import AES
 from django.conf import settings
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.users.models import ConnectIDUserLink, CouchUser
 
 FCM_ANALYTICS_LABEL = "commcare-hq-message-notification"
+MAX_ERROR_DETAIL_LENGTH = 200
 
 
 class ConnectBackend:
@@ -28,17 +30,23 @@ class ConnectBackend:
             "nonce": base64.b64encode(cipher.nonce).decode("utf-8"),
             "ciphertext": base64.b64encode(data).decode("utf-8"),
         }
-        response = requests.post(
-            settings.CONNECTID_MESSAGE_URL,
-            json={
-                "channel": user_link.messaging_channel,
-                "content": content,
-                "message_id": str(message.message_id),
-                "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
-            },
-            auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
-        )
-        return response.status_code == requests.codes.OK
+        try:
+            response = requests.post(
+                settings.CONNECTID_MESSAGE_URL,
+                json={
+                    "channel": user_link.messaging_channel,
+                    "content": content,
+                    "message_id": str(message.message_id),
+                    "fcm_options": {"analytics_label": FCM_ANALYTICS_LABEL}
+                },
+                auth=(settings.CONNECTID_CLIENT_ID, settings.CONNECTID_SECRET_KEY)
+            )
+        except requests.RequestException as err:
+            raise BackendProcessingException(f"Request failed: {err}") from err
+        if response.status_code != requests.codes.OK:
+            raise BackendProcessingException(
+                f"HTTP {response.status_code}: {get_error_detail(response)}"
+            )
 
     def create_channel(self, user_link):
         domain_obj = Domain.get_by_name(user_link.domain)
@@ -59,3 +67,14 @@ class ConnectBackend:
         user_link.messaging_consent = response_dict["consent"]
         user_link.save()
         return True
+
+
+def get_error_detail(response):
+    """
+    ConnectID returns its own errors as ``{"errors": "<ERROR_CODE>"}``. Other
+    error bodies (e.g. a proxy's HTML error page) are truncated.
+    """
+    try:
+        return response.json()['errors']
+    except (ValueError, KeyError, TypeError):
+        return response.text[:MAX_ERROR_DETAIL_LENGTH]
