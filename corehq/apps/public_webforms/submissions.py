@@ -2,6 +2,7 @@ from django.utils import timezone
 
 from casexml.apps.case.xform import get_case_updates
 
+from corehq.apps.analytics.tasks import record_google_analytics_event_for_client
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebformType
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
@@ -73,4 +74,11 @@ def consume_public_form_session(session, xform):
         pk=session.pk,
         submitted_at__isnull=True,
     ).update(submitted_at=timezone.now(), xform_id=xform.form_id)
+    if consumed:
+        record_google_analytics_event_for_client(
+            'public_webform_form_completed', session.analytics_id, {
+                'domain': session.public_webform.domain,
+                'webform_id': session.public_webform_id,
+                'delivery': 'email' if session.email else 'sms',
+            })
     return bool(consumed)
