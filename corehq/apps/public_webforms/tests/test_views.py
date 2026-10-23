@@ -201,7 +201,7 @@ class TestEditPublicWebformView(PublicWebformViewTestCase):
         return self.client.post(self.url(webform, domain), {
             'label': 'Antenatal visit',
             'expires_at': '2026-09-01 17:00:00',
-            'link_choices': ['allow_email'],
+            'allow_email': True,
             'open_to_requests': 'on',
             **fields,
         })
