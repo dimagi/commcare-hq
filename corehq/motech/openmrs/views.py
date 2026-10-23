@@ -35,7 +35,10 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_person_attribute_types,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.tasks import import_patients_to_domain
+from corehq.motech.openmrs.tasks import (
+    import_patients_to_domain,
+    validate_report_params,
+)
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_cbc_encrypt
@@ -162,6 +165,34 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
+# The OpenmrsImporter fields that may be set from posted importer JSON
+IMPORTER_EDITABLE_FIELDS = tuple(OpenmrsImporterForm.base_fields)
+
+
+def update_importer(importer, data):
+    """
+    Sets the allow-listed fields in ``data`` on ``importer``. Other
+    keys are ignored. Does not save.
+
+    Raises ValueError if ``report_params`` contains an invalid template.
+    """
+    for key, value in data.items():
+        if key not in IMPORTER_EDITABLE_FIELDS:
+            continue
+        if key == 'password':
+            if value == PASSWORD_PLACEHOLDER:
+                continue  # Skip updating the password if it hasn't been changed.
+            else:
+                value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
+        elif key == 'report_params':
+            value = json.loads(value)
+            validate_report_params(value)
+        elif key == 'column_map':
+            list_of_dicts = json.loads(value)
+            value = [ColumnMapping(**d) for d in list_of_dicts]
+        setattr(importer, key, value)
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
@@ -171,18 +202,7 @@ class OpenmrsImporterView(BaseProjectSettingsView):
     template_name = 'openmrs/importers.html'
 
     def _update_importer(self, importer, data):
-        for key, value in data.items():
-            if key == 'password':
-                if value == PASSWORD_PLACEHOLDER:
-                    continue  # Skip updating the password if it hasn't been changed.
-                else:
-                    value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
-            elif key == 'report_params':
-                value = json.loads(value)
-            elif key == 'column_map':
-                list_of_dicts = json.loads(value)
-                value = [ColumnMapping(**d) for d in list_of_dicts]
-            setattr(importer, key, value)
+        update_importer(importer, data)
         importer.save()
 
     def post(self, request, *args, **kwargs):
