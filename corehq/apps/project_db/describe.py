@@ -28,7 +28,8 @@ Schema:
  * Datetime columns carry a timezone, and will be queried in the project timezone
 
 Supported SQL:
- * SELECT of a column list or *, with optional AS aliases.
+ * SELECT of *, or a list of columns, aggregates and any value allowed in a
+   WHERE condition, with optional AS aliases.
  * DISTINCT, and DISTINCT ON (columns).
  * A single table in the FROM clause, with an optional alias.
  * JOIN and LEFT JOIN, with an ON condition. A table can be joined to itself if
@@ -54,15 +55,21 @@ Supported SQL:
  * make_interval(days => 30), added to or subtracted from a date or time, as in
    opened_on > now() - make_interval(months => 3). Its units are years, months,
    weeks, days, hours, mins and secs, and a count may be a parameter or integer literal
- * ORDER BY a column, with ASC/DESC and NULLS FIRST/LAST.
+ * GROUP BY columns, and HAVING to filter the groups with the same conditions
+   as WHERE.
+ * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
+   and string_agg(value, '<delimiter>').
+ * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
+   To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
  * Named :parameters wherever a literal is allowed
 
 Not supported:
- * Aggregates, other function calls and casts (::type).
+ * Other function calls and casts (::type).
+ * DISTINCT, ORDER BY and FILTER inside an aggregate.
  * Arithmetic, apart from shifting a date or time by an interval.
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
- * GROUP BY, LIMIT, LIKE and BETWEEN.
+ * LIMIT, LIKE and BETWEEN.
  * Negative numbers.
  * Subqueries and CTEs.
  * INTERSECT and EXCEPT.
