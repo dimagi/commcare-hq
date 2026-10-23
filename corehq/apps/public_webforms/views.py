@@ -9,6 +9,7 @@ from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -125,7 +126,14 @@ class CreatePublicWebformView(BasePublicWebformsView):
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        self.form.create_public_webform()
+        webform = self.form.create_public_webform()
+        record_google_analytics_event('public_webform_created', request.couch_user, {
+            'domain': self.domain,
+            'webform_id': webform.id,
+            'session_type': webform.session_type,
+            'allow_email': 'yes' if webform.allow_email else 'no',
+            'allow_sms': 'yes' if webform.allow_sms else 'no',
+        })
         messages.success(request, _("Public webform created."))
         return HttpResponseRedirect(
             reverse(ManagePublicWebformsView.urlname, args=[self.domain]))
