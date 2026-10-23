@@ -363,6 +363,16 @@ def _convert_aggregate(node, columns):
     return aggregate(_convert_value(expression, columns))
 
 
+def _convert_aggregate_filter(node, columns):
+    """Convert ``aggregate(...) FILTER (WHERE ...)``"""
+    aggregate, where = _unpack(node, 'this', 'expression')
+    if type(aggregate) not in AGGREGATES:
+        raise UnsupportedSQL(f"FILTER requires an aggregate, got {str(aggregate)}")
+    predicate, = _unpack(where, 'this')
+    return (_convert_aggregate(aggregate, columns)
+            .filter(_convert_predicate(predicate, columns)))
+
+
 def _convert_column(node, columns, aliases=None):
     """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
@@ -563,6 +573,8 @@ def _convert_value(node, columns):
         return _convert_arithmetic(node, columns)
     if type(node) in AGGREGATES:
         return _convert_aggregate(node, columns)
+    if isinstance(node, exp.Filter):
+        return _convert_aggregate_filter(node, columns)
     if isinstance(node, exp.Func):
         return _convert_value_function(node, columns)
     return _convert_column(node, columns)
