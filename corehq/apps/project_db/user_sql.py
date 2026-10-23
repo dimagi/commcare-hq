@@ -347,6 +347,8 @@ AGGREGATES = {
     exp.Avg: func.avg,
     exp.Min: func.min,
     exp.Max: func.max,
+    exp.GroupConcat: func.string_agg,
+    exp.ArrayAgg: func.array_agg,
 }
 
 
@@ -358,6 +360,10 @@ def _convert_projected_value(node, columns):
 
 def _convert_aggregate(node, columns):
     aggregate = AGGREGATES[type(node)]
+    if isinstance(node, exp.GroupConcat):
+        expression, separator = _unpack(node, 'this', 'separator')
+        return aggregate(_convert_column(expression, columns),
+                         _convert_value(separator, columns))
     expression, _ = _unpack(node, 'this', 'big_int')
     if expression is None or expression == exp.Star():
         return aggregate()

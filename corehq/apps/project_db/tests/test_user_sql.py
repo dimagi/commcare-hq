@@ -172,6 +172,11 @@ def _within_distance(coordinates, meters):
     ('SELECT name, max(case_id) AS latest FROM client GROUP BY name',
      select([CLIENT.c.name, func.max(CLIENT.c.case_id).label('latest')])
      .group_by(CLIENT.c.name)),
+    ("SELECT string_agg(name, ', ') FROM client",
+     select([func.string_agg(CLIENT.c.name, _bind_literal('literal', ', '))])),
+    ('SELECT string_agg(name, :sep) FROM client',
+     select([func.string_agg(CLIENT.c.name, bindparam('sep'))])),
+    ('SELECT array_agg(name) FROM client', select([func.array_agg(CLIENT.c.name)])),
 
     # HAVING
     ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
@@ -392,6 +397,11 @@ def _compiled(query):
     'SELECT sum(DISTINCT case_id) FROM client',     # aggregate DISTINCT
     'SELECT max(name, case_id) FROM client',        # max with two arguments
     'SELECT sum(missing) FROM client',              # aggregate an unknown column
+    'SELECT string_agg(name) FROM client',          # string_agg without a separator
+    "SELECT string_agg(DISTINCT name, ', ') FROM client",  # string_agg DISTINCT
+    "SELECT string_agg(name, ', ' ORDER BY case_id) FROM client",  # ordered string_agg
+    'SELECT array_agg(DISTINCT name) FROM client',  # array_agg DISTINCT
+    'SELECT array_agg(name ORDER BY case_id) FROM client',  # ordered array_agg
     'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
     'SELECT name FROM client GROUP BY name HAVING name LIKE :n',  # unsupported predicate
     'SELECT * FROM client WHERE case_id = -1',    # negative number
