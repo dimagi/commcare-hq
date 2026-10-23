@@ -356,12 +356,12 @@ def _convert_aggregate(node, columns):
     aggregate = AGGREGATES[type(node)]
     if isinstance(node, exp.GroupConcat):
         expression, separator = _unpack(node, 'this', 'separator')
-        return aggregate(_convert_column(expression, columns),
+        return aggregate(_convert_value(expression, columns),
                          _convert_value(separator, columns))
     expression, _ = _unpack(node, 'this', 'big_int')
     if expression is None or expression == exp.Star():
         return aggregate()
-    return aggregate(_convert_column(expression, columns))
+    return aggregate(_convert_value(expression, columns))
 
 
 def _convert_column(node, columns, aliases=None):

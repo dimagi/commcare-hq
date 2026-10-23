@@ -186,6 +186,10 @@ def _within_distance(coordinates, meters):
     ('SELECT string_agg(name, :sep) FROM client',
      select([func.string_agg(CLIENT.c.name, bindparam('sep'))])),
     ('SELECT array_agg(name) FROM client', select([func.array_agg(CLIENT.c.name)])),
+    # Aggregates take any value, not just columns
+    ('SELECT max(name + make_interval(days => 30)) FROM client',
+     select([func.max(CLIENT.c.name + _interval('days', 30))])),
+    ('SELECT count(:p) FROM client', select([func.count(bindparam('p'))]).select_from(CLIENT)),
 
     # HAVING
     ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
