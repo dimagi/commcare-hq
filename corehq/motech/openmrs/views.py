@@ -18,18 +18,14 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES_CBC
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
     OpenmrsConfigForm,
     OpenmrsImporterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.openmrs.models import (
-    ColumnMapping,
-    OpenmrsImporter,
-    validate_report_params,
-)
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     OpenmrsFormConfig,
@@ -42,7 +38,6 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
-from corehq.motech.utils import b64_aes_cbc_encrypt
 
 
 def require_openmrs_repeater_access(view_func):
@@ -166,34 +161,6 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
-# The OpenmrsImporter fields that may be set from posted importer JSON
-IMPORTER_EDITABLE_FIELDS = tuple(OpenmrsImporterForm.base_fields)
-
-
-def update_importer(importer, data):
-    """
-    Sets the allow-listed fields in ``data`` on ``importer``. Other
-    keys are ignored. Does not save.
-
-    Raises ValueError if ``report_params`` contains an invalid template.
-    """
-    for key, value in data.items():
-        if key not in IMPORTER_EDITABLE_FIELDS:
-            continue
-        if key == 'password':
-            if value == PASSWORD_PLACEHOLDER:
-                continue  # Skip updating the password if it hasn't been changed.
-            else:
-                value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
-        elif key == 'report_params':
-            value = json.loads(value)
-            validate_report_params(value)
-        elif key == 'column_map':
-            list_of_dicts = json.loads(value)
-            value = [ColumnMapping(**d) for d in list_of_dicts]
-        setattr(importer, key, value)
-
-
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
@@ -202,26 +169,31 @@ class OpenmrsImporterView(BaseProjectSettingsView):
     page_title = gettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
-    def _update_importer(self, importer, data):
-        update_importer(importer, data)
-        importer.save()
-
     def post(self, request, *args, **kwargs):
         try:
             new_openmrs_importers = json.loads(request.POST['openmrs_importers'])
             current_openmrs_importers = get_openmrs_importers_by_domain(request.domain)
-            i = -1
-            for i, openmrs_importer in enumerate(current_openmrs_importers):
-                if i < len(new_openmrs_importers):
-                    self._update_importer(openmrs_importer, new_openmrs_importers[i])
+            forms = []
+            for i, data in enumerate(new_openmrs_importers):
+                if i < len(current_openmrs_importers):
+                    importer = current_openmrs_importers[i]
                 else:
-                    # Delete removed OpenMRS Importers
-                    openmrs_importer.delete()
-            if i + 1 < len(new_openmrs_importers):
-                # Insert new OpenMRS Importers
-                for j in range(i + 1, len(new_openmrs_importers)):
-                    openmrs_importer = OpenmrsImporter(domain=request.domain)
-                    self._update_importer(openmrs_importer, new_openmrs_importers[j])
+                    importer = OpenmrsImporter(domain=request.domain)
+                forms.append(OpenmrsImporterForm(data, instance=importer))
+            # Validate all importers before saving any of them
+            invalid = [form for form in forms if not form.is_valid()]
+            if invalid:
+                errors = '; '.join(
+                    f'{field}: {" ".join(messages)}'
+                    for form in invalid
+                    for field, messages in form.errors.items()
+                )
+                return json_response({'message': None, 'error': errors}, status_code=400)
+            for form in forms:
+                form.save()
+            # Delete removed OpenMRS Importers
+            for importer in current_openmrs_importers[len(new_openmrs_importers):]:
+                importer.delete()
             get_openmrs_importers_by_domain.clear(request.domain)
             return json_response({'message': _('OpenMRS Importers saved'), 'error': None})
         except Exception as err:

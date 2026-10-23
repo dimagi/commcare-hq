@@ -6,6 +6,7 @@ template engine. Only the documented ``{{ today }}`` and
 ``{{ location }}`` placeholders are substituted; everything else is a
 literal string.
 """
+import doctest
 from datetime import datetime
 from unittest.mock import patch
 
@@ -83,3 +84,10 @@ def test_validate_report_params_accepts(params):
 def test_validate_report_params_rejects(value):
     with pytest.raises(ValueError, match='endDate'):
         validate_report_params({'endDate': value})
+
+
+def test_doctests():
+    import corehq.motech.openmrs.models
+
+    results = doctest.testmod(corehq.motech.openmrs.models)
+    assert results.failed == 0

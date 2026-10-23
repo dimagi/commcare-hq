@@ -6,6 +6,7 @@ from django.urls import reverse
 from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
 from corehq.util.test_utils import flag_enabled, privilege_enabled
@@ -75,3 +76,68 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
 
         # Config should not change
         self.assertEqual(updated_repeater.to_json(), self.repeater.to_json())
+
+
+@flag_enabled('OPENMRS_INTEGRATION')
+class TestOpenmrsImporterView(BaseViewTest):
+    @classmethod
+    def _create_data(cls):
+        cls.url = reverse('openmrs_importer_view', kwargs={'domain': cls.domain.name})
+        cls.importer_data = {
+            'server_url': 'http://www.example.com/openmrs',
+            'username': 'admin',
+            'password': 'Admin123',
+            'report_uuid': 'c0ffee',
+            'report_params': '{"endDate": "{{ today }}"}',
+            'case_type': 'patient',
+            'external_id_column': 'NID',
+            'name_columns': 'givenName familyName',
+            'column_map': '[{"column": "givenName", "property": "first_name"}]',
+        }
+
+    def tearDown(self):
+        for importer in get_openmrs_importers_by_domain(self.domain.name):
+            importer.delete()
+        get_openmrs_importers_by_domain.clear(self.domain.name)
+        super().tearDown()
+
+    def post_importers(self, *importers):
+        return self.client.post(self.url, {'openmrs_importers': json.dumps(importers)})
+
+    def test_post_creates_importer(self):
+        response = self.post_importers(self.importer_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['error'])
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(len(importers), 1)
+        self.assertEqual(importers[0].domain, self.domain.name)
+        self.assertEqual(importers[0].report_params, {'endDate': '{{ today }}'})
+
+    def test_post_ignores_domain_and_id(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'domain': 'other-domain',
+            '_id': 'attacker-chosen-id',
+        })
+        self.assertEqual(response.status_code, 200)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(len(importers), 1)
+        self.assertEqual(importers[0].domain, self.domain.name)
+        self.assertNotEqual(importers[0]._id, 'attacker-chosen-id')
+
+    def test_post_rejects_bad_report_params(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'report_params': '{"endDate": "{{ \'\'.__class__ }}"}',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('report_params', response.json()['error'])
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
+    def test_post_saves_nothing_if_any_importer_invalid(self):
+        response = self.post_importers(
+            self.importer_data,
+            {**self.importer_data, 'report_uuid': ''},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])

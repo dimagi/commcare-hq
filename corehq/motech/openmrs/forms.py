@@ -18,7 +18,13 @@ from corehq.motech.openmrs.const import (
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
 )
-from corehq.motech.const import IMPORT_FREQUENCY_CHOICES
+from corehq.motech.const import (
+    ALGO_AES_CBC,
+    IMPORT_FREQUENCY_CHOICES,
+    PASSWORD_PLACEHOLDER,
+)
+from corehq.motech.openmrs.models import ColumnMapping, validate_report_params
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.motech.repeaters.forms import CaseRepeaterForm
 
 
@@ -107,6 +113,37 @@ class OpenmrsImporterForm(forms.Form):
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=mark_safe(  # nosec: no user input
                                _('e.g. [{"column": "givenName", "property": "first_name"}, ...]')))
+
+    def __init__(self, *args, instance=None, **kwargs):
+        """
+        ``instance`` is the ``OpenmrsImporter`` to update on ``save()``,
+        in the manner of ``ModelForm``.
+        """
+        super().__init__(*args, **kwargs)
+        self.instance = instance
+
+    def clean_report_params(self):
+        report_params = self.cleaned_data['report_params'] or {}
+        try:
+            validate_report_params(report_params)
+        except ValueError as err:
+            raise ValidationError(str(err), code='invalid')
+        return report_params
+
+    def save(self, commit=True):
+        for name, value in self.cleaned_data.items():
+            if name in ('import_frequency', 'log_level') and value in (None, ''):
+                continue  # Keep the current value; the document does not accept blanks
+            if name == 'password':
+                if value == PASSWORD_PLACEHOLDER:
+                    continue  # Skip updating the password if it hasn't been changed.
+                value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
+            elif name == 'column_map':
+                value = [ColumnMapping(**d) for d in value]
+            setattr(self.instance, name, value)
+        if commit:
+            self.instance.save()
+        return self.instance
 
 
 class OpenmrsRepeaterForm(CaseRepeaterForm):

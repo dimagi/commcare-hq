@@ -106,7 +106,13 @@ var openmrsImporters = function (openmrsImporters, importNowUrl) {
             form.action,
             {'openmrs_importers': JSON.stringify(openmrsImporters)},
             function (data) { alertUser.alert_user(data['message'], 'success', true); },
-        ).fail(function () { alertUser.alert_user(gettext('Unable to save OpenMRS Importers'), 'danger'); });
+        ).fail(function (jqXHR) {
+            var message = gettext('Unable to save OpenMRS Importers');
+            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                message += ': ' + jqXHR.responseJSON.error;
+            }
+            alertUser.alert_user(message, 'danger');
+        });
     };
 
     self.importNow = function () {
