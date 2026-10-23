@@ -64,6 +64,7 @@ from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.public_webforms.utils import can_access_public_webforms
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
 )
@@ -1196,7 +1197,7 @@ class ApplicationsTab(UITab):
         if not apps:
             return submenu_context
 
-        if self._can_access_public_webforms:
+        if can_access_public_webforms(self._request, self.domain):
             submenu_context.append(dropdown_dict(_("Public Webforms"), is_header=True))
             submenu_context.append(dropdown_dict(
                 _("Manage Public Webforms"),
@@ -1239,7 +1240,7 @@ class ApplicationsTab(UITab):
             EditPublicWebformView,
             ManagePublicWebformsView,
         )
-        if not self._can_access_public_webforms:
+        if not can_access_public_webforms(self._request, self.domain):
             return []
 
         return [{
@@ -1267,16 +1268,6 @@ class ApplicationsTab(UITab):
                 and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_enterprise=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
-
-    @property
-    def _can_access_public_webforms(self):
-        return (
-            domain_has_privilege(self.domain, privileges.PUBLIC_WEBFORMS)
-            and self.couch_user.has_permission(
-                self.domain, get_permission_name(HqPermissions.edit_public_webforms)
-            )
-            and toggles.PUBLIC_WEBFORMS.enabled_for_request(self._request)
-        )
 
 
 class CloudcareTab(UITab):

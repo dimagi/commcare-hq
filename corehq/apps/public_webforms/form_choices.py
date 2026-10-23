@@ -1,14 +1,12 @@
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import (
-    get_latest_released_app,
     get_latest_released_build_ids_by_app_id,
     wrap_app,
 )
-from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms.models import PublicWebformType
-from corehq.apps.public_webforms.utils import get_live_app_ids, is_app_live
+from corehq.apps.public_webforms.utils import get_live_app_ids
 from corehq.util.quickcache import quickcache
 
 
@@ -68,21 +66,6 @@ def _get_build_choice(app):
         'version': app.version,
         'menus': menus,
     }
-
-
-def get_public_webform_eligible_form(domain, app_id, form_unique_id):
-    if not is_app_live(domain, app_id):
-        return None
-    app = get_latest_released_app(domain, app_id)
-    if app is None:
-        return None
-    try:
-        form = app.get_form(form_unique_id)
-    except FormNotFoundException:
-        return None
-    if form.get_module().module_type != 'basic' or form.requires_case():
-        return None
-    return form
 
 
 def get_public_webform_type(form):

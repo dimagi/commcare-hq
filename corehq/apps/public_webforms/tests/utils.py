@@ -1,4 +1,5 @@
 import datetime
+from types import SimpleNamespace
 from uuid import uuid4
 
 from django.test import Client, TestCase, override_settings
@@ -9,6 +10,7 @@ from unmagic import fixture, use
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.origin_token import ORIGIN_TOKEN_SLUG
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
@@ -83,6 +85,30 @@ def saved_app():
         yield app
     finally:
         Application.get_db().delete_doc(app._id)
+
+
+def build_app():
+    """An app with one of each relevant form: an eligible survey form, an
+    eligible registration form, an ineligible case-requiring form, and a form
+    in an advanced (non-basic) menu."""
+    factory = AppFactory(domain='pwf-test', name='Public Forms App', build_version='2.51.0')
+    factory.app.copy_of = 'app-1'
+    __, survey_form = factory.new_basic_module('survey', 'patient')
+    __, registration_form = factory.new_basic_module('registration', 'patient')
+    factory.form_opens_case(registration_form, 'patient')
+    __, followup_form = factory.new_basic_module('followup', 'patient')
+    factory.form_requires_case(followup_form)
+    __, advanced_form = factory.new_advanced_module('advanced', 'patient')
+    return SimpleNamespace(
+        app=factory.app,
+        domain=factory.app.domain,
+        survey_form=survey_form,
+        registration_form=registration_form,
+        survey_form_id=survey_form.unique_id,
+        registration_form_id=registration_form.unique_id,
+        followup_form_id=followup_form.unique_id,
+        advanced_form_id=advanced_form.unique_id,
+    )
 
 
 @use('db')
