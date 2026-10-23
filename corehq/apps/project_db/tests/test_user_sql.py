@@ -12,6 +12,7 @@ from sqlalchemy import (
     bindparam,
     cast,
     column,
+    distinct,
     func,
     literal_column,
     not_,
@@ -190,6 +191,13 @@ def _within_distance(coordinates, meters):
     ('SELECT max(name + make_interval(days => 30)) FROM client',
      select([func.max(CLIENT.c.name + _interval('days', 30))])),
     ('SELECT count(:p) FROM client', select([func.count(bindparam('p'))]).select_from(CLIENT)),
+    ('SELECT count(DISTINCT name) FROM client', select([func.count(distinct(CLIENT.c.name))])),
+    ('SELECT sum(DISTINCT case_id) FROM client',
+     select([func.sum(distinct(CLIENT.c.case_id))])),
+    ('SELECT array_agg(DISTINCT name) FROM client',
+     select([func.array_agg(distinct(CLIENT.c.name))])),
+    ("SELECT string_agg(DISTINCT name, ', ') FROM client",
+     select([func.string_agg(distinct(CLIENT.c.name), _bind_literal('literal', ', '))])),
     ("SELECT sum(case_id) FILTER (WHERE name = 'x') AS n FROM client",
      select([func.sum(CLIENT.c.case_id)
              .filter(CLIENT.c.name == _bind_literal('literal', 'x')).label('n')])),
@@ -409,17 +417,15 @@ def _compiled(query):
     'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
     'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
     'SELECT count(missing) FROM client',            # count an unknown column
-    'SELECT count(DISTINCT name) FROM client',      # count DISTINCT
     'SELECT count(name, case_id) FROM client',      # count with two arguments
     "SELECT now() FILTER (WHERE name = 'x') FROM client",  # FILTER on a non-aggregate
     "SELECT count(*) FILTER (WHERE name LIKE 'x') FROM client",  # unsupported predicate
-    'SELECT sum(DISTINCT case_id) FROM client',     # aggregate DISTINCT
     'SELECT max(name, case_id) FROM client',        # max with two arguments
     'SELECT sum(missing) FROM client',              # aggregate an unknown column
+    'SELECT count(DISTINCT name, case_id) FROM client',  # DISTINCT over two values
+    'SELECT count(DISTINCT *) FROM client',         # DISTINCT over *
     'SELECT string_agg(name) FROM client',          # string_agg without a separator
-    "SELECT string_agg(DISTINCT name, ', ') FROM client",  # string_agg DISTINCT
     "SELECT string_agg(name, ', ' ORDER BY case_id) FROM client",  # ordered string_agg
-    'SELECT array_agg(DISTINCT name) FROM client',  # array_agg DISTINCT
     'SELECT array_agg(name ORDER BY case_id) FROM client',  # ordered array_agg
     'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
     'SELECT name FROM client GROUP BY name HAVING name LIKE :n',  # unsupported predicate

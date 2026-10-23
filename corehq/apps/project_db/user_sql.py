@@ -25,6 +25,7 @@ from sqlalchemy import (
     bindparam,
     cast,
     column,
+    distinct,
     func,
     literal_column,
     not_,
@@ -363,12 +364,22 @@ def _convert_aggregate(node, columns):
     aggregate = AGGREGATES[type(node)]
     if isinstance(node, exp.GroupConcat):
         expression, separator = _unpack(node, 'this', 'separator')
-        return aggregate(_convert_value(expression, columns),
+        return aggregate(_convert_aggregated_value(expression, columns),
                          _convert_value(separator, columns))
     expression, _ = _unpack(node, 'this', 'big_int')
     if expression is None or expression == exp.Star():
         return aggregate()
-    return aggregate(_convert_value(expression, columns))
+    return aggregate(_convert_aggregated_value(expression, columns))
+
+
+def _convert_aggregated_value(node, columns):
+    """Convert the value an aggregate is over, optionally prefixed by DISTINCT"""
+    if isinstance(node, exp.Distinct):
+        expressions, = _unpack(node, 'expressions')
+        if len(expressions) != 1:
+            raise UnsupportedSQL("DISTINCT in an aggregate takes exactly one value")
+        return distinct(_convert_value(expressions[0], columns))
+    return _convert_value(node, columns)
 
 
 def _convert_column(node, columns, aliases=None):
