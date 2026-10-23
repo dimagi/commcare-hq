@@ -3,7 +3,6 @@ from django.conf import settings
 from casexml.apps.phone.document_store import SyncLogDocumentStore
 from pillowtop.dao.couch import CouchDocumentStore
 
-from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import (
     LOCATION_DOC_TYPE,
@@ -90,7 +89,7 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None, l
         load_counter = case_load_counter
     elif doc_type == LOCATION_DOC_TYPE:
         return LocationDocumentStore(domain)
-    elif doc_type == topics.LEDGER:
+    elif doc_type == document_types.LEDGER_DOC_TYPE:
         return LedgerV2DocumentStore(domain)
     else:
         # all other types still live in couchdb
