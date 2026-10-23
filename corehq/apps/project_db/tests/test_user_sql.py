@@ -99,6 +99,15 @@ def _within_distance(coordinates, meters):
     ('SELECT case_id AS "My Id" FROM client',
      select([CLIENT.c.case_id.label('My Id')])),
 
+    # Values other than columns may be selected
+    ("SELECT 'x' AS foo FROM client",
+     select([_bind_literal('literal', 'x').label('foo')]).select_from(CLIENT)),
+    ('SELECT :p FROM client', select([bindparam('p')]).select_from(CLIENT)),
+    ('SELECT name, today() AS d FROM client',
+     select([CLIENT.c.name, func.current_date().label('d')])),
+    ("SELECT string_to_array(name, ' ') FROM client",
+     select([_string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' '))])),
+
     ("SELECT * FROM client WHERE name = 'x'",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     ("SELECT * FROM client WHERE name = ('x')",
@@ -363,8 +372,6 @@ def _compiled(query):
 
     # Not (yet) supported
     'SELECT * FROM client LIMIT 5',       # extra clause
-    # Only columns may be selected, aliased or not
-    "SELECT 'x' AS foo FROM client",      # aliased literal
     'SELECT * FROM (SELECT * FROM client) AS t',  # subquery is not a table
     'SELECT * FROM generate_series(1, 10)',  # table valued function not supported
     "INSERT INTO client VALUES ('x')",    # not a SELECT
@@ -448,8 +455,8 @@ def _compiled(query):
     "SELECT * FROM client WHERE similar_name(name)",
     "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
 
-    # Only columns can be selected or ordered by
-    "SELECT string_to_array(name, ' ') FROM client",
+    # Only columns and aliases can be ordered by
+    "SELECT name FROM client ORDER BY string_to_array(name, ' ')",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',

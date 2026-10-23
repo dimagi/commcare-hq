@@ -337,8 +337,8 @@ def _convert_projection(expressions, columns):
 def _convert_projected_column(node, columns):
     if isinstance(node, exp.Alias):
         expression, alias = _unpack(node, 'this', 'alias')
-        return _convert_projected_value(expression, columns).label(alias.name)
-    return _convert_projected_value(node, columns)
+        return _convert_value(expression, columns).label(alias.name)
+    return _convert_value(node, columns)
 
 
 AGGREGATES = {
@@ -350,12 +350,6 @@ AGGREGATES = {
     exp.GroupConcat: func.string_agg,
     exp.ArrayAgg: func.array_agg,
 }
-
-
-def _convert_projected_value(node, columns):
-    if type(node) in AGGREGATES:
-        return _convert_aggregate(node, columns)
-    return _convert_column(node, columns)
 
 
 def _convert_aggregate(node, columns):
