@@ -154,6 +154,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('integration.KycConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('integration.MoMoConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('ip_access.IPAccessConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('document_templates.Template', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
