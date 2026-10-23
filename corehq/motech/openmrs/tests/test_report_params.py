@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 from unmagic import fixture, use
 
-from corehq.motech.openmrs.tasks import parse_params, validate_report_params
+from corehq.motech.openmrs.models import parse_params, validate_report_params
 
 TODAY = datetime(2026, 10, 23)
 
@@ -23,7 +23,7 @@ class FakeLocation:
 
 @fixture
 def fixed_today():
-    with patch('corehq.motech.openmrs.tasks.datetime') as dt:
+    with patch('corehq.motech.openmrs.models.datetime') as dt:
         dt.today.return_value = TODAY
         yield
 

@@ -25,7 +25,11 @@ from corehq.motech.openmrs.forms import (
     OpenmrsImporterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
+from corehq.motech.openmrs.models import (
+    ColumnMapping,
+    OpenmrsImporter,
+    validate_report_params,
+)
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     OpenmrsFormConfig,
@@ -35,10 +39,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_person_attribute_types,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.tasks import (
-    import_patients_to_domain,
-    validate_report_params,
-)
+from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
 from corehq.motech.utils import b64_aes_cbc_encrypt

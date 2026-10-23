@@ -6,7 +6,6 @@ its Atom Feed (daily or more) to track changes.
 import re
 import uuid
 from collections import namedtuple
-from datetime import datetime
 
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -41,73 +40,17 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.exceptions import OpenmrsException
-from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
+from corehq.motech.openmrs.models import (
+    OpenmrsImporter,
+    deserialize,
+    parse_params,
+)
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# The location metadata key that maps to its corresponding OpenMRS location UUID
-LOCATION_OPENMRS = 'openmrs_uuid'
 
-# The placeholders that may be used in ``OpenmrsImporter.report_params``
-# values. Report params are user-supplied and must never be passed to a
-# template engine, so only these are substituted.
-REPORT_PARAM_PLACEHOLDERS = ('today', 'location')
-_placeholder_re = re.compile(r'\{\{\s*(\w+)\s*\}\}')
-_template_markers = ('{{', '{%', '{#')
-
-
-def parse_params(params, location=None):
-    """
-    Inserts date and OpenMRS location UUID into report params
-
-    >>> parse_params({'endDate': '{{ today }}', 'n': 1})['n']
-    1
-    """
-    context = {
-        'today': datetime.today().strftime('%Y-%m-%d'),
-        'location': location.metadata[LOCATION_OPENMRS] if location else None,
-    }
-
-    def substitute(match):
-        name = match.group(1)
-        if name in REPORT_PARAM_PLACEHOLDERS:
-            return str(context[name])
-        return match.group(0)
-
-    parsed = {}
-    for key, value in params.items():
-        if isinstance(value, str):
-            value = _placeholder_re.sub(substitute, value)
-        parsed[key] = value
-    return parsed
-
-
-def validate_report_params(params):
-    """
-    Raises ValueError if a report param value contains anything that
-    looks like a template other than the allowed placeholders.
-
-    >>> validate_report_params({'endDate': '{{ today }}'})
-    >>> validate_report_params({'endDate': '{{ today | upper }}'})
-    Traceback (most recent call last):
-      ...
-    ValueError: Invalid template in report param "endDate". Only {{ today }} and {{ location }} are allowed.
-    """
-    for key, value in params.items():
-        if not isinstance(value, str):
-            continue
-        # Remove allowed placeholders, then check for any template syntax left over
-        remainder = _placeholder_re.sub(
-            lambda m: '' if m.group(1) in REPORT_PARAM_PLACEHOLDERS else m.group(0),
-            value,
-        )
-        if any(marker in remainder for marker in _template_markers):
-            allowed = ' and '.join(f'{{{{ {p} }}}}' for p in REPORT_PARAM_PLACEHOLDERS)
-            raise ValueError(
-                f'Invalid template in report param "{key}". Only {allowed} are allowed.'
-            )
 
 
 def get_openmrs_patients(requests, importer, location=None):
