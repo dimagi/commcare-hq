@@ -110,6 +110,7 @@ from corehq.apps.domain.models import (
     AllowedUCRExpressionSettings,
     AppManagerDomainSettings,
     AppReleaseModeSetting,
+    ChatbotDomainSettings,
     OperatorCallLimitSettings,
     all_restricted_ucr_expressions,
 )
@@ -136,6 +137,7 @@ from corehq.toggles import (
     EXPORTS_APPS_USE_ELASTICSEARCH,
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
+    GA_OCS_CHATBOT,
     SECURE_SESSION_TIMEOUT,
     USE_LOGO_IN_SYSTEM_EMAILS,
 )
@@ -551,6 +553,14 @@ class DomainGlobalSettingsForm(forms.Form):
         ),
     )
 
+    disable_chatbot = BooleanField(
+        required=False,
+        label=gettext_lazy("Opt out of CommCare Companion"),
+        widget=BootstrapCheckboxInput(
+            inline_label=gettext_lazy("Hide the CommCare Companion chatbot for all users in this project space"),
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -595,9 +605,16 @@ class DomainGlobalSettingsForm(forms.Form):
         else:
             self._handle_exports_use_elasticsearch_setting_value()
 
+        if not GA_OCS_CHATBOT.enabled(self.domain):
+            del self.fields['disable_chatbot']
+        else:
+            self._handle_disable_chatbot_setting_value()
+
         checkbox_fields = [
             hqcrispy.CheckboxField('release_mode_visibility'),
         ]
+        if 'disable_chatbot' in self.fields:
+            checkbox_fields.append(hqcrispy.CheckboxField('disable_chatbot'))
         if 'enable_all_add_ons' in self.fields:
             checkbox_fields.append(hqcrispy.CheckboxField('enable_all_add_ons'))
         checkbox_fields.extend([
@@ -677,6 +694,11 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_exports_use_elasticsearch_setting_value(self):
         self.fields['exports_use_elasticsearch'].initial = self.project.exports_use_elasticsearch
+
+    def _handle_disable_chatbot_setting_value(self):
+        self.fields['disable_chatbot'].initial = ChatbotDomainSettings.objects.filter(
+            domain=self.domain, disabled=True,
+        ).exists()
 
     def _handle_opt_out_of_data_sharing_setting_value(self):
         self.fields['opt_out_of_data_sharing'].initial = not self.project.internal.can_use_data
@@ -841,6 +863,11 @@ class DomainGlobalSettingsForm(forms.Form):
     def _save_exports_use_elasticsearch(self, domain):
         domain.exports_use_elasticsearch = self.cleaned_data.get("exports_use_elasticsearch", False)
 
+    def _save_disable_chatbot(self):
+        ChatbotDomainSettings.objects.update_or_create(
+            domain=self.domain, defaults={'disabled': self.cleaned_data['disable_chatbot']},
+        )
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -865,6 +892,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_opt_out_of_data_sharing_setting(domain)
         if EXPORTS_APPS_USE_ELASTICSEARCH.enabled(self.domain):
             self._save_exports_use_elasticsearch(domain)
+        if GA_OCS_CHATBOT.enabled(self.domain):
+            self._save_disable_chatbot()
         domain.save()
         return True
 
@@ -2402,13 +2431,13 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
         self.helper.layout = crispy.Layout(
             crispy.Field('organization_name'),
             crispy.Field('emails'),
-            crispy.Field('trial_length', data_bind='value: trialLength'),
+            crispy.Field('trial_length', x_model='trialLength'),
             crispy.Div(
                 crispy.Div(
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
-                        'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '
-                        'On <span data-bind="text: end_date"></span> '
+                        'as you hit "Update" and end on <span x-text="endDate"></span>.  '
+                        'On <span x-text="endDate"></span> '
                         'the project space will be automatically paused.</p>'
                     )),
                     css_class='field-control-offset'
@@ -2735,7 +2764,7 @@ class SelectSubscriptionTypeForm(forms.Form):
             self.helper.layout = crispy.Layout(
                 crispy.Field(
                     'subscription_type',
-                    data_bind='value: subscriptionType',
+                    x_model='subscriptionType',
                     css_class="disabled"
                 )
             )

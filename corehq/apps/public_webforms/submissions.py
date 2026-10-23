@@ -14,12 +14,15 @@ def validate_public_form_submission(session, form_json):
     persisted. Returns an error message if the submission is not allowed for
     the session's webform type, else ``None``.
 
-    - Every submission must be attributed to PUBLIC_USER_ID.
+    - Every submission must be attributed to PUBLIC_USER_ID and the
+      session's username, and every case it creates to PUBLIC_USER_ID.
     - Survey webforms may not submit any case data.
     - Registration webforms may only create new cases with PUBLIC_USER_ID.
     """
     if extract_meta_user_id(form_json) != PUBLIC_USER_ID:
         return f"Public form submissions must be attributed to '{PUBLIC_USER_ID}'."
+    if (form_json.get('meta') or {}).get('username') != session.session_username:
+        return "Public form submissions must be attributed to the session's username."
 
     session_type = session.public_webform.session_type
     case_updates = get_case_updates(form_json)
@@ -43,6 +46,8 @@ def _validate_registration_case_updates(session, case_updates):
             return "Registration public forms may only create new cases."
         if create_action.owner_id != PUBLIC_USER_ID:
             return f"Registration public form cases must be owned by '{PUBLIC_USER_ID}'."
+        if case_update.user_id not in ('', PUBLIC_USER_ID):
+            return f"Registration public form cases must be attributed to '{PUBLIC_USER_ID}'."
         update_action = case_update.get_update_action()
         if update_action and update_action.owner_id and update_action.owner_id != PUBLIC_USER_ID:
             return "Registration public forms may not reassign case ownership."

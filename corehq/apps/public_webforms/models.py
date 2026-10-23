@@ -9,6 +9,7 @@ from casexml.apps.phone.models import OTARestoreUser
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.utils import is_app_live
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.util.models import GetOrNoneManager
 
@@ -28,6 +29,10 @@ class PublicWebformStatus(models.IntegerChoices):
     OPEN = (0, _("Open"))
     CLOSED = (1, _("Closed"))
     EXPIRED = (2, _("Expired"))
+
+
+class PublicWebformAppDeleted(Exception):
+    pass
 
 
 class PublicWebformQuerySet(models.QuerySet):
@@ -91,6 +96,11 @@ class PublicWebform(models.Model):
     @property
     def is_open(self):
         return not self.is_disabled and not self.is_expired
+
+    def set_disabled(self, is_disabled):
+        if not is_disabled and not is_app_live(self.domain, self.app_id):
+            raise PublicWebformAppDeleted
+        self.is_disabled = is_disabled
 
 
 class PublicFormSession(models.Model):
@@ -221,11 +231,12 @@ class PublicFormUser:
         return False
 
     def has_permission(self, domain, permission, data=None):
-        if domain != self._session.public_webform.domain:
-            return False
-        if permission == 'access_web_app':
-            return data == self._session.public_webform.app_id
-        return permission == 'access_mobile_endpoints'
+        webform = self._session.public_webform
+        return (
+            domain == webform.domain
+            and permission == 'access_web_app'
+            and data == webform.app_id
+        )
 
     def can_access_any_web_apps(self, domain=None):
         return domain == self._session.public_webform.domain

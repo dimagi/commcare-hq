@@ -172,7 +172,7 @@ def load_data_from_db(table_name):
 
     engine = connection_manager.get_session_helper(DEFAULT_DB_ALIAS).engine
     metadata = sqlalchemy.MetaData(bind=engine)
-    metadata.reflect(bind=engine)
+    metadata.reflect(bind=engine, only=[table_name])
     table = metadata.tables[table_name]
     columns = [
         column.name

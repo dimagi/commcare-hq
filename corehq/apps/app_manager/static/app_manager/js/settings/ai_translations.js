@@ -34,6 +34,7 @@ var panelModel = function (options) {
     // a poll sent before a run was started may predate it; its response is dropped
     var runsStarted = 0;
 
+    self.canEdit = options.canEdit;
     self.activeStates = options.activeStates;
     self.limitReached = options.limitReached;
     self.languagesChanged = ko.observable(false);
@@ -52,7 +53,8 @@ var panelModel = function (options) {
     };
 
     function pollStatus() {
-        if (document.hidden || requestInFlight) {
+        // the status URL needs edit permission
+        if (!self.canEdit || document.hidden || requestInFlight) {
             return;
         }
         requestInFlight = true;
@@ -148,8 +150,12 @@ var languageModel = function (options, panel) {
                     panel.runStarted();
                     return;
                 }
-                self.startError((xhr.responseJSON || {}).error
-                    || gettext("The translation couldn't be started. Try again."));
+                var error = (xhr.responseJSON || {}).error;
+                if (!error && xhr.status === 403) {
+                    // e.g. the user's permissions changed since the page loaded
+                    error = gettext("You need permission to edit this app to translate it.");
+                }
+                self.startError(error || gettext("The translation couldn't be started. Try again."));
             })
             .always(function () {
                 self.starting(false);
@@ -240,7 +246,7 @@ var _finishedRunDisplay = function (display, status) {
         var parts = [interpolate(gettext("%(translated)s of %(total)s labels translated (%(percent)s%)"), {
             translated: _number(status.translated),
             total: _number(status.total),
-            percent: Math.round(100 * status.translated / status.total),
+            percent: _percent(status.translated, status.total),
         }, true)];
         if (status.skipped) {
             parts.push(interpolate(gettext("%(count)s skipped"), {count: _number(status.skipped)}, true));
@@ -302,7 +308,7 @@ var _appShare = function (run) {
         return "";
     }
     return interpolate(gettext("AI translated %(percent)s% of the Application (%(translated)s of %(total)s labels)"), {
-        percent: Math.round(100 * run.total_app_strings_ai_translated / run.total_app_strings),
+        percent: _percent(run.total_app_strings_ai_translated, run.total_app_strings),
         translated: _number(run.total_app_strings_ai_translated),
         total: _number(run.total_app_strings),
     }, true);
@@ -312,6 +318,18 @@ var _versionLine = function (inVersion) {
     return inVersion
         ? interpolate(gettext("In version %(version)s"), {version: inVersion}, true)
         : gettext("Not in a version yet");
+};
+
+// 100% and 0% only when it's all or nothing: 1,359 of 1,360 is 99%, not 100%
+var _percent = function (part, whole) {
+    var percent = Math.round(100 * part / whole);
+    if (part < whole) {
+        percent = Math.min(percent, 99);
+    }
+    if (part > 0) {
+        percent = Math.max(percent, 1);
+    }
+    return percent;
 };
 
 var _number = function (value) {
@@ -327,6 +345,7 @@ $(function () {
     var $panel = $("#ai-translations-panel");
     if ($panel.length) {
         $panel.koApplyBindings(panelModel({
+            canEdit: initialPageData.get("ai_translation_can_edit"),
             languages: initialPageData.get("ai_translation_languages"),
             activeStates: initialPageData.get("ai_translation_active_states"),
             limitReached: initialPageData.get("ai_translation_limit_reached"),

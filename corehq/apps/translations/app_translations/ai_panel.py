@@ -16,8 +16,9 @@ from corehq.apps.translations.app_translations.ai_translator import (
 from corehq.apps.translations.models import AITranslationUsage
 
 
-def get_ai_translation_panel_context(app):
-    """Context for the panel, or None if the panel isn't shown."""
+def get_ai_translation_panel_context(app, can_edit):
+    """Context for the panel, or None if the panel isn't shown.
+    ``can_edit`` is whether the user may start runs."""
     if (not toggles.AI_APP_TRANSLATION.enabled(app.domain, namespace=toggles.NAMESPACE_DOMAIN)
             or app.is_remote_app()):
         return None
@@ -29,6 +30,7 @@ def get_ai_translation_panel_context(app):
         return context
     last_runs = get_last_ai_runs(app)
     context.update({
+        'can_edit': can_edit,
         'active_states': list(AITranslationStatus.ACTIVE_STATES),
         'limit_reached': monthly_word_limit_reached(app.domain),
         'languages': [

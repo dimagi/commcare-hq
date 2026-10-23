@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
+from corehq.apps.translations.integrations.llm import PROVIDERS
+
 
 class SMSTranslations(models.Model):
     domain = models.CharField(max_length=255, unique=True)
@@ -123,7 +125,9 @@ class AITranslationConfig(models.Model):
             .first()
         )
         if row is None:
-            return {'provider': defaults['provider'], 'model': defaults['model']}
+            provider = defaults['provider']
+            model = defaults.get('model') or PROVIDERS[provider].default_model
+            return {'provider': provider, 'model': model}
         return {'provider': row.provider or defaults['provider'], 'model': row.model}
 
 

@@ -65,12 +65,12 @@ def test_is_filtering_reports_whether_the_list_was_narrowed(params, expected):
     assert forms.PublicWebformFilterForm(params).is_filtering is expected
 
 
-def _form(data=None, has_sms_privilege=False, eligible_form=SURVEY_FORM):
+def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
     """Stubs the reads that go to the database or to released builds."""
     args = [data] if data is not None else []
     with patch.multiple(
         forms,
-        domain_has_privilege=Mock(return_value=has_sms_privilege),
+        domain_can_send_sms=Mock(return_value=can_send_sms),
         get_public_webform_choices=Mock(return_value=[]),
         get_public_webform_eligible_form=Mock(return_value=eligible_form),
     ):
@@ -83,7 +83,7 @@ def _post_data(**kwargs):
     return {
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'allow_email': True,
         'app_id': 'app-1',
         'form_unique_id': 'form-1',
         **kwargs,
@@ -107,17 +107,14 @@ def test_expires_at_defaults_to_the_datepicker_format():
 
 
 def test_a_delivery_option_is_required():
-    form = _form(_post_data(link_choices=[]))
+    form = _form(_post_data(allow_email=False, allow_sms=False))
     assert not form.is_valid()
-    assert 'link_choices' in form.errors
 
 
-@pytest.mark.parametrize('has_sms_privilege', [True, False])
-def test_sms_is_offered_only_with_the_privilege(has_sms_privilege):
-    form = _form(has_sms_privilege=has_sms_privilege)
-    rendered = dict(form.fields['link_choices'].widget.choices)
-    assert ('allow_sms' in rendered) == has_sms_privilege
-    assert 'allow_email' in rendered
+@pytest.mark.parametrize('can_send_sms', [True, False])
+def test_sms_is_disabled_when_project_cannot_send_sms(can_send_sms):
+    form = _form(can_send_sms=can_send_sms)
+    assert form.fields['allow_sms'].disabled is not can_send_sms
 
 
 @pytest.mark.parametrize('eligible_form, expected_type', [
@@ -147,7 +144,7 @@ def test_an_ineligible_form_is_rejected():
 def _create_webform(**post_data):
     """Stubs generating the endpoint, which builds a copy of a released app.
     SMS is granted so delivery options can be exercised independently of it."""
-    form = _form(_post_data(**post_data), has_sms_privilege=True)
+    form = _form(_post_data(**post_data), can_send_sms=True)
     assert form.is_valid(), form.errors
     with patch.object(
         forms, 'create_public_webform_build',
@@ -191,19 +188,6 @@ def test_create_stores_the_selection_and_generated_endpoint():
     assert webform.is_disabled
 
 
-@use('db')
-@pytest.mark.parametrize('link_choices, allow_email, allow_sms', [
-    (['allow_email'], True, False),
-    (['allow_sms'], False, True),
-    (['allow_email', 'allow_sms'], True, True),
-])
-def test_create_maps_link_choices_to_delivery_options(link_choices, allow_email, allow_sms):
-    webform = _create_webform(link_choices=link_choices)
-
-    assert webform.allow_email == allow_email
-    assert webform.allow_sms == allow_sms
-
-
 def _webform(**kwargs):
     return PublicWebform(**{
         'id': 1,
@@ -217,17 +201,18 @@ def _webform(**kwargs):
     })
 
 
-def _edit_form(webform, data=None, has_sms_privilege=False):
+def _edit_form(webform, data=None, can_send_sms=False, is_app_deleted=False):
     """Stubs the build read that names the app, menu, and form."""
     args = [data] if data is not None else []
     with patch.multiple(
         forms,
-        domain_has_privilege=Mock(return_value=has_sms_privilege),
+        domain_can_send_sms=Mock(return_value=can_send_sms),
         get_public_webform_form_paths=Mock(return_value={webform.id: {
             'app_name': 'Frontline Program',
             'app_version': '12',
             'menu_name': 'Registration',
             'form_name': 'Cohort Registration',
+            'is_app_deleted': is_app_deleted,
         }}),
     ):
         form = forms.EditPublicWebformForm(
@@ -240,7 +225,7 @@ def _edit_data(**kwargs):
     return {
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'allow_email': True,
         **kwargs,
     }
 
@@ -254,14 +239,22 @@ def test_edit_prefills():
     assert form.initial['label'] == 'Antenatal visit'
     # stored as UTC, offered back in the project's timezone
     assert form.fields['expires_at'].initial == '2026-09-01 17:00:00'
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.initial['allow_email'] is True
     assert form.initial['open_to_requests'] is True
 
 
 def test_edit_drops_a_delivery_option_the_project_can_no_longer_use():
-    form = _edit_form(_webform(allow_sms=True), has_sms_privilege=False)
+    form = _edit_form(_webform(allow_sms=True), can_send_sms=False)
 
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.fields['allow_sms'].disabled
+
+
+def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
+    form = _edit_form(_webform(is_disabled=False), is_app_deleted=True)
+
+    rendered = str(form['open_to_requests'])
+    assert 'disabled' in rendered
+    assert 'checked' not in rendered
 
 
 @use('db')
@@ -272,10 +265,11 @@ def test_edit_updates_the_webform():
         _edit_data(
             label='Antenatal visit, round two',
             expires_at='2026-12-01 17:00:00',
-            link_choices=['allow_sms'],
+            allow_email=False,
+            allow_sms=True,
             is_disabled=True,
         ),
-        has_sms_privilege=True,
+        can_send_sms=True,
     )
     assert form.is_valid(), form.errors
 

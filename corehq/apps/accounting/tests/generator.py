@@ -23,6 +23,7 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     Feature,
+    FeatureRate,
     FeatureType,
     Role,
     SoftwarePlan,
@@ -128,6 +129,20 @@ def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
         )
         feature_rates.append(feature.get_rate(default_instance=True))
     return feature_rates
+
+
+@unit_testing_only
+def add_web_user_feature_rate(plan_version):
+    feature, __ = Feature.objects.get_or_create(
+        name=FeatureType.WEB_USER, defaults={'feature_type': FeatureType.WEB_USER},
+    )
+    rate = FeatureRate.objects.create(
+        feature=feature,
+        monthly_limit=10,
+        per_excess_fee=Decimal('10.00'),
+    )
+    plan_version.feature_rates.add(rate)
+    return rate
 
 
 @unit_testing_only

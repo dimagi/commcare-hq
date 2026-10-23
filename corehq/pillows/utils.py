@@ -67,7 +67,7 @@ def get_user_type(user_id):
         except (ResourceNotFound, WrappingAttributeError):
             pass
 
-    get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(True)
+    get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(UNKNOWN_USER_TYPE)
     return UNKNOWN_USER_TYPE
 
 

@@ -149,7 +149,8 @@ def view_generic(
             context.update(get_releases_context(request, domain, app_id))
         else:
             # only the settings page has the Languages tab
-            context['ai_translation'] = get_ai_translation_panel_context(app)
+            context['ai_translation'] = get_ai_translation_panel_context(
+                app, can_edit=request.couch_user.can_edit_apps(domain))
 
         context['is_app_settings_page'] = not release_manager
 

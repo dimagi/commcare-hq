@@ -1,0 +1,66 @@
+{% load i18n %}
+
+<div class="alert alert-info">
+  <p>
+    <i class="fa fa-circle-info"></i>
+    <strong>{% trans "Action is required to enable messaging." %}</strong>
+  </p>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "How to Enable Messaging" %}</h3>
+  </div>
+  <div class="panel-body">
+    <p>
+      {% blocktrans %}
+        To enable messaging features for this project space, please do at least
+        <strong>one</strong> of the following:
+      {% endblocktrans %}
+    </p>
+    <ul>
+      {% url 'domain_update_billing_info' domain as billing_info_url %}
+      <li>
+        {% blocktrans %}
+          <a href="{{ billing_info_url }}">Save a payment card</a> to your user
+          account.
+        {% endblocktrans %}
+      </li>
+      <li>
+        {% blocktrans %}
+          <a href="{{ billing_info_url }}">Enable automatic payments</a>
+          for this project space.
+        {% endblocktrans %}
+      </li>
+      <li>
+        {% url 'domain_billing_statements' domain as pay_invoices_url %}
+        {% url 'domain_subscription_view' domain as purchase_credits_url %}
+        {% blocktrans %}
+          <a href="{{ pay_invoices_url }}">Pay invoices</a>
+          or
+          <a href="{{ purchase_credits_url }}">purchase prepaid credits</a>
+          totaling {{ self_enable_payment_threshold }} or more.
+        {% endblocktrans %}
+      </li>
+    </ul>
+    <p>
+      {% blocktrans %}
+        Then, return to this page to enable messaging. This helps us ensure SMS
+        charges can be billed correctly.
+      {% endblocktrans %}
+    </p>
+    <hr />
+    <p>
+      {% blocktrans %}
+        If none of these options are available for you, please email
+        <a href="mailto:{{ ACCOUNTS_EMAIL }}">{{ ACCOUNTS_EMAIL }}</a>
+        to request access to messaging features. Include your full name and the
+        name of the organization you work for.
+      {% endblocktrans %}
+    </p>
+  </div>
+</div>
+
+<a class="btn btn-default" href="{% url 'homepage' %}"
+  >{% trans "Back to Home" %}</a
+>

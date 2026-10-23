@@ -1063,6 +1063,156 @@ msgstr "لا توجد تغييرات جديدة!"
 msgid "You have unsaved changes to your prompt setting"
 msgstr "لديك تغييرات غير محفوظة في إعداد المطالبة"
 
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(name)s (%(code)s)"
+msgstr "%(name)s ‏(%(code)s)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "You need permission to edit this app to translate it."
+msgstr "تحتاج إلى إذن لتعديل هذا التطبيق من أجل ترجمته."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "The translation couldn't be started. Try again."
+msgstr "تعذّر بدء الترجمة. حاول مرة أخرى."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not yet supported"
+msgstr "غير مدعوم بعد"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Use the manual translation options below"
+msgstr "استخدم خيارات الترجمة اليدوية أدناه"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Settings"
+msgid "Starting…"
+msgstr "جارٍ البدء…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Requeued"
+msgid "Queued"
+msgstr "في قائمة الانتظار"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Add Translation"
+msgid "Translating…"
+msgstr "جارٍ الترجمة…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Batch %(batch)s of %(total)s"
+msgstr "الدفعة %(batch)s من %(total)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Auto fill translations"
+msgid "Applying translations…"
+msgstr "جارٍ تطبيق الترجمات…"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Saving to the app"
+msgstr "جارٍ الحفظ في التطبيق"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
+#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
+#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
+#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
+msgid "Failed"
+msgstr "فشل"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Nothing to translate"
+msgstr "لا يوجد ما يُترجم"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Every label already has a translation."
+msgstr "كل تسمية لديها ترجمة بالفعل."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Add Translation"
+msgid "AI translated"
+msgstr "تمت الترجمة بواسطة الذكاء الاصطناعي"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in this run"
+msgid_plural "%(count)s labels translated in this run"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Form submission failed with error"
+msgid "Finished with errors"
+msgstr "اكتمل مع وجود أخطاء"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
+msgstr "تمت ترجمة %(translated)s من أصل %(total)s تسمية (%(percent)s٪)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s skipped"
+msgstr "تم تخطي %(count)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s failed"
+msgstr "فشل %(count)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s changed during the run"
+msgstr "تغير %(count)s أثناء العملية"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Run AI Translate again to retry the labels that weren't translated."
+msgstr ""
+"شغّل الترجمة بالذكاء الاصطناعي مرة أخرى لإعادة محاولة ترجمة التسميات التي لم"
+" تُترجم."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "No AI run yet"
+msgstr "لم يتم تشغيل الذكاء الاصطناعي بعد"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label translated in the last run"
+msgid_plural "%(count)s labels translated in the last run"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+msgstr[4] ""
+msgstr[5] ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "Auto fill translations"
+msgid "Partially translated"
+msgstr "تمت الترجمة جزئيًا"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"%(translated)s of %(attempted)s labels translated in the last run · "
+"%(missed)s weren't translated"
+msgstr ""
+"تمت ترجمة %(translated)s من أصل %(attempted)s تسمية في آخر عملية · لم تُترجم"
+" %(missed)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid ""
+"AI translated %(percent)s% of the Application (%(translated)s of %(total)s "
+"labels)"
+msgstr ""
+"ترجم الذكاء الاصطناعي %(percent)s٪ من التطبيق (%(translated)s من أصل "
+"%(total)s تسمية)"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "In version %(version)s"
+msgstr "في الإصدار %(version)s"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Not in a version yet"
+msgstr "لم يُدرج في إصدار بعد"
+
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap3/commcare_settings.js
 #: corehq/apps/app_manager/static/app_manager/js/settings/bootstrap5/commcare_settings.js
 #, javascript-format
@@ -3260,14 +3410,6 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
 msgid "Success!"
 msgstr "تم بنجاح!"
-
-#: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
-#: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js
-#: corehq/ex-submodules/casexml/apps/case/static/case/js/repeat_records.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap3/repeat_record_report.js
-#: corehq/motech/repeaters/static/repeaters/js/bootstrap5/repeat_record_report.js
-msgid "Failed"
-msgstr "فشل"
 
 #: corehq/apps/reports/static/reports/js/bootstrap3/submission_error_report.js
 #: corehq/apps/reports/static/reports/js/bootstrap5/submission_error_report.js

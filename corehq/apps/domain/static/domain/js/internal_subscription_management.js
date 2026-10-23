@@ -1,17 +1,14 @@
-import $ from "jquery";
-import ko from "knockout";
+import "commcarehq";
+import Alpine from "alpinejs";
+import moment from "moment";
 import "hqwebapp/js/bootstrap5/widgets";
 
-$(function () {
-    var viewModel = {
-        subscriptionType: ko.observable($('#id_subscription_type').val() || null),
-        trialLength: ko.observable(90),
-    };
-    viewModel.end_date = ko.computed(function () {
-        var date = new Date();
-        date.setHours(0, 0, 0, 0);
-        date.setDate(date.getDate() + parseInt(viewModel.trialLength()));
-        return date.toJSON().slice(0, 10);
-    });
-    $('#subscription_management').koApplyBindings(viewModel);
-});
+Alpine.data("subscriptionManagement", () => ({
+    subscriptionType: document.getElementById("id_subscription_type")?.value || null,
+    trialLength: 90,
+    get endDate() {
+        return moment().startOf("day").add(this.trialLength, "days").format("YYYY-MM-DD");
+    },
+}));
+
+Alpine.start();
