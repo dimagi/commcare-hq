@@ -2,6 +2,7 @@ from kafka import TopicPartition
 
 import settingshelper
 from corehq.apps.app_manager.util import app_doc_types
+from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.form_processor.models import XFormInstance
@@ -39,17 +40,15 @@ ALL = (
     SYNCLOG_SQL,
 )
 
+# SQL models that have no doc_type of their own
+_SQL_DOC_TYPE_TOPICS = {
+    document_types.LEDGER_DOC_TYPE: LEDGER,
+    document_types.SMS_DOC_TYPE: SMS,
+    document_types.SYNCLOG_SQL_DOC_TYPE: SYNCLOG_SQL,
+}
+
 
 def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
-    from corehq.apps.change_feed import document_types
-
-    # SQL models that have no doc_type of their own
-    sql_doc_type_topics = {
-        document_types.LEDGER_DOC_TYPE: LEDGER,
-        document_types.SMS_DOC_TYPE: SMS,
-        document_types.SYNCLOG_SQL_DOC_TYPE: SYNCLOG_SQL,
-    }
-
     if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL
     elif doc_type in XFormInstance.ALL_DOC_TYPES:
@@ -68,8 +67,8 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
         return APP
     elif doc_type == document_types.LOCATION_DOC_TYPE:
         return LOCATION
-    elif doc_type in sql_doc_type_topics:
-        return sql_doc_type_topics[doc_type]
+    elif doc_type in _SQL_DOC_TYPE_TOPICS:
+        return _SQL_DOC_TYPE_TOPICS[doc_type]
     elif default_topic:
         return default_topic
     else:
