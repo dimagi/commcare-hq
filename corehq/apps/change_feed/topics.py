@@ -44,6 +44,13 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
     from corehq.apps.change_feed import document_types
     from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 
+    # SQL models that have no doc_type of their own
+    sql_doc_type_topics = {
+        document_types.LEDGER_DOC_TYPE: LEDGER,
+        document_types.SMS_DOC_TYPE: SMS,
+        document_types.SYNCLOG_SQL_DOC_TYPE: SYNCLOG_SQL,
+    }
+
     if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL
     elif doc_type in XFormInstance.ALL_DOC_TYPES:
@@ -62,8 +69,8 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
         return APP
     elif doc_type == LOCATION_DOC_TYPE:
         return LOCATION
-    elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
-        return doc_type
+    elif doc_type in sql_doc_type_topics:
+        return sql_doc_type_topics[doc_type]
     elif default_topic:
         return default_topic
     else:
