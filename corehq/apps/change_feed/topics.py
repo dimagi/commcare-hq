@@ -48,7 +48,7 @@ _SQL_DOC_TYPE_TOPICS = {
 }
 
 
-def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
+def get_topic_for_doc_type(doc_type, default_topic=None):
     if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL
     elif doc_type in XFormInstance.ALL_DOC_TYPES:
