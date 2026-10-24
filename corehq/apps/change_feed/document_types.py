@@ -16,6 +16,7 @@ SYNCLOG_DOC_TYPES = ('SimplifiedSyncLog',)
 LEDGER_DOC_TYPE = 'ledger'
 SMS_DOC_TYPE = 'sms'
 SYNCLOG_SQL_DOC_TYPE = 'synclog-sql'
+LOCATION_DOC_TYPE = 'Location'
 
 
 DocumentMetadata = namedtuple(

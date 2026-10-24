@@ -42,7 +42,6 @@ ALL = (
 
 def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
     from corehq.apps.change_feed import document_types
-    from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 
     # SQL models that have no doc_type of their own
     sql_doc_type_topics = {
@@ -67,7 +66,7 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
         return SYNCLOG_SQL
     elif doc_type in app_doc_types():
         return APP
-    elif doc_type == LOCATION_DOC_TYPE:
+    elif doc_type == document_types.LOCATION_DOC_TYPE:
         return LOCATION
     elif doc_type in sql_doc_type_topics:
         return sql_doc_type_topics[doc_type]
