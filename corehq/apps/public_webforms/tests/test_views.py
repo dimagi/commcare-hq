@@ -200,7 +200,9 @@ class TestEditPublicWebformView(PublicWebformViewTestCase):
     def post(self, webform=None, domain=DOMAIN, **fields):
         return self.client.post(self.url(webform, domain), {
             'label': 'Antenatal visit',
-            'expires_at': '2026-09-01 17:00:00',
+            'expires_at': (
+                datetime.datetime.now() + datetime.timedelta(days=30)
+            ).strftime('%Y-%m-%d %H:%M:%S'),
             'allow_email': True,
             'open_to_requests': 'on',
             **fields,

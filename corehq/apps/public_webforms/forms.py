@@ -215,8 +215,12 @@ class BasePublicWebformForm(forms.Form):
 
     def clean_expires_at(self):
         # The datepicker submits wall-clock time in the project's timezone; store UTC.
-        expires_at = self.cleaned_data['expires_at']
-        return UserTime(expires_at, tzinfo=self.timezone).server_time().done()
+        user_time = UserTime(self.cleaned_data['expires_at'], tzinfo=self.timezone)
+        expires_at = user_time.server_time().done()
+        is_changed = user_time.ui_string(fmt='%Y-%m-%d %H:%M:%S') != self.initial_expires_at()
+        if is_changed and expires_at <= datetime.now(UTC).replace(tzinfo=None):
+            raise forms.ValidationError(_("Webform must expire in the future."))
+        return expires_at
 
     def clean(self):
         cleaned_data = super().clean()
