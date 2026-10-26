@@ -1,7 +1,7 @@
 import sys
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import (
@@ -667,18 +667,18 @@ def test_set_timezone_lasts_for_one_transaction():
         assert conn.execute(text('SHOW TimeZone')).scalar() != 'Asia/Kolkata'
 
 
-@pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
-def test_run_reports_a_database_error(error_class):
-    msg = 'column "nope" does not exist\nLINE 1: ...'
-    engine = MagicMock()
-    # The first side_effect is from setting the timezone
-    engine.begin().__enter__().execute.side_effect = [
-        None, error_class('SELECT 1', {}, Exception(msg))]
-    user_sql = _user_sql('SELECT * FROM client')
-    with patch('corehq.apps.project_db.user_sql.get_domain_query_engine',
-               return_value=engine):
+@use('db')
+@pytest.mark.parametrize('sql, error_class, msg', [
+    ('SELECT nope', ProgrammingError, 'column "nope" does not exist'),
+    ("SELECT 'abc'::int", DataError, 'invalid input syntax for type integer'),
+])
+def test_a_database_error_is_reported(sql, error_class, msg):
+    with project_db_table('test-db-error', 'patient', {'name': 'plain'}):
+        user_sql = UserSQL('test-db-error', 'SELECT case_id FROM patient')
         with pytest.raises(UserSQLProgrammingError) as error:
-            user_sql.run({})
+            with user_sql._connect() as conn:
+                conn.execute(text(sql))
+    assert isinstance(error.value.__cause__, error_class)
     assert msg in error.value.msg
 
 
