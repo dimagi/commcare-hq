@@ -17,6 +17,7 @@ from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.sso.models import (
     IdentityProvider,
@@ -97,6 +98,17 @@ def calc_has_custom_branding(domain_context):
         getattr(app, 'logo_refs', None)
         for app in domain_context.apps
     )
+
+
+def calc_public_webforms(domain_context):
+    return PublicWebform.objects.filter(domain=domain_context.domain).count()
+
+
+def calc_public_webform_submissions(domain_context):
+    return PublicFormSession.objects.filter(
+        public_webform__domain=domain_context.domain,
+        submitted_at__isnull=False,
+    ).count()
 
 
 # Data & Export Feature metric calculations
@@ -272,6 +284,10 @@ FEATURE_METRICS = [
               calc_bulk_case_editing_sessions, is_boolean=False),
     MetricDef('has_custom_branding', 'cp_has_custom_branding',
               calc_has_custom_branding),
+    MetricDef('public_webforms', 'cp_n_public_webforms',
+              calc_public_webforms),
+    MetricDef('public_webform_submissions', 'cp_n_public_webform_submissions',
+              calc_public_webform_submissions),
 
     # Data & Export Features
     MetricDef('has_data_dictionary', 'cp_has_data_dictionary',
