@@ -1177,14 +1177,14 @@ wheels = [
 
 [[package]]
 name = "django-cte"
-version = "2.0.0"
+version = "4.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/0c/c305d220c683fb69ccea94f3270a34b8eb8c4d8bdddd425f1d49608fc516/django_cte-2.0.0.tar.gz", hash = "sha256:24674655be4eaa1b091c19f256da7c2b134aa37a59914c6f902448139fe5d76a", size = 11216, upload-time = "2025-06-16T15:29:28.477Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/68/9d533b1fec250a0e4f659ef5116646cf9e61c353629f252cd5aa36587c56/django_cte-4.0.0.tar.gz", hash = "sha256:bb8dd23c19111c1e55c19dc5ffb30abee354c3f57c869baace90131e1463d74d", size = 12120, upload-time = "2026-08-31T11:30:32.486Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0c/88/2f3510961fbfabe1441e69783ccca197a129a9705c539aaf019bf6d9fba5/django_cte-2.0.0-py3-none-any.whl", hash = "sha256:6de54525be8d9c8bd3d0a2d0422a733295f501bca0ae1c9351cf314d376e0111", size = 12975, upload-time = "2025-06-16T15:29:27.465Z" },
+    { url = "https://files.pythonhosted.org/packages/73/37/3374d9a4dca2bd38806b3f00b8140bce59433e8342f2ffae166a55de8f86/django_cte-4.0.0-py3-none-any.whl", hash = "sha256:cf708d4172063d9a43b087a3d93b6d048c50a24fac46b04f45f274761af6db35", size = 13900, upload-time = "2026-08-31T11:30:31.31Z" },
 ]
 
 [[package]]
