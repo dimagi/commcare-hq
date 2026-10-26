@@ -208,20 +208,33 @@ def test_populate_case_type():
     assert CaseTable('test-upsert', 'clinic').reflect() is None
 
 
-@use('db', project_db_table('test-select', 'patient', {'interests': 'select'}))
-def test_send_select_property_round_trip():
-    populate_case_type('test-select', 'patient', [
-        _make_case({'interests': 'sports music'}, case_id='c1', type='patient'),
-        _make_case({}, case_id='c2', type='patient'),  # absent -> empty array, not NULL
+@use('db', project_db_table('test-typed', 'patient', {
+    'dob': 'date', 'weight': 'number', 'interests': 'select', 'location': 'gps',
+}))
+def test_send_typed_properties_round_trip():
+    populate_case_type('test-typed', 'patient', [
+        _make_case({
+            'dob': '1990-05-20',
+            'weight': '70.5',
+            'interests': 'sports music',
+            'location': '42.365 -71.102',
+        }, type='patient'),
     ])
 
-    table = CaseTable('test-select', 'patient').reflect()
+    table = CaseTable('test-typed', 'patient').reflect()
     with get_project_db_engine().begin() as conn:
-        rows = conn.execute(
-            table.select().order_by(table.c.case_id)
-        ).fetchall()
-    interests = {r['case_id']: r['select_prop__interests'] for r in rows}
-    assert interests == {'c1': ['sports', 'music'], 'c2': []}
+        row = conn.execute(sqlalchemy.select([
+            table.c.date_prop__dob,
+            table.c.number_prop__weight,
+            table.c.select_prop__interests,
+            func.latitude(table.c.gps_prop__location),
+        ])).fetchone()
+    assert tuple(row) == (
+        datetime.date(1990, 5, 20),
+        Decimal('70.5'),
+        ['sports', 'music'],
+        pytest.approx(42.365),
+    )
 
 
 @use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))
