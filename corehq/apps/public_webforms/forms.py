@@ -11,8 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-from corehq import privileges
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapSwitchInput
 from corehq.apps.public_webforms.app_builds import (
@@ -32,6 +30,7 @@ from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
 )
+from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
 
@@ -95,11 +94,16 @@ class BasePublicWebformForm(forms.Form):
             "One-time links already sent can be used until they expire."
         ),
     )
-    link_choices = forms.MultipleChoiceField(
-        label=gettext_lazy("How Respondents Receive Their One-time Link"),
-        choices=[],
-        initial=['allow_email'],
-        widget=forms.CheckboxSelectMultiple,
+    allow_email = forms.BooleanField(
+        label=gettext_lazy("Email"),
+        help_text=gettext_lazy("A branded email with a single-use link."),
+        initial=True,
+        required=False,
+    )
+    allow_sms = forms.BooleanField(
+        label=gettext_lazy("SMS"),
+        help_text=gettext_lazy("A short text with a shortened link. Billed per message sent."),
+        required=False,
     )
     open_to_requests = forms.BooleanField(
         required=False,
@@ -116,25 +120,8 @@ class BasePublicWebformForm(forms.Form):
         self.timezone = timezone
         super().__init__(*args, **kwargs)
 
-        link_choices = [(
-            'allow_email',
-            format_html(
-                '{} <div class="form-text">{}</div>',
-                _("Email"),
-                _("A branded email with a single-use link.")
-            ),
-        )]
-        if domain_has_privilege(domain, privileges.OUTBOUND_SMS):
-            link_choices.append((
-                'allow_sms',
-                format_html(
-                    '{} <div class="form-text">{}</div>',
-                    _("SMS"),
-                    _("A short text with a shortened link. Billed per message sent.")
-                ),
-            ))
-
-        self.fields['link_choices'].choices = link_choices
+        if not domain_can_send_sms(domain):
+            self.fields['allow_sms'].disabled = True
 
         self.fields['expires_at'].initial = self.initial_expires_at()
 
@@ -169,6 +156,20 @@ class BasePublicWebformForm(forms.Form):
         alpine_data_model = {
             'expires_at': self.fields['expires_at'].initial,
         }
+        allow_sms_field = [
+            twbscrispy.InlineField('allow_sms'),
+            crispy.HTML(
+                format_html(
+                    '<div class="form-text">{}</div>',
+                    self.fields['allow_sms'].help_text,
+                ),
+            ),
+        ]
+        if self.fields['allow_sms'].disabled:
+            allow_sms_field.append(
+                crispy.HTML('{% include "public_webforms/partials/enable_messaging.html" %}'),
+            )
+
         return [
             crispy.Field('label'),
             crispy.Div(
@@ -186,7 +187,29 @@ class BasePublicWebformForm(forms.Form):
                 ),
                 x_data=json.dumps(alpine_data_model),
             ),
-            crispy.Field('link_choices'),
+            crispy.Div(
+                crispy.HTML(
+                    format_html(
+                        '<label id="delivery-options-label" class="field-label">'
+                        '{}<span class="asteriskField">*</span></label>',
+                        _("How Respondents Receive Their One-time Link"),
+                    ),
+                ),
+                crispy.Div(
+                    twbscrispy.InlineField('allow_email'),
+                    crispy.HTML(
+                        format_html(
+                            '<div class="form-text">{}</div>',
+                            self.fields['allow_email'].help_text,
+                        ),
+                    ),
+                    *allow_sms_field,
+                    css_class='field-control',
+                ),
+                css_class='row mb-3',
+                role='group',
+                aria_labelledby='delivery-options-label',
+            ),
             twbscrispy.PrependedText('open_to_requests', ''),
         ]
 
@@ -194,6 +217,12 @@ class BasePublicWebformForm(forms.Form):
         # The datepicker submits wall-clock time in the project's timezone; store UTC.
         expires_at = self.cleaned_data['expires_at']
         return UserTime(expires_at, tzinfo=self.timezone).server_time().done()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('allow_email') and not cleaned_data.get('allow_sms'):
+            self.add_error(None, _("Choose at least one way for respondents to receive one-time links."))
+        return cleaned_data
 
 
 class CreatePublicWebformForm(BasePublicWebformForm):
@@ -242,7 +271,6 @@ class CreatePublicWebformForm(BasePublicWebformForm):
         form_unique_id = self.cleaned_data['form_unique_id']
         app_build_id, endpoint_id = create_public_webform_build(
             self.domain, app_id, form_unique_id)
-        link_choices = self.cleaned_data['link_choices']
         try:
             return PublicWebform.objects.create(
                 domain=self.domain,
@@ -253,8 +281,8 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 endpoint_id=endpoint_id,
                 session_type=self.cleaned_data['session_type'],
                 expires_at=self.cleaned_data['expires_at'],
-                allow_email='allow_email' in link_choices,
-                allow_sms='allow_sms' in link_choices,
+                allow_email=self.cleaned_data['allow_email'],
+                allow_sms=self.cleaned_data['allow_sms'],
                 is_disabled=not self.cleaned_data['open_to_requests'],
             )
         except Exception:
@@ -282,17 +310,18 @@ class EditPublicWebformForm(BasePublicWebformForm):
         super().__init__(domain, timezone, *args, **kwargs)
         form_paths = get_public_webform_form_paths(
             domain, [webform])[webform.id]
+        if form_paths['is_app_deleted']:
+            self.fields['open_to_requests'].disabled = True
+            self.fields['open_to_requests'].help_text = _(
+                "This webform's application has been deleted, so it can't be opened.")
         self.initial.update({
             'label': webform.label,
-            'open_to_requests': not webform.is_disabled,
+            'open_to_requests': not webform.is_disabled and not form_paths['is_app_deleted'],
             'app_name': f"{form_paths['app_name']} (v{form_paths['app_version']})",
             'menu_name': form_paths['menu_name'],
             'form_name': form_paths['form_name'],
-            # a delivery option the project can no longer use is dropped, not kept
-            'link_choices': [
-                choice for choice, __ in self.fields['link_choices'].choices
-                if getattr(webform, choice)
-            ],
+            'allow_email': webform.allow_email,
+            'allow_sms': webform.allow_sms and not self.fields['allow_sms'].disabled,
         })
 
     def initial_expires_at(self):
@@ -307,11 +336,10 @@ class EditPublicWebformForm(BasePublicWebformForm):
         ]
 
     def update_public_webform(self):
-        link_choices = self.cleaned_data['link_choices']
         self.webform.label = self.cleaned_data['label']
         self.webform.expires_at = self.cleaned_data['expires_at']
-        self.webform.allow_email = 'allow_email' in link_choices
-        self.webform.allow_sms = 'allow_sms' in link_choices
-        self.webform.is_disabled = not self.cleaned_data['open_to_requests']
+        self.webform.allow_email = self.cleaned_data['allow_email']
+        self.webform.allow_sms = self.cleaned_data['allow_sms']
+        self.webform.set_disabled(not self.cleaned_data['open_to_requests'])
         self.webform.save()
         return self.webform

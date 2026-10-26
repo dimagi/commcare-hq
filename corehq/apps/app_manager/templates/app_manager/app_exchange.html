@@ -66,11 +66,6 @@
                     {% endfor %}
                   </select>
                   <br>
-                  {% if app.changelog_link %}
-                    <p>
-                      <small><a target="_blank" href="{{ app.changelog_link }}">{% trans "Version History" %}</a></small>
-                    </p>
-                  {% endif %}
                 </div>
               {% else %}
                 {% for version in app.versions %}

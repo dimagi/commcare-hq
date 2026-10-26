@@ -3,6 +3,7 @@ from django.urls import include, re_path as url
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
 from corehq.apps.hqadmin.offboarding.views import ExternalPlatformOffboardingView
+from corehq.apps.hqadmin.template_apps.views import ManageTemplateAppsView, TemplateAppSectorsView
 from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
@@ -75,5 +76,7 @@ urlpatterns = [
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
+    url(r'^manage_template_apps/$', ManageTemplateAppsView.as_view(), name=ManageTemplateAppsView.urlname),
+    url(r'^manage_template_apps/sectors/$', TemplateAppSectorsView.as_view(), name=TemplateAppSectorsView.urlname),
     AdminReportDispatcher.url_pattern(),
 ]

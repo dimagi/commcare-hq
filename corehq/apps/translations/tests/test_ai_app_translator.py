@@ -158,16 +158,17 @@ def _record_ai_translation(app, string_key, source, translated, lang='fra'):
 
 AI_SOURCE = 'register module'
 AI_TRANSLATION = 'module inscription'
-UNCHANGED = ChangedAITranslations(manually_edited=set(), stale=set())
-EDITED = ChangedAITranslations(manually_edited={MODULE_NAME_KEY}, stale=set())
-STALE = ChangedAITranslations(manually_edited=set(), stale={MODULE_NAME_KEY})
+NO_AI_TRANSLATIONS = ChangedAITranslations(manually_edited=set(), stale=set(), previous=set())
+PREVIOUS = ChangedAITranslations(manually_edited=set(), stale=set(), previous={MODULE_NAME_KEY})
+EDITED = ChangedAITranslations(manually_edited={MODULE_NAME_KEY}, stale=set(), previous=set())
+STALE = ChangedAITranslations(manually_edited=set(), stale={MODULE_NAME_KEY}, previous=set())
 
 
 @pytest.mark.parametrize("app_source, app_translation, expected", [
-    pytest.param(AI_SOURCE, AI_TRANSLATION, UNCHANGED, id='unchanged'),
+    pytest.param(AI_SOURCE, AI_TRANSLATION, PREVIOUS, id='previous'),
     pytest.param(AI_SOURCE, 'module enregistrement', EDITED, id='edited'),
     # missing again, so fill_missing translates it like any other
-    pytest.param(AI_SOURCE, '', UNCHANGED, id='cleared'),
+    pytest.param(AI_SOURCE, '', NO_AI_TRANSLATIONS, id='cleared'),
     pytest.param('enrol module', AI_TRANSLATION, STALE, id='source-changed'),
     # the edit wins
     pytest.param('enrol module', 'module enregistrement', EDITED, id='both-changed'),
@@ -189,7 +190,7 @@ def test_find_changed_ai_translations_ignores_strings_gone_from_app():
     _record_ai_translation(
         app, '["deleted_module","name",1]', AI_SOURCE, AI_TRANSLATION)
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == NO_AI_TRANSLATIONS
 
 
 @use('db')
@@ -201,7 +202,7 @@ def test_find_changed_ai_translations_ignores_other_languages():
         app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION, lang='hin')
     app.get_module(0).name['fra'] = 'module enregistrement'
 
-    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == UNCHANGED
+    assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == NO_AI_TRANSLATIONS
 
 
 def test_saved_units_keeps_result_the_ai_returned_unchanged():
@@ -244,19 +245,23 @@ def test_refresh_provenance_statuses():
 
 
 @use('db')
-def test_prepare_translation_format_finds_edited_and_stale_strings():
+def test_prepare_translation_format_finds_edited_stale_and_previous_strings():
     app = _make_app()
     app._id = 'test-app-id'
     form = app.get_module(0).get_form(0)
+    header = app.get_module(0).case_details.short.columns[0].header
     _record_ai_translation(app, MODULE_NAME_KEY, AI_SOURCE, AI_TRANSLATION)
     _record_ai_translation(app, FORM_NAME_KEY, form.name['en'], 'formulaire')
+    _record_ai_translation(app, CASE_LIST_KEY, 'Name', 'Nom')
     app.get_module(0).name['fra'] = 'mon module'  # a user edited the AI translation
     form.name.update({'en': 'enrol form', 'fra': 'formulaire'})  # its source changed
+    header['fra'] = 'Nom'  # still as the AI wrote it
 
     fmt = prepare_translation_format(app, 'fra', MODE_FILL_MISSING)
 
     assert fmt.manually_edited_keys == {MODULE_NAME_KEY}
     assert fmt.stale_keys == {FORM_NAME_KEY}
+    assert fmt.previous_ai_keys == {CASE_LIST_KEY}
 
 
 def test_string_keys_use_unique_ids_not_sheet_names():
@@ -382,6 +387,14 @@ def test_treat_default_copies_as_missing():
     assert 'register module' in {u.source_text for u in fmt2.load_input().values()}
 
 
+def test_default_copies_the_ai_wrote_are_not_missing():
+    app = _make_app()
+    app.get_module(0).name['fra'] = 'register module'
+    fmt = AppTranslationFormat(app, 'fra', previous_ai_keys={MODULE_NAME_KEY})
+
+    assert MODULE_NAME_KEY not in {u.string_key for u in fmt.load_input().values()}
+
+
 def test_parse_output_buffers_valid_and_skips_invalid():
     app = _make_app()
     fmt = AppTranslationFormat(app, 'fra')
@@ -399,7 +412,7 @@ def test_for_app_copies_settings_not_state():
     app = _make_app()
     fmt = AppTranslationFormat(
         app, 'fra', mode=MODE_RETRANSLATE, manually_edited_keys={'k'},
-        stale_keys={'s'}, treat_default_copies_as_missing=False)
+        stale_keys={'s'}, previous_ai_keys={'a'}, treat_default_copies_as_missing=False)
     fmt.load_input()
     fmt.results = {'0': 'traduction'}
     other_app = _make_app()
@@ -410,6 +423,7 @@ def test_for_app_copies_settings_not_state():
     assert (copy.target_lang, copy.mode) == ('fra', MODE_RETRANSLATE)
     assert copy.manually_edited_keys == {'k'}
     assert copy.stale_keys == {'s'}
+    assert copy.previous_ai_keys == {'a'}
     assert copy.treat_default_copies_as_missing is False
     assert (copy.units_by_id, copy.results, copy.skipped_ids) == ({}, {}, set())
 
@@ -813,9 +827,10 @@ class TestRecordRun(TestCase):
         }
         usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert usage.total_app_strings_ai_translated == 2
-        # the next run sees them as untouched AI translations
+        # the next run sees them as previous AI translations
         assert find_changed_ai_translations(AppTranslationFormat(app, 'fra')) == (
-            ChangedAITranslations(manually_edited=set(), stale=set()))
+            ChangedAITranslations(
+                manually_edited=set(), stale=set(), previous={MODULE_NAME_KEY, QUESTION_KEY}))
 
     def test_unapplied_result_keeps_the_string_stale(self):
         app = _make_app()
@@ -844,12 +859,13 @@ class TestRecordRun(TestCase):
 
 
 class _FakeTranslator:
-    """Translates every batch by prefixing 'FR:', failing when asked.
+    """Translates every batch by prefixing ``prefix``, failing when asked.
     ``on_translate`` runs before each batch."""
     model = 'fake-model'
 
-    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None):
+    def __init__(self, fmt, fail_batches=(), fail_all=False, on_translate=None, prefix='FR:'):
         self.fmt = fmt
+        self.prefix = prefix
         self.fail_batches = set(fail_batches)
         self.fail_all = fail_all
         self.on_translate = on_translate
@@ -862,7 +878,7 @@ class _FakeTranslator:
         if self.fail_all or self.calls in self.fail_batches:
             raise Exception('LLM exploded')
         return self.fmt.parse_output(json.dumps(
-            {uid: f'FR:{unit.source_text}' for uid, unit in batch.items()}))
+            {uid: f'{self.prefix}{unit.source_text}' for uid, unit in batch.items()}))
 
 
 class TestRunAppTranslation(TestCase):
@@ -873,9 +889,13 @@ class TestRunAppTranslation(TestCase):
         summary = run_app_translation(
             app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
             translator=_FakeTranslator(fmt), chunk_size=2)
+        usage = AITranslationUsage.objects.get(app_id=app.get_id)
         assert summary == {
+            'total_app_strings': usage.total_app_strings,
+            'total_app_strings_ai_translated': usage.total_app_strings_ai_translated,
             'total': 5, 'translated': 5, 'skipped': 0, 'changed': 0, 'failed': 0,
             'app_version': app.version, 'errors': []}
+        assert usage.total_app_strings_ai_translated == 5
         assert app.get_module(0).name['fra'] == 'FR:register module'
 
     def test_partial_apply_on_batch_failure(self):
@@ -905,6 +925,22 @@ class TestRunAppTranslation(TestCase):
         assert summary['translated'] == 0
         assert translator2.calls == 0
 
+    def test_labels_the_ai_left_unchanged_are_not_sent_again(self):
+        app = _make_app()
+
+        first_run = self._run_with_ai_returning_the_english(app)
+        assert first_run['translated'] == len(ALL_STRING_KEYS)
+        assert app.get_module(0).name['fra'] == 'register module'
+
+        second_run = self._run_with_ai_returning_the_english(app)
+        assert second_run['total'] == 0
+
+    def _run_with_ai_returning_the_english(self, app):
+        fmt = prepare_translation_format(app, 'fra', MODE_FILL_MISSING)
+        return run_app_translation(
+            app, 'fra', MODE_FILL_MISSING, translation_format=fmt,
+            translator=_FakeTranslator(fmt, prefix=''), chunk_size=50)
+
     def _run(self, app, **translator_kwargs):
         return run_app_translation(
             app, 'fra', MODE_FILL_MISSING, chunk_size=50,
@@ -923,6 +959,9 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app)
 
         assert summary['total'] == 1
+        # this run translated 1 string; the app holds 4 AI translations,
+        # the first run's 5 less the edited module name
+        assert (summary['translated'], summary['total_app_strings_ai_translated']) == (1, 4)
         assert app.get_module(0).name['fra'] == 'mon module'
         assert app.get_module(0).get_form(0).name['fra'] == 'FR:enrol form'
 
@@ -930,7 +969,6 @@ class TestRunAppTranslation(TestCase):
         # Only the form's name was retranslated;
         # the module's name was skipped because it was manually edited
         assert (usage.strings_attempted, usage.strings_translated, usage.model) == (1, 1, 'fake-model')
-        # the first run's 5, less the edited module name
         assert usage.total_app_strings_ai_translated == 4
 
         statuses = dict(
@@ -971,5 +1009,6 @@ class TestRunAppTranslation(TestCase):
         summary = self._run(app, fail_all=True)
 
         assert summary['translated'] == 0
+        assert 'total_app_strings' not in summary
         assert not AITranslationUsage.objects.filter(app_id=app.get_id).exists()
         assert not AITranslation.objects.filter(app_id=app.get_id).exists()

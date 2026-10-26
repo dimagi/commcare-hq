@@ -522,6 +522,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('project_db', drop_project_db, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
+    ModelDeletion('domain', 'ChatbotDomainSettings', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),

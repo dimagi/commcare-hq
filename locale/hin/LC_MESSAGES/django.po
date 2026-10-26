@@ -218,6 +218,7 @@ msgstr "छिपा है"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -1223,14 +1224,6 @@ msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_roles)d Custom Role configured for your project. If you "
-#| "select this plan, all users with that role will change to having the Read "
-#| "Only role."
-#| msgid_plural ""
-#| "You have %(num_roles)d Custom Roles configured for your project . If you "
-#| "select this plan, all users with these roles will change to having the Read "
-#| "Only role."
 msgid ""
 "You have %(num_roles)d Custom Role configured for your project. If you "
 "select this plan, all users with that role will change to having the Read "
@@ -1321,12 +1314,6 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_apps)d application that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
-#| msgid_plural ""
-#| "You have %(num_apps)d applications that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
 msgid ""
 "You have %(num_apps)d application that has a practice mobile worker "
 "configured, it will be unset on downgrade."
@@ -6022,7 +6009,6 @@ msgid "Remote Application"
 msgstr "रिमोट एप्लिकेशन"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid ""
 "Application successfully copied. The following lookup tables were also "
 "copied: {}."
@@ -6031,7 +6017,6 @@ msgstr ""
 "{}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid "Application successfully copied."
 msgstr "एप्लिकेशन सफलतापूर्वक कॉपी की गई।"
 
@@ -6040,7 +6025,6 @@ msgid "Could not copy lookup tables missing from the source project: {}."
 msgstr "सोर्स प्रोजेक्ट से गायब लुकअप टेबल्स कॉपी नहीं की जा सकीं: {}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "An error occurred during the download."
 msgid "An error occurred while copying the following lookup tables: {}."
 msgstr "निम्नलिखित लुकअप टेबल्स की कॉपी करते समय एक त्रुटि हुई: {}."
 
@@ -6082,8 +6066,14 @@ msgstr ""
 " गायब हैं।"
 
 #: corehq/apps/app_manager/models/applications.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr "corehq.privileges से विशेषाधिकार स्ट्रिंग्स की स्पेस से अलग सूची"
+#| msgid "Started On"
+msgid "Starter App"
+msgstr "स्टार्टर ऐप"
+
+#: corehq/apps/app_manager/models/applications.py
+#| msgid "Feature Type"
+msgid "Feature Template"
+msgstr "फ़ीचर टेम्पलेट"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -7650,10 +7640,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-msgid "Version History"
-msgstr "संस्करण इतिहास"
-
-#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
 msgid "Import"
 msgstr "आयात करें"
 
@@ -7816,6 +7802,7 @@ msgstr "मेनू सेटिंग्स"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
@@ -8356,6 +8343,136 @@ msgstr "बल्क CommCare अनुवाद"
 msgid "Bulk Application Translations"
 msgstr "बल्क ऐप्लिकेशन अनुवाद"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translate Me"
+msgid "Translate with AI"
+msgstr "एआई से अनुवाद करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "नया"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"AI fills in missing translations. Manual edits are kept. Review AI "
+"translations before releasing your app."
+msgstr ""
+"एआई गुम अनुवादों को भरता है। मैन्युअल संपादन सुरक्षित रहते हैं। अपने ऐप को "
+"जारी करने से पहले एआई अनुवादों की समीक्षा करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Learn More About Pricing Plans"
+msgid "Learn more about AI translations"
+msgstr "एआई अनुवादों के बारे में और जानें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "AI translation is no longer available for this project."
+msgid "AI translations are available on Standard plans and above."
+msgstr "एआई अनुवाद स्टैंडर्ड प्लान और उससे ऊपर के लिए उपलब्ध हैं।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "CommCare plans"
+msgid "Compare plans"
+msgstr "प्लान की तुलना करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Linked apps get their translations from their upstream app. Translate the "
+"upstream app instead."
+msgstr ""
+"लिंक किए गए ऐप्स को उनके अपस्ट्रीम ऐप से अनुवाद मिलते हैं। इसके बजाय "
+"अपस्ट्रीम ऐप का अनुवाद करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Please select an upstream app."
+msgid "Go to the upstream app"
+msgstr "अपस्ट्रीम ऐप पर जाएँ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Add a language in the Language List below, then refresh to translate it with"
+" AI."
+msgstr ""
+"नीचे दी गई भाषा सूची में एक भाषा जोड़ें, फिर उसे एआई से अनुवाद करने के लिए "
+"रिफ्रेश करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid "Refresh"
+msgstr "रिफ्रेश करें"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "You do not have permission to edit locations."
+msgid "You need permission to edit this app to translate it."
+msgstr "इस ऐप का अनुवाद करने के लिए आपको संपादन की अनुमति चाहिए।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/views.py
+msgid ""
+"This project has reached its monthly AI translation limit. Contact support "
+"to raise it."
+msgstr ""
+"इस प्रोजेक्ट ने अपनी मासिक एआई अनुवाद सीमा पूरी कर ली है। सीमा बढ़ाने के लिए"
+" सपोर्ट से संपर्क करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The language list has changed. Refresh to update the languages below."
+msgstr ""
+"भाषा सूची बदल गई है। नीचे दी गई भाषाओं को अपडेट करने के लिए रिफ्रेश करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
+#: corehq/apps/reports/forms.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+msgid "Language"
+msgstr "भाषा"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "app translation"
+msgid "Last AI translated"
+msgstr "अंतिम बार एआई से अनुवादित"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translations"
+msgid "Translation progress"
+msgstr "अनुवाद प्रगति"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"To translate the remaining labels yourself, use <a href=\"#bulk-application-"
+"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+"application-translations\" >Bulk Application Translations</a >."
+msgstr ""
+"शेष लेबल्स का अनुवाद स्वयं करने के लिए, <a href=\"#bulk-application-"
+"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+"application-translations\" >बल्क एप्लिकेशन ट्रांसलेशन</a> का उपयोग करें।"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Translate Me"
+msgid "AI Translate"
+msgstr "एआई अनुवाद"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Status reflects the last AI Translate run; the percentage is how much of the"
+" whole app is AI translated as of that run. Labels you add or change "
+"afterwards are translated the next time you run AI Translate. Translations "
+"are applied to the current draft; make a new version to release them."
+msgstr ""
+"स्थिति अंतिम एआई अनुवाद रन को दर्शाती है; प्रतिशत बताता है कि उस रन के "
+"अनुसार पूरे ऐप का कितना हिस्सा एआई से अनुवादित है। बाद में जो लेबल आप जोड़ते"
+" या बदलते हैं, वे अगली बार एआई अनुवाद चलाने पर अनुवादित होते हैं। अनुवाद "
+"वर्तमान ड्राफ्ट पर लागू होते हैं; उन्हें जारी करने के लिए नया संस्करण बनाएं।"
+
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
@@ -8419,17 +8536,6 @@ msgstr ""
 "\n"
 "    %(name)s से लिंक किया गया | V%(version)s\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-#: corehq/apps/reports/forms.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-msgid "Language"
-msgstr "भाषा"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -10986,11 +11092,6 @@ msgid "Disable manual linking"
 msgstr "मैन्युअल लिंकिंग अक्षम करें"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-msgid "Refresh"
-msgstr "रिफ्रेश करें"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_list/multi_select_continue_button.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/modals/base_confirm.html
@@ -12247,7 +12348,6 @@ msgstr "खोज स्क्रीन उपशीर्षक"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Display Condition"
 msgid "Search Button Display Condition"
 msgstr "सर्च बटन डिस्प्ले कंडीशन"
 
@@ -15933,12 +16033,10 @@ msgid "Only one value may be given for '{}'"
 msgstr "'{}' के लिए केवल एक मान दिया जा सकता है"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "Dates are presented in YYYY-MM-DD format"
 msgid "'{}' must be a date in YYYY-MM-DD format"
 msgstr "'{}' एक तारीख होनी चाहिए, फॉर्मेट YYYY-MM-DD में"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "'name' must be unique"
 msgid "'{}' must be a number"
 msgstr "'{}' एक संख्या होनी चाहिए"
 
@@ -16253,12 +16351,10 @@ msgid "date"
 msgstr "तारीख"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Date range"
 msgid "date range"
 msgstr "तारीख सीमा"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Select"
 msgid "select"
 msgstr "चुनें"
 
@@ -16310,7 +16406,6 @@ msgid "Updated By"
 msgstr "द्वारा अपडेट किया गया"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Pull content from an upstream project space"
 msgid "Linked from an upstream project space"
 msgstr "एक अपस्ट्रीम प्रोजेक्ट स्पेस से लिंक किया गया"
 
@@ -16449,7 +16544,6 @@ msgid "Endpoint '{}' query is invalid"
 msgstr "एंडपॉइंट '{}' क्वेरी अमान्य है"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "एंडपॉइंट '{}' के पैरामीटर अमान्य हैं"
 
@@ -17136,20 +17230,14 @@ msgid "Date Registered"
 msgstr "पंजीकरण तिथि"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "# Forms Submitted"
 msgid "Form Submitted"
 msgstr "फॉर्म सबमिट किया गया"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "Message received!"
 msgid "Response Received"
 msgstr "रिस्पॉन्स प्राप्त हुआ"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Thank you for your feedback! We appreciate it.\n"
-#| "            "
 msgid ""
 "\n"
 "              Thank you. Your response has been submitted.\n"
@@ -17160,10 +17248,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Not Active\n"
-#| "            "
 msgid ""
 "\n"
 "              You can close this page.\n"
@@ -18677,14 +18761,6 @@ msgstr "परिवर्तन लागू किए गए"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Finished processing changes, updated 1 case.\n"
-#| "  "
-#| msgid_plural ""
-#| "\n"
-#| "    Finished processing changes, updated %(count)s cases.\n"
-#| "  "
 msgid "Finished processing changes, updated %(count)s case."
 msgid_plural "Finished processing changes, updated %(count)s cases."
 msgstr[0] "परिवर्तनों की प्रोसेसिंग पूरी हुई, %(count)s केस अपडेट किया गया।"
@@ -18774,14 +18850,6 @@ msgstr "इस सत्र को पुनः आरंभ करें"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      One edit will be applied.\n"
-#| "    "
-#| msgid_plural ""
-#| "\n"
-#| "      A total of %(count)s edits will be applied.\n"
-#| "    "
 msgid "%(count)s edit will be applied."
 msgid_plural "A total of %(count)s edits will be applied."
 msgstr[0] "%(count)s संपादन लागू किया जाएगा।"
@@ -18799,14 +18867,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      One edit will be cleared.\n"
-#| "    "
-#| msgid_plural ""
-#| "\n"
-#| "      A total of %(count)s edits will be cleared.\n"
-#| "    "
 msgid "%(count)s edit will be cleared."
 msgid_plural "A total of %(count)s edits will be cleared."
 msgstr[0] "%(count)s संपादन क्लियर किया जाएगा।"
@@ -20025,10 +20085,6 @@ msgstr "रुका हुआ"
 msgid "Error"
 msgstr "त्रुटि"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "कोई फॉर्म उपलब्ध नहीं है"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -20700,7 +20756,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -20766,33 +20821,21 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "केस पुनः असाइनमेंट असफल! विवरण:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>इसे पलटने के लिए <a href=\"%(form_management_url)s\">फॉर्म प्रबंधन</a> पर लौटें।</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "The job failed. Please try again."
 msgstr "कार्य असफल रहा। कृपया पुनः प्रयास करें।"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
-#| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
 msgid_plural "%(counter)s forms processed successfully"
 msgstr[0] "%(counter)s फॉर्म सफलतापूर्वक प्रोसेस किया गया"
 msgstr[1] "%(counter)s फॉर्म्स सफलतापूर्वक प्रोसेस किए गए"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 msgid "Some forms were skipped:"
 msgstr "कुछ फ़ॉर्म छोड़ दिए गए:"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
 msgid ""
 "\n"
@@ -20828,41 +20871,6 @@ msgstr "इस समूह में '{}' पहचानकर्ता वा
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "'{}' पहचानकर्ता वाला केस इस समूह में जोड़ दिया गया है।"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "XForm {form_id} नहीं मिला"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "डोमेन {domain} के लिए XForm {form_id} उपयोगकर्ता '{username}' द्वारा"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "{form} को सफलतापूर्वक आर्काइव किया गया"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "{form} को सफलतापूर्वक अनआर्काइव किया गया"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not archive {form}"
-msgstr "{form} को आर्काइव नहीं किया जा सका"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not unarchive {form}"
-msgstr "{form} को अनआर्काइव नहीं किया जा सका"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} फॉर्म"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -21520,6 +21528,18 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\">एग्रीगेट डेटा उपयोग</a> से बाहर निकलें"
 
 #: corehq/apps/domain/forms.py
+#| msgid "CommCare Companion (Beta)"
+msgid "Opt out of CommCare Companion"
+msgstr "CommCare Companion से बाहर निकलें"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Hide the CommCare Companion chatbot for all users in this project space"
+msgstr ""
+"इस प्रोजेक्ट स्पेस में सभी उपयोगकर्ताओं के लिए CommCare Companion चैटबॉट "
+"छुपाएँ"
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "डिफ़ॉल्ट टाइमज़ोन"
 
@@ -21893,16 +21913,20 @@ msgid "Partner Contact Emails"
 msgstr "पार्टनर संपर्क ईमेल"
 
 #: corehq/apps/domain/forms.py
+#| msgid ""
+#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
+#| "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
+#| "<span data-bind=\"text: end_date\"></span> the project space will be "
+#| "automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-"hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-"<span data-bind=\"text: end_date\"></span> the project space will be "
-"automatically paused.</p>"
+"hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
+"x-text=\"endDate\"></span> the project space will be automatically "
+"paused.</p>"
 msgstr ""
-"<p><i class=\"fa fa-info-circle\"></i> ट्रायल जैसे ही आप \"अपडेट\" पर क्लिक "
-"करेंगे शुरू हो जाएगा और <span data-bind=\"text: end_date\"></span> को समाप्त"
-" होगा। <span data-bind=\"text: end_date\"></span> को प्रोजेक्ट स्पेस अपने आप"
-" रोक दिया जाएगा।</p>"
+"<p><i class=\"fa fa-info-circle\"></i> ट्रायल \"Update\" पर क्लिक करते ही "
+"शुरू हो जाएगा और <span x-text=\"endDate\"></span> को समाप्त होगा। <span "
+"x-text=\"endDate\"></span> को प्रोजेक्ट स्पेस अपने आप रोक दिया जाएगा।</p>"
 
 #: corehq/apps/domain/forms.py
 msgid "Contracted Partner"
@@ -23482,46 +23506,6 @@ msgstr "हमारे प्लान्स के बारे में औ�
 msgid "Change My Plan"
 msgstr "मेरा प्लान बदलें"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
-#, python-format
-msgid ""
-"\n"
-"    <p>\n"
-"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
-"      to set up a subscription for this project space.\n"
-"\n"
-"      Use this tool only for projects that are:\n"
-"    <ul>\n"
-"      <li>an internal test project</li>\n"
-"      <li>part of a contracted project</li>\n"
-"      <li>a short term extended trial for biz dev</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Your project is currently subscribed to %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      यह पेज केवल Dimagi कर्मचारियों के लिए दृश्यमान है (आपके पास @dimagi.com ईमेल पता है)। आप इस पेज का उपयोग\n"
-"      इस प्रोजेक्ट स्पेस के लिए सब्सक्रिप्शन सेटअप करने के लिए कर सकते हैं।\n"
-"\n"
-"      इस टूल का उपयोग केवल उन प्रोजेक्ट्स के लिए करें जो:\n"
-"    <ul>\n"
-"      <li>एक आंतरिक परीक्षण प्रोजेक्ट हैं</li>\n"
-"      <li>कॉन्ट्रैक्टेड प्रोजेक्ट का हिस्सा हैं</li>\n"
-"      <li>बिजनेस डेवेलपमेंट के लिए अल्पकालिक विस्तारित ट्रायल हैं</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      आपका प्रोजेक्ट वर्तमान में %(plan_name)s के लिए सब्सक्राइब्ड है।\n"
-"    </h3>\n"
-"  "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -24208,6 +24192,45 @@ msgstr "सभी कुछ लोड करें"
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load Property"
 msgstr "प्रॉपर्टी लोड करें"
+
+#: corehq/apps/domain/templates/domain/internal_subscription_management.html
+#, python-format
+msgid ""
+"\n"
+"    <p>\n"
+"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
+"      to set up a subscription for this project space.\n"
+"\n"
+"      Use this tool only for projects that are:\n"
+"    <ul>\n"
+"      <li>an internal test project</li>\n"
+"      <li>part of a contracted project</li>\n"
+"      <li>a short term extended trial for biz dev</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Your project is currently subscribed to %(plan_name)s.\n"
+"    </h3>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      यह पेज केवल Dimagi कर्मचारियों के लिए दृश्यमान है (आपके पास @dimagi.com ईमेल पता है)। आप इस पेज का उपयोग\n"
+"      इस प्रोजेक्ट स्पेस के लिए सब्सक्रिप्शन सेटअप करने के लिए कर सकते हैं।\n"
+"\n"
+"      इस टूल का उपयोग केवल उन प्रोजेक्ट्स के लिए करें जो:\n"
+"    <ul>\n"
+"      <li>एक आंतरिक परीक्षण प्रोजेक्ट हैं</li>\n"
+"      <li>कॉन्ट्रैक्टेड प्रोजेक्ट का हिस्सा हैं</li>\n"
+"      <li>बिजनेस डेवेलपमेंट के लिए अल्पकालिक विस्तारित ट्रायल हैं</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      आपका प्रोजेक्ट वर्तमान में %(plan_name)s के लिए सब्सक्राइब्ड है।\n"
+"    </h3>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 msgid "Autopay Terms and Conditions"
@@ -25888,14 +25911,6 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            You have only one backup token remaining.\n"
-#| "          "
-#| msgid_plural ""
-#| "\n"
-#| "            You have %(counter)s backup tokens remaining.\n"
-#| "          "
 msgid "You have only %(counter)s backup token remaining."
 msgid_plural "You have %(counter)s backup tokens remaining."
 msgstr[0] "आपके पास केवल %(counter)s बैकअप टोकन शेष है।"
@@ -30321,7 +30336,6 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py
 #, python-format
-#| msgid "Table ID must be between 1 and 31 characters."
 msgid "Table ID must be between 1 and %(max_length)s characters."
 msgstr "टेबल आईडी 1 से %(max_length)s अक्षरों के बीच होना चाहिए।"
 
@@ -31850,13 +31864,11 @@ msgstr ""
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Disable auto update"
 msgid "Disabled Datadog user {label}"
 msgstr "डिसेबल्ड Datadog उपयोगकर्ता {label}"
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Remove Mobile Workers From Organizations"
 msgid "Removed {label} from the Sentry organization"
 msgstr "{label} को Sentry संगठन से हटाया गया"
 
@@ -31871,7 +31883,6 @@ msgid "Removed HubSpot user {label}"
 msgstr "HubSpot उपयोगकर्ता {label} को हटाया गया"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Please enter a valid email address."
 msgid "Enter a valid email address."
 msgstr "मान्य ईमेल पता दर्ज करें।"
 
@@ -31880,7 +31891,6 @@ msgid "Offboard staff from external platforms"
 msgstr "बाहरी प्लेटफार्मों से स्टाफ को ऑफबोर्ड करें"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "A send date is required."
 msgid "An email address is required."
 msgstr "एक ईमेल पता आवश्यक है।"
 
@@ -31889,7 +31899,6 @@ msgid "'{}' is protected and cannot be offboarded with this tool."
 msgstr "'{}' संरक्षित है और इस टूल के साथ ऑफबोर्ड नहीं किया जा सकता।"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Unknown command: '{0}'"
 msgid "Unknown platform '{}'."
 msgstr "अज्ञात प्लेटफॉर्म '{}'।"
 
@@ -32183,12 +32192,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Email Address"
 msgid "Email address"
 msgstr "ईमेल पता"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Lookup Tables"
 msgid "Look up accounts"
 msgstr "खाते खोजें"
 
@@ -32218,17 +32225,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Select a Form"
 msgid "Select all platforms"
 msgstr "सभी प्लेटफार्म चुनें"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "form"
 msgid "Platform"
 msgstr "प्लेटफॉर्म"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "De-activate Alert"
 msgid "Deactivate selected…"
 msgstr "चयनित को निष्क्रिय करें…"
 
@@ -32237,27 +32241,19 @@ msgid "Working…"
 msgstr "काम कर रहा है…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Confirm Plan"
 msgid "Confirm offboarding"
 msgstr "ऑफबोर्डिंग की पुष्टि करें"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "You are about to delete"
 msgid "You are about to:"
 msgstr "आप निम्नलिखित करने वाले हैं:"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Whenever Possible"
 msgid "irreversible"
 msgstr "अपरिवर्तनीय"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid ""
-#| "\n"
-#| "                    List of devices used to access CommCare applications, with\n"
-#| "                    approximate last-use dates.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    This is not a dimagi.com address. Only continue once TechOps\n"
@@ -32274,27 +32270,22 @@ msgid "Looking up account…"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No endpoints configured."
 msgid "Not configured"
 msgstr "कॉन्फ़िगर नहीं किया गया"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "FCM is not setup on this environment!"
 msgid "Credentials are not configured on this environment."
 msgstr "इस वातावरण में क्रेडेंशियल्स कॉन्फ़िगर नहीं हैं।"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No transaction found"
 msgid "No account found"
 msgstr "कोई खाता नहीं मिला"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Only Deactivated"
 msgid "Already deactivated"
 msgstr "पहले ही निष्क्रिय किया जा चुका है"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Lookup Table"
 msgid "Lookup failed:"
 msgstr "खोज विफल रही:"
 
@@ -32305,7 +32296,6 @@ msgstr "पुनः प्रयास करें"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 #, python-format
-#| msgid "Request failed"
 msgid "%(verb)s failed:"
 msgstr "%(verb)s विफल रहा:"
 
@@ -32456,8 +32446,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "{count} domain membership"
-#| msgid_plural "{count} domain memberships"
 msgid "%(count)s domain membership"
 msgid_plural "%(count)s domain memberships"
 msgstr[0] "%(count)s डोमेन सदस्यता"
@@ -33979,14 +33967,6 @@ msgstr "OAuth एप्लिकेशन पंजीकृत करें"
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your prepaid credits will run out in 1 week!\n"
-#| "          "
-#| msgid_plural ""
-#| "\n"
-#| "            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
-#| "          "
 msgid "Your prepaid credits will run out in %(prepaid_weeks_remaining)s week!"
 msgid_plural ""
 "Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!"
@@ -35865,12 +35845,18 @@ msgstr ""
 "संपर्क करें।"
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+"भुगतान स्थिति प्राप्त करने में असमर्थ। इसे स्वचालित रूप से फिर से प्रयास "
+"किया जाएगा।"
+
+#: corehq/apps/integration/payments/const.py
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "अनुरोध त्रुटि के साथ अधिकतम पुनः प्रयास सीमा पार हो गई।"
 
 #: corehq/apps/integration/payments/const.py
-msgid "Maximum retry attempts exceeded with pending status"
-msgstr "लंबित स्थिति के साथ अधिकतम पुनः प्रयास सीमा पार हो गई"
+msgid "Maximum retry attempts exceeded with pending status."
+msgstr "लंबित स्थिति के साथ अधिकतम पुनः प्रयास प्रयासों की सीमा पार हो गई है।"
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -35934,6 +35920,14 @@ msgstr "भुगतान अनुरोध विफल"
 #: corehq/apps/integration/payments/services.py
 msgid "Verification"
 msgstr "सत्यापन"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
+"केवल वे भुगतान जिनके उपयोगकर्ताओं की KYC स्थिति '{}' है, सत्यापन के लिए "
+"पात्र हैं।"
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -36235,22 +36229,18 @@ msgid "You cannot access this page from your current IP address"
 msgstr "आप अपने वर्तमान IP पते से इस पृष्ठ तक पहुँच नहीं सकते"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid ""
-#| "Linking expressions to a remote link is not currently supported"
 msgid ""
 "Linking case search endpoints to a remote link is not currently supported"
 msgstr ""
 "केस सर्च एंडपॉइंट्स को रिमोट लिंक से जोड़ना वर्तमान में समर्थित नहीं है"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid "Expression does not exist in the upstream domain"
 msgid ""
 "Endpoint does not exist in the upstream domain. Maybe it has been deleted?"
 msgstr "अपस्ट्रीम डोमेन में एंडपॉइंट मौजूद नहीं है। शायद इसे हटा दिया गया है?"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
 #, python-brace-format
-#| msgid "Profile conflicts with existing data"
 msgid "Endpoint {name} conflicts with an existing endpoint in {domain}"
 msgstr "एंडपॉइंट {name} का {domain} में पहले से मौजूद एंडपॉइंट से टकराव है"
 
@@ -38398,7 +38388,6 @@ msgid "Run"
 msgstr "चलाएँ"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "Query"
 msgid "Query plan"
 msgstr "क्वेरी प्लान"
 
@@ -38409,7 +38398,6 @@ msgstr "%(duration)s सेकंड में मूल्यांकन क�
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "This report's timezone is %(timezone)s."
 msgid "Datetimes are in %(timezone)s"
 msgstr "दिनांक-समय %(timezone)s में हैं"
 
@@ -38527,6 +38515,10 @@ msgstr "पब्लिक वेबफॉर्म संपादित कर
 msgid "Save Changes"
 msgstr "परिवर्तन सहेजें"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "This webform's application has been deleted, so it can't be opened."
+msgstr "इस वेबफॉर्म के ऐप को हटा दिया गया है, इसलिए इसे खोला नहीं जा सकता।"
+
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
 msgid "Your one-time link for {form_name}"
@@ -38534,7 +38526,6 @@ msgstr "{form_name} के लिए आपकी एक बार की लि
 
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
-#| msgid "Your one-time link for {form_name} is: {url}"
 msgid ""
 "Your one-time link for {form_name}:\n"
 "{url}"
@@ -38583,7 +38574,6 @@ msgid "Enter a valid phone number."
 msgstr "कृपया एक मान्य फ़ोन नंबर दर्ज करें।"
 
 #: corehq/apps/public_webforms/public/views.py
-#| msgid "Webforms"
 msgid "Webform Request"
 msgstr "वेबफॉर्म अनुरोध"
 
@@ -38818,7 +38808,6 @@ msgid "Send my link"
 msgstr "मेरा लिंक भेजें"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid "Webforms"
 msgid "Webform Closed"
 msgstr "वेबफॉर्म बंद हुआ"
 
@@ -38852,10 +38841,6 @@ msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      The link expires %(link_lifespan)s after it was created and only works\n"
@@ -38871,20 +38856,14 @@ msgid "Request another link"
 msgstr "एक और लिंक का अनुरोध करें"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "Unavailable"
 msgid "Form Link Unavailable"
 msgstr "फॉर्म लिंक उपलब्ध नहीं है"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "No longer available"
 msgid "Link No Longer Available"
 msgstr "लिंक अब उपलब्ध नहीं है"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      One-time links expire after a short time, and can only be used once.\n"
@@ -38895,10 +38874,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      Please start a new bulk edit session above.\n"
-#| "    "
 msgid ""
 "\n"
 "      Request a new link to fill out this form.\n"
@@ -38938,6 +38913,12 @@ msgstr "सार्वजनिक वेबफॉर्म बनाया ग
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform updated."
 msgstr "पब्लिक वेबफॉर्म अपडेट किया गया।"
+
+#: corehq/apps/public_webforms/views.py
+msgid ""
+"This public webform's application has been deleted, so it can't be opened."
+msgstr ""
+"इस सार्वजनिक वेबफॉर्म के ऐप को हटा दिया गया है, इसलिए इसे खोला नहीं जा सकता।"
 
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform closed to new requests."
@@ -41248,6 +41229,10 @@ msgid "Current Indian Financial Year"
 msgstr "वर्तमान भारतीय वित्तीय वर्ष"
 
 #: corehq/apps/reports/display.py
+msgid "public user"
+msgstr "सार्वजनिक उपयोगकर्ता"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "उपयोगकर्ता नाम के लिए कोई डेटा नहीं"
 
@@ -41817,6 +41802,10 @@ msgstr "सक्रिय वेब उपयोगकर्ता"
 #: corehq/apps/reports/models.py
 msgid "Deactivated Web Users"
 msgstr "निष्क्रिय वेब उपयोगकर्ता"
+
+#: corehq/apps/reports/models.py
+msgid "Public Users"
+msgstr "सार्वजनिक उपयोगकर्ता"
 
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
@@ -48842,6 +48831,17 @@ msgid "Last Usage"
 msgstr "अंतिम उपयोग"
 
 #: corehq/apps/translations/app_translations/ai_translator.py
+msgid "Remote apps can't be translated with AI."
+msgstr "रिमोट ऐप्स का एआई से अनुवाद नहीं किया जा सकता।"
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Only the current version of an app can be translated, not a previous "
+"version."
+msgstr ""
+"केवल ऐप के वर्तमान संस्करण का अनुवाद किया जा सकता है, पिछले संस्करण का नहीं।"
+
+#: corehq/apps/translations/app_translations/ai_translator.py
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-format
 msgid "You must provide at least one translation of the case property '%s'"
@@ -49073,12 +49073,10 @@ msgstr ""
 " में है। इस पंक्ति के लिए कोई अनुवाद अपडेट नहीं किया गया।"
 
 #: corehq/apps/translations/tasks.py
-#| msgid "The deposit transaction could not be performed."
 msgid "The translation couldn't be queued. Run it again."
 msgstr "अनुवाद कतार में नहीं लगाया जा सका। फिर से चलाएँ।"
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Source lang selected not available for the project"
 msgid "AI translation is no longer available for this project."
 msgstr "इस प्रोजेक्ट के लिए AI अनुवाद अब उपलब्ध नहीं है।"
 
@@ -49095,17 +49093,20 @@ msgid "Other translations of this app took too long to finish. Run it again."
 msgstr "इस ऐप के अन्य अनुवादों को पूरा होने में बहुत समय लगा। फिर से चलाएँ।"
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Something went wrong. Please reload the page and try again."
+#| msgid ""
+#| "Something went wrong while translating the app. Review its translations and "
+#| "run it again."
 msgid ""
-"Something went wrong while translating the app. Review its translations and "
-"run it again."
+"Something went wrong and the translation didn't finish. Run it again, and "
+"contact support if it keeps failing."
 msgstr ""
-"ऐप का अनुवाद करते समय कुछ गलत हो गया। इसके अनुवाद की समीक्षा करें और फिर से "
-"चलाएँ।"
+"कुछ गलत हो गया और अनुवाद पूरा नहीं हुआ। इसे फिर से चलाएँ, और यदि बार-बार "
+"विफल हो तो सपोर्ट से संपर्क करें।"
 
 #: corehq/apps/translations/tasks.py
-msgid "No strings could be translated."
-msgstr "कोई भी स्ट्रिंग अनुवादित नहीं की जा सकी।"
+#| msgid "No strings could be translated."
+msgid "No labels could be translated."
+msgstr "कोई भी लेबल अनुवादित नहीं हो सका।"
 
 #: corehq/apps/translations/tasks.py
 #, python-format, python-brace-format
@@ -49153,6 +49154,29 @@ msgstr "UI अनुवाद अपडेट किए गए!"
 #: corehq/apps/translations/views.py
 msgid "Please select language to validate."
 msgstr "कृपया सत्यापन के लिए भाषा चुनें।"
+
+#: corehq/apps/translations/views.py
+#| msgid "AI translation is no longer available for this project."
+msgid "AI translation isn't available for this project."
+msgstr "इस प्रोजेक्ट के लिए एआई अनुवाद उपलब्ध नहीं है।"
+
+#: corehq/apps/translations/views.py
+msgid "This language can't be translated with AI."
+msgstr "इस भाषा का एआई से अनुवाद नहीं किया जा सकता।"
+
+#: corehq/apps/translations/views.py
+#| msgid "This user is already an enterprise administrator."
+msgid "This language is already being translated."
+msgstr "इस भाषा का पहले से ही अनुवाद किया जा रहा है।"
+
+#: corehq/apps/user_importer/exceptions.py
+msgid ""
+"This project has reached the mobile worker limit for its subscription plan. "
+"Deactivate other mobile workers or upgrade the plan to add more."
+msgstr ""
+"इस प्रोजेक्ट ने अपनी सब्सक्रिप्शन प्लान के लिए मोबाइल वर्कर सीमा पूरी कर ली "
+"है। अधिक जोड़ने के लिए अन्य मोबाइल वर्कर को निष्क्रिय करें या प्लान अपग्रेड "
+"करें।"
 
 #: corehq/apps/user_importer/helpers.py
 msgid "Double Entry for {}"
@@ -52662,11 +52686,6 @@ msgstr "लंबित..."
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "नया"
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "ERROR"
 msgstr "त्रुटि"
 
@@ -54697,13 +54716,6 @@ msgstr ""
 
 #: corehq/apps/users/views/role.py
 #, python-brace-format
-#| msgid ""
-#| "Unable to delete role '{role}'. It has one user and/or invitation still "
-#| "assigned to it. Remove all users assigned to the role before deleting it."
-#| msgid_plural ""
-#| "Unable to delete role '{role}'. It has {user_count} users and/or invitations"
-#| " still assigned to it. Remove all users assigned to the role before deleting"
-#| " it."
 msgid ""
 "Unable to delete role '{role}'. It has {user_count} user and/or invitation "
 "still assigned to it. Remove all users assigned to the role before deleting "
@@ -59147,7 +59159,6 @@ msgid "Save to Case"
 msgstr "केस में सहेजें"
 
 #: corehq/privileges.py
-#| msgid "App Translations"
 msgid "AI App Translations"
 msgstr "AI ऐप अनुवाद"
 
@@ -60133,6 +60144,53 @@ msgstr "आवश्यक कॉलम हैं {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
+
+#~ msgid "Space-separated list of privilege strings from corehq.privileges"
+#~ msgstr "corehq.privileges से विशेषाधिकार स्ट्रिंग्स की स्पेस से अलग सूची"
+
+#~ msgid "Version History"
+#~ msgstr "संस्करण इतिहास"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "कोई फॉर्म उपलब्ध नहीं है"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>इसे पलटने के लिए <a href=\"%(form_management_url)s\">फॉर्म प्रबंधन</a> पर लौटें।</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "XForm {form_id} नहीं मिला"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr "डोमेन {domain} के लिए XForm {form_id} उपयोगकर्ता '{username}' द्वारा"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "{form} को सफलतापूर्वक आर्काइव किया गया"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "{form} को सफलतापूर्वक अनआर्काइव किया गया"
+
+#, python-brace-format
+#~ msgid "Could not archive {form}"
+#~ msgstr "{form} को आर्काइव नहीं किया जा सका"
+
+#, python-brace-format
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "{form} को अनआर्काइव नहीं किया जा सका"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} फॉर्म"
 
 #, python-format
 #~ msgid ""

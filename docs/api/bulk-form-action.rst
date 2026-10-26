@@ -71,7 +71,8 @@ Starting a Job
       "created_at": "2026-08-25T14:02:11.930000Z",
       "started_at": null,
       "completed_at": null,
-      "status_url": "https://www.commcarehq.org/a/[domain]/api/form/v1/bulk-action/0f3a9c..."
+      "status_url": "https://www.commcarehq.org/a/[domain]/api/form/v1/bulk-action/0f3a9c...",
+      "message": "The job has been queued for processing. Poll status_url to track its progress and get the results."
     }
 
 Duplicate form ids are collapsed, so ``requested`` may be lower than the
@@ -114,7 +115,7 @@ Checking Job Status
     https://www.commcarehq.org/a/[domain]/api/form/v1/bulk-action/[id]/
 
 The response is the same object returned when the job was created, without
-``status_url``.
+``status_url`` or ``message``.
 
 .. code-block:: json
 

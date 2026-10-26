@@ -56,6 +56,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
+from corehq.apps.hqadmin.template_apps.views import ManageTemplateAppsView
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -2680,6 +2681,9 @@ class AdminTab(UITab):
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname),
                  'icon': 'fa fa-refresh'},
+                {'title': _('Manage Template Apps'),
+                 'url': reverse(ManageTemplateAppsView.urlname),
+                 'icon': 'fa fa-layer-group'},
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [

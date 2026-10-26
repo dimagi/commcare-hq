@@ -1,7 +1,7 @@
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
 from corehq.apps.es.client import manager
@@ -46,7 +46,7 @@ class UserPillowTest(UserPillowTestBase):
         user.retire(TEST_DOMAIN, deleted_by=None)
 
         # send to kafka
-        since = get_topic_offset(topics.COMMCARE_USER)
+        since = get_multi_topic_offset(topics.USER_TOPICS)
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
@@ -60,7 +60,7 @@ class UserPillowTest(UserPillowTestBase):
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret', None, None)
 
         # send to kafka
-        since = get_topic_offset(topics.COMMCARE_USER)
+        since = get_multi_topic_offset(topics.USER_TOPICS)
         producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch

@@ -5,6 +5,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SoftwareProductRate,
 )
+from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from django_prbac.models import Role
 import random
@@ -40,6 +41,15 @@ class SoftwarePlanVersionTest(BaseAccountingTest):
         self.assertIn(plan1_new, recent_versions)
         self.assertIn(plan2, recent_versions)
         self.assertNotIn(plan1_old, recent_versions)
+
+    def test_has_web_user_feature_false_without_web_user_feature_rate(self):
+        plan_version = _create_plan_version(self.software_plan1)
+        assert plan_version.has_web_user_feature is False
+
+    def test_has_web_user_feature_true_with_web_user_feature_rate(self):
+        plan_version = _create_plan_version(self.software_plan1)
+        generator.add_web_user_feature_rate(plan_version)
+        assert plan_version.has_web_user_feature is True
 
 
 def _create_plan_version(software_plan):

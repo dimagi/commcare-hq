@@ -6,7 +6,7 @@ import ko from "knockout";
 import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
-import markdowner from "markdown-it/dist/markdown-it";
+import markdowner from "markdown-it";
 import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import GGAnalytics from "analytix/js/google";
@@ -447,7 +447,7 @@ FormplayerFrontend.on('navigation:back', function () {
         if (_.has(options, "endpointId")) {
             return;
         }
-    } catch (e) {
+    } catch {
         // do nothing
     }
     window.history.back();

@@ -56,18 +56,14 @@ class ViewTestCase(TestCase):
         super(ViewTestCase, cls).setUpClass()
         cls.domain = Domain(name="donkeykong", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.username = 'bananafana'
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(ViewTestCase, cls).tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
@@ -114,6 +110,35 @@ class DataFileDownloadDetailTest(ViewTestCase):
         self.data_file._meta.save()
         resp = self.client.get(self.data_file_url)
         self.assertEqual(resp.status_code, 404)
+
+    def test_data_file_download_suffix_range(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=-500')
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(
+            resp['Content-Range'],
+            'bytes {}-{}/{}'.format(content_length - 500, content_length - 1, content_length),
+        )
+        self.assertEqual(resp['Content-Length'], '500')
+        self.assertEqual(resp.getvalue(), self.content[-500:])
+
+    def test_data_file_download_range_end_beyond_content(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=1000-{}'.format(content_length + 1000))
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(resp['Content-Range'], 'bytes 1000-{}/{}'.format(content_length - 1, content_length))
+        self.assertEqual(resp.getvalue(), self.content[1000:])
+
+    def test_data_file_download_range_not_satisfiable(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}-'.format(content_length))
+        self.assertEqual(resp.status_code, 416)
+        self.assertEqual(resp['Content-Range'], 'bytes */{}'.format(content_length))
+
+    def test_data_file_download_multiple_ranges_ignored(self):
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=0-99,200-299')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.getvalue(), self.content)
 
 
 @generate_cases([
@@ -380,7 +405,6 @@ class ExportListCrossDomainTest(ViewTestCase):
         delete_all_export_instances()
         super().tearDown()
 
-
     def test_get_saved_export_progress(self):
         def _get_saved_export_progress(export_id):
             return self.client.get(
@@ -389,7 +413,6 @@ class ExportListCrossDomainTest(ViewTestCase):
             )
         assert _get_saved_export_progress(self.export._id).status_code == 200
         assert _get_saved_export_progress(self.other_export._id).status_code == 404
-
 
     def test_toggle_saved_export_enabled(self):
         def _toggle_saved_export_enabled(export_id):
@@ -400,7 +423,6 @@ class ExportListCrossDomainTest(ViewTestCase):
         assert _toggle_saved_export_enabled(self.export._id).status_code == 200
         assert _toggle_saved_export_enabled(self.other_export._id).status_code == 404
         assert FormExportInstance.get(self.other_export._id).auto_rebuild_enabled
-
 
     @patch('corehq.apps.export.views.list.rebuild_saved_export')
     def test_update_emailed_export_data(self, rebuild_saved_export):
@@ -414,7 +436,6 @@ class ExportListCrossDomainTest(ViewTestCase):
 
         assert _update_emailed_export_data(self.other_export._id).status_code == 404
         assert rebuild_saved_export.call_count == 1
-
 
     def test_commit_filters(self):
         def _commit_filters(export_id):
@@ -494,7 +515,6 @@ class ExportSchemaAndMultimediaCrossDomainTest(ViewTestCase):
     def tearDown(self):
         delete_all_export_instances()
         super().tearDown()
-
 
     def test_has_multimedia(self):
         def _has_multimedia(export_id):
@@ -579,7 +599,6 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
         assert len(get_form_exports_by_domain(self.domain.name)) == before + 1
 
         assert _copy(self.other_export._id).status_code == 404
-
 
     def test_edit_export_name(self):
         def _edit_name(export_id, value):
