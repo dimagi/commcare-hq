@@ -83,7 +83,7 @@ def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
 def _post_data(**kwargs):
     return {
         'label': 'Antenatal visit',
-        'expires_at': (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d %H:%M:%S'),
+        'expires_at': (datetime.now() + timedelta(days=30)).strftime(forms.ALPINE_DATETIME_PICKER_FORMAT),
         'allow_email': True,
         'app_id': 'app-1',
         'form_unique_id': 'form-1',

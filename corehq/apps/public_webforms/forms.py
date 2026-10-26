@@ -33,6 +33,8 @@ from corehq.apps.public_webforms.models import (
 from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
 
+ALPINE_DATETIME_PICKER_FORMAT = '%Y-%m-%d %H:%M:%S'
+
 
 class PublicWebformFilterForm(forms.Form):
 
@@ -217,7 +219,7 @@ class BasePublicWebformForm(forms.Form):
         # The datepicker submits wall-clock time in the project's timezone; store UTC.
         user_time = UserTime(self.cleaned_data['expires_at'], tzinfo=self.timezone)
         expires_at = user_time.server_time().done()
-        is_changed = user_time.ui_string(fmt='%Y-%m-%d %H:%M:%S') != self.initial_expires_at()
+        is_changed = user_time.ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT) != self.initial_expires_at()
         if is_changed and expires_at <= datetime.now(UTC).replace(tzinfo=None):
             raise forms.ValidationError(_("Webform must expire in the future."))
         return expires_at
@@ -242,7 +244,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
         return (
             ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90))
             .user_time(self.timezone)
-            .ui_string(fmt='%Y-%m-%d %H:%M:%S')
+            .ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT)
         )
 
     def fieldset_fields(self):
@@ -329,7 +331,11 @@ class EditPublicWebformForm(BasePublicWebformForm):
         })
 
     def initial_expires_at(self):
-        return ServerTime(self.webform.expires_at).user_time(self.timezone).ui_string(fmt='%Y-%m-%d %H:%M:%S')
+        return (
+            ServerTime(self.webform.expires_at)
+            .user_time(self.timezone)
+            .ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT)
+        )
 
     def fieldset_fields(self):
         return [
