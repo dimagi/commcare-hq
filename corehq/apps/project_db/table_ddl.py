@@ -1,6 +1,5 @@
 import hashlib
 from functools import lru_cache
-from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -68,16 +67,6 @@ def _assert_project_db_configured():
         raise ImproperlyConfigured(
             f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
         )
-
-
-SETUP_SQL_PATH = Path(__file__).parent / 'project_db_setup.sql'
-
-
-def setup_project_db():
-    """Apply project_db_setup.sql, which production applies via commcare-cloud"""
-    engine = get_project_db_engine()
-    with engine.begin() as conn:
-        conn.execute(sqlalchemy.text(SETUP_SQL_PATH.read_text()))
 
 
 class DomainSchema:

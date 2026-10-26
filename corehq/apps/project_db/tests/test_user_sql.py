@@ -28,7 +28,6 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, ProgrammingError
 from unmagic import autouse, fixture, use
 
-from corehq.apps.project_db.populate import coerce_to_gps
 from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
     MAX_TREE_DEPTH,
@@ -559,12 +558,15 @@ def test_allows_nesting_up_to_the_limit():
     assert translate(sql, TABLES) is not None
 
 
+to_gps = func.lib_projectdb.coerce_to_gps
+
+
 @use('db', project_db_table('test-within-distance', 'patient', {'location': 'gps'}, (
     ['case_id', 'owner_id', 'gps_prop__location'], [
-        ['far', 'o', coerce_to_gps('44.1710 -71.1097')],
-        ['near', 'o', coerce_to_gps('42.3736 -71.1097')],
+        ['far', 'o', to_gps('44.1710 -71.1097')],
+        ['near', 'o', to_gps('42.3736 -71.1097')],
         # 5.5km away, but inside the 5km bounding box, which is square.
-        ['corner', 'o', coerce_to_gps('42.4086 -71.0623')],
+        ['corner', 'o', to_gps('42.4086 -71.0623')],
         ['null', 'o', None],
     ]
 )))
