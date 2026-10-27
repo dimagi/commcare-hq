@@ -931,9 +931,10 @@ function Question(json, parent) {
     });
 
     self.isButton = self.datatype() === 'select' && self.stylesContains(constants.BUTTON_SELECT);
+    self.isFetchButton = self.datatype() === constants.STRING && self.stylesContains(constants.FETCH);
     self.isLabel = self.datatype() === 'info';
     self.hasLabelContent = ko.computed(function () {
-        return !self.isButton && (
+        return !self.isButton && !self.isFetchButton && (
             ko.utils.unwrapObservable(self.caption)
             || ko.utils.unwrapObservable(self.caption_markdown)
             || ko.utils.unwrapObservable(self.help)
