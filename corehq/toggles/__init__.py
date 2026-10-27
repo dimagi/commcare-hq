@@ -1038,6 +1038,13 @@ PROJECT_DB = StaticToggle(
     save_fn=_sync_project_db_schema,
 )
 
+DOCUMENT_TEMPLATES = StaticToggle(
+    'document_templates',
+    'Document templates: Generate documents from templates',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",
