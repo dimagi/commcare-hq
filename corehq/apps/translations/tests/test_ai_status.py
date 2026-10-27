@@ -6,6 +6,7 @@ from django.core.cache import cache
 from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
+from corehq.apps.translations.tasks import NO_STRINGS_TRANSLATED
 
 SUMMARY = {
     'total': 5, 'translated': 3, 'skipped': 1, 'changed': 0, 'failed': 1,
@@ -62,11 +63,11 @@ def test_finish_stores_summary_and_releases_the_language():
     status = _status()
     status.start('user@example.com')
     status.finish(AITranslationStatus.STATE_DONE,
-                  summary=SUMMARY, message_code='many_skipped')
+                  summary=SUMMARY, message_code=NO_STRINGS_TRANSLATED)
     # returns the finished status, not the active one
     current = status.get()
     assert current['state'] == AITranslationStatus.STATE_DONE
-    assert current['message_code'] == 'many_skipped'
+    assert current['message_code'] == NO_STRINGS_TRANSLATED
     assert current['username'] == 'user@example.com'
     assert current['finished_on']
     assert SUMMARY.items() <= current.items()
