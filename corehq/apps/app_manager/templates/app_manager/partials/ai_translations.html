@@ -205,6 +205,10 @@
                         Translate again to see which labels can't be translated.
                       {% endblocktrans %}
                     </div>
+                    <div
+                      class="mb-2 text-body-secondary"
+                      data-bind="visible: failedLabelsCutLine, text: failedLabelsCutLine"
+                    ></div>
                     <!-- ko foreach: failedLabelGroups -->
                     <div class="mb-2">
                       <div class="fw-semibold">

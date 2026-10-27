@@ -155,6 +155,17 @@ var languageModel = function (options, panel) {
             "%(count)s labels couldn't be translated",
             self.failedLabelCount()), {count: _number(self.failedLabelCount())}, true);
     });
+    // the saved list stops at a limit; the count is every label that failed
+    self.failedLabelsCutLine = ko.computed(function () {
+        var shown = (self.failedLabels() || []).length;
+        if (!shown || shown >= self.failedLabelCount()) {
+            return "";
+        }
+        return interpolate(gettext("Showing the first %(shown)s of %(count)s labels."), {
+            shown: _number(shown),
+            count: _number(self.failedLabelCount()),
+        }, true);
+    });
     self.anyFailedLabelsHidden = ko.computed(function () {
         return self.failedLabelGroups().some(function (group) { return group.hidden; });
     });

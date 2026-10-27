@@ -25,11 +25,15 @@ from corehq.blobs.models import BlobMeta
 
 # minutes; the list lasts as long as the status that has its count
 FAILED_LABELS_TIMEOUT = FINISHED_STATUS_TIMEOUT // 60
+MAX_FAILED_LABELS = 1000
 
 
 def save_failed_labels(domain, app_id, lang, records):
-    """Replace the language's list with this run's. An empty list only
-    removes the previous run's."""
+    """Replace the language's failed-label list with this run's.
+
+    Only the first ``MAX_FAILED_LABELS`` labels are kept. An empty list
+    only removes the previous run's.
+    """
     db = get_blob_db()
     old = [
         meta for meta in db.metadb.get_for_parent(app_id, CODES.ai_translation_failed_labels)
@@ -40,7 +44,7 @@ def save_failed_labels(domain, app_id, lang, records):
     if not records:
         return
     db.put(
-        BytesIO(json.dumps(records).encode('utf-8')),
+        BytesIO(json.dumps(records[:MAX_FAILED_LABELS]).encode('utf-8')),
         domain=domain,
         parent_id=app_id,
         type_code=CODES.ai_translation_failed_labels,

@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -58,6 +59,14 @@ class TestFailedLabels(TestCase):
         meta.save()
 
         assert get_failed_labels(APP_ID, 'fra') is None
+
+    @patch('corehq.apps.translations.app_translations.ai_failed_labels.MAX_FAILED_LABELS', 2)
+    def test_keeps_only_the_first_labels(self):
+        third_record = {**RECORD, 'source': 'How old are you?'}
+
+        save_failed_labels(DOMAIN, APP_ID, 'fra', [RECORD, OTHER_RECORD, third_record])
+
+        assert get_failed_labels(APP_ID, 'fra') == [RECORD, OTHER_RECORD]
 
     def test_list_deleted_after_its_metadata_was_read(self):
         save_failed_labels(DOMAIN, APP_ID, 'fra', [RECORD])
