@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, override_settings
 
-from two_factor.plugins.registry import registry
+from two_factor.plugins.registry import MethodNotFoundError, registry
 
 from corehq.apps.hqwebapp.apps import register_two_factor_methods
 from corehq.apps.hqwebapp.two_factor_methods import (
@@ -42,5 +42,7 @@ class RegisterCustom2FAMethodsTests(SimpleTestCase):
     @override_settings(ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE=False)
     def test_neither_phone_method_is_registered_if_allow_phone_setting_is_false(self):
         register_two_factor_methods()
-        self.assertIsNone(registry.get_method('call'))
-        self.assertIsNone(registry.get_method('sms'))
+        with self.assertRaises(MethodNotFoundError):
+            registry.get_method('call')
+        with self.assertRaises(MethodNotFoundError):
+            registry.get_method('sms')

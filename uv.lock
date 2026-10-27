@@ -744,7 +744,7 @@ requires-dist = [
     { name = "django-tables2" },
     { name = "django-tastypie" },
     { name = "django-transfer" },
-    { name = "django-two-factor-auth", git = "https://github.com/jazzband/django-two-factor-auth.git?rev=16f688bf329526d897a33594ab598bcd3fc8eaae" },
+    { name = "django-two-factor-auth" },
     { name = "django-user-agents" },
     { name = "djangorestframework" },
     { name = "dropbox" },
@@ -1335,14 +1335,18 @@ sdist = { url = "https://files.pythonhosted.org/packages/4f/85/086ea0e40853e475d
 
 [[package]]
 name = "django-two-factor-auth"
-version = "1.16.0"
-source = { git = "https://github.com/jazzband/django-two-factor-auth.git?rev=16f688bf329526d897a33594ab598bcd3fc8eaae#16f688bf329526d897a33594ab598bcd3fc8eaae" }
+version = "1.18.1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-formtools" },
     { name = "django-otp" },
     { name = "django-phonenumber-field" },
     { name = "qrcode" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/72/ba/68d8f5bf2b54869a6d32f234cc6651408bf7b11c393117e8750a6b820764/django_two_factor_auth-1.18.1.tar.gz", hash = "sha256:9d624db63123141cd95a6afe3d626105c3c29a7c8e25a3d93411dd1fac0be464", size = 176500, upload-time = "2025-09-27T17:36:52.578Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f8/85/042d8e380f57396d3221a2f23257444ec1020881b2d1210a4d7915f26586/django_two_factor_auth-1.18.1-py3-none-any.whl", hash = "sha256:ccc9cee10be880037914e572389be6dcae93947709a8a9ff01fb23f7dee254f2", size = 316610, upload-time = "2025-09-27T17:36:50.569Z" },
 ]
 
 [[package]]
