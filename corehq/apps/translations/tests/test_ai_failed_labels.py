@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 from django.test import TestCase
@@ -55,6 +56,14 @@ class TestFailedLabels(TestCase):
         [meta] = self.db.metadb.get_for_parent(APP_ID, CODES.ai_translation_failed_labels)
         meta.expires_on = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=1)
         meta.save()
+
+        assert get_failed_labels(APP_ID, 'fra') is None
+
+    def test_list_deleted_after_its_metadata_was_read(self):
+        save_failed_labels(DOMAIN, APP_ID, 'fra', [RECORD])
+        # as if a newer run deleted it between reading the metadata and the list
+        [meta] = self.db.metadb.get_for_parent(APP_ID, CODES.ai_translation_failed_labels)
+        os.remove(self.db.get_path(meta.key))
 
         assert get_failed_labels(APP_ID, 'fra') is None
 

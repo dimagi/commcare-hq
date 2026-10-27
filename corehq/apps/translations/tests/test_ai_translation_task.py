@@ -144,7 +144,8 @@ class TestTranslateAppTask(TestCase):
         assert notify_exception.called
         status = self.status.get()
         assert status['state'] == DONE
-        assert status['failed_label_count'] == 1
+        # the page offers no list, rather than the previous run's
+        assert status['failed_label_count'] == 0
 
     def test_error_in_the_run(self):
         with (

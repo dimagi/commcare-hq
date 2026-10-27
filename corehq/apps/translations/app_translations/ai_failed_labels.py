@@ -8,6 +8,9 @@ from io import BytesIO
 
 from django.utils.translation import gettext as _
 
+from corehq.apps.translations.app_translations.ai_status import (
+    FINISHED_STATUS_TIMEOUT,
+)
 from corehq.apps.translations.app_translations.ai_translator import (
     PROBLEM_EMPTY,
     PROBLEM_FORMATTING_CHANGED,
@@ -20,7 +23,8 @@ from corehq.apps.translations.app_translations.ai_translator import (
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.blobs.models import BlobMeta
 
-FAILED_LABELS_TIMEOUT = 24 * 60  # minutes
+# minutes; the list lasts as long as the status that has its count
+FAILED_LABELS_TIMEOUT = FINISHED_STATUS_TIMEOUT // 60
 
 
 def save_failed_labels(domain, app_id, lang, records):

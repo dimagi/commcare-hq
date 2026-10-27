@@ -85,6 +85,8 @@ def translate_app_task(domain, app_id, target_lang, mode):
         # the translations are saved; losing their list mustn't fail the run
         notify_exception(None, 'Saving AI translation failed labels failed', details={
             'domain': domain, 'app_id': app_id, 'target_lang': target_lang})
+        # the previous run's list may still be there; don't offer it as this run's
+        failed_labels = []
     summary['failed_label_count'] = len(failed_labels)
     state, message_code = _final_state(summary)
     status.finish(state, summary=summary, message_code=message_code)
