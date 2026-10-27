@@ -126,3 +126,12 @@ def render_preview(values, context):
 
 def _syntax_error_message(error):
     return f'Template syntax error on line {error.lineno} of the combined template: {error.message}'
+
+
+def render_template(template, context):
+    """Render a saved :class:`Template` with ``context`` for the variables its values use
+
+    :raises DocumentRenderError: if the template is invalid or fails to render
+    """
+    values = {name: variable['value'] for name, variable in template.variables.items()}
+    return render_preview(values, context)
