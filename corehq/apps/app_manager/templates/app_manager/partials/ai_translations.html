@@ -78,6 +78,7 @@
         {% initial_page_data 'ai_translation_limit_reached' ai_translation.limit_reached %}
         {% registerurl "start_ai_translation" domain app.id %}
         {% registerurl "ai_translation_status" domain app.id %}
+        {% registerurl "ai_translation_failed_labels" domain app.id %}
         {% if not ai_translation.can_edit %}
           <div class="alert alert-info">
             {% trans "You need permission to edit this app to translate it." %}
@@ -117,7 +118,8 @@
               </tr>
             </thead>
             <tbody data-bind="foreach: languages">
-              <tr>
+              {# top, so the language and its button stay by the status when the failed labels are open #}
+              <tr class="align-top">
                 <td data-bind="text: label"></td>
                 <td>
                   <span
@@ -156,7 +158,8 @@
                   <!-- /ko -->
                   <div class="small" data-bind="visible: display().partial">
                     {% blocktrans trimmed %}
-                      To translate the remaining labels yourself, use
+                      Running AI Translate again may translate the rest. If it
+                      doesn't, translate them yourself with
                       <a
                         href="#bulk-application-translations"
                         data-bs-toggle="collapse"
@@ -165,10 +168,99 @@
                       >.
                     {% endblocktrans %}
                   </div>
+                  <!-- ko if: failedLabelCount() -->
+                  <div class="small mt-1">
+                    <span data-bind="text: failedLabelsLine"></span> ·
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm p-0 align-baseline"
+                      data-bind="click: toggleFailedLabels, attr: {'aria-expanded': showFailedLabels() ? 'true' : 'false', 'aria-controls': failedLabelsId}"
+                    >
+                      <span data-bind="visible: !showFailedLabels()"
+                        >{% trans "Show labels" %}</span
+                      >
+                      <span data-bind="visible: showFailedLabels"
+                        >{% trans "Hide labels" %}</span
+                      >
+                    </button>
+                  </div>
                   <div
-                    class="small text-warning-emphasis"
-                    data-bind="visible: display().warning, text: display().warning"
-                  ></div>
+                    class="small text-danger"
+                    data-bind="visible: failedLabelsError"
+                  >
+                    {% trans "The labels couldn't be loaded. Try again." %}
+                  </div>
+                  <!-- ko if: showFailedLabels -->
+                  <div
+                    class="small mt-2"
+                    data-bind="attr: {id: failedLabelsId}"
+                  >
+                    <div data-bind="visible: loadingFailedLabels">
+                      <i
+                        class="fa-solid fa-spinner fa-spin"
+                        aria-hidden="true"
+                      ></i>
+                      {% trans "Loading…" %}
+                    </div>
+                    <div data-bind="visible: failedLabelsExpired">
+                      {% blocktrans trimmed %}
+                        The list of labels is no longer available. Run AI
+                        Translate again to see which labels can't be translated.
+                      {% endblocktrans %}
+                    </div>
+                    <div
+                      class="mb-2 text-body-secondary"
+                      data-bind="visible: failedLabelsCutLine, text: failedLabelsCutLine"
+                    ></div>
+                    <!-- ko foreach: failedLabelGroups -->
+                    <div class="mb-2">
+                      <div class="fw-semibold">
+                        <span data-bind="text: reason"></span>
+                        (<span data-bind="text: count"></span>)
+                      </div>
+                      <ul class="list-unstyled mb-0 ps-2">
+                        <!-- ko foreach: labels -->
+                        <li>
+                          <!-- ko if: location.length -->
+                          <span data-bind="text: location.join(' › ')"></span>:
+                          <!-- /ko -->
+                          <!-- ko ifnot: location.length -->
+                          <span class="text-body-secondary"
+                            >{% trans "No longer in the app" %}:</span
+                          >
+                          <!-- /ko -->
+                          “<span data-bind="text: source"></span>”
+                          <!-- ko if: url -->
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-bind="attr: {href: url}"
+                            >{% trans "Open" %}
+                            <i
+                              class="fa-solid fa-arrow-up-right-from-square"
+                              aria-hidden="true"
+                            ></i
+                          ></a>
+                          <!-- /ko -->
+                        </li>
+                        <!-- /ko -->
+                      </ul>
+                      <div
+                        class="ps-2 text-body-secondary"
+                        data-bind="visible: hidden, text: hiddenLine"
+                      ></div>
+                    </div>
+                    <!-- /ko -->
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm p-0"
+                      data-bind="visible: anyFailedLabelsHidden, click: showAllLabels"
+                    >
+                      {% trans "Show all labels" %}
+                    </button>
+                  </div>
+                  <!-- /ko -->
+                  <!-- /ko -->
                   <div
                     class="small text-danger"
                     data-bind="visible: startError, text: startError"
