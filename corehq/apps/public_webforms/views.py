@@ -149,9 +149,15 @@ class CreatePublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
-        data = self.request.POST if self.request.method == 'POST' else None
+        timezone = self.domain_object.get_default_timezone()
+        if self.request.method == 'POST':
+            return CreatePublicWebformForm(self.domain, timezone, self.request.POST)
         return CreatePublicWebformForm(
-            self.domain, self.domain_object.get_default_timezone(), data)
+            self.domain,
+            timezone,
+            app_id=self.request.GET.get('app_id'),
+            form_unique_id=self.request.GET.get('form_unique_id'),
+        )
 
 
 class EditPublicWebformView(BasePublicWebformsView):
