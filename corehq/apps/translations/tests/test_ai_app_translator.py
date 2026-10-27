@@ -233,6 +233,24 @@ def test_saved_units_keeps_result_the_ai_returned_unchanged():
     assert [u.target_text for u in saved_units] == ['ancien']
 
 
+def test_saved_units_keeps_ai_returned_escaped_text_unchanged():
+    app = _make_app()
+    # a default copy: the French text is the English text
+    xform = XFormBuilder()
+    xform.new_question('name', {'en': 'Q & A', 'fra': 'Q & A'})
+    app.get_module(0).get_form(0).source = xform.tostring().decode('utf-8')
+    fmt = AppTranslationFormat(app, 'fra')
+    string_key_unit_map = {u.string_key: uid for uid, u in fmt.load_input().items()}
+    # read from the form's XML, the text stays escaped
+    assert fmt.units_by_id[string_key_unit_map[QUESTION_KEY]].target_text == 'Q &amp; A'
+    # the AI returned it unescaped
+    fmt.results = {string_key_unit_map[QUESTION_KEY]: 'Q & A'}
+
+    saved_units = _saved_units(fmt, fmt.for_app(app).all_app_strings())
+
+    assert [u.string_key for u in saved_units] == [QUESTION_KEY]
+
+
 @use('db')
 def test_refresh_provenance_statuses():
     app = _make_app()
