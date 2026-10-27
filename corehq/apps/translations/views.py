@@ -213,9 +213,11 @@ def ai_translation_status(request, domain, app_id):
 @require_GET
 @require_can_edit_apps
 def ai_translation_failed_labels(request, domain, app_id):
-    """The labels the language's last run couldn't translate, fetched when
-    someone asks to see them. ``labels`` is None once the list has
-    expired."""
+    """Return the labels the language's last run couldn't translate.
+
+    The page fetches them when someone asks to see them. ``labels`` is
+    None once the list has expired.
+    """
     if not ai_translation_enabled(domain):
         return _json_error(_("AI translation isn't available for this project."), 403)
     app = _get_app(domain, app_id)
@@ -238,10 +240,12 @@ CASE_PROPERTY_SECTIONS = {
 
 
 def _failed_label_row(app, record, questions_by_form):
-    """What the Languages page shows for a label a run couldn't
-    translate: where it is in the app as it is now, a link to it, its
-    English text and why. A label whose menu or form has been deleted
-    since has no location or link."""
+    """Describe why a label failed to translate, and where it is in the app.
+
+    The row has where the label is in the app as it is now, a link to
+    it, its English text and why it failed. A label whose menu or form
+    has since been deleted has no location or link.
+    """
     row = {
         'source': record['source'],
         'reason': failed_label_reason(record['reason']),
@@ -274,12 +278,7 @@ def _failed_label_row(app, record, questions_by_form):
 
 
 def _form_text_location(app, form, itext_id, questions_by_form):
-    """The name of the question ``itext_id`` belongs to, and a link that
-    opens the form builder with that question selected. A choice, hint or
-    other text of a question is named after it, e.g. "Sex › choice". Text
-    whose question can't be found is named by its id and links to the
-    form builder. ``questions_by_form`` saves reading a form's questions
-    for every label in it."""
+    """Name the question ``itext_id`` belongs to, and link to it."""
     if form.unique_id not in questions_by_form:
         try:
             questions = form.get_questions(
@@ -287,8 +286,8 @@ def _form_text_location(app, form, itext_id, questions_by_form):
         except XFormException:
             # a form that doesn't parse still gets its rows, named by text id
             questions = []
-        # longest path first, so a question whose id starts with another's
-        # path ("age-group" after "age") is matched before it
+        # reverse order puts "age-group" before "age", so "age-group-hint"
+        # matches the question it belongs to, not "age"
         questions_by_form[form.unique_id] = sorted(
             questions, key=lambda question: question['value'], reverse=True)
     url = reverse('form_source', args=[app.domain, app.get_id, form.unique_id])
@@ -304,10 +303,15 @@ def _form_text_location(app, form, itext_id, questions_by_form):
 
 
 def _question_for_itext(questions, itext_id):
-    """The question whose text ``itext_id`` is, and which part of it, or
-    None for its label. The form builder gives a question's other text ids
-    that start with its path: ``<path>-hint``, ``<path>-<choice>-label``.
-    ``questions`` are longest path first."""
+    """Find the part of the question for given ``itext_id``.
+
+    A question has more text than its label, such as a hint or the
+    choices of a multiple choice question. Their ids start with the
+    question's path, e.g. ``age-hint`` is the hint of question ``age``.
+
+    Returns the question and what the text is: None if it is the
+    label, otherwise "hint", "choice" and so on.
+    """
     for question in questions:
         if question.get('label_ref') == itext_id:
             return question, None
