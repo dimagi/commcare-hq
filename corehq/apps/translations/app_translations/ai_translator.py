@@ -513,8 +513,10 @@ class AppTranslationFormat(TranslationFormat):
         try:
             llm_output = json.loads(output_data)
         except (json.JSONDecodeError, TypeError):
+            llm_output = None
+        if not isinstance(llm_output, dict):
             logger.warning(
-                "AI translation answer isn't JSON, so its batch wasn't translated: "
+                "AI translation answer isn't a JSON object, so its batch wasn't translated: "
                 "domain=%s app_id=%s lang=%s units=%d output=%r",
                 self.app.domain, self.app.get_id, self.target_lang,
                 len(allowed_ids), str(output_data)[:200])

@@ -438,7 +438,20 @@ def test_parse_output_buffers_valid_and_skips_invalid():
     assert parsed == {uid: 'traduction'}
     assert fmt.results == {uid: 'traduction'}
     assert fmt.skipped == {rejected_uid: PROBLEM_EMPTY}
-    assert fmt.parse_output('not json') == {}
+
+
+@pytest.mark.parametrize('output', [
+    pytest.param('not json', id='not-json'),
+    pytest.param('["traduction"]', id='list'),
+    pytest.param('"traduction"', id='string'),
+    pytest.param('null', id='null'),
+])
+def test_parse_output_ignores_an_answer_that_isnt_an_object(output):
+    fmt = AppTranslationFormat(_make_app(), 'fra')
+    fmt.load_input()
+
+    assert fmt.parse_output(output) == {}
+    assert fmt.results == {}
 
 
 def test_for_app_copies_settings_not_state():
