@@ -1,6 +1,7 @@
 import json
 import re
 from copy import deepcopy
+from datetime import datetime
 from io import BytesIO
 from unittest.mock import Mock, patch
 
@@ -27,11 +28,12 @@ from corehq.apps.users.models import (
     CouchUser,
     HQApiKey,
     HqPermissions,
+    Invitation,
     UserHistory,
     UserRole,
     WebUser,
 )
-from corehq.apps.users.views import BaseUploadUser
+from corehq.apps.users.views import BaseUploadUser, InviteWebUserView
 from corehq.apps.users.views.mobile.users import (
     CommCareUserPasswordResetView,
     MobileWorkerListView,
@@ -242,6 +244,73 @@ class TestDeleteRole(TestCase):
         user_count_patcher = patch('corehq.apps.users.views.role.get_role_user_count', return_value=0)
         self.user_count_mock = user_count_patcher.start()
         self.addCleanup(user_count_patcher.stop)
+
+
+class InvitationViewTestCase(TestCase):
+    domain = 'test-invitation-views'
+    password = '***'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.admin = WebUser.create(cls.domain, 'admin@example.com', cls.password, None, None, is_admin=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.admin.delete(cls.domain, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.admin.username, password=self.password)
+
+    def create_invitation(self, domain=None):
+        return Invitation.objects.create(
+            domain=domain or self.domain,
+            email='invitee@example.com',
+            invited_by='inviter-id',
+            invited_on=datetime.utcnow(),
+        )
+
+
+class TestInviteWebUserViewInvitation(InvitationViewTestCase):
+
+    def test_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._get_invitation(domain=self.domain, invitation_id=str(invitation.uuid)) == invitation
+
+    def test_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        with self.assertRaises(Http404):
+            self._get_invitation(domain=self.domain, invitation_id=str(invitation.uuid))
+
+    def test_no_invitation_id(self):
+        assert self._get_invitation(domain=self.domain) is None
+
+    def test_post_edits_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._post_admin_role(invitation).status_code == 302
+        invitation.refresh_from_db()
+        assert invitation.role == 'admin'
+
+    def test_post_cannot_edit_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        assert self._post_admin_role(invitation).status_code == 404
+        invitation.refresh_from_db()
+        assert invitation.role is None
+
+    def _get_invitation(self, **kwargs):
+        view = InviteWebUserView()
+        view.setup(RequestFactory().get('/'), **kwargs)
+        return view.invitation
+
+    def _post_admin_role(self, invitation):
+        return self.client.post(
+            reverse('edit_invitation', args=[self.domain, invitation.uuid]),
+            {'email': invitation.email, 'role': 'admin'},
+        )
 
 
 class TestDeletePhoneNumberView(TestCase):
