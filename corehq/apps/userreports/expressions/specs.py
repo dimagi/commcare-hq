@@ -16,7 +16,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+from corehq.apps.change_feed.document_types import LOCATION_DOC_TYPE
 from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     XFORM_CACHE_KEY_PREFIX,
