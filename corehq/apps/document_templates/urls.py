@@ -3,7 +3,6 @@ from django.urls import path
 from corehq.apps.document_templates.views import (
     DeleteDocumentTemplateView,
     DocumentTemplatesView,
-    DownloadDocumentView,
     EditDocumentTemplateView,
     NewDocumentTemplateView,
     PreviewDocumentView,
@@ -31,5 +30,4 @@ urlpatterns = [
     ),
     path('templates/preview/', PreviewDocumentView.as_view(), name=PreviewDocumentView.urlname),
     path('templates/render', RenderDocumentView.as_view(), name=RenderDocumentView.urlname),
-    path('templates/download', DownloadDocumentView.as_view(), name=DownloadDocumentView.urlname),
 ]
