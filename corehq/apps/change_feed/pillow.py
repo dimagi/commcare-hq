@@ -39,7 +39,7 @@ class KafkaProcessor(PillowProcessor):
             doc_type = _get_doc_type_from_change(change)
             # The default topic is used in case a doc_type cannot be found (e.g., a hard deletion might result
             # in a missing doc_type)
-            topic = get_topic_for_doc_type(doc_type, self._data_source_type, self._default_topic)
+            topic = get_topic_for_doc_type(doc_type, self._default_topic)
             self._producer.send_change(topic, change.metadata)
 
             # soft deletion

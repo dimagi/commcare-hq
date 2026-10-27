@@ -10,6 +10,7 @@ from django.utils.timesince import timeuntil
 from django.utils.translation import get_language, gettext_lazy as _
 
 from corehq import feature_previews, toggles
+from corehq.apps.analytics.tasks import record_google_analytics_event_for_client
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_doc
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.cloudcare.utils import format_app_doc, get_web_apps_context
@@ -57,7 +58,15 @@ class PublicWebformRequestView(BasePublicWebformView):
     template_name = 'public_webforms/public/webform_request.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not (self.webform.is_open and self.form.can_deliver):
+        is_open = self.webform.is_open and self.form.can_deliver
+        if request.method == 'GET':
+            record_google_analytics_event_for_client(
+                'public_webform_public_link_accessed', self.webform.public_id.hex, {
+                    'domain': self.webform.domain,
+                    'webform_id': self.webform.id,
+                    'status': 'open' if is_open else 'closed',
+                })
+        if not is_open:
             return render(
                 request,
                 'public_webforms/public/webform_closed.html',
@@ -79,7 +88,14 @@ class PublicWebformRequestView(BasePublicWebformView):
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        send_one_time_link(self.form.get_or_create_session(), self.form_name)
+        session = self.form.get_or_create_session()
+        send_one_time_link(session, self.form_name)
+        record_google_analytics_event_for_client(
+            'public_webform_one_time_link_requested', session.analytics_id, {
+                'domain': self.webform.domain,
+                'webform_id': self.webform.id,
+                'delivery': 'email' if session.email else 'sms',
+            })
 
         if phone_number := self.form.cleaned_data.get('phone_number'):
             request.session['masked_phone_number'] = get_masked_string(
@@ -164,6 +180,12 @@ class PublicFormView(BasePublicWebformView):
         if self.session.opened_at is None:
             self.session.opened_at = timezone.now()
             self.session.save(update_fields=['opened_at'])
+            record_google_analytics_event_for_client(
+                'public_webform_one_time_link_accessed', self.session.analytics_id, {
+                    'domain': self.webform.domain,
+                    'webform_id': self.webform.id,
+                    'delivery': 'email' if self.session.email else 'sms',
+                })
         request.public_form_session = self.session
 
         response = super().get(request, *args, **kwargs)

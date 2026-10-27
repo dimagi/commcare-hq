@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '4'",
@@ -543,6 +543,7 @@ wheels = [
 name = "commcare-hq"
 version = "1.0.0"
 source = { virtual = "." }
+default-groups = ["dev", "sso"]
 dependencies = [
     { name = "alembic" },
     { name = "architect" },
@@ -1035,18 +1036,6 @@ wheels = [
 ]
 
 [[package]]
-name = "deprecated"
-version = "1.2.10"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "wrapt" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c1/2d/60b1be29720ea1a3d3146fac1a596875622ae8dcb40cf926cc4759dadfd6/Deprecated-1.2.10.tar.gz", hash = "sha256:525ba66fb5f90b07169fdd48b6373c18f1ee12728ca277ca44567a367d9d7f74", size = 2969723, upload-time = "2020-05-13T20:47:14.215Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/a1/05d7f62f956d77b23a640efc650f80ce24483aa2f85a09c03fb64f49e879/Deprecated-1.2.10-py2.py3-none-any.whl", hash = "sha256:a766c1dccb30c5f6eb2b203f87edd1d8588847709c78589e1521d769addc8218", size = 8672, upload-time = "2020-05-13T20:46:43.481Z" },
-]
-
-[[package]]
 name = "diff-match-patch"
 version = "20241021"
 source = { registry = "https://pypi.org/simple" }
@@ -1153,14 +1142,15 @@ wheels = [
 
 [[package]]
 name = "django-countries"
-version = "7.3.2"
+version = "9.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "asgiref" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/85/0f/6a36509c4dc72519e4b32a13fd79a57a64e662e1430552fb99111c52622c/django-countries-7.3.2.tar.gz", hash = "sha256:0df6d34193667c2343da8935cbfb8a2bd4fb0c97baf01ac10db4628ba1557a82", size = 656991, upload-time = "2022-03-03T21:55:46.643Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/7e/54c144d213ccdd4f3e74e044c4b6cb7a0c2ccf2e738886fd61b9a0a376df/django_countries-9.1.0.tar.gz", hash = "sha256:c1027417e1d1ebad5ac8fbc45a7578fc400c4fc895d6b865e001c16ba4be0939", size = 614115, upload-time = "2026-09-10T22:24:18Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/d2/897603dc2c7592f504c92da7cbdb2e403674093f94c6964b9b322a62c84f/django_countries-7.3.2-py3-none-any.whl", hash = "sha256:27fc8a0f66a87c9d839493f3926b4e0f4dd873ef66465aa8cd3e953f99758cc9", size = 839582, upload-time = "2022-03-03T21:55:43.27Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/86/f4a3a1bc0827e19bd0ec7267d80725e4f02916d34a279747672436a0aa5b/django_countries-9.1.0-py3-none-any.whl", hash = "sha256:18c9f6e1a8e32356656b1db5ee94121310cbc3b91dc78171052a9ef9d57d5318", size = 928029, upload-time = "2026-09-10T22:24:16.325Z" },
 ]
 
 [[package]]
@@ -1370,14 +1360,14 @@ wheels = [
 
 [[package]]
 name = "djangorestframework"
-version = "3.17.2"
+version = "3.18.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/35/c96055e700fdff25da3a7b7756cfd1d4dc54f38b9bc6d6c5e19e3a0fdc20/djangorestframework-3.17.2.tar.gz", hash = "sha256:89ed713b6dc83e1539f214b7d10808ae19bb8511004beba886225da6d5c9dafa", size = 906683, upload-time = "2026-08-05T07:47:22.5Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/8b/2f048189610d58b29ae947f46d9c7d19c20ba427568eac906d6a2277d391/djangorestframework-3.18.2.tar.gz", hash = "sha256:8249bad7715eb37274ce5820fc5d9fd786b7579806589565f52a71c02b35f54b", size = 923551, upload-time = "2026-10-06T20:42:15.116Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/46/c14108e400b208c394325eb63fbae06c81341b6447fa1a6f9da718b17fe7/djangorestframework-3.17.2-py3-none-any.whl", hash = "sha256:cb0546a7415d5b46c04e0f4fe0a54b2109f4fdd5e83ca773c8c6183a6493d042", size = 899109, upload-time = "2026-08-05T07:47:20.853Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/9e/81e5bfbba54f7396233df979befde49e6e13c94c2df21b94555684dddd3e/djangorestframework-3.18.2-py3-none-any.whl", hash = "sha256:a92d6a4e128a2550bd2fe2e02008a9e47fe52c180e130bb438f5ba70ee933a3f", size = 903990, upload-time = "2026-10-06T20:42:13.411Z" },
 ]
 
 [[package]]
@@ -1751,18 +1741,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a7/84/62473fb57d61e31fef6e36d64a179c8781605429fd927b5dd608c997be31/imagesize-1.4.1.tar.gz", hash = "sha256:69150444affb9cb0d5cc5a92b3676f0b2fb7cd9ae39e947a5e11a36b4497cd4a", size = 1280026, upload-time = "2022-07-01T12:21:05.687Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl", hash = "sha256:0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b", size = 8769, upload-time = "2022-07-01T12:21:02.467Z" },
-]
-
-[[package]]
-name = "importlib-metadata"
-version = "8.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "zipp" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/cd/12/33e59336dca5be0c398a7482335911a33aa0e20776128f038019f1a95f1b/importlib_metadata-8.5.0.tar.gz", hash = "sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7", size = 55304, upload-time = "2024-09-11T14:56:08.937Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/d9/a1e041c5e7caa9a05c925f4bdbdfb7f006d1f74996af53467bc394c97be7/importlib_metadata-8.5.0-py3-none-any.whl", hash = "sha256:45e54197d28b7a7f1559e60b95e7c567032b602131fbd588f1497f47880aa68b", size = 26514, upload-time = "2024-09-11T14:56:07.019Z" },
 ]
 
 [[package]]
@@ -2342,15 +2320,14 @@ wheels = [
 
 [[package]]
 name = "opentelemetry-api"
-version = "1.28.1"
+version = "1.45.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "deprecated" },
-    { name = "importlib-metadata" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/f7/5f8771e591f7641ba019904e2a6be151998a6c8f3e1137654773ca060b04/opentelemetry_api-1.28.1.tar.gz", hash = "sha256:6fa7295a12c707f5aebef82da3d9ec5afe6992f3e42bfe7bec0339a44b3518e7", size = 62804, upload-time = "2024-11-08T19:25:21.106Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2e/02/6e0ae9cc61bd3169d401077b507b3ebc344745171e1051ab430be012dcd9/opentelemetry_api-1.45.1.tar.gz", hash = "sha256:aa38ed19bcc084ba42782a73255b3582283eced7ad6dddbd6695189e69adfb75", size = 72804, upload-time = "2026-10-06T17:32:58.133Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/39/7a9c2fde8e0309e9fd339aa953110a49ebbdf8797eb497d8357f1933ec5d/opentelemetry_api-1.28.1-py3-none-any.whl", hash = "sha256:bfe86c95576cf19a914497f439fd79c9553a38de0adbdc26f7cfc46b0c00b16c", size = 64316, upload-time = "2024-11-08T19:24:53.081Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/41/f7dcf80b81ee8e71c1a2b59f14208bc723edbd89ed027a73b175abf6348e/opentelemetry_api-1.45.1-py3-none-any.whl", hash = "sha256:b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb", size = 60256, upload-time = "2026-10-06T17:32:33.506Z" },
 ]
 
 [[package]]
@@ -3165,11 +3142,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/a1/7f/a1d4f4c7b66f0fc02
 
 [[package]]
 name = "setuptools"
-version = "83.0.0"
+version = "84.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/34/26/f5d29e25ffdb535afef2d35cdb55b325298f96debd670da4c325e08d70f4/setuptools-83.0.0.tar.gz", hash = "sha256:025bccbbf0fa05b6192bc64ae1e7b16e001fd6d6d4d5de03c97b1c1ade523bef", size = 1154254, upload-time = "2026-07-04T15:31:22.699Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/eb/7e5f628ee2eb168fecbf8026de7856b2543d6d609cc85f086b9a91ac93d6/setuptools-84.1.0.tar.gz", hash = "sha256:23657205b63d4d31395ab917815247f694aafad28cd21316bf5fd45a51048ea0", size = 1171783, upload-time = "2026-10-19T20:11:43.489Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5d/40/e1e72872c6354b306daef1703549e8e83b4d43cfea356311bf722a043752/setuptools-83.0.0-py3-none-any.whl", hash = "sha256:29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3", size = 1008090, upload-time = "2026-07-04T15:31:20.885Z" },
+    { url = "https://files.pythonhosted.org/packages/18/02/b4bbb90f8f29e334898ff45c6d9b1fffaa6f378017052b3023a06262b5f7/setuptools-84.1.0-py3-none-any.whl", hash = "sha256:5231689c6ac8156cd155cfb98c3fd6fb252c3e7e9bd3d78b64d3c55f132624c9", size = 819380, upload-time = "2026-10-19T20:11:41.684Z" },
 ]
 
 [[package]]
@@ -3899,15 +3876,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/38/02/eef443559563ef8f2e10469387b8b1e97cb5efee95b288a56da60801f7ee/yarl-1.25.1-cp315-cp315t-win_amd64.whl", hash = "sha256:b13b88747769537f3d32e89e3a735da10c0a9e35d7322928c701b5f93d3afffd", size = 106811, upload-time = "2026-09-15T19:34:54.935Z" },
     { url = "https://files.pythonhosted.org/packages/88/91/41e284ca2cf5211e05dae031d126a3668aea88fa759df56e7e35c6ad25ba/yarl-1.25.1-cp315-cp315t-win_arm64.whl", hash = "sha256:783dd1467083f4d3f7722ad6a313f24c173e7571372738fcb7a6e6d1ba48df25", size = 101804, upload-time = "2026-09-15T19:34:57.231Z" },
     { url = "https://files.pythonhosted.org/packages/54/22/318c7980066769c6bcd9221ed2248294f5698811da099013098c670565ed/yarl-1.25.1-py3-none-any.whl", hash = "sha256:681c758b0490f9e96b78e5fa8e8dc6e648e9185bb6eaebe73183c33ea0c445f3", size = 63617, upload-time = "2026-09-15T19:34:59.616Z" },
-]
-
-[[package]]
-name = "zipp"
-version = "3.21.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3f/50/bad581df71744867e9468ebd0bcd6505de3b275e06f202c2cb016e3ff56f/zipp-3.21.0.tar.gz", hash = "sha256:2c9958f6430a2040341a52eb608ed6dd93ef4392e02ffe219417c1b28b5dd1f4", size = 24545, upload-time = "2024-11-10T15:05:20.202Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/1a/7e4798e9339adc931158c9d69ecc34f5e6791489d469f5e50ec15e35f458/zipp-3.21.0-py3-none-any.whl", hash = "sha256:ac1bbe05fd2991f160ebce24ffbac5f6d11d83dc90891255885223d42b3cd931", size = 9630, upload-time = "2024-11-10T15:05:19.275Z" },
 ]
 
 [[package]]

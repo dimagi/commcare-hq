@@ -1,23 +1,26 @@
 from kafka import TopicPartition
 
+import settingshelper
 from corehq.apps.app_manager.util import app_doc_types
+from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.connection import get_kafka_consumer
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.form_processor.models import XFormInstance
 
-DOMAIN = 'domain'
-META = 'meta'
-APP = 'app'
-CASE_SQL = 'case-sql'
-FORM_SQL = 'form-sql'
-SMS = 'sms'
-LEDGER = 'ledger'
-COMMCARE_USER = 'commcare-user'
-GROUP = 'group'
-WEB_USER = 'web-user'
-LOCATION = 'location'
-SYNCLOG_SQL = 'synclog-sql'
+_PREFIX = 'test-' if settingshelper.is_testing() else ''
 
+DOMAIN = _PREFIX + 'domain'
+META = _PREFIX + 'meta'
+APP = _PREFIX + 'app'
+CASE_SQL = _PREFIX + 'case-sql'
+FORM_SQL = _PREFIX + 'form-sql'
+SMS = _PREFIX + 'sms'
+LEDGER = _PREFIX + 'ledger'
+COMMCARE_USER = _PREFIX + 'commcare-user'
+GROUP = _PREFIX + 'group'
+WEB_USER = _PREFIX + 'web-user'
+LOCATION = _PREFIX + 'location'
+SYNCLOG_SQL = _PREFIX + 'synclog-sql'
 
 CASE_TOPICS = (CASE_SQL, )
 FORM_TOPICS = (FORM_SQL, )
@@ -37,11 +40,15 @@ ALL = (
     SYNCLOG_SQL,
 )
 
+# SQL models that have no doc_type of their own
+_SQL_DOC_TYPE_TOPICS = {
+    document_types.LEDGER_DOC_TYPE: LEDGER,
+    document_types.SMS_DOC_TYPE: SMS,
+    document_types.SYNCLOG_SQL_DOC_TYPE: SYNCLOG_SQL,
+}
 
-def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
-    from corehq.apps.change_feed import document_types
-    from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 
+def get_topic_for_doc_type(doc_type, default_topic=None):
     if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL
     elif doc_type in XFormInstance.ALL_DOC_TYPES:
@@ -58,10 +65,10 @@ def get_topic_for_doc_type(doc_type, data_source_type=None, default_topic=None):
         return SYNCLOG_SQL
     elif doc_type in app_doc_types():
         return APP
-    elif doc_type == LOCATION_DOC_TYPE:
+    elif doc_type == document_types.LOCATION_DOC_TYPE:
         return LOCATION
-    elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
-        return doc_type
+    elif doc_type in _SQL_DOC_TYPE_TOPICS:
+        return _SQL_DOC_TYPE_TOPICS[doc_type]
     elif default_topic:
         return default_topic
     else:

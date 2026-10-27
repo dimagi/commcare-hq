@@ -3334,10 +3334,10 @@ diff@8.0.3, diff@^5.2.0, diff@^7.0.0, diff@^8.0.2:
   resolved "https://registry.yarnpkg.com/diff/-/diff-8.0.3.tgz#c7da3d9e0e8c283bb548681f8d7174653720c2d5"
   integrity sha512-qejHi7bcSD4hQAZE0tNAawRK1ZtafHDmMTMkrrIGgSLl7hTnQHmKCeB45xAcbfTqK2zowkM3j3bHt/4b/ARbYQ==
 
-dompurify@3.4.16, dompurify@^3.0.5, dompurify@^3.3.1:
-  version "3.4.16"
-  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.16.tgz#c51b3709ea15ee9abb07e804f2ef30ea9b953128"
-  integrity sha512-sqo+pNp3qRhCIpbgRi1y8Tgk27Bo2Ry7w0dC1NBeNTdZChWjz9Xb/KOoZbRP/R6pQZ80Qw8YhXw13hWWBbMRnQ==
+dompurify@3.4.17, dompurify@^3.0.5, dompurify@^3.3.1:
+  version "3.4.17"
+  resolved "https://registry.yarnpkg.com/dompurify/-/dompurify-3.4.17.tgz#074bbb24eaa419535ac19ffe7f663104b0e1543d"
+  integrity sha512-B/pSlYVHQ58kqISD/yDjuJ1yfzI34m1gF4lAod2bwSRhiN4K5Cl3H8Af7hqB2PmTL911tdEudnnXn5FnhRoz0w==
   optionalDependencies:
     "@types/trusted-types" "^2.0.7"
 
@@ -3705,9 +3705,9 @@ fast-png@^6.2.0:
     pako "^2.1.0"
 
 fast-uri@^3.0.1:
-  version "3.1.8"
-  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.1.8.tgz#f7db8d942e20eead3cfe93b0beeb4eb0169e938b"
-  integrity sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==
+  version "3.1.9"
+  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.1.9.tgz#f1deba822b1d6ac79da2f860e872a63470cff203"
+  integrity sha512-hS/0Wt3Ya043oKXs0sIxrMpKQITXhMLIrVAKKXi4gozGC9v7YRWVnXIZzjNPTO02M9BdxLCWqK1yRXgNziVyJQ==
 
 fastest-levenshtein@^1.0.12, fastest-levenshtein@^1.0.16, fastest-levenshtein@^1.0.7:
   version "1.0.16"
@@ -4530,9 +4530,9 @@ iobuffer@^5.3.2:
   integrity sha512-DRebOWuqDvxunfkNJAlc3IzWIPD5xVxwUNbHr7xKB8E6aLJxIPfNX3CoMJghcFjpv6RWQsrcJbghtEwSPoJqMA==
 
 ip-address@^10.0.1:
-  version "10.7.2"
-  resolved "https://registry.yarnpkg.com/ip-address/-/ip-address-10.7.2.tgz#5b3b2b7d46c6293861b82dfcd49cc203aa8f2c5c"
-  integrity sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w==
+  version "10.7.5"
+  resolved "https://registry.yarnpkg.com/ip-address/-/ip-address-10.7.5.tgz#4c4c423f6477d0b0b5c2ea59ac77e93eff49003e"
+  integrity sha512-t2v0rkILYv9WXmSL7TpAaU3HXgaFYOPUcH3QHgwQ++gpJuH3bqyMy4Fvt/DJCTKwzH3Cf+bAp5W/mFL39KPLzA==
 
 ip-regex@5.0.0:
   version "5.0.0"

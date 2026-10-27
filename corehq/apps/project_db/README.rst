@@ -13,10 +13,10 @@ Layout
 - One schema per domain, named ``projectdb_<domain>``.
 - One table per case type, named after the case type.
 - Each table has a fixed set of columns mirroring ``CommCareCase``, plus a
-  ``prop__<name>`` column for every case property (defaults to `''`). Typed
-  properties (date, number, select, gps) get an additional typed column, e.g.
-  ``date_prop__<name>``. GPS properties are stored as the earthdistance
-  ``earth`` type, which requires the ``cube`` and ``earthdistance`` extensions.
+  ``prop__<name>`` column for every case property (defaults to `''`)
+- Typed properties (date, number, select, gps) get an additional typed column, e.g.
+  ``date_prop__<name>``, computed from the raw value on insert by a
+  ``lib_projectdb.coerce_to_*`` function.
 
 Postgres truncates identifiers at 63 bytes, so schema, table, and column names
 are truncated with a hash suffix for uniqueness, with the raw values stored as
@@ -26,6 +26,25 @@ Definitions are built with `SQLAlchemy Core
 <https://docs.sqlalchemy.org/en/13/core/>`_ and live in the database configured
 for the ``project_db`` engine (the default database unless
 ``REPORTING_DATABASES`` maps it elsewhere).
+
+Setup
+-----
+
+Two SQL files set up what the per-domain tables depend on:
+
+- ``project_db_setup.sql`` installs the Postgres extensions and the
+  ``SECURITY DEFINER`` role functions (see Access control). These need elevated
+  privileges, so commcare-cloud applies this file in production.
+- ``lib_projectdb.sql`` creates the shared ``lib_projectdb`` schema and the
+  functions that coerce raw property values into typed columns. HQ's database
+  user can create these, so HQ applies this file itself.
+
+The ``project_db`` Django migrations apply ``lib_projectdb.sql`` in every
+environment, and in dev and test also apply ``project_db_setup.sql`` first,
+standing in for commcare-cloud.
+
+Modifications to either file will need a new migration, and changes to
+``project_db_setup.sql`` will need a corresponding change in commcare-cloud.
 
 Querying
 --------
@@ -55,9 +74,7 @@ instead, since the domain role cannot write.
 
 HQ's database user cannot create roles, so provisioning goes through
 ``projectdb_provision_role`` and ``projectdb_drop_role``, ``SECURITY DEFINER``
-functions that run as their owner. commcare-cloud installs these in production;
-``project_db_setup.sql`` mirrors that template for dev and CI, where
-``setup_project_db`` applies it.
+functions that run as their owner.
 
 Status
 ------

@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 import sqlalchemy
@@ -9,10 +10,6 @@ from unmagic import use
 
 from corehq.apps.project_db.populate import (
     case_to_row,
-    coerce_to_date,
-    coerce_to_gps,
-    coerce_to_number,
-    coerce_to_select,
     populate_case_type,
     send_cases_to_project_db,
     upsert_cases,
@@ -28,68 +25,48 @@ from corehq.util.metrics.tests.utils import capture_metrics
 from .util import project_db_table
 
 
-@pytest.mark.parametrize('value, expected', [
-    ('2024-03-15',          datetime.date(2024, 3, 15)),
-    ('2024-03-15T10:30:00', datetime.date(2024, 3, 15)),
-    (None,                  None),
-    ('',                    None),
-    ('not-a-date',          None),
-    ('2024-13-01',          None),
+to_date = func.lib_projectdb.coerce_to_date
+to_number = func.lib_projectdb.coerce_to_number
+to_array = func.lib_projectdb.coerce_to_array
+to_gps = func.lib_projectdb.coerce_to_gps
+
+
+@pytest.mark.parametrize('coercion, expected', [
+    (to_date('2024-03-15'), datetime.date(2024, 3, 15)),
+    (to_date('2024-03-15T10:30:00'), datetime.date(2024, 3, 15)),
+    (to_date(None), None),
+    (to_date(''), None),
+    (to_date('2024-02-30'), None),
+    (to_date('15/03/2024'), None),
+    (to_number('-7.5'), Decimal('-7.5')),
+    (to_number(None), None),
+    (to_number(''), None),
+    (to_number('abc'), None),
+    (to_number(' 42 '), Decimal('42')),
+    (to_number('1e3'), Decimal('1E+3')),
+    (to_number('1_000'), None),
+    (to_number('1e1000000'), None),
+    (to_array(' red '), ['red']),
+    (to_array('red  blue'), ['red', 'blue']),
+    (to_array(None), []),
+    (to_array(''), []),
+    (to_array('  '), []),
+    (func.latitude(to_gps('42.365 -71.102')), pytest.approx(42.365)),
+    (func.longitude(to_gps('42.365 -71.102')), pytest.approx(-71.102)),
+    (func.latitude(to_gps('42.365 -71.102 x')), pytest.approx(42.365)),  # extra values ignored
+    (to_gps(None), None),
+    (to_gps(''), None),
+    (to_gps('0'), None),
+    (to_gps('0  0'), None),  # double space makes an empty element
+    (to_gps('91 0'), None),
+    (to_gps('0 181'), None),
+    (to_gps('NaN 0'), None),
 ])
-def test_coerce_to_date(value, expected):
-    assert coerce_to_date(value) == expected
-
-
-@pytest.mark.parametrize('value, expected', [
-    ('42',   Decimal('42')),
-    ('3.14', Decimal('3.14')),
-    ('-7.5', Decimal('-7.5')),
-    (None,   None),
-    ('',     None),
-    ('abc',  None),
-    ('  ',   None),
-])
-def test_coerce_to_number(value, expected):
-    assert coerce_to_number(value) == expected
-
-
-@pytest.mark.parametrize('value, expected', [
-    ('red',            ['red']),
-    (' red ',         ['red']),
-    ('red  blue',     ['red', 'blue']),
-    ('red green blue', ['red', 'green', 'blue']),
-    (None,            []),
-    ('',              []),
-    ('  ',           []),
-])
-def test_coerce_to_select(value, expected):
-    assert coerce_to_select(value) == expected
-
-
-def assert_gps_equals(actual_str, expected):
-    actual = tuple(float(n) for n in actual_str.strip('()').split(','))
-    # approx match to account for float rounding
-    assert actual == pytest.approx(expected, abs=1e-3)
-
-
-@pytest.mark.parametrize('value, expected', [
-    (None,             None),
-    ('',               None),
-    ('not a gps',      None),
-    ('91 0 0 0',       None),  # latitude out of range
-    ('0 0 0 0',        (6378168.0, 0.0, 0.0)),  # equator / prime meridian
-    ('0 90 0 0',       (0.0, 6378168.0, 0.0)),  # equator, 90°E
-    ('0 90',           (0.0, 6378168.0, 0.0)),  # two-element version works fine too
-    ('90 0 0 0',       (0.0, 0.0, 6378168.0)),  # north pole
-    ('42.365 -71.102', (1526343.604, -4458592.705, 4297935.938)),
-
-])
-def test_coerce_to_gps(value, expected):
-    result = coerce_to_gps(value)
-    if expected is None:
-        assert result is None
-    else:
-        assert_gps_equals(result, expected)
+@use('db')
+def test_sql_coercion(coercion, expected):
+    with get_project_db_engine().begin() as conn:
+        result = conn.execute(sqlalchemy.select([coercion])).scalar()
+    assert result == expected
 
 
 def _make_index(identifier, referenced_id):
@@ -127,7 +104,7 @@ def test_static_fields_mapped_to_columns():
         server_modified_on=datetime.datetime(2025, 6, 2),
         indices=[_make_index('parent', 'p1'), _make_index('host', 'h1')],
     )
-    assert case_to_row(case, table_columns=set()) == {
+    assert case_to_row(case, columns=[]) == {
         'case_id': 'abc123',
         'owner_id': 'owner1',
         'case_name': 'My Case',
@@ -146,36 +123,33 @@ def _utc_datetime(*args):
     return datetime.datetime(*args, tzinfo=datetime.timezone.utc)
 
 
-@pytest.mark.parametrize('case_json, columns, expected_props', [
+def _property_columns(properties):
+    """The columns CaseTable builds for ``{name: data_type}``"""
+    with patch.object(CaseTable, '_get_dd_properties', return_value=properties.items()):
+        return list(CaseTable('domain', 'case_type')._build_property_columns())
+
+
+@pytest.mark.parametrize('case_json, properties, expected_props', [
     # property dropped when it has no column
-    ({'color': 'red', 'size': 'large'}, {'prop__color'}, {'prop__color': 'red'}),
+    ({'color': 'red', 'size': 'large'}, {'color': 'plain'}, {'prop__color': 'red'}),
     # raw value coerced to str
-    ({'count': 42}, {'prop__count'}, {'prop__count': '42'}),
-    # typed columns populated via coercion
-    ({'dob': '1990-05-20', 'weight': '70.5'},
-     {'prop__dob', 'date_prop__dob', 'prop__weight', 'number_prop__weight'},
-     {'prop__dob': '1990-05-20', 'date_prop__dob': datetime.date(1990, 5, 20),
-      'prop__weight': '70.5', 'number_prop__weight': Decimal('70.5')}),
-    # typed value skipped when only the raw column exists
-    ({'dob': '1990-05-20'}, {'prop__dob'}, {'prop__dob': '1990-05-20'}),
-    # select property populates both the raw and the text[] column
-    ({'interests': 'sports music'},
-     {'prop__interests', 'select_prop__interests'},
-     {'prop__interests': 'sports music',
-      'select_prop__interests': ['sports', 'music']}),
+    ({'count': 42}, {'count': 'plain'}, {'prop__count': '42'}),
+    # missing or None values become empty strings
+    ({}, {'color': 'plain'}, {'prop__color': ''}),
+    ({'color': None}, {'color': 'plain'}, {'prop__color': ''}),
+    # truncated column names are matched by their comment
+    ({'x' * 100: 'long'}, {'x' * 100: 'plain'},
+     {truncate_identifier('prop__' + 'x' * 100): 'long'}),
+    # typed columns coerced in SQL are left to upsert_cases
+    ({'dob': '1990-05-20', 'weight': '70.5', 'interests': 'sports music'},
+     {'dob': 'date', 'weight': 'number', 'interests': 'select'},
+     {'prop__dob': '1990-05-20', 'prop__weight': '70.5',
+      'prop__interests': 'sports music'}),
 ])
-def test_property_columns(case_json, columns, expected_props):
+def test_property_columns(case_json, properties, expected_props):
+    columns = _property_columns(properties)
     result = case_to_row(_make_case(case_json=case_json), columns)
     assert {k: v for k, v in result.items() if 'prop__' in k} == expected_props
-
-
-def test_gps_property_column_populated():
-    result = case_to_row(
-        _make_case(case_json={'location': '0 0 0 0'}),
-        {'prop__location', 'gps_prop__location'},
-    )
-    assert result['prop__location'] == '0 0 0 0'
-    assert_gps_equals(result['gps_prop__location'], (6378168.0, 0, 0))
 
 
 @pytest.mark.parametrize('indices, expected_parent, expected_host', [
@@ -185,7 +159,7 @@ def test_gps_property_column_populated():
     ([_make_index('custom', 'x1')],  None, None),
 ])
 def test_index_extraction(indices, expected_parent, expected_host):
-    result = case_to_row(_make_case(indices=indices), table_columns=set())
+    result = case_to_row(_make_case(indices=indices), columns=[])
     assert result['parent_id'] == expected_parent
     assert result['host_id'] == expected_host
 
@@ -196,7 +170,8 @@ def test_case_json_keys_cannot_collide_with_fixed_fields():
         owner_id='real-owner',
         case_json={'case_id': 'fake-id', 'owner_id': 'fake-owner'},
     )
-    result = case_to_row(case, table_columns={'prop__case_id', 'prop__owner_id'})
+    columns = _property_columns({'case_id': 'plain', 'owner_id': 'plain'})
+    result = case_to_row(case, columns)
     assert result['case_id'] == 'real-id'
     assert result['owner_id'] == 'real-owner'
     # case_json values are namespaced under prop__, so they coexist safely
@@ -233,44 +208,33 @@ def test_populate_case_type():
     assert CaseTable('test-upsert', 'clinic').reflect() is None
 
 
-@use('db', project_db_table('test-select', 'patient', {'interests': 'select'}))
-def test_send_select_property_round_trip():
-    populate_case_type('test-select', 'patient', [
-        _make_case({'interests': 'sports music'}, case_id='c1', type='patient'),
-        _make_case({}, case_id='c2', type='patient'),  # absent -> empty array, not NULL
+@use('db', project_db_table('test-typed', 'patient', {
+    'dob': 'date', 'weight': 'number', 'interests': 'select', 'location': 'gps',
+}))
+def test_send_typed_properties_round_trip():
+    populate_case_type('test-typed', 'patient', [
+        _make_case({
+            'dob': '1990-05-20',
+            'weight': '70.5',
+            'interests': 'sports music',
+            'location': '42.365 -71.102',
+        }, type='patient'),
     ])
 
-    table = CaseTable('test-select', 'patient').reflect()
+    table = CaseTable('test-typed', 'patient').reflect()
     with get_project_db_engine().begin() as conn:
-        rows = conn.execute(
-            table.select().order_by(table.c.case_id)
-        ).fetchall()
-    interests = {r['case_id']: r['select_prop__interests'] for r in rows}
-    assert interests == {'c1': ['sports', 'music'], 'c2': []}
-
-
-@use('db')
-def test_send_gps_property_round_trip():
-    # Stored earth values must line up with postgres ll_to_earth, proving the
-    # Python cube formula stays in sync with the earthdistance extension.
-    domain = 'test-gps'
-    with project_db_table(domain, 'patient', {'location': 'gps'}):
-        populate_case_type(domain, 'patient', [
-            _make_case({'location': '40.7128 -74.006 10 5'}, case_id='c1', type='patient'),
-            _make_case({'location': 'garbage'}, case_id='c2', type='patient'),
-            _make_case({}, case_id='c3', type='patient'),  # absent -> NULL
-        ])
-        table = CaseTable(domain, 'patient').reflect()
-        column = table.c['gps_prop__location']
-        distance = func.earth_distance(column, func.ll_to_earth(40.7128, -74.006))
-        with get_project_db_engine().begin() as conn:
-            rows = conn.execute(
-                sqlalchemy.select([table.c.case_id, distance]).order_by(table.c.case_id)
-            ).fetchall()
-    by_id = {r[0]: r[1] for r in rows}
-    assert by_id['c1'] == pytest.approx(0, abs=0.01)  # within a centimeter
-    assert by_id['c2'] is None  # unparseable -> NULL
-    assert by_id['c3'] is None
+        row = conn.execute(sqlalchemy.select([
+            table.c.date_prop__dob,
+            table.c.number_prop__weight,
+            table.c.select_prop__interests,
+            func.latitude(table.c.gps_prop__location),
+        ])).fetchone()
+    assert tuple(row) == (
+        datetime.date(1990, 5, 20),
+        Decimal('70.5'),
+        ['sports', 'music'],
+        pytest.approx(42.365),
+    )
 
 
 @use('db', project_db_table('test-long-prop', 'patient', {'x' * 100: 'date'}))
@@ -320,3 +284,8 @@ def test_send_cases_to_project_db():
     assert sorted(r['case_id'] for r in patients) == ['c1', 'c3']
     assert [r['case_id'] for r in clinics] == ['c2']
     assert metrics.list('commcare.project_db.populate.duration', domain=domain), metrics
+
+
+def test_missing_external_id_is_empty_string():
+    case = _make_case(external_id=None)
+    assert case_to_row(case, columns=[])['external_id'] == ''

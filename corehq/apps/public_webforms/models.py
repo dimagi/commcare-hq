@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -167,6 +168,12 @@ class PublicFormSession(models.Model):
     def one_time_link(self):
         """The absolute link sent to the respondent who asked for it."""
         return f'{self.public_webform.public_url}{self.id.hex}/'
+
+    @property
+    def analytics_id(self):
+        """Identifies the session to Google Analytics without revealing
+        ``id``, which opens the form through the one-time link."""
+        return hashlib.sha256(self.id.bytes).hexdigest()
 
     @property
     def session_username(self):
