@@ -137,6 +137,6 @@ def _update_progress(status, batches_done, batches_total):
 def _final_state(summary):
     # labels dropped because the app changed under them aren't failures:
     # the next run translates them
-    if summary['total'] and not summary['translated'] and not summary['changed']:
+    if not summary['translated'] and (summary['failed'] or summary['skipped']):
         return AITranslationStatus.STATE_ERROR, NO_STRINGS_TRANSLATED
     return AITranslationStatus.STATE_DONE, None

@@ -218,7 +218,10 @@ class TestTranslateAppTask(TestCase):
     pytest.param(dict(), (ERROR, NO_STRINGS_TRANSLATED), id='every-label-failed'),
     pytest.param(dict(skipped=10), (ERROR, NO_STRINGS_TRANSLATED), id='every-translation-rejected'),
     # the next run translates labels dropped because the app changed
-    pytest.param(dict(skipped=1, changed=9), (DONE, None), id='rest-changed-during-the-run'),
+    pytest.param(dict(changed=10), (DONE, None), id='every-label-changed-during-the-run'),
+    pytest.param(dict(skipped=1, changed=9), (ERROR, NO_STRINGS_TRANSLATED),
+                 id='rest-changed-during-the-run'),
+    pytest.param(dict(changed=2), (ERROR, NO_STRINGS_TRANSLATED), id='rest-failed'),
 ])
 def test_final_state(summary, final_state):
     assert _final_state(_summary(**summary)) == final_state
