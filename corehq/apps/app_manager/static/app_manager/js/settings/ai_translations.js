@@ -146,6 +146,8 @@ var languageModel = function (options, panel) {
     self.loadingFailedLabels = ko.observable(false);
     self.showFailedLabels = ko.observable(false);
     self.showAllFailedLabels = ko.observable(false);
+    // for the toggle's aria-controls
+    self.failedLabelsId = "ai-translation-failed-labels-" + self.code;
     self.failedLabelGroups = ko.computed(function () {
         return groupByReason(self.failedLabels() || [], self.showAllFailedLabels());
     });

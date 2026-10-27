@@ -174,7 +174,7 @@
                     <button
                       type="button"
                       class="btn btn-link btn-sm p-0 align-baseline"
-                      data-bind="click: toggleFailedLabels, attr: {'aria-expanded': showFailedLabels() ? 'true' : 'false'}"
+                      data-bind="click: toggleFailedLabels, attr: {'aria-expanded': showFailedLabels() ? 'true' : 'false', 'aria-controls': failedLabelsId}"
                     >
                       <span data-bind="visible: !showFailedLabels()"
                         >{% trans "Show labels" %}</span
@@ -191,7 +191,10 @@
                     {% trans "The labels couldn't be loaded. Try again." %}
                   </div>
                   <!-- ko if: showFailedLabels -->
-                  <div class="small mt-2">
+                  <div
+                    class="small mt-2"
+                    data-bind="attr: {id: failedLabelsId}"
+                  >
                     <div data-bind="visible: loadingFailedLabels">
                       <i
                         class="fa-solid fa-spinner fa-spin"
