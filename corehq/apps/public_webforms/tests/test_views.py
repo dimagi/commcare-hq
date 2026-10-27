@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.public_webforms.forms import ALPINE_DATETIME_PICKER_FORMAT
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
@@ -200,7 +201,9 @@ class TestEditPublicWebformView(PublicWebformViewTestCase):
     def post(self, webform=None, domain=DOMAIN, **fields):
         return self.client.post(self.url(webform, domain), {
             'label': 'Antenatal visit',
-            'expires_at': '2026-09-01 17:00:00',
+            'expires_at': (
+                datetime.datetime.now() + datetime.timedelta(days=30)
+            ).strftime(ALPINE_DATETIME_PICKER_FORMAT),
             'allow_email': True,
             'open_to_requests': 'on',
             **fields,

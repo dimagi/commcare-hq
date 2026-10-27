@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
 import pytz
 from django.db import DatabaseError
+from time_machine import travel
 from unmagic import use
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -85,7 +86,7 @@ def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM,
 def _post_data(**kwargs):
     return {
         'label': 'Antenatal visit',
-        'expires_at': '2026-09-01 17:00:00',
+        'expires_at': (datetime.now() + timedelta(days=30)).strftime(forms.ALPINE_DATETIME_PICKER_FORMAT),
         'allow_email': True,
         'app_id': 'app-1',
         'form_unique_id': 'form-1',
@@ -97,6 +98,7 @@ def _post_data(**kwargs):
     ('2026-09-01 17:00:00', datetime(2026, 9, 1, 21, 0)),
     ('2026-12-01 17:00:00', datetime(2026, 12, 1, 22, 0)),
 ], ids=['daylight-saving-utc-4', 'standard-time-utc-5'])
+@travel(datetime(2026, 8, 1), tick=False)
 def test_expires_at_is_stored_as_utc(entered, expected_utc):
     form = _form(_post_data(expires_at=entered))
     assert form.is_valid(), form.errors
@@ -107,6 +109,16 @@ def test_expires_at_defaults_to_the_datepicker_format():
     initial = _form().fields['expires_at'].initial
     # any other format makes the datepicker treat it as invalid and clear it
     assert datetime.strptime(initial, '%Y-%m-%d %H:%M:%S')
+
+
+@pytest.mark.parametrize('entered, expected', [
+    ('2026-08-01 08:00:00', False),
+    ('2026-08-01 08:00:01', True),
+], ids=['now', 'future'])
+@travel(TIMEZONE.localize(datetime(2026, 8, 1, 8)), tick=False)
+def test_expires_at_must_be_in_the_future_when_modified(entered, expected):
+    form = _form(_post_data(expires_at=entered))
+    assert form.is_valid() is expected
 
 
 def test_a_delivery_option_is_required():
@@ -196,8 +208,9 @@ def test_create_deletes_the_generated_build_if_the_webform_is_not_saved():
 
 
 @use('db')
+@travel(datetime(2026, 8, 1), tick=False)
 def test_create_stores_the_selection_and_generated_endpoint():
-    webform = _create_webform()
+    webform = _create_webform(expires_at='2026-09-01 17:00:00')
 
     assert webform.domain == DOMAIN
     assert webform.label == 'Antenatal visit'
@@ -279,7 +292,21 @@ def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
     assert 'checked' not in rendered
 
 
+@pytest.mark.parametrize('entered, expected', [
+    ('2026-09-01 17:00:00', True),
+    ('2026-09-01 17:00:01', False),
+], ids=['unchanged', 'changed'])
+@travel(datetime(2026, 10, 1), tick=False)
+def test_edit_allows_a_past_expiry_only_if_unchanged(entered, expected):
+    form = _edit_form(
+        _webform(expires_at=datetime(2026, 9, 1, 21, 0)),
+        _edit_data(expires_at=entered),
+    )
+    assert form.is_valid() is expected
+
+
 @use('db')
+@travel(datetime(2026, 8, 1), tick=False)
 def test_edit_updates_the_webform():
     webform = create_webform()
     form = _edit_form(
