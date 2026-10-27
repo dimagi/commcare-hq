@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
 from corehq.form_processor.signals import sql_case_post_save
@@ -35,7 +36,11 @@ def publish_case_saved(case, associated_form_id=None, send_post_save_signal=True
     """
     Publish the change to kafka and run case post-save signals.
     """
-    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case, associated_form_id))
+    topic = topics.CASE_SQL
+    if case and toggles.DEMO_CASE_PILLOW.enabled(case.domain):
+        topic = topics.DEMO_CASE_SQL
+
+    producer.send_change(topic, change_meta_from_sql_case(case, associated_form_id))
     if send_post_save_signal:
         sql_case_post_save.send(case.__class__, case=case)
 
@@ -54,7 +59,11 @@ def change_meta_from_sql_case(case, associated_form_id=None):
 
 
 def publish_case_deleted(domain, case_id):
-    producer.send_change(topics.CASE_SQL, ChangeMeta(
+    topic = topics.CASE_SQL
+    if toggles.DEMO_CASE_PILLOW.enabled(domain):
+        topic = topics.DEMO_CASE_SQL
+
+    producer.send_change(topic, ChangeMeta(
         document_id=case_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.CASE_SQL,

@@ -2575,3 +2575,10 @@ AI_APP_TRANSLATION = FeatureRelease(
     namespaces=[NAMESPACE_DOMAIN],
     owner='Amit Phulera',
 )
+
+DEMO_CASE_PILLOW = StaticToggle(
+    slug='demo_case_pillow',
+    label='Process case changes on separate queue',
+    tag=TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+)
