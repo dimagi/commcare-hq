@@ -129,6 +129,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
+from corehq.apps.public_webforms.utils import get_create_public_webform_url
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.project_limits.const import (
@@ -1066,6 +1067,7 @@ def get_form_view_context(
         ],
         'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'create_public_webform_url': get_create_public_webform_url(request, form),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
         'case_property_warning': {
