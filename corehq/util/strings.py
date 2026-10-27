@@ -16,7 +16,7 @@ def get_masked_email(email, mask_character='*', reveal_length=1):
     """Mask all but ``reveal_length`` characters of a valid email's local
     portion with ``mask_character``.
     """
-    email_parts = email.split('@')
+    email_parts = email.rsplit('@', 1)
     email_parts[0] = get_masked_string(
         email_parts[0],
         mask_character=mask_character,

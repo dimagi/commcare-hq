@@ -1,3 +1,4 @@
+import pytest
 from django.test import SimpleTestCase
 
 from corehq.util.strings import get_masked_email, get_masked_string
@@ -33,5 +34,9 @@ class TestGetMaskedString(SimpleTestCase):
         self.assertEqual(result, 'ab')
 
 
-def test_get_masked_email():
-    assert get_masked_email('clifford@example.com') == 'c*******@example.com'
+@pytest.mark.parametrize('email, expected', [
+    ('clifford@example.com', 'c*******@example.com'),
+    ('cliff"@ford"@example.com', 'c***********@example.com')
+])
+def test_get_masked_email(email, expected):
+    assert get_masked_email(email) == expected
