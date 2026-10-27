@@ -380,11 +380,7 @@ def _apply_translations(fmt):
     for attempt in range(1, AI_TRANSLATION_APPLY_ATTEMPTS + 1):
         try:
             errors = fmt.save_output()
-            saved_app_strings, saved_units = _read_saved_app(fmt)
-            fmt.drop_unapplied_results(saved_units)
-            return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors,
-                                       saved_app_strings=saved_app_strings,
-                                       saved_units=saved_units)
+            break
         except ResourceConflict as e:
             if attempt == AI_TRANSLATION_APPLY_ATTEMPTS:
                 raise AppChangedDuringTranslation() from e
@@ -392,6 +388,11 @@ def _apply_translations(fmt):
             fresh_fmt.load_input()
             changed += _rebase_results(fmt, fresh_fmt)
             fmt = fresh_fmt
+    saved_app_strings, saved_units = _read_saved_app(fmt)
+    fmt.drop_unapplied_results(saved_units)
+    return AppliedTranslations(saved_fmt=fmt, changed=changed, errors=errors,
+                               saved_app_strings=saved_app_strings,
+                               saved_units=saved_units)
 
 
 class AppTranslationFormat(TranslationFormat):
