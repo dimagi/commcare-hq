@@ -205,6 +205,7 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'outgoing_sms_in_last_90_days': 'cp_n_sms_out_90_d',
     'public_webforms': 'cp_n_public_webforms',
     'public_webform_submissions': 'cp_n_public_webform_submissions',
+    'questions_locked': 'cp_n_questions_locked',
     'repeaters': 'cp_n_repeaters',
     'report_builder_reports': 'cp_n_rb_reports',
     'saved_exports': 'cp_n_saved_exports',
@@ -341,6 +342,7 @@ class DomainMetrics(models.Model):
     has_custom_branding = models.BooleanField(null=True, default=None)
     public_webforms = models.IntegerField(null=True)
     public_webform_submissions = models.IntegerField(null=True)
+    questions_locked = models.IntegerField(null=True)
 
     # -- Data & Export Features --
     form_exports = models.IntegerField(null=True, default=None)
