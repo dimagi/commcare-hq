@@ -27,14 +27,8 @@ class DomainTests(SimpleTestCase):
 class DomainAuditRecordEntryTests(TestCase):
 
     def test_update_calculations_increments_by_one(self):
-        DomainAuditRecordEntry.update_calculations('test-audit-domain', 'cp_n_questions_locked')
-        DomainAuditRecordEntry.update_calculations('test-audit-domain', 'cp_n_questions_locked')
+        DomainAuditRecordEntry.update_calculations('test-audit-domain', 'cp_n_saved_app_changes')
+        DomainAuditRecordEntry.update_calculations('test-audit-domain', 'cp_n_saved_app_changes')
 
         entry = DomainAuditRecordEntry.objects.get(domain='test-audit-domain')
-        assert entry.cp_n_questions_locked == 2
-
-    def test_update_calculations_increments_by_count(self):
-        DomainAuditRecordEntry.update_calculations('test-audit-domain', 'cp_n_questions_locked', count=3)
-
-        entry = DomainAuditRecordEntry.objects.get(domain='test-audit-domain')
-        assert entry.cp_n_questions_locked == 3
+        assert entry.cp_n_saved_app_changes == 2
