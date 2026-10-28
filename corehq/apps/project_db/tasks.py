@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.core.cache import cache
 from django.db import transaction
 
@@ -7,7 +9,8 @@ from sqlalchemy.exc import OperationalError
 from corehq.apps.celery import serial_task
 
 from .models import PendingOperation
-from .table_ddl import create_or_update_project_db
+from .populate import backfill_typed_columns
+from .table_ddl import CaseTable, create_or_update_project_db
 
 
 def schedule_project_db_sync(domain):
@@ -37,6 +40,7 @@ def process_pending_operations(domain):
         if err.orig.pgcode == errorcodes.LOCK_NOT_AVAILABLE:
             process_pending_operations.retry(exc=err)
         raise
+    _apply_pending_backfills(domain)
 
 
 def _apply_pending_sync(domain):
@@ -47,3 +51,17 @@ def _apply_pending_sync(domain):
         create_or_update_project_db(domain)
         # Delete only syncs present before update started
         PendingOperation.objects.filter(id__in=sync_ids).delete()
+
+
+def _apply_pending_backfills(domain):
+    pending_ops = defaultdict(list)
+    for op in PendingOperation.objects.filter(
+        domain=domain, operation=PendingOperation.Operation.BACKFILL,
+    ):
+        pending_ops[op.args['case_type']].append(op)
+
+    for case_type, ops in pending_ops.items():
+        if (table := CaseTable(domain, case_type).reflect()) is not None:
+            column_names = {name for op in ops for name in op.args['columns']}
+            backfill_typed_columns(table, [col for col in table.c if col.name in column_names])
+        PendingOperation.objects.filter(id__in=[op.id for op in ops]).delete()

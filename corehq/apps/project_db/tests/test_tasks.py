@@ -1,20 +1,25 @@
+import datetime
 from unittest.mock import Mock, patch
 
 from django.core.cache import cache
 from django.test import TestCase
 
 import pytest
+import sqlalchemy
 from celery.exceptions import Retry
 from psycopg2 import errorcodes
 from sqlalchemy.exc import OperationalError
 from unmagic import fixture, use
 
 from corehq.apps.project_db.models import PendingOperation
+from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
 from corehq.apps.project_db.tasks import (
     _processing_queued_key,
     process_pending_operations,
     schedule_project_db_sync,
 )
+
+from .util import project_db_table
 
 DOMAIN = 'project-db-signals-test'
 SYNC_PATH = 'corehq.apps.project_db.tasks.create_or_update_project_db'
@@ -29,6 +34,14 @@ def clear_queued_flag():
 
 def _record_sync(domain=DOMAIN):
     PendingOperation.objects.create(domain=domain, operation=PendingOperation.Operation.SYNC)
+
+
+def _record_backfill(case_type, columns, domain=DOMAIN):
+    PendingOperation.objects.create(
+        domain=domain,
+        operation=PendingOperation.Operation.BACKFILL,
+        args={'case_type': case_type, 'columns': columns},
+    )
 
 
 def _pending_sync_count():
@@ -71,3 +84,21 @@ def test_process_retries_on_lock_timeout():
         process_pending_operations(DOMAIN)
     retry_mock.assert_called_once_with(exc=err)
     assert _pending_sync_count() == 1
+
+
+@use('db', project_db_table('test-backfill-task', 'patient', {'dob': 'date'}, (
+    ['case_id', 'owner_id', 'prop__dob'], [('a', 'o', '2020-01-01')],
+)))
+def test_process_applies_and_clears_pending_backfills():
+    domain = 'test-backfill-task'
+    _record_backfill('patient', ['date_prop__dob', 'date_prop__deleted'], domain)
+    _record_backfill('patient', ['date_prop__dob'], domain)  # Duplicate
+    _record_backfill('deleted', ['date_prop__dob'], domain)
+
+    process_pending_operations(domain)
+
+    table = CaseTable(domain, 'patient').reflect()
+    with get_project_db_engine().begin() as conn:
+        dob = conn.execute(sqlalchemy.select([table.c.date_prop__dob])).scalar()
+    assert dob == datetime.date(2020, 1, 1)
+    assert not PendingOperation.objects.filter(domain=domain).exists()
