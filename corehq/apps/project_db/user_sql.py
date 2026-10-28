@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from functools import cached_property
 
 import sqlglot
+from psycopg2 import errorcodes
 from sqlalchemy import (
     ARRAY,
     Float,
@@ -26,11 +27,12 @@ from sqlalchemy import (
     nullslast,
     or_,
     select,
+    text,
     union,
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import DataError, ProgrammingError
+from sqlalchemy.exc import DataError, OperationalError, ProgrammingError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.base import Executable
 from sqlalchemy.sql.expression import ClauseElement
@@ -62,7 +64,12 @@ class UserSQLProgrammingError(UserSQLValidationError):
     """The SQL was found to be invalid at runtime"""
 
 
+class UserSQLTimeout(UserSQLProgrammingError):
+    """The query exceeded the statement timeout"""
+
+
 LITERAL_PARAM_PREFIX = 'hq_'  # Our reserved namespace for parameters
+STATEMENT_TIMEOUT = '5s'
 
 # A query parameter's name is interpolated into the compiled SQL, so it is
 # restricted to characters that cannot close the placeholder and inject SQL.
@@ -155,11 +162,17 @@ class UserSQL:
     @contextmanager
     def _connect(self):
         with get_domain_query_engine(self.domain).begin() as conn:
+            conn.execute(text(f"SET LOCAL statement_timeout = '{STATEMENT_TIMEOUT}'"))
             _set_timezone(conn, self.timezone)
             try:
                 yield conn
             except (DataError, ProgrammingError) as e:
                 raise UserSQLProgrammingError(str(e.orig)) from e
+            except OperationalError as e:
+                if e.orig.pgcode == errorcodes.QUERY_CANCELED:
+                    msg = f"query cancelled after exceeding the {STATEMENT_TIMEOUT} time limit"
+                    raise UserSQLTimeout(msg) from e
+                raise
 
     def _clean_parameters(self, raw_parameters):
         unexpected_parameters = set(raw_parameters) - set(self.parameters)

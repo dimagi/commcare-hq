@@ -1,15 +1,19 @@
 import datetime
 from collections import defaultdict
 
-from sqlalchemy import bindparam, func
+from sqlalchemy import bindparam, func, select
 from sqlalchemy.dialects.postgresql import insert
 
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.util.metrics import metrics_histogram_timer
 
-from .table_ddl import CaseTable, get_project_db_engine, property_column
+from .table_ddl import (
+    CaseTable,
+    get_coercion_fn,
+    get_project_db_engine,
+    property_column,
+)
 
 
 def send_cases_to_project_db(domain, cases):
@@ -49,14 +53,51 @@ def upsert_cases(conn, table, cases):
 
 def _insert_values(table):
     """Specify what values to insert and how"""
-    # Raw values
-    values = {col.name: bindparam(col.name, type_=col.type) for col in table.c}
-    # Values that are coerced to type in SQL
-    for col in table.c:
-        for data_type, coerce in _SQL_COERCIONS:
-            if col.comment and col.name == property_column(col.comment, data_type):
-                values[col.name] = coerce(values[property_column(col.comment)])
-    return values
+    columns = [(col, get_coercion_fn(col)) for col in table.c]
+    raw_values = {col.name: bindparam(col.name, type_=col.type) for col, fn in columns if not fn}
+    computed_values = {  # for example - date_prop__dob: coerce_to_date(:prop__dob)
+        col.name: fn(raw_values[property_column(col.comment)])
+        for col, fn in columns if fn
+    }
+    return raw_values | computed_values
+
+
+def backfill_typed_columns(table, columns, chunk_size=1000):
+    """Populate new typed columns from their raw columns in SQL"""
+    values = {}
+    for column in columns:
+        if coercion_fn := get_coercion_fn(column):
+            # Coerce the existing raw property column
+            values[column.name] = coercion_fn(table.c[property_column(column.comment)])
+        else:
+            raise ValueError(f'{column.name} is not a typed property column')
+    stmt = _backfill_chunk_statement(table, values, chunk_size)
+
+    engine = get_project_db_engine()
+    after = ''
+    while after is not None:
+        with engine.begin() as conn:
+            # Update chunk and get last case_id updated
+            after = conn.execute(stmt, {'after': after}).scalar()
+
+
+def _backfill_chunk_statement(table, values, chunk_size):
+    # Paginate through cases, ordered by case_id, return last one
+    chunk = (
+        select([table.c.case_id])
+        .where(table.c.case_id > bindparam('after'))
+        .order_by(table.c.case_id)
+        .limit(chunk_size)
+        .cte('chunk')
+    )
+    updated = (
+        table.update()
+        .values(values)
+        .where(table.c.case_id == chunk.c.case_id)
+        .returning(table.c.case_id)
+        .cte('updated')
+    )
+    return select([func.max(updated.c.case_id)])
 
 
 def case_to_row(case, columns):
@@ -85,12 +126,3 @@ def case_to_row(case, columns):
 def _as_utc(value):
     """Attach explicit UTC timezone to naive datetime values"""
     return value.replace(tzinfo=datetime.timezone.utc) if value else None
-
-
-# Functions defined in lib_projectdb.sql
-_SQL_COERCIONS = [
-    (CaseProperty.DataType.DATE, func.lib_projectdb.coerce_to_date),
-    (CaseProperty.DataType.NUMBER, func.lib_projectdb.coerce_to_number),
-    (CaseProperty.DataType.SELECT, func.lib_projectdb.coerce_to_array),
-    (CaseProperty.DataType.GPS, func.lib_projectdb.coerce_to_gps),
-]
