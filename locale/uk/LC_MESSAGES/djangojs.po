@@ -1096,11 +1096,27 @@ msgid "%(name)s (%(code)s)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label couldn't be translated"
+msgid_plural "%(count)s labels couldn't be translated"
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+msgstr[3] ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Showing the first %(shown)s of %(count)s labels."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "You need permission to edit this app to translate it."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "The translation couldn't be started. Try again."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "and %(count)s more"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
@@ -1185,19 +1201,7 @@ msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "%(count)s skipped"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "%(count)s failed"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s changed during the run"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "Run AI Translate again to retry the labels that weren't translated."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
@@ -1405,47 +1409,10 @@ msgstr "Останнє збережене"
 msgid "[unknown]"
 msgstr "[невідомо]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "Drag question here"
-msgstr "Перетягніть питання сюди"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is equal to"
-msgstr "дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is not equal to"
-msgstr "не дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than"
-msgstr "менше ніж"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than or equal to"
-msgstr "менше або дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than"
-msgstr "більше ніж"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than or equal to"
-msgstr "більше або дорівнює"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "has selected value"
-msgstr "має вибране значення"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ALL of the expressions are true."
-msgstr "Правда, якщо ВСІ вирази істинні."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ANY of the expressions are true."
-msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "loadXFormOrError"
 msgstr ""
 
@@ -1474,12 +1441,18 @@ msgid "getMainProperties"
 msgstr "Властивості користувача"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 #, fuzzy
 #| msgid "Create"
 msgid "createXML"
 msgstr "Створити"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 #, fuzzy
 #| msgid "User Data"
 msgid "getData"
@@ -1490,16 +1463,109 @@ msgid "checkMove"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 #, fuzzy
 #| msgid "Streets"
 msgid "jstree"
 msgstr "Вулиці"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getCurrentMugInput"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getMugByPath"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+#, fuzzy
+#| msgid "load"
+msgid "loadXML"
+msgstr "завантажити"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+#, fuzzy
+#| msgid "Add Question"
+msgid "addQuestion"
+msgstr "Додати питання"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "nodeIDFromLabel"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+#, fuzzy
+#| msgid "Questions"
+msgid "getSections"
+msgstr "Питання"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+#, fuzzy
+#| msgid "Clear selection"
+msgid "collapseSection"
+msgstr "Очистити вибір"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "Drag question here"
+msgstr "Перетягніть питання сюди"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is equal to"
+msgstr "дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is not equal to"
+msgstr "не дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than"
+msgstr "менше ніж"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than or equal to"
+msgstr "менше або дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than"
+msgstr "більше ніж"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than or equal to"
+msgstr "більше або дорівнює"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "has selected value"
+msgstr "має вибране значення"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Правда, якщо ВСІ вирази істинні."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Правда, якщо БУДЬ-ЯКИЙ з виразів істинний."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} не є дійсним батьківським елементом даних"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/8096.js
 msgid "\n"
 msgstr ""
 
@@ -5444,26 +5510,6 @@ msgstr "CommCare HQ не вдалося виконати запит: "
 
 #~ msgid "No Translation Data"
 #~ msgstr "Немає даних для перекладу"
-
-#, fuzzy
-#~| msgid "load"
-#~ msgid "loadXML"
-#~ msgstr "завантажити"
-
-#, fuzzy
-#~| msgid "Add Question"
-#~ msgid "addQuestion"
-#~ msgstr "Додати питання"
-
-#, fuzzy
-#~| msgid "Questions"
-#~ msgid "getSections"
-#~ msgstr "Питання"
-
-#, fuzzy
-#~| msgid "Clear selection"
-#~ msgid "collapseSection"
-#~ msgstr "Очистити вибір"
 
 #~ msgid "Active"
 #~ msgstr "Активно"
