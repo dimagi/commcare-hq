@@ -1,30 +1,49 @@
 from django.core.cache import cache
+from django.db import transaction
 
 from psycopg2 import errorcodes
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.celery import serial_task
 
+from .models import PendingOperation
 from .table_ddl import create_or_update_project_db
 
 
-def _sync_queued_key(domain):
-    return f'project-db-sync-queued-{domain}'
-
-
 def schedule_project_db_sync(domain):
-    """Queue a schema sync unless one is already queued for the domain"""
-    if cache.add(_sync_queued_key(domain), True, timeout=5 * 60):
+    """Record that the domain needs a schema sync, and queue processing"""
+    PendingOperation.objects.create(domain=domain, operation=PendingOperation.Operation.SYNC)
+    transaction.on_commit(lambda: _queue_processing(domain))
+
+
+def _queue_processing(domain):
+    """Queue an update unless one is already queued for the domain"""
+    if cache.add(_processing_queued_key(domain), True, timeout=5 * 60):
         # Schedule the task with a 15 second debounce delay
-        update_project_db_schema.apply_async([domain], countdown=15)
+        process_pending_operations.apply_async([domain], countdown=15)
+
+
+def _processing_queued_key(domain):
+    return f'project-db-processing-queued-{domain}'
 
 
 @serial_task('{domain}', timeout=30 * 60, max_retries=3)
-def update_project_db_schema(domain):
-    cache.delete(_sync_queued_key(domain))
+def process_pending_operations(domain):
+    # allow overlapping operations to be queued
+    cache.delete(_processing_queued_key(domain))
     try:
-        create_or_update_project_db(domain)
+        _apply_pending_sync(domain)
     except OperationalError as err:
         if err.orig.pgcode == errorcodes.LOCK_NOT_AVAILABLE:
-            update_project_db_schema.retry(exc=err)
+            process_pending_operations.retry(exc=err)
         raise
+
+
+def _apply_pending_sync(domain):
+    sync_ids = list(PendingOperation.objects.filter(
+        domain=domain, operation=PendingOperation.Operation.SYNC,
+    ).values_list('id', flat=True))
+    if sync_ids:
+        create_or_update_project_db(domain)
+        # Delete only syncs present before update started
+        PendingOperation.objects.filter(id__in=sync_ids).delete()
