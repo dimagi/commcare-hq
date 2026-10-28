@@ -1088,12 +1088,29 @@ msgid "%(name)s (%(code)s)"
 msgstr "%(name)s (%(code)s)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s label translated in this run"
+#| msgid_plural "%(count)s labels translated in this run"
+msgid "%(count)s label couldn't be translated"
+msgid_plural "%(count)s labels couldn't be translated"
+msgstr[0] "Impossibile tradurre %(count)s etichetta"
+msgstr[1] "Impossibile tradurre %(count)s etichette"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Showing the first %(shown)s of %(count)s labels."
+msgstr "Visualizzazione delle prime %(shown)s di %(count)s etichette."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "You need permission to edit this app to translate it."
 msgstr "È necessario avere il permesso di modificare questa app per tradurla."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "The translation couldn't be started. Try again."
 msgstr "Impossibile avviare la traduzione. Riprova."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s failed"
+msgid "and %(count)s more"
+msgstr "e altre %(count)s"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "Not yet supported"
@@ -1104,31 +1121,27 @@ msgid "Use the manual translation options below"
 msgstr "Usa le opzioni di traduzione manuale qui sotto"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#, fuzzy
 #| msgid "Settings"
 msgid "Starting…"
-msgstr "Impostazioni"
+msgstr "Avvio…"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Requeued"
 msgid "Queued"
 msgstr "In coda"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#, fuzzy
 #| msgid "Add Translation"
 msgid "Translating…"
-msgstr "Aggiungi traduzione"
+msgstr "Traduzione…"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "Batch %(batch)s of %(total)s"
 msgstr "Batch %(batch)s di %(total)s"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#, fuzzy
 #| msgid "Auto fill translations"
 msgid "Applying translations…"
-msgstr "Compila automaticamente le traduzioni"
+msgstr "Applicazione delle traduzioni…"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "Saving to the app"
@@ -1152,7 +1165,6 @@ msgid "Every label already has a translation."
 msgstr "Ogni etichetta ha già una traduzione."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Add Translation"
 msgid "AI translated"
 msgstr "Tradotto dall'IA"
 
@@ -1163,7 +1175,6 @@ msgstr[0] "%(count)s etichetta tradotta in questa esecuzione"
 msgstr[1] "%(count)s etichette tradotte in questa esecuzione"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Form submission failed with error"
 msgid "Finished with errors"
 msgstr "Completato con errori"
 
@@ -1172,25 +1183,8 @@ msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
 msgstr "%(translated)s di %(total)s etichette tradotte (%(percent)s%)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "%(count)s Invitation Accepted"
-#| msgid_plural "%(count)s Invitations Accepted"
-msgid "%(count)s skipped"
-msgstr "%(count)s saltate"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "%(count)s Invitation Pending"
-#| msgid_plural "%(count)s Invitations Pending"
-msgid "%(count)s failed"
-msgstr "%(count)s non riuscite"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s changed during the run"
 msgstr "%(count)s modificate durante l'esecuzione"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "Run AI Translate again to retry the labels that weren't translated."
-msgstr ""
-"Esegui nuovamente la traduzione IA per riprovare le etichette non tradotte."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "No AI run yet"
@@ -1203,7 +1197,6 @@ msgstr[0] "%(count)s etichetta tradotta nell'ultima esecuzione"
 msgstr[1] "%(count)s etichette tradotte nell'ultima esecuzione"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Auto fill translations"
 msgid "Partially translated"
 msgstr "Parzialmente tradotto"
 
@@ -1212,6 +1205,8 @@ msgid ""
 "%(translated)s of %(attempted)s labels translated in the last run · "
 "%(missed)s weren't translated"
 msgstr ""
+"%(translated)s etichette tradotte su %(attempted)s nell’ultima esecuzione · "
+"%(missed)s non sono state tradotte"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid ""
@@ -1396,47 +1391,10 @@ msgstr "Ultimo salvato"
 msgid "[unknown]"
 msgstr "[sconosciuto]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "Drag question here"
-msgstr "Trascina qui la domanda"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is equal to"
-msgstr "è uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is not equal to"
-msgstr "non è uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than"
-msgstr "è minore di"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than or equal to"
-msgstr "è minore o uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than"
-msgstr "è maggiore di"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than or equal to"
-msgstr "è maggiore o uguale a"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "has selected value"
-msgstr "ha il valore selezionato"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ALL of the expressions are true."
-msgstr "Vero quando TUTTE le espressioni sono vere."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ANY of the expressions are true."
-msgstr "Vero quando QUALSIASI delle espressioni è vera."
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "loadXFormOrError"
 msgstr "loadXFormOrError"
 
@@ -1461,10 +1419,16 @@ msgid "getMainProperties"
 msgstr "getMainProperties"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "createXML"
 msgstr "creaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "getData"
 msgstr "ottieniDati"
 
@@ -1473,14 +1437,99 @@ msgid "checkMove"
 msgstr "checkMove"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "jstree"
 msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getCurrentMugInput"
+msgstr "getCurrentMugInput"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "loadXML"
+msgstr "loadXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "addQuestion"
+msgstr "aggiungiDomanda"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "nodeIDFromLabel"
+msgstr "nodeIDDaEtichetta"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getSections"
+msgstr "ottieniSezioni"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "collapseSection"
+msgstr "collassaSezione"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "Drag question here"
+msgstr "Trascina qui la domanda"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is equal to"
+msgstr "è uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is not equal to"
+msgstr "non è uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than"
+msgstr "è minore di"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than or equal to"
+msgstr "è minore o uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than"
+msgstr "è maggiore di"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than or equal to"
+msgstr "è maggiore o uguale a"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "has selected value"
+msgstr "ha il valore selezionato"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Vero quando TUTTE le espressioni sono vere."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Vero quando QUALSIASI delle espressioni è vera."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} non è un genitore dati valido"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/8096.js
 msgid "\n"
 msgstr "\n"
 
@@ -4522,6 +4571,13 @@ msgstr "Fallito! La risposta è: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
+#~ msgid "%(count)s skipped"
+#~ msgstr "%(count)s saltate"
+
+#~ msgid "Run AI Translate again to retry the labels that weren't translated."
+#~ msgstr ""
+#~ "Esegui nuovamente la traduzione IA per riprovare le etichette non tradotte."
+
 #~ msgid "Seconds"
 #~ msgstr "Secondi"
 
@@ -5427,27 +5483,6 @@ msgstr "CommCare HQ non è riuscito a effettuare la richiesta: "
 
 #~ msgid "No Translation Data"
 #~ msgstr "Nessun Dato di Traduzione"
-
-#~ msgid "getCurrentMugInput"
-#~ msgstr "getCurrentMugInput"
-
-#~ msgid "getMugByPath"
-#~ msgstr "getMugByPath"
-
-#~ msgid "loadXML"
-#~ msgstr "loadXML"
-
-#~ msgid "addQuestion"
-#~ msgstr "aggiungiDomanda"
-
-#~ msgid "nodeIDFromLabel"
-#~ msgstr "nodeIDDaEtichetta"
-
-#~ msgid "getSections"
-#~ msgstr "ottieniSezioni"
-
-#~ msgid "collapseSection"
-#~ msgstr "collassaSezione"
 
 #~ msgid "Active"
 #~ msgstr "Attivo"

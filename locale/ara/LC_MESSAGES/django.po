@@ -362,6 +362,7 @@ msgid ""
 msgstr "لا يمكن أن يكون حساب التحويل هو نفس الحساب الذي تحاول إلغاء تنشيطه."
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
 msgid "Billing Account"
 msgstr "حساب الفوترة"
 
@@ -1150,7 +1151,23 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting this"
 " plan will deactivate them."
 msgstr[0] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
 msgstr[1] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
+msgstr[2] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
+msgstr[3] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
+msgstr[4] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
+msgstr[5] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة. سيؤدي اختيار هذه "
+"الخطة إلى إلغاء تفعيلها."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1161,7 +1178,23 @@ msgid_plural ""
 "You have %(num_active)d active Reminder Rules and Broadcasts which use a "
 "Survey. Selecting this plan will deactivate them."
 msgstr[0] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
 msgstr[1] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
+msgstr[2] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
+msgstr[3] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
+msgstr[4] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
+msgstr[5] ""
+"لديك %(num_active)d من قواعد التذكير أو رسائل البث النشطة التي تستخدم "
+"استطلاعًا. سيؤدي اختيار هذه الخطة إلى إلغاء تفعيلها."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1171,7 +1204,23 @@ msgid_plural ""
 "You have %(num)d De-Identified Exports. Selecting this plan will remove "
 "them."
 msgstr[0] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
 msgstr[1] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
+msgstr[2] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
+msgstr[3] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
+msgstr[4] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
+msgstr[5] ""
+"لديك %(num)d من عمليات التصدير منزوعة الهوية. سيؤدي اختيار هذه الخطة إلى "
+"إزالتها."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1186,7 +1235,35 @@ msgid_plural ""
 "charge of USD %(excess_fee)s per Mobile Worker, totalling USD "
 "%(monthly_total)s per month, if you select this plan."
 msgstr[0] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
 msgstr[1] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
+msgstr[2] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
+msgstr[3] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
+msgstr[4] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
+msgstr[5] ""
+"لديك %(num_extra)d من العاملين المتنقلين فوق الحد الشهري البالغ "
+"%(monthly_limit)d لهذه الخطة الجديدة. ستُضاف رسوم شهرية قدرها USD "
+"%(excess_fee)s عن كل عامل متنقل، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا، إذا اخترت هذه الخطة."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1205,7 +1282,47 @@ msgid_plural ""
 "additional charge of USD %(excess_fee)s, totalling USD %(monthly_total)s per"
 " month."
 msgstr[0] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
 msgstr[1] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
+msgstr[2] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
+msgstr[3] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
+msgstr[4] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
+msgstr[5] ""
+"تتضمن الخطط المجانية %(monthly_limit)s من العاملين المتنقلين افتراضيًا. "
+"نظرًا لوجود %(num_extra)d من العاملين المتنقلين الإضافيين لديك، فسيتم إلغاء "
+"تفعيل جميع العاملين المتنقلين في مشروعك. يمكنك إعادة تفعيلهم يدويًا بعد "
+"الرجوع إلى خطة أدنى. سيترتب على كل عامل متنقل نشط يتجاوز %(monthly_limit)s "
+"رسوم إضافية قدرها USD %(excess_fee)s، ليصبح الإجمالي USD %(monthly_total)s "
+"شهريًا."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1218,7 +1335,23 @@ msgid_plural ""
 "select this plan, all users with these roles will change to having the Read "
 "Only role."
 msgstr[0] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذا الدور إلى دور للقراءة فقط."
 msgstr[1] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذه الأدوار إلى دور للقراءة فقط."
+msgstr[2] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذه الأدوار إلى دور للقراءة فقط."
+msgstr[3] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذه الأدوار إلى دور للقراءة فقط."
+msgstr[4] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذه الأدوار إلى دور للقراءة فقط."
+msgstr[5] ""
+"لديك %(num_roles)d من الأدوار المخصصة المُعدّة لمشروعك. إذا اخترت هذه الخطة،"
+" فسيُغيّر دور جميع المستخدمين الذين لديهم هذه الأدوار إلى دور للقراءة فقط."
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
@@ -1238,7 +1371,23 @@ msgid_plural ""
 "You have %(rule_count)d automatic case update rules configured in your "
 "project. If you select this plan, these rules will be deactivated."
 msgstr[0] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القواعد."
 msgstr[1] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القاعدة."
+msgstr[2] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القواعد."
+msgstr[3] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القواعد."
+msgstr[4] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القواعد."
+msgstr[5] ""
+"لديك %(rule_count)d من قواعد التحديث التلقائي للحالات المُعدّة في مشروعك. "
+"إذا اخترت هذه الخطة، فسيتم إلغاء تفعيل هذه القواعد."
 
 #: corehq/apps/accounting/subscription_changes.py
 msgid ""
@@ -1292,7 +1441,23 @@ msgid_plural ""
 "You have %(num_apps)d applications that have a practice mobile worker "
 "configured, it will be unset on downgrade."
 msgstr[0] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
 msgstr[1] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
+msgstr[2] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
+msgstr[3] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
+msgstr[4] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
+msgstr[5] ""
+"لديك %(num_apps)d من التطبيقات المُعدّة لاستخدام عامل متنقل تدريبي، وسيُزال "
+"هذا الإعداد عند الرجوع إلى خطة أدنى."
 
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
@@ -1465,6 +1630,7 @@ msgstr ""
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -6042,12 +6208,10 @@ msgid ""
 msgstr "تم تحديث التطبيق بنجاح، لكن التطبيق يفتقد إلى ملف/ملفات وسائط متعددة."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Started On"
 msgid "Starter App"
 msgstr "تطبيق البداية"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Feature Type"
 msgid "Feature Template"
 msgstr "قالب ميزة"
 
@@ -7766,6 +7930,7 @@ msgstr "إعدادات القائمة"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8293,7 +8458,6 @@ msgid "Bulk Application Translations"
 msgstr "ترجمات التطبيق بالجملة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
 msgid "Translate with AI"
 msgstr "الترجمة بالذكاء الاصطناعي"
 
@@ -8312,17 +8476,14 @@ msgstr ""
 "اليدوية. يرجى مراجعة ترجمات الذكاء الاصطناعي قبل نشر تطبيقك."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Learn More About Pricing Plans"
 msgid "Learn more about AI translations"
 msgstr "تعرف على المزيد حول ترجمات الذكاء الاصطناعي"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translations are available on Standard plans and above."
 msgstr "ترجمات الذكاء الاصطناعي متوفرة في الخطط القياسية وما فوقها."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "CommCare plans"
 msgid "Compare plans"
 msgstr "قارن الخطط"
 
@@ -8336,7 +8497,6 @@ msgstr ""
 "الرئيسي بدلاً من ذلك."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Please select an upstream app."
 msgid "Go to the upstream app"
 msgstr "انتقل إلى التطبيق الرئيسي"
 
@@ -8354,7 +8514,6 @@ msgid "Refresh"
 msgstr "تحديث"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "You do not have permission to edit locations."
 msgid "You need permission to edit this app to translate it."
 msgstr "تحتاج إلى إذن لتعديل هذا التطبيق لترجمته."
 
@@ -8384,27 +8543,76 @@ msgid "Language"
 msgstr "اللغة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "app translation"
 msgid "Last AI translated"
 msgstr "آخر ترجمة بالذكاء الاصطناعي"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translations"
 msgid "Translation progress"
 msgstr "تقدم الترجمة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid ""
+#| "To translate the remaining labels yourself, use <a href=\"#bulk-application-"
+#| "translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+#| "application-translations\" >Bulk Application Translations</a >."
 msgid ""
-"To translate the remaining labels yourself, use <a href=\"#bulk-application-"
-"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-"application-translations\" >Bulk Application Translations</a >."
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
 msgstr ""
-"لترجمة التسميات المتبقية بنفسك، استخدم <a href=\"#bulk-application-"
-"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-"application-translations\" >ترجمات التطبيق الجماعية</a >."
+"قد تؤدي إعادة تشغيل الترجمة بالذكاء الاصطناعي إلى ترجمة الباقي. وإذا لم يحدث"
+" ذلك، فترجمها بنفسك باستخدام <a href=\"#bulk-application-translations\" "
+"data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-application-"
+"translations\" >ترجمات التطبيقات المجمّعة</a >."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
+#| msgid "Search labels"
+msgid "Show labels"
+msgstr "إظهار التسميات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Search labels"
+msgid "Hide labels"
+msgstr "إخفاء التسميات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "The translation couldn't be queued. Run it again."
+msgid "The labels couldn't be loaded. Try again."
+msgstr "تعذّر تحميل التسميات. حاول مرة أخرى."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Loading"
+msgid "Loading…"
+msgstr "جارٍ التحميل…"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+"لم تعد قائمة التسميات متاحة. شغّل الترجمة بالذكاء الاصطناعي مرة أخرى لمعرفة "
+"التسميات التي تعذّرت ترجمتها."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "No longer available"
+msgid "No longer in the app"
+msgstr "لم يعد في التطبيق"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "مفتوح"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Show All Dates"
+msgid "Show all labels"
+msgstr "إظهار جميع التسميات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 msgid "AI Translate"
 msgstr "ترجمة بالذكاء الاصطناعي"
 
@@ -10814,6 +11022,16 @@ msgstr ""
 "        يمكن تغيير ذلك في إعدادات التطبيق، ضمن علامة التبويب <strong>الإعدادات المتقدمة</strong>،\n"
 "        قسم <strong>إعدادات أندرويد</strong>.\n"
 "      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "Public Webforms"
+msgid "Public Webform"
+msgstr "نموذج ويب عام"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "No public webforms match these filters."
+msgid "Create public webform from latest released version"
+msgstr "إنشاء نموذج ويب عام من أحدث إصدار منشور"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
@@ -15028,6 +15246,7 @@ msgstr "تعديل الأداة"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -16181,6 +16400,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -18663,12 +18883,12 @@ msgstr "تم تطبيق التغييرات"
 #, python-format
 msgid "Finished processing changes, updated %(count)s case."
 msgid_plural "Finished processing changes, updated %(count)s cases."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
+msgstr[1] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
+msgstr[2] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
+msgstr[3] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
+msgstr[4] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
+msgstr[5] "اكتملت معالجة التغييرات، وتم تحديث %(count)s من الحالات."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
@@ -18757,12 +18977,12 @@ msgstr "إعادة بدء هذه الجلسة"
 #, python-format
 msgid "%(count)s edit will be applied."
 msgid_plural "A total of %(count)s edits will be applied."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "سيتم تطبيق %(count)s من التعديلات."
+msgstr[1] "سيتم تطبيق %(count)s من التعديلات."
+msgstr[2] "سيتم تطبيق %(count)s من التعديلات."
+msgstr[3] "سيتم تطبيق %(count)s من التعديلات."
+msgstr[4] "سيتم تطبيق %(count)s من التعديلات."
+msgstr[5] "سيتم تطبيق %(count)s من التعديلات."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 msgid ""
@@ -18775,16 +18995,16 @@ msgstr ""
 "    "
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
-#, fuzzy, python-format
+#, python-format
 #| msgid "Sending will be retried."
 msgid "%(count)s edit will be cleared."
 msgid_plural "A total of %(count)s edits will be cleared."
-msgstr[0] "سيتم إعادة محاولة الإرسال."
-msgstr[1] "سيتم إعادة محاولة الإرسال."
-msgstr[2] "سيتم إعادة محاولة الإرسال."
-msgstr[3] "سيتم إعادة محاولة الإرسال."
-msgstr[4] "سيتم إعادة محاولة الإرسال."
-msgstr[5] "سيتم إعادة محاولة الإرسال."
+msgstr[0] "سيتم مسح %(count)s من التعديلات."
+msgstr[1] "سيتم مسح %(count)s من التعديلات."
+msgstr[2] "سيتم مسح %(count)s من التعديلات."
+msgstr[3] "سيتم مسح %(count)s من التعديلات."
+msgstr[4] "سيتم مسح %(count)s من التعديلات."
+msgstr[5] "سيتم مسح %(count)s من التعديلات."
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 msgid ""
@@ -20732,16 +20952,16 @@ msgid "The job failed. Please try again."
 msgstr "فشل المهمة. يرجى المحاولة مرة أخرى."
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, fuzzy, python-format
+#, python-format
 #| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
 msgid_plural "%(counter)s forms processed successfully"
-msgstr[0] "تمت معالجة النموذج بنجاح."
-msgstr[1] "تمت معالجة النموذج بنجاح."
-msgstr[2] "تمت معالجة النموذج بنجاح."
-msgstr[3] "تمت معالجة النموذج بنجاح."
-msgstr[4] "تمت معالجة النموذج بنجاح."
-msgstr[5] "تمت معالجة النموذج بنجاح."
+msgstr[0] "تمت معالجة %(counter)s من النماذج بنجاح"
+msgstr[1] "تمت معالجة %(counter)s من النماذج بنجاح"
+msgstr[2] "تمت معالجة %(counter)s من النماذج بنجاح"
+msgstr[3] "تمت معالجة %(counter)s من النماذج بنجاح"
+msgstr[4] "تمت معالجة %(counter)s من النماذج بنجاح"
+msgstr[5] "تمت معالجة %(counter)s من النماذج بنجاح"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 msgid "Some forms were skipped:"
@@ -21433,7 +21653,6 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> استخدام البيانات المجمعة</a>"
 
 #: corehq/apps/domain/forms.py
-#| msgid "CommCare Companion (Beta)"
 msgid "Opt out of CommCare Companion"
 msgstr "إلغاء الاشتراك من CommCare Companion"
 
@@ -21813,11 +22032,6 @@ msgid "Partner Contact Emails"
 msgstr "عناوين البريد الإلكتروني لجهات الاتصال الشريكة"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-#| "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-#| "<span data-bind=\"text: end_date\"></span> the project space will be "
-#| "automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
 "hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
@@ -22530,6 +22744,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 msgid "Please note:"
 msgstr "يرجى الملاحظة:"
 
@@ -25829,12 +26044,12 @@ msgstr ""
 #, python-format
 msgid "You have only %(counter)s backup token remaining."
 msgid_plural "You have %(counter)s backup tokens remaining."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
+msgstr[1] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
+msgstr[2] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
+msgstr[3] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
+msgstr[4] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
+msgstr[5] "لم يتبقَّ لديك سوى %(counter)s من رموز النسخ الاحتياطي."
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
@@ -31962,6 +32177,34 @@ msgstr "تم التغيير في"
 msgid "Update Randomness"
 msgstr "تحديث العشوائية"
 
+#: corehq/apps/hqadmin/template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "على سبيل المثال، الزراعة"
+
+#: corehq/apps/hqadmin/template_apps/forms.py
+#| msgid "A case type with this name already exists."
+msgid "A sector with this name already exists."
+msgstr "يوجد قطاع بهذا الاسم بالفعل."
+
+#: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
+#| msgid "Manage Tables"
+msgid "Manage Template Apps"
+msgstr "إدارة تطبيقات القوالب"
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "{} cannot be deleted"
+msgid "Sector label deleted."
+msgstr "تم حذف تسمية القطاع."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "Search labels"
+msgid "Sector label saved."
+msgstr "تم حفظ تسمية القطاع."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+msgid "Sector label added."
+msgstr "تمت إضافة تسمية القطاع."
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "اسم النطاق"
@@ -32236,6 +32479,49 @@ msgstr "يمكنه تعيين مستخدم فائق"
 msgid "Feature Flag Edit Permissions"
 msgstr "أذونات تعديل علم الميزة"
 
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Manage Forms"
+msgid "Manage sectors"
+msgstr "إدارة القطاعات"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Template Name"
+msgid "Template Apps"
+msgstr "تطبيقات القوالب"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"تُشارك تسميات القطاعات بين تطبيقات القوالب. تؤدي إعادة تسمية تسمية إلى تحديث"
+" كل قالب يستخدمها."
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Use question labels"
+msgid "New sector label"
+msgstr "تسمية قطاع جديدة"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Add User"
+msgid "Add sector"
+msgstr "إضافة قطاع"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Search labels"
+msgid "Sector label"
+msgstr "تسمية القطاع"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Template String"
+msgid "Templates using it"
+msgstr "القوالب التي تستخدمها"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr "لا توجد تسميات قطاعات بعد. أضف التسمية الأولى أعلاه."
+
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
 msgstr "شاهد مشاريع المستخدم بإدخال عنوان بريده الإلكتروني أدناه."
@@ -32297,16 +32583,16 @@ msgstr ""
 "              "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
-#, fuzzy, python-format
+#, python-format
 #| msgid "Update Location Membership"
 msgid "%(count)s domain membership"
 msgid_plural "%(count)s domain memberships"
-msgstr[0] "تحديث عضوية الموقع"
-msgstr[1] "تحديث عضوية الموقع"
-msgstr[2] "تحديث عضوية الموقع"
-msgstr[3] "تحديث عضوية الموقع"
-msgstr[4] "تحديث عضوية الموقع"
-msgstr[5] "تحديث عضوية الموقع"
+msgstr[0] "%(count)s من عضويات النطاق"
+msgstr[1] "%(count)s من عضويات النطاق"
+msgstr[2] "%(count)s من عضويات النطاق"
+msgstr[3] "%(count)s من عضويات النطاق"
+msgstr[4] "%(count)s من عضويات النطاق"
+msgstr[5] "%(count)s من عضويات النطاق"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "Superuser access"
@@ -32404,12 +32690,12 @@ msgstr "المستخدم '{username}' غير موجود."
 #, python-brace-format
 msgid "{count} domain membership"
 msgid_plural "{count} domain memberships"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "{count} من عضويات النطاق"
+msgstr[1] "{count} من عضويات النطاق"
+msgstr[2] "{count} من عضويات النطاق"
+msgstr[3] "{count} من عضويات النطاق"
+msgstr[4] "{count} من عضويات النطاق"
+msgstr[5] "{count} من عضويات النطاق"
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "superuser access"
@@ -32764,12 +33050,12 @@ msgstr ""
 #, python-format
 msgid "%(matched_count)s match found."
 msgid_plural "%(matched_count)s matches found."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "تم العثور على %(matched_count)s من النتائج المطابقة."
+msgstr[1] "تم العثور على %(matched_count)s من النتائج المطابقة."
+msgstr[2] "تم العثور على %(matched_count)s من النتائج المطابقة."
+msgstr[3] "تم العثور على %(matched_count)s من النتائج المطابقة."
+msgstr[4] "تم العثور على %(matched_count)s من النتائج المطابقة."
+msgstr[5] "تم العثور على %(matched_count)s من النتائج المطابقة."
 
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/bulk_upload_status.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/bulk_upload_status.html
@@ -33751,11 +34037,23 @@ msgid_plural ""
 "You're at risk of losing access to your project space if your invoice isn't "
 "paid in %(days_until_downgrade)s days."
 msgstr[0] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 msgstr[1] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 msgstr[2] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 msgstr[3] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 msgstr[4] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 msgstr[5] ""
+"أنت معرّض لخطر فقدان إمكانية الوصول إلى مساحة مشروعك إذا لم تُسدّد فاتورتك "
+"خلال %(days_until_downgrade)s يوم."
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/downgrade_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
@@ -33835,11 +34133,17 @@ msgid "Your prepaid credits will run out in %(prepaid_weeks_remaining)s week!"
 msgid_plural ""
 "Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!"
 msgstr[0] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 msgstr[1] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 msgstr[2] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 msgstr[3] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 msgstr[4] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 msgstr[5] ""
+"ستنتهي أرصدتك المدفوعة مسبقًا خلال %(prepaid_weeks_remaining)s أسبوع!"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
@@ -34137,7 +34441,9 @@ msgstr "صفحة الحالة"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/users/views/web.py
+#: corehq/apps/settings/views.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/users/views/web.py
 msgid "Project"
 msgstr "مشروع"
 
@@ -38281,8 +38587,12 @@ msgstr ""
 " تم إرسالها بالفعل حتى تنتهي صلاحيتها."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "كيف يتلقى المستجيبون رابطهم لمرة واحدة"
+msgid "A branded email with a single-use link."
+msgstr "بريد إلكتروني يحمل علامة تجارية مع رابط للاستخدام مرة واحدة."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr "رسالة نصية قصيرة مع رابط مختصر. يتم احتساب التكلفة لكل رسالة مرسلة."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "Open to Requests"
@@ -38293,12 +38603,12 @@ msgid "Immediately open this public webform to one-time link requests."
 msgstr "افتح هذا النموذج العام على الويب فوراً لطلبات الروابط لمرة واحدة."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "بريد إلكتروني يحمل علامة تجارية مع رابط للاستخدام مرة واحدة."
+msgid "How Respondents Receive Their One-time Link"
+msgstr "كيف يتلقى المستجيبون رابطهم لمرة واحدة"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A short text with a shortened link. Billed per message sent."
-msgstr "رسالة نصية قصيرة مع رابط مختصر. يتم احتساب التكلفة لكل رسالة مرسلة."
+msgid "Choose at least one way for respondents to receive one-time links."
+msgstr "اختر طريقة واحدة على الأقل ليتلقى المشاركون روابط لمرة واحدة."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -38313,10 +38623,6 @@ msgstr "إنشاء نموذج ويب عام"
 #: corehq/apps/public_webforms/forms.py
 msgid "Please select an application, menu, and form."
 msgstr "يرجى اختيار تطبيق وقائمة ونموذج."
-
-#: corehq/apps/public_webforms/forms.py
-msgid "The selected form can't be used for a public webform."
-msgstr "لا يمكن استخدام النموذج المحدد كنموذج ويب عام."
 
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 msgid "Edit Public Webform"
@@ -38346,13 +38652,6 @@ msgid ""
 msgstr ""
 "رابطك لمرة واحدة لنموذج {form_name}:\n"
 "{url}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "مفتوح"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -38540,6 +38839,24 @@ msgstr ""
 "          فقط <strong>نماذج التسجيل</strong> و<strong>الاستطلاع</strong>\n"
 "          مؤهلة. لا يمكن جعل النماذج التي تحدث الحالات الحالية عامة.\n"
 "        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+"\n"
+"    تتطلب روابط الرسائل النصية القصيرة خدمة المراسلة، وهي متوقفة لهذا المشروع.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Messaging"
+msgid "Enable Messaging"
+msgstr "تفعيل المراسلة"
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
@@ -40443,8 +40760,12 @@ msgstr "لم يتم تحديد أي مساحات مشروع"
 #, python-brace-format
 msgid "{count} invitation sent"
 msgid_plural "{count} invitations sent"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "تم إرسال {count} من الدعوات"
+msgstr[1] "تم إرسال {count} من الدعوات"
+msgstr[2] "تم إرسال {count} من الدعوات"
+msgstr[3] "تم إرسال {count} من الدعوات"
+msgstr[4] "تم إرسال {count} من الدعوات"
+msgstr[5] "تم إرسال {count} من الدعوات"
 
 #: corehq/apps/registry/views.py
 msgid "Grant not found"
@@ -46088,6 +46409,189 @@ msgstr "و"
 msgid "Add Day and Time Window"
 msgstr "إضافة يوم ونافذة زمنية"
 
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Enable messaging for %(domain_name)s\n"
+"          "
+msgstr ""
+"\n"
+"            تفعيل المراسلة لـ %(domain_name)s\n"
+"          "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+msgid ""
+"\n"
+"              %(billing_account)s\n"
+"              will be charged for every SMS this project sends and receives.\n"
+"            "
+msgstr ""
+"\n"
+"              ستُحمّل %(billing_account)s\n"
+"              تكلفة كل رسالة نصية قصيرة يرسلها هذا المشروع أو يستقبلها.\n"
+"            "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#| msgid ""
+#| "\n"
+#| "                To select a range of fields hold the Shift key and select\n"
+#| "                the first and last field in the range.\n"
+#| "              "
+msgid ""
+"\n"
+"                A public webform with SMS turned on sends a text to any phone\n"
+"                number a respondent enters, and each text is charged.\n"
+"              "
+msgstr ""
+"\n"
+"                يرسل نموذج ويب عام مع تفعيل الرسائل النصية رسالةً إلى أي رقم هاتف\n"
+"                يُدخله المستجيب، وتُفرض رسوم على كل رسالة.\n"
+"              "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Role is required for web users."
+msgid "Action is required to enable messaging."
+msgstr "يلزم اتخاذ إجراء لتفعيل المراسلة."
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Outgoing Messaging"
+msgid "How to Enable Messaging"
+msgstr "كيفية تفعيل المراسلة"
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        To enable messaging features for this project space, please do at least\n"
+"        <strong>one</strong> of the following:\n"
+"      "
+msgstr ""
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  <a href=\"%(login_url)s\">Login</a> to access your account.\n"
+#| "                "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+"          account.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">احفظ بطاقة دفع</a> في حساب المستخدم\n"
+"          الخاص بك.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "              has no reports.\n"
+#| "            "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+"          for this project space.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">فعّل الدفعات التلقائية</a>\n"
+"          لمساحة المشروع هذه.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+"          or\n"
+"          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+"          totaling %(self_enable_payment_threshold)s or more.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">سدّد الفواتير</a>\n"
+"          أو\n"
+"          <a href=\"%(purchase_credits_url)s\">اشترِ أرصدة مسبقة الدفع</a>\n"
+"          بقيمة إجمالية تبلغ %(self_enable_payment_threshold)s أو أكثر.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+"        charges can be billed correctly.\n"
+"      "
+msgstr ""
+"\n"
+"        بعد ذلك، عُد إلى هذه الصفحة لتفعيل المراسلة. يساعدنا ذلك على ضمان\n"
+"        احتساب رسوم الرسائل النصية القصيرة على نحو صحيح.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"        If none of these options are available for you, please email\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"        to request access to messaging features. Include your full name and the\n"
+"        name of the organization you work for.\n"
+"      "
+msgstr ""
+"\n"
+"        إذا لم يكن أي من هذه الخيارات متاحًا لك، يُرجى مراسلة\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"        لطلب الوصول إلى ميزات المراسلة. أدرج اسمك الكامل واسم المؤسسة التي\n"
+"        تعمل لديها.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Back to Forms"
+msgid "Back to Home"
+msgstr "العودة إلى الصفحة الرئيسية"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "Turning on messaging will cost this project money."
+msgstr "سيؤدي تفعيل المراسلة إلى فرض رسوم على هذا المشروع."
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid ""
+"\n"
+"      This project is charged for every SMS it sends and receives. The price of\n"
+"      each SMS depends on the country of the phone number. Charges appear on the\n"
+"      project's monthly CommCare invoice.\n"
+"    "
+msgstr ""
+"\n"
+"      تُفرض رسوم على هذا المشروع مقابل كل رسالة نصية قصيرة يرسلها أو يستقبلها. ويعتمد سعر\n"
+"      كل رسالة نصية قصيرة على بلد رقم الهاتف. وتظهر الرسوم في فاتورة CommCare الشهرية\n"
+"      للمشروع.\n"
+"    "
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "See SMS prices by country"
+msgstr "عرض أسعار الرسائل النصية القصيرة حسب البلد"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Usage Charge"
+msgid "Who is Charged"
+msgstr "الجهة التي تتحمل الرسوم"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Invoice No."
+msgid "Invoices Emailed to"
+msgstr "تُرسل الفواتير بالبريد الإلكتروني إلى"
+
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Filter Type"
 msgstr "نوع الفلتر"
@@ -46109,30 +46613,36 @@ msgid "Verification Pending"
 msgstr "في انتظار التحقق"
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Request Access to Messaging Features"
-msgstr "طلب الوصول إلى ميزات الرسائل"
-
-#: corehq/apps/sms/templates/sms/wall.html
-#, python-format
 msgid ""
 "\n"
-"      To enable messaging features, please request access by sending an email to\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
-"      work email address containing the following information:\n"
-"    "
+"        Messaging lets this project send and receive SMS, including one-time\n"
+"        links for public webforms, broadcasts, and conditional alerts.\n"
+"      "
 msgstr ""
 "\n"
-"      لتمكين ميزات المراسلة، يرجى طلب الوصول عن طريق إرسال بريد إلكتروني إلى\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> من بريدك الإلكتروني الخاص بالعمل متضمناً المعلومات التالية:\n"
-"    "
+"        تتيح المراسلة لهذا المشروع إرسال الرسائل النصية القصيرة واستقبالها، بما في ذلك الروابط\n"
+"        لمرة واحدة لنماذج الويب العامة، والرسائل الجماعية، والتنبيهات المشروطة.\n"
+"      "
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Your full name"
-msgstr "اسمك الكامل"
+#| msgid ""
+#| "Filtering by unknown forms is currently unavailable for this project."
+msgid "Messaging is currently disabled for this project space."
+msgstr "المراسلة معطّلة حاليًا لمساحة المشروع هذه."
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "The organization you work for"
-msgstr "المنظمة التي تعمل بها"
+#| msgid ""
+#| "\n"
+#| "      Please contact a project administrator to restore access.\n"
+#| "    "
+msgid ""
+"\n"
+"            Please contact your project administrator to enable messaging.\n"
+"          "
+msgstr ""
+"\n"
+"            يُرجى التواصل مع مسؤول المشروع لتفعيل المراسلة.\n"
+"          "
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "WhatsApp Templates"
@@ -46190,6 +46700,15 @@ msgstr "أسبوع واحد"
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr "30 يومًا"
+
+#: corehq/apps/sms/views.py
+#| msgid "{} fields saved successfully."
+msgid "Messaging enabled successfully."
+msgstr "تم تفعيل المراسلة بنجاح."
+
+#: corehq/apps/sms/views.py
+msgid "Messaging cannot be enabled right now."
+msgstr "يتعذر تفعيل المراسلة الآن."
 
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Compose SMS Message"
@@ -48534,6 +49053,42 @@ msgstr "النطاقات النشطة"
 msgid "Last Usage"
 msgstr "آخر استخدام"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr "لم يُرجع الذكاء الاصطناعي ترجمة."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The payee is not allowed to receive the deposit transaction."
+msgid "The app didn't accept the AI's translation."
+msgstr "لم يقبل التطبيق ترجمة الذكاء الاصطناعي."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr "أرجع الذكاء الاصطناعي ترجمة فارغة."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The deposit transaction was rejected by the payer."
+msgid "The AI's translation has characters the app can't save."
+msgstr "تحتوي ترجمة الذكاء الاصطناعي على أحرف لا يستطيع التطبيق حفظها."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr "غيّر الذكاء الاصطناعي قيمةً مُدرجة من سؤال آخر أو حذفها."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr "غيّر الذكاء الاصطناعي التنسيق، مثل النص العريض أو القائمة."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The message was blank."
+msgid "The AI changed a web link."
+msgstr "غيّر الذكاء الاصطناعي رابط ويب."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "No labels could be translated."
+msgid "The label couldn't be translated."
+msgstr "تعذّرت ترجمة التسمية."
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 msgid "Remote apps can't be translated with AI."
 msgstr "لا يمكن ترجمة التطبيقات البعيدة بالذكاء الاصطناعي."
@@ -48796,9 +49351,6 @@ msgid "Other translations of this app took too long to finish. Run it again."
 msgstr "استغرقت ترجمات أخرى لهذا التطبيق وقتًا طويلاً للانتهاء. أعد المحاولة."
 
 #: corehq/apps/translations/tasks.py
-#| msgid ""
-#| "Something went wrong while translating the app. Review its translations and "
-#| "run it again."
 msgid ""
 "Something went wrong and the translation didn't finish. Run it again, and "
 "contact support if it keeps failing."
@@ -48807,15 +49359,8 @@ msgstr ""
 "الفشل."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "No strings could be translated."
 msgid "No labels could be translated."
 msgstr "لم يتمكن النظام من ترجمة أي تسمية."
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
@@ -48859,7 +49404,6 @@ msgid "Please select language to validate."
 msgstr "يرجى اختيار اللغة للتحقق."
 
 #: corehq/apps/translations/views.py
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translation isn't available for this project."
 msgstr "الترجمة بالذكاء الاصطناعي غير متاحة لهذا المشروع."
 
@@ -48868,9 +49412,42 @@ msgid "This language can't be translated with AI."
 msgstr "لا يمكن ترجمة هذه اللغة باستخدام الذكاء الاصطناعي."
 
 #: corehq/apps/translations/views.py
-#| msgid "This user is already an enterprise administrator."
 msgid "This language is already being translated."
 msgstr "يتم بالفعل ترجمة هذه اللغة."
+
+#: corehq/apps/translations/views.py
+#| msgid "case list"
+msgid "Case list"
+msgstr "قائمة الحالات"
+
+#: corehq/apps/translations/views.py
+#| msgid "case detail"
+msgid "Case detail"
+msgstr "تفاصيل الحالة"
+
+#: corehq/apps/translations/views.py
+#| msgid "Case Search"
+msgid "Case search"
+msgstr "البحث عن حالة"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr "تلميح"
+
+#: corehq/apps/translations/views.py
+#| msgid "Help Text"
+msgid "help text"
+msgstr "نص المساعدة"
+
+#: corehq/apps/translations/views.py
+#| msgid "Validation Message"
+msgid "validation message"
+msgstr "رسالة التحقق"
+
+#: corehq/apps/translations/views.py
+#| msgid "Choices"
+msgid "choice"
+msgstr "خيار"
 
 #: corehq/apps/user_importer/exceptions.py
 msgid ""
@@ -59723,6 +60300,31 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr "لا يمكن استخدام النموذج المحدد كنموذج ويب عام."
+
+#~ msgid "Request Access to Messaging Features"
+#~ msgstr "طلب الوصول إلى ميزات الرسائل"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      To enable messaging features, please request access by sending an email to\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
+#~ "      work email address containing the following information:\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      لتمكين ميزات المراسلة، يرجى طلب الوصول عن طريق إرسال بريد إلكتروني إلى\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> من بريدك الإلكتروني الخاص بالعمل متضمناً المعلومات التالية:\n"
+#~ "    "
+
+#~ msgid "Your full name"
+#~ msgstr "اسمك الكامل"
+
+#~ msgid "The organization you work for"
+#~ msgstr "المنظمة التي تعمل بها"
 
 #~ msgid "Space-separated list of privilege strings from corehq.privileges"
 #~ msgstr "قائمة مفصولة بمسافات من سلاسل الامتيازات من corehq.privileges"
