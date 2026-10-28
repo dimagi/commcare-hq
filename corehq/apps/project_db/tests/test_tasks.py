@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from django.core.cache import cache
 from django.test import TestCase
+from django.utils import timezone
 
 import pytest
 import sqlalchemy
@@ -16,6 +17,7 @@ from corehq.apps.project_db.table_ddl import CaseTable, get_project_db_engine
 from corehq.apps.project_db.tasks import (
     _processing_queued_key,
     process_pending_operations,
+    queue_stale_pending_operations,
     schedule_project_db_sync,
 )
 
@@ -102,3 +104,13 @@ def test_process_applies_and_clears_pending_backfills():
         dob = conn.execute(sqlalchemy.select([table.c.date_prop__dob])).scalar()
     assert dob == datetime.date(2020, 1, 1)
     assert not PendingOperation.objects.filter(domain=domain).exists()
+
+
+@use('db')
+def test_sweep_queues_domains_with_stale_operations():
+    _record_sync(domain='stale-domain')
+    PendingOperation.objects.update(created_on=timezone.now() - datetime.timedelta(hours=2))
+    _record_sync(domain='fresh-domain')
+    with patch('corehq.apps.project_db.tasks._queue_processing') as queue_mock:
+        queue_stale_pending_operations()
+    queue_mock.assert_called_once_with('stale-domain')

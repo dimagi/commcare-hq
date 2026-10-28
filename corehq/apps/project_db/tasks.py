@@ -1,12 +1,15 @@
 from collections import defaultdict
+from datetime import timedelta
 
 from django.core.cache import cache
 from django.db import transaction
+from django.utils import timezone
 
+from celery.schedules import crontab
 from psycopg2 import errorcodes
 from sqlalchemy.exc import OperationalError
 
-from corehq.apps.celery import serial_task
+from corehq.apps.celery import periodic_task, serial_task
 
 from .models import PendingOperation
 from .populate import backfill_typed_columns
@@ -28,6 +31,18 @@ def _queue_processing(domain):
 
 def _processing_queued_key(domain):
     return f'project-db-processing-queued-{domain}'
+
+
+@periodic_task(run_every=crontab(minute=0), queue='background_queue')
+def queue_stale_pending_operations():
+    """Requeue processing for domains whose operations were lost or failed"""
+    cutoff = timezone.now() - timedelta(hours=1)
+    domains = (
+        PendingOperation.objects.filter(created_on__lt=cutoff)
+        .values_list('domain', flat=True).distinct()
+    )
+    for domain in domains:
+        _queue_processing(domain)
 
 
 @serial_task('{domain}', timeout=30 * 60, max_retries=3)
