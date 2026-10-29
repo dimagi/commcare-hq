@@ -5,11 +5,12 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
+from celery.exceptions import Retry
 from celery.schedules import crontab
 from psycopg2 import errorcodes
 from sqlalchemy.exc import OperationalError
 
-from corehq.apps.celery import periodic_task, serial_task
+from corehq.apps.celery import periodic_task, task
 
 from .models import PendingOperation
 from .populate import backfill_typed_columns
@@ -23,10 +24,10 @@ def schedule_project_db_sync(domain):
 
 
 def _queue_processing(domain):
-    """Queue an update unless one is already queued for the domain"""
-    if cache.add(_processing_queued_key(domain), True, timeout=5 * 60):
+    """Queue an update unless one is already queued or running for the domain"""
+    if cache.add(_processing_queued_key(domain), True, timeout=60 * 60):
         # Schedule the task with a 15 second debounce delay
-        process_pending_operations.apply_async([domain], countdown=15)
+        _process_pending_operations.apply_async([domain], countdown=15)
 
 
 def _processing_queued_key(domain):
@@ -45,17 +46,33 @@ def queue_stale_pending_operations():
         _queue_processing(domain)
 
 
-@serial_task('{domain}', timeout=30 * 60, max_retries=3)
-def process_pending_operations(domain):
-    # allow overlapping operations to be queued
-    cache.delete(_processing_queued_key(domain))
-    try:
-        _apply_pending_sync(domain)
-    except OperationalError as err:
-        if err.orig.pgcode == errorcodes.LOCK_NOT_AVAILABLE:
-            process_pending_operations.retry(exc=err)
-        raise
-    _apply_pending_backfills(domain)
+@task(bind=True, queue='background_queue', ignore_result=True, default_retry_delay=30)
+def _process_pending_operations(self, domain):
+    with _ProcessingLock(domain):
+        try:
+            _apply_pending_sync(domain)
+            _apply_pending_backfills(domain)
+        except OperationalError as err:
+            if err.orig.pgcode == errorcodes.LOCK_NOT_AVAILABLE:
+                raise self.retry(exc=err)  # Couldn't get a write lock, retry
+            raise
+
+    # Requeue operations recorded during this run
+    if PendingOperation.objects.filter(domain=domain).exists():
+        _queue_processing(domain)
+
+
+class _ProcessingLock:
+    """Clear the lock at the end unless we're retrying"""
+    def __init__(self, domain):
+        self.key = _processing_queued_key(domain)
+
+    def __enter__(self):
+        ...
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not Retry:
+            cache.delete(self.key)
 
 
 def _apply_pending_sync(domain):

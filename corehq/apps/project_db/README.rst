@@ -63,7 +63,7 @@ never dropped or rewritten. A new case property becomes a new column; a new
 case type becomes a new table.
 
 Pending syncs and backfills of new typed columns are recorded as
-``PendingOperation`` rows.  The ``process_pending_operations`` task applies all
+``PendingOperation`` rows.  The ``_process_pending_operations`` task applies all
 pending operations and deletes the record. As a safeguard, an hourly task
 requeues any unprocessed operations.
 
