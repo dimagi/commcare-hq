@@ -15,6 +15,7 @@ whole document through bleach would strip tags the layout relies on
 (``html``, ``head``, ``body``, ``thead``, ``tfoot``). Values the author wrote
 are run in a sandbox, and values from the context are autoescaped.
 """
+from functools import cache
 from pathlib import Path
 
 import bleach
@@ -52,7 +53,12 @@ class DocumentRenderError(Exception):
 
 
 def get_variable_names():
-    return parse_variable_names(US_LETTER_TEMPLATE.read_text())
+    return list(_get_variable_names())
+
+
+@cache
+def _get_variable_names():
+    return tuple(parse_variable_names(US_LETTER_TEMPLATE.read_text()))
 
 
 def parse_variable_names(source):
