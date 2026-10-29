@@ -313,6 +313,22 @@ class TestInviteWebUserViewInvitation(InvitationViewTestCase):
         )
 
 
+class TestReinviteWebUser(InvitationViewTestCase):
+
+    @patch('corehq.apps.users.models.Invitation.send_activation_email')
+    def test_resend_invitation_in_domain(self, send_activation_email):
+        self._post(self.create_invitation())
+        send_activation_email.assert_called_once()
+
+    @patch('corehq.apps.users.models.Invitation.send_activation_email')
+    def test_cannot_resend_invitation_in_other_domain(self, send_activation_email):
+        self._post(self.create_invitation(domain='other-domain'))
+        send_activation_email.assert_not_called()
+
+    def _post(self, invitation):
+        return self.client.post(reverse('reinvite_web_user', args=[self.domain]), {'uuid': invitation.uuid})
+
+
 class TestDeletePhoneNumberView(TestCase):
     domain = 'test'
 

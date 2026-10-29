@@ -256,7 +256,7 @@ def accept_invitation(request, domain, uuid):
 def reinvite_web_user(request, domain):
     uuid = request.POST['uuid']
     try:
-        invitation = Invitation.objects.get(uuid=uuid)
+        invitation = Invitation.objects.get(uuid=uuid, domain=domain)
     except Invitation.DoesNotExist:
         return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
     if not user_can_access_invite(domain, request.couch_user, invitation):
