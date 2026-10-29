@@ -62,6 +62,23 @@ class TestUserInvitation(TestCase):
         self.assertEqual(302, response.status_code)
         self.assertEqual("/accounts/login/", response.url)
 
+    def test_redirect_if_invite_is_in_other_domain(self):
+        request = Mock()
+        invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
+
+        Invitation.objects.create(
+            email='test@dimagi.com',
+            uuid=invite_uuid,
+            domain='other-domain',
+            is_accepted=False,
+            invited_on=datetime.datetime.now(),
+            invited_by="system@dimagi.com",
+        )
+
+        response = UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual("/accounts/login/", response.url)
+
     def test_redirect_if_invite_is_already_accepted(self):
         request = Mock()
         invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"

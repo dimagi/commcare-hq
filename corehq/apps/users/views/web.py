@@ -55,7 +55,7 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
         try:
-            invitation = Invitation.objects.get(uuid=uuid)
+            invitation = Invitation.objects.get(uuid=uuid, domain=self.domain)
         except (Invitation.DoesNotExist, ValidationError):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
@@ -71,8 +71,6 @@ class UserInvitationView(object):
                                           "If you feel this is a mistake, please ask the inviter for "
                                           "another invitation."))
             return HttpResponseRedirect(reverse("login"))
-
-        self.validate_invitation(invitation)
 
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -222,9 +220,6 @@ class UserInvitationView(object):
 
         context.update({"form": form})
         return render(request, self.template, context)
-
-    def validate_invitation(self, invitation):
-        assert invitation.domain == self.domain
 
     def is_invited(self, invitation, couch_user):
         return couch_user.is_member_of(invitation.domain)
