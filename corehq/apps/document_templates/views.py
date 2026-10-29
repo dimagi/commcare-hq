@@ -42,6 +42,7 @@ class DocumentTemplatesView(BaseMessagingSectionView):
         return {
             'templates': Template.objects.filter(
                 domain=self.domain,
+                deleted=False,
             )
             .order_by('name')
         }
@@ -115,7 +116,7 @@ class NewDocumentTemplateView(BaseMessagingSectionView):
         )
 
     def get_existing_slugs(self):
-        return Template.objects.filter(domain=self.domain).values_list('slug', flat=True)
+        return Template.objects.filter(domain=self.domain, deleted=False).values_list('slug', flat=True)
 
     @property
     def page_context(self):
@@ -145,7 +146,7 @@ class EditDocumentTemplateView(NewDocumentTemplateView):
 
     @cached_property
     def document_template(self):
-        return get_object_or_404(Template, domain=self.domain, pk=self.kwargs['template_id'])
+        return get_object_or_404(Template, domain=self.domain, pk=self.kwargs['template_id'], deleted=False)
 
     @property
     def page_url(self):
@@ -177,8 +178,9 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
         return reverse(self.urlname, args=[self.domain, self.kwargs['template_id']])
 
     def post(self, request, *args, **kwargs):
-        template = get_object_or_404(Template, domain=self.domain, pk=kwargs['template_id'])
-        template.delete()
+        template = get_object_or_404(Template, domain=self.domain, pk=kwargs['template_id'], deleted=False)
+        template.deleted = True
+        template.save(update_fields=['deleted'])
         return HttpResponseRedirect(
             reverse(DocumentTemplatesView.urlname, args=[self.domain])
         )
