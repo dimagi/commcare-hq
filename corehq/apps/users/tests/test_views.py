@@ -329,6 +329,22 @@ class TestReinviteWebUser(InvitationViewTestCase):
         return self.client.post(reverse('reinvite_web_user', args=[self.domain]), {'uuid': invitation.uuid})
 
 
+class TestDeleteInvitation(InvitationViewTestCase):
+
+    def test_delete_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._post(invitation).status_code == 200
+        assert not Invitation.objects.filter(pk=invitation.pk).exists()
+
+    def test_cannot_delete_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        assert self._post(invitation).status_code == 404
+        assert Invitation.objects.filter(pk=invitation.pk).exists()
+
+    def _post(self, invitation):
+        return self.client.post(reverse('delete_invitation', args=[self.domain]), {'uuid': invitation.uuid})
+
+
 class TestDeletePhoneNumberView(TestCase):
     domain = 'test'
 

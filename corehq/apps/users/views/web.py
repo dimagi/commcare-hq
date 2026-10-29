@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -274,7 +274,7 @@ def reinvite_web_user(request, domain):
 @location_safe
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
-    invitation = Invitation.objects.get(uuid=uuid)
+    invitation = get_object_or_404(Invitation, uuid=uuid, domain=domain)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
     invitation.delete(deleted_by=request.couch_user.user_id)
