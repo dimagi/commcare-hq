@@ -9,6 +9,7 @@ from django import forms
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory, TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import InvitationHistory
 from corehq.apps.users.model_log import InviteModelAction
@@ -205,3 +206,55 @@ class TestUserInvitation(TestCase):
         InvitationHistory.objects.get(invitation_id=invitation.pk, action=3)
         with self.assertRaises(Invitation.DoesNotExist):
             Invitation.objects.get(uuid=invite_uuid)
+
+    @patch.object(Domain, 'allow_invite_email_only', True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_allow_invite_email_only_blocks_other_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("other@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertFalse(WebUser.get_by_username("other@dimagi.com").is_member_of(self.domain))
+
+    @patch.object(Domain, 'allow_invite_email_only', True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_allow_invite_email_only_accepts_invited_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("invitee@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertTrue(WebUser.get_by_username("invitee@dimagi.com").is_member_of(self.domain))
+
+    def _setup_signed_in_invitation_and_request(self, username):
+        invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
+        inviter = WebUser.create(
+            None,
+            'inviter@dimagi.com',
+            'pass12342&*LKJ',
+            None,
+            None,
+            by_domain_required_for_log=False,
+        )
+        user = WebUser.create(
+            None,
+            username,
+            'pass12342&*LKJ',
+            None,
+            None,
+            by_domain_required_for_log=False,
+        )
+        request = self.factory.post(f"/join/{invite_uuid}")
+        request.user = user.get_django_user()
+        request.couch_user = user
+        Invitation.objects.create(
+            email="invitee@dimagi.com",
+            uuid=invite_uuid,
+            domain=self.domain,
+            is_accepted=False,
+            invited_on=(datetime.datetime.now() - datetime.timedelta(days=1)),
+            invited_by=inviter.user_id,
+            role="admin",
+        )
+        return request, invite_uuid

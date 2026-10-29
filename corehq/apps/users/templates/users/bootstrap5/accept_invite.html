@@ -16,7 +16,7 @@
         <div class="reg-form-container sign-in-container">
           {% if request.user.is_authenticated %}
             <div class="form-bubble form-bubble-lg">
-              {% if not mobile_user %}
+              {% if not mobile_user and not email_mismatch_blocked %}
                 <form name="form" method="post" action="">
                   <h2>
                     {% blocktrans %}
@@ -56,7 +56,7 @@
                   </div>
 
                 </form>
-              {% else %}
+              {% elif mobile_user %}
                 <p>
                   <strong>{% trans 'Note' %}:</strong>
                   {% trans "You are signed in as a mobile user, but to accept this invitation, you must be a web user." %}
@@ -66,6 +66,11 @@
                   <a href="?switch=true" class="btn btn-outline-primary">{% trans 'switch accounts' %}</a>
                   {% trans 'or' %}
                   <a href="?create=true" class="btn btn-outline-primary">{% trans "create a web account" %}</a>
+                </p>
+              {% else %}
+                <p>
+                  <strong>{% trans 'Note' %}:</strong>
+                  {% blocktrans with user.username as username %}You are signed in as {{ username }}, but this invitation was sent to {{ invited_user }}.{% endblocktrans %}
                 </p>
               {% endif %}
             </div>
