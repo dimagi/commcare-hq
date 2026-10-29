@@ -1,6 +1,9 @@
 from unittest.mock import MagicMock, patch
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
+
+from corehq.apps.public_webforms.tests.utils import DOMAIN, create_session, create_webform
 
 from ..feature_calcs import (
     calc_bulk_case_editing_sessions,
@@ -11,6 +14,8 @@ from ..feature_calcs import (
     calc_has_multimedia,
     calc_has_save_to_case,
     calc_has_web_apps,
+    calc_public_webforms,
+    calc_public_webform_submissions,
 )
 from ..metric_registry import DomainContext
 
@@ -230,3 +235,34 @@ class TestCalcHasCustomBranding(SimpleTestCase):
     def test_false_when_no_apps(self):
         ctx = _make_domain_context(apps=[], has_custom_logo=False)
         assert calc_has_custom_branding(ctx) is False
+
+
+class TestCalcPublicWebforms(SimpleTestCase):
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_counts_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 5
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 5
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_zero_when_no_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 0
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 0
+
+
+class TestPublicWebformSubmissions(TestCase):
+
+    def test_counts_only_submitted_sessions(self):
+        webform = create_webform()
+        for _ in range(3):
+            create_session(webform, submitted_at=timezone.now())
+        for _ in range(2):
+            create_session(webform)
+        ctx = _make_domain_context(name=DOMAIN)
+        assert calc_public_webform_submissions(ctx) == 3
+
+    def test_zero_when_no_submissions(self):
+        ctx = _make_domain_context()
+        assert calc_public_webform_submissions(ctx) == 0

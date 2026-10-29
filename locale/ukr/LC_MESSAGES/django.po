@@ -367,6 +367,7 @@ msgstr ""
 "деактивувати."
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
 msgid "Billing Account"
 msgstr "Рахунок для виставлення рахунків"
 
@@ -1571,6 +1572,7 @@ msgstr ""
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -6204,12 +6206,10 @@ msgstr ""
 "мультимедійний файл(и)."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Started On"
 msgid "Starter App"
 msgstr "Стартовий додаток"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Feature Type"
 msgid "Feature Template"
 msgstr "Шаблон функції"
 
@@ -7965,6 +7965,7 @@ msgstr "Налаштування меню"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8496,7 +8497,6 @@ msgid "Bulk Application Translations"
 msgstr "Масові переклади додатку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
 msgid "Translate with AI"
 msgstr "Перекласти за допомогою ШІ"
 
@@ -8515,17 +8515,14 @@ msgstr ""
 "переклади ШІ перед випуском додатка."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Learn More About Pricing Plans"
 msgid "Learn more about AI translations"
 msgstr "Дізнатися більше про переклади за допомогою ШІ"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translations are available on Standard plans and above."
 msgstr "Переклади ШІ доступні на тарифах Standard і вище."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "CommCare plans"
 msgid "Compare plans"
 msgstr "Порівняти тарифи"
 
@@ -8539,7 +8536,6 @@ msgstr ""
 "основний додаток."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Please select an upstream app."
 msgid "Go to the upstream app"
 msgstr "Перейти до основного додатка"
 
@@ -8558,7 +8554,6 @@ msgid "Refresh"
 msgstr "Оновити"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "You do not have permission to edit locations."
 msgid "You need permission to edit this app to translate it."
 msgstr "Вам потрібен дозвіл на редагування цього додатка для перекладу."
 
@@ -8588,27 +8583,77 @@ msgid "Language"
 msgstr "Мова"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "app translation"
 msgid "Last AI translated"
 msgstr "Останній переклад ШІ"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translations"
 msgid "Translation progress"
 msgstr "Прогрес перекладу"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid ""
+#| "To translate the remaining labels yourself, use <a href=\"#bulk-application-"
+#| "translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+#| "application-translations\" >Bulk Application Translations</a >."
 msgid ""
-"To translate the remaining labels yourself, use <a href=\"#bulk-application-"
-"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-"application-translations\" >Bulk Application Translations</a >."
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
 msgstr ""
-"Щоб перекласти решту міток самостійно, скористайтеся <a href=\"#bulk-"
+"Повторний запуск AI Translate може перекласти решту. Якщо цього не "
+"станеться, перекладіть їх самостійно за допомогою <a href=\"#bulk-"
 "application-translations\" data-bs-toggle=\"collapse\" data-bs-"
-"target=\"#bulk-application-translations\" >Масовим перекладом додатка</a >."
+"target=\"#bulk-application-translations\" >Масовий переклад застосунків</a "
+">."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
+#| msgid "Search labels"
+msgid "Show labels"
+msgstr "Показати мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Search labels"
+msgid "Hide labels"
+msgstr "Приховати мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "The translation couldn't be queued. Run it again."
+msgid "The labels couldn't be loaded. Try again."
+msgstr "Не вдалося завантажити мітки. Спробуйте ще раз."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Loading"
+msgid "Loading…"
+msgstr "Завантаження…"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+"Список міток більше недоступний. Запустіть AI Translate ще раз, щоб "
+"побачити, які мітки не вдалося перекласти."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "No longer available"
+msgid "No longer in the app"
+msgstr "Більше не в застосунку"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Відкрити"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Show All Dates"
+msgid "Show all labels"
+msgstr "Показати всі мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 msgid "AI Translate"
 msgstr "Перекласти ШІ"
 
@@ -11051,6 +11096,16 @@ msgstr ""
 "        Це можна змінити в налаштуваннях застосунку, на вкладці <strong>Додаткові налаштування</strong>,\n"
 "        у розділі <strong>Налаштування Android</strong>.\n"
 "      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "Public Webforms"
+msgid "Public Webform"
+msgstr "Публічна вебформа"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "No public webforms match these filters."
+msgid "Create public webform from latest released version"
+msgstr "Створити публічну вебформу на основі останньої опублікованої версії"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
@@ -15340,6 +15395,7 @@ msgstr "Редагувати віджет"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -16506,6 +16562,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -21810,7 +21867,6 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> агрегованого використання даних</a>"
 
 #: corehq/apps/domain/forms.py
-#| msgid "CommCare Companion (Beta)"
 msgid "Opt out of CommCare Companion"
 msgstr "Відмовитися від CommCare Companion"
 
@@ -22199,11 +22255,6 @@ msgid "Partner Contact Emails"
 msgstr "Email-и контактних осіб партнера"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-#| "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-#| "<span data-bind=\"text: end_date\"></span> the project space will be "
-#| "automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
 "hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
@@ -22929,6 +22980,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 msgid "Please note:"
 msgstr "Зверніть увагу:"
 
@@ -32542,6 +32594,34 @@ msgstr "Змінено о"
 msgid "Update Randomness"
 msgstr "Оновити випадковість"
 
+#: corehq/apps/hqadmin/template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "Наприклад, сільське господарство"
+
+#: corehq/apps/hqadmin/template_apps/forms.py
+#| msgid "A case type with this name already exists."
+msgid "A sector with this name already exists."
+msgstr "Сектор із такою назвою вже існує."
+
+#: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
+#| msgid "Manage Tables"
+msgid "Manage Template Apps"
+msgstr "Керування шаблонними застосунками"
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "{} cannot be deleted"
+msgid "Sector label deleted."
+msgstr "Мітку сектора видалено."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "Search labels"
+msgid "Sector label saved."
+msgstr "Мітку сектора збережено."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+msgid "Sector label added."
+msgstr "Мітку сектора додано."
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Доменне ім'я"
@@ -32830,6 +32910,49 @@ msgstr "Може призначати суперкористувача"
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Feature Flag Edit Permissions"
 msgstr "Дозволи на редагування прапорця функції"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Manage Forms"
+msgid "Manage sectors"
+msgstr "Керування секторами"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Template Name"
+msgid "Template Apps"
+msgstr "Шаблонні застосунки"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"Мітки секторів спільні для всіх шаблонних застосунків. Перейменування мітки "
+"оновить її в кожному шаблоні, де вона використовується."
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Use question labels"
+msgid "New sector label"
+msgstr "Нова мітка сектора"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Add User"
+msgid "Add sector"
+msgstr "Додати сектор"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Search labels"
+msgid "Sector label"
+msgstr "Мітка сектора"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Template String"
+msgid "Templates using it"
+msgstr "Шаблони, у яких використовується"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr "Міток секторів поки немає. Додайте першу мітку вище."
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -34765,7 +34888,9 @@ msgstr "Сторінка статусу"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/users/views/web.py
+#: corehq/apps/settings/views.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/users/views/web.py
 msgid "Project"
 msgstr "Проєкт"
 
@@ -39016,8 +39141,14 @@ msgstr ""
 "вже надіслано, можна використовувати до завершення їх терміну дії."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Як респонденти отримують своє одноразове посилання"
+msgid "A branded email with a single-use link."
+msgstr "Брендований електронний лист з одноразовим посиланням."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr ""
+"Коротке текстове повідомлення зі скороченим посиланням. Оплата за кожне "
+"надіслане повідомлення."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "Open to Requests"
@@ -39029,14 +39160,13 @@ msgstr ""
 "Негайно відкрити цю публічну веб-форму для запитів на одноразове посилання."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Брендований електронний лист з одноразовим посиланням."
+msgid "How Respondents Receive Their One-time Link"
+msgstr "Як респонденти отримують своє одноразове посилання"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A short text with a shortened link. Billed per message sent."
+msgid "Choose at least one way for respondents to receive one-time links."
 msgstr ""
-"Коротке текстове повідомлення зі скороченим посиланням. Оплата за кожне "
-"надіслане повідомлення."
+"Виберіть принаймні один спосіб отримання респондентами одноразових посилань."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -39051,10 +39181,6 @@ msgstr "Створити публічну веб-форму"
 #: corehq/apps/public_webforms/forms.py
 msgid "Please select an application, menu, and form."
 msgstr "Будь ласка, виберіть застосунок, меню та форму."
-
-#: corehq/apps/public_webforms/forms.py
-msgid "The selected form can't be used for a public webform."
-msgstr "Обрану форму не можна використовувати для публічної веб-форми."
 
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 msgid "Edit Public Webform"
@@ -39084,13 +39210,6 @@ msgid ""
 msgstr ""
 "Ваш одноразовий лінк для {form_name}:\n"
 "{url}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Відкрити"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -39279,6 +39398,24 @@ msgstr ""
 "          Лише <strong>реєстраційні</strong> та <strong>опитувальні</strong> форми\n"
 "          дозволені. Форми, які оновлюють існуючі справи, не можуть бути публічними.\n"
 "        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+"\n"
+"    Для SMS-посилань потрібен обмін повідомленнями, який вимкнено для цього проєкту.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Messaging"
+msgid "Enable Messaging"
+msgstr "Увімкнути обмін повідомленнями"
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
@@ -46328,7 +46465,7 @@ msgstr "Ключове слово не знайдено: '{0}'"
 #: corehq/apps/sms/messages.py
 #, python-brace-format
 msgid "Usage: {0} <keyword>"
-msgstr ""
+msgstr "Використання: {0} <keyword>"
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
@@ -46931,6 +47068,193 @@ msgstr "та"
 msgid "Add Day and Time Window"
 msgstr "Додати день і часовий проміжок"
 
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Enable messaging for %(domain_name)s\n"
+"          "
+msgstr ""
+"\n"
+"            Увімкнути обмін повідомленнями для %(domain_name)s\n"
+"          "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+msgid ""
+"\n"
+"              %(billing_account)s\n"
+"              will be charged for every SMS this project sends and receives.\n"
+"            "
+msgstr ""
+"\n"
+"              З рахунку %(billing_account)s\n"
+"              стягуватиметься плата за кожне SMS, надіслане та отримане цим проєктом.\n"
+"            "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#| msgid ""
+#| "\n"
+#| "                To select a range of fields hold the Shift key and select\n"
+#| "                the first and last field in the range.\n"
+#| "              "
+msgid ""
+"\n"
+"                A public webform with SMS turned on sends a text to any phone\n"
+"                number a respondent enters, and each text is charged.\n"
+"              "
+msgstr ""
+"\n"
+"                Публічна вебформа з увімкненими SMS надсилає повідомлення на будь-який номер телефону,\n"
+"                який вказує респондент, і за кожне повідомлення стягується плата.\n"
+"              "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Role is required for web users."
+msgid "Action is required to enable messaging."
+msgstr "Щоб увімкнути обмін повідомленнями, потрібна дія."
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Outgoing Messaging"
+msgid "How to Enable Messaging"
+msgstr "Як увімкнути обмін повідомленнями"
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        To enable messaging features for this project space, please do at least\n"
+"        <strong>one</strong> of the following:\n"
+"      "
+msgstr ""
+"\n"
+"        Щоб увімкнути функції обміну повідомленнями для цього проєктного простору, виконайте принаймні\n"
+"        <strong>одну</strong> з наведених нижче дій:\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  <a href=\"%(login_url)s\">Login</a> to access your account.\n"
+#| "                "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+"          account.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Збережіть платіжну картку</a> у своєму\n"
+"          обліковому записі користувача.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "              has no reports.\n"
+#| "            "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+"          for this project space.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Увімкніть автоматичні платежі</a>\n"
+"          для цього проєктного простору.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+"          or\n"
+"          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+"          totaling %(self_enable_payment_threshold)s or more.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">Сплатіть рахунки</a>\n"
+"          або\n"
+"          <a href=\"%(purchase_credits_url)s\">придбайте передплачені кредити</a>\n"
+"          на загальну суму %(self_enable_payment_threshold)s або більше.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+"        charges can be billed correctly.\n"
+"      "
+msgstr ""
+"\n"
+"        Потім поверніться на цю сторінку, щоб увімкнути обмін повідомленнями. Це допоможе нам переконатися,\n"
+"        що плату за SMS можна буде правильно виставити.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"        If none of these options are available for you, please email\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"        to request access to messaging features. Include your full name and the\n"
+"        name of the organization you work for.\n"
+"      "
+msgstr ""
+"\n"
+"        Якщо жоден із цих варіантів вам недоступний, надішліть електронного листа на адресу\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>,\n"
+"        щоб запросити доступ до функцій обміну повідомленнями. Укажіть своє повне ім’я та\n"
+"        назву організації, у якій ви працюєте.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Back to Forms"
+msgid "Back to Home"
+msgstr "На головну"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "Turning on messaging will cost this project money."
+msgstr "Увімкнення обміну повідомленнями коштуватиме цьому проєкту грошей."
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid ""
+"\n"
+"      This project is charged for every SMS it sends and receives. The price of\n"
+"      each SMS depends on the country of the phone number. Charges appear on the\n"
+"      project's monthly CommCare invoice.\n"
+"    "
+msgstr ""
+"\n"
+"      За кожне SMS, надіслане та отримане цим проєктом, стягується плата. Вартість\n"
+"      кожного SMS залежить від країни номера телефону. Плата відображається в\n"
+"      щомісячному рахунку CommCare проєкту.\n"
+"    "
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "See SMS prices by country"
+msgstr "Переглянути ціни на SMS за країнами"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Usage Charge"
+msgid "Who is Charged"
+msgstr "Хто сплачує"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Invoice No."
+msgid "Invoices Emailed to"
+msgstr "Рахунки надсилаються на адресу"
+
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Filter Type"
 msgstr "Тип фільтра"
@@ -46952,31 +47276,36 @@ msgid "Verification Pending"
 msgstr "Очікує на підтвердження"
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Request Access to Messaging Features"
-msgstr "Запит на доступ до функцій обміну повідомленнями"
-
-#: corehq/apps/sms/templates/sms/wall.html
-#, python-format
 msgid ""
 "\n"
-"      To enable messaging features, please request access by sending an email to\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
-"      work email address containing the following information:\n"
-"    "
+"        Messaging lets this project send and receive SMS, including one-time\n"
+"        links for public webforms, broadcasts, and conditional alerts.\n"
+"      "
 msgstr ""
 "\n"
-"      Щоб увімкнути функції обміну повідомленнями, будь ласка, надішліть запит, відправивши листа на\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> з вашої\n"
-"      робочої електронної адреси з такою інформацією:\n"
-"    "
+"        Обмін повідомленнями дає змогу цьому проєкту надсилати й отримувати SMS, зокрема одноразові\n"
+"        посилання для публічних вебформ, масових розсилок і умовних сповіщень.\n"
+"      "
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Your full name"
-msgstr "Ваше повне ім'я"
+#| msgid ""
+#| "Filtering by unknown forms is currently unavailable for this project."
+msgid "Messaging is currently disabled for this project space."
+msgstr "Обмін повідомленнями наразі вимкнено для цього проєктного простору."
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "The organization you work for"
-msgstr "Організація, в якій ви працюєте"
+#| msgid ""
+#| "\n"
+#| "      Please contact a project administrator to restore access.\n"
+#| "    "
+msgid ""
+"\n"
+"            Please contact your project administrator to enable messaging.\n"
+"          "
+msgstr ""
+"\n"
+"            Зверніться до адміністратора проєкту, щоб увімкнути обмін повідомленнями.\n"
+"          "
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "WhatsApp Templates"
@@ -47034,6 +47363,15 @@ msgstr "1 тиждень"
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr "30 днів"
+
+#: corehq/apps/sms/views.py
+#| msgid "{} fields saved successfully."
+msgid "Messaging enabled successfully."
+msgstr "Обмін повідомленнями успішно ввімкнено."
+
+#: corehq/apps/sms/views.py
+msgid "Messaging cannot be enabled right now."
+msgstr "Зараз не вдається ввімкнути обмін повідомленнями."
 
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Compose SMS Message"
@@ -49434,6 +49772,42 @@ msgstr "Активні домени"
 msgid "Last Usage"
 msgstr "Останнє використання"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr "ШІ не повернув переклад."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The payee is not allowed to receive the deposit transaction."
+msgid "The app didn't accept the AI's translation."
+msgstr "Застосунок не прийняв переклад ШІ."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr "ШІ повернув порожній переклад."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The deposit transaction was rejected by the payer."
+msgid "The AI's translation has characters the app can't save."
+msgstr "Переклад ШІ містить символи, які застосунок не може зберегти."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr "ШІ змінив або пропустив значення, вставлене з іншого запитання."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr "ШІ змінив форматування, наприклад жирний текст або список."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The message was blank."
+msgid "The AI changed a web link."
+msgstr "ШІ змінив вебпосилання."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "No labels could be translated."
+msgid "The label couldn't be translated."
+msgstr "Не вдалося перекласти мітку."
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 msgid "Remote apps can't be translated with AI."
 msgstr "Віддалені додатки не можна перекладати за допомогою ШІ."
@@ -49698,9 +50072,6 @@ msgstr ""
 "Інші переклади цього додатку виконувалися занадто довго. Спробуйте ще раз."
 
 #: corehq/apps/translations/tasks.py
-#| msgid ""
-#| "Something went wrong while translating the app. Review its translations and "
-#| "run it again."
 msgid ""
 "Something went wrong and the translation didn't finish. Run it again, and "
 "contact support if it keeps failing."
@@ -49709,15 +50080,8 @@ msgstr ""
 "до підтримки, якщо проблема повторюється."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "No strings could be translated."
 msgid "No labels could be translated."
 msgstr "Не вдалося перекласти жодної мітки."
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
@@ -49763,7 +50127,6 @@ msgid "Please select language to validate."
 msgstr "Будь ласка, виберіть мову для перевірки."
 
 #: corehq/apps/translations/views.py
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translation isn't available for this project."
 msgstr "Переклад ШІ недоступний для цього проєкту."
 
@@ -49772,9 +50135,42 @@ msgid "This language can't be translated with AI."
 msgstr "Цю мову не можна перекласти за допомогою ШІ."
 
 #: corehq/apps/translations/views.py
-#| msgid "This user is already an enterprise administrator."
 msgid "This language is already being translated."
 msgstr "Ця мова вже перекладається."
+
+#: corehq/apps/translations/views.py
+#| msgid "case list"
+msgid "Case list"
+msgstr "Список справ"
+
+#: corehq/apps/translations/views.py
+#| msgid "case detail"
+msgid "Case detail"
+msgstr "Деталі справи"
+
+#: corehq/apps/translations/views.py
+#| msgid "Case Search"
+msgid "Case search"
+msgstr "Пошук справ"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr "підказка"
+
+#: corehq/apps/translations/views.py
+#| msgid "Help Text"
+msgid "help text"
+msgstr "довідковий текст"
+
+#: corehq/apps/translations/views.py
+#| msgid "Validation Message"
+msgid "validation message"
+msgstr "повідомлення про помилку перевірки"
+
+#: corehq/apps/translations/views.py
+#| msgid "Choices"
+msgid "choice"
+msgstr "варіант відповіді"
 
 #: corehq/apps/user_importer/exceptions.py
 msgid ""
@@ -60830,6 +61226,32 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr "Обрану форму не можна використовувати для публічної веб-форми."
+
+#~ msgid "Request Access to Messaging Features"
+#~ msgstr "Запит на доступ до функцій обміну повідомленнями"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      To enable messaging features, please request access by sending an email to\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
+#~ "      work email address containing the following information:\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Щоб увімкнути функції обміну повідомленнями, будь ласка, надішліть запит, відправивши листа на\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> з вашої\n"
+#~ "      робочої електронної адреси з такою інформацією:\n"
+#~ "    "
+
+#~ msgid "Your full name"
+#~ msgstr "Ваше повне ім'я"
+
+#~ msgid "The organization you work for"
+#~ msgstr "Організація, в якій ви працюєте"
 
 #~ msgid "Space-separated list of privilege strings from corehq.privileges"
 #~ msgstr "Список рядків привілеїв, розділених пробілами, з corehq.privileges"

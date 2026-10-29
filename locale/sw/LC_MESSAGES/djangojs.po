@@ -1084,12 +1084,29 @@ msgid "%(name)s (%(code)s)"
 msgstr "%(name)s (%(code)s)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s label translated in this run"
+#| msgid_plural "%(count)s labels translated in this run"
+msgid "%(count)s label couldn't be translated"
+msgid_plural "%(count)s labels couldn't be translated"
+msgstr[0] "Lebo %(count)s haikuweza kutafsiriwa"
+msgstr[1] "Lebo %(count)s hazikuweza kutafsiriwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Showing the first %(shown)s of %(count)s labels."
+msgstr "Inaonyesha lebo %(shown)s za kwanza kati ya lebo %(count)s."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "You need permission to edit this app to translate it."
 msgstr "Unahitaji ruhusa ya kuhariri programu hii ili kuitafsiri."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "The translation couldn't be started. Try again."
 msgstr "Tafsiri haikuweza kuanzishwa. Jaribu tena."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s failed"
+msgid "and %(count)s more"
+msgstr "na %(count)s zaidi"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "Not yet supported"
@@ -1100,17 +1117,14 @@ msgid "Use the manual translation options below"
 msgstr "Tumia chaguo za kutafsiri kwa mkono zilizo hapa chini"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Settings"
 msgid "Starting…"
 msgstr "Inaanza…"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Requeued"
 msgid "Queued"
 msgstr "Imepangwa foleni"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Add Translation"
 msgid "Translating…"
 msgstr "Inatafsiri…"
 
@@ -1119,7 +1133,6 @@ msgid "Batch %(batch)s of %(total)s"
 msgstr "Kundi %(batch)s kati ya %(total)s"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Auto fill translations"
 msgid "Applying translations…"
 msgstr "Inaweka tafsiri…"
 
@@ -1145,7 +1158,6 @@ msgid "Every label already has a translation."
 msgstr "Kila lebo tayari ina tafsiri."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Add Translation"
 msgid "AI translated"
 msgstr "Imetafsiriwa na AI"
 
@@ -1156,7 +1168,6 @@ msgstr[0] "Lebo %(count)s imetafsiriwa katika mchakato huu"
 msgstr[1] "Lebo %(count)s zimetafsiriwa katika mchakato huu"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Form submission failed with error"
 msgid "Finished with errors"
 msgstr "Imekamilika na makosa"
 
@@ -1165,25 +1176,8 @@ msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
 msgstr "Lebo %(translated)s kati ya %(total)s zimetafsiriwa (%(percent)s%)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "%(count)s Invitation Accepted"
-#| msgid_plural "%(count)s Invitations Accepted"
-msgid "%(count)s skipped"
-msgstr "%(count)s zimerukwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "%(count)s Invitation Pending"
-#| msgid_plural "%(count)s Invitations Pending"
-msgid "%(count)s failed"
-msgstr "%(count)s zimefeli"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s changed during the run"
 msgstr "%(count)s zimebadilika wakati wa mchakato"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "Run AI Translate again to retry the labels that weren't translated."
-msgstr ""
-"Endesha tena Tafsiri ya AI ili kujaribu tena lebo ambazo hazikutafsiriwa."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "No AI run yet"
@@ -1196,7 +1190,6 @@ msgstr[0] "Lebo %(count)s imetafsiriwa katika mchakato uliopita"
 msgstr[1] "Lebo %(count)s zimetafsiriwa katika mchakato uliopita"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Auto fill translations"
 msgid "Partially translated"
 msgstr "Imetafsiriwa sehemu"
 
@@ -1391,47 +1384,10 @@ msgstr "Iliyohifadhiwa hivi karibuni"
 msgid "[unknown]"
 msgstr "[haijulikani]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "Drag question here"
-msgstr "Buruta swali hapa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is equal to"
-msgstr "ni sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is not equal to"
-msgstr "si sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than"
-msgstr "ni chini ya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than or equal to"
-msgstr "ni chini au sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than"
-msgstr "ni zaidi ya"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than or equal to"
-msgstr "ni zaidi au sawa na"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "has selected value"
-msgstr "ina thamani iliyochaguliwa"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ALL of the expressions are true."
-msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ANY of the expressions are true."
-msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "loadXFormOrError"
 msgstr "pakiaXFormAuHitilafu"
 
@@ -1456,10 +1412,16 @@ msgid "getMainProperties"
 msgstr "pataSifaKuu"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "createXML"
 msgstr "undaXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "getData"
 msgstr "pataData"
 
@@ -1468,14 +1430,99 @@ msgid "checkMove"
 msgstr "kaguaUhamisho"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "jstree"
 msgstr "jstree"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getCurrentMugInput"
+msgstr "pataMugInputWaSasa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "loadXML"
+msgstr "pakiaXML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "addQuestion"
+msgstr "ongezaSwali"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "nodeIDFromLabel"
+msgstr "kitambulishoChaNodeKutokaKwaLebo"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getSections"
+msgstr "pataSehemu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "collapseSection"
+msgstr "kunjaSehemu"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "Drag question here"
+msgstr "Buruta swali hapa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is equal to"
+msgstr "ni sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is not equal to"
+msgstr "si sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than"
+msgstr "ni chini ya"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than or equal to"
+msgstr "ni chini au sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than"
+msgstr "ni zaidi ya"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than or equal to"
+msgstr "ni zaidi au sawa na"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "has selected value"
+msgstr "ina thamani iliyochaguliwa"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ALL of the expressions are true."
+msgstr "Kweli ikiwa KAULI ZOTE ni kweli."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ANY of the expressions are true."
+msgstr "Kweli ikiwa YOYOTE kati ya kauli ni kweli."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} si mzazi halali wa data"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/8096.js
 msgid "\n"
 msgstr "\n"
 
@@ -4507,6 +4554,13 @@ msgstr "Imeshindikana! Majibu ni: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
+#~ msgid "%(count)s skipped"
+#~ msgstr "%(count)s zimerukwa"
+
+#~ msgid "Run AI Translate again to retry the labels that weren't translated."
+#~ msgstr ""
+#~ "Endesha tena Tafsiri ya AI ili kujaribu tena lebo ambazo hazikutafsiriwa."
+
 #~ msgid "Seconds"
 #~ msgstr "Sekunde"
 
@@ -5404,27 +5458,6 @@ msgstr "CommCare HQ imeshindwa kutuma ombi: "
 
 #~ msgid "No Translation Data"
 #~ msgstr "Hakuna Data ya Tafsiri"
-
-#~ msgid "getCurrentMugInput"
-#~ msgstr "pataMugInputWaSasa"
-
-#~ msgid "getMugByPath"
-#~ msgstr "getMugByPath"
-
-#~ msgid "loadXML"
-#~ msgstr "pakiaXML"
-
-#~ msgid "addQuestion"
-#~ msgstr "ongezaSwali"
-
-#~ msgid "nodeIDFromLabel"
-#~ msgstr "kitambulishoChaNodeKutokaKwaLebo"
-
-#~ msgid "getSections"
-#~ msgstr "pataSehemu"
-
-#~ msgid "collapseSection"
-#~ msgstr "kunjaSehemu"
 
 #~ msgid "Active"
 #~ msgstr "Hai"

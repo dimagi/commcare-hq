@@ -96,6 +96,7 @@ from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
 from corehq.apps.translations.views import (
+    ai_translation_failed_labels,
     ai_translation_status,
     download_bulk_app_translations,
     download_bulk_ui_translations,
@@ -118,6 +119,8 @@ app_urls = [
         name='start_ai_translation'),
     url(r'^languages/ai_translation/status/$', ai_translation_status,
         name='ai_translation_status'),
+    url(r'^languages/ai_translation/failed_labels/$', ai_translation_failed_labels,
+        name='ai_translation_failed_labels'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,

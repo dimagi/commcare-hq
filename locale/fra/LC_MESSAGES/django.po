@@ -397,6 +397,7 @@ msgstr ""
 "essaiez de désactivé."
 
 #: corehq/apps/accounting/forms.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
 msgid "Billing Account"
 msgstr "Compte de facturation"
 
@@ -1573,6 +1574,7 @@ msgstr ""
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -6265,12 +6267,10 @@ msgstr ""
 "fichiers multimédias à l'application."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Started On"
 msgid "Starter App"
 msgstr "Application de démarrage"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Feature Type"
 msgid "Feature Template"
 msgstr "Modèle de fonctionnalité"
 
@@ -8068,6 +8068,7 @@ msgstr "Paramètres du menu"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8610,7 +8611,6 @@ msgid "Bulk Application Translations"
 msgstr "Traductions d'application en bulk"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
 msgid "Translate with AI"
 msgstr "Traduire avec l’IA"
 
@@ -8630,19 +8630,16 @@ msgstr ""
 "application."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Learn More About Pricing Plans"
 msgid "Learn more about AI translations"
 msgstr "En savoir plus sur les traductions IA"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translations are available on Standard plans and above."
 msgstr ""
 "Les traductions IA sont disponibles avec les forfaits Standard et "
 "supérieurs."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "CommCare plans"
 msgid "Compare plans"
 msgstr "Comparer les forfaits"
 
@@ -8656,7 +8653,6 @@ msgstr ""
 "amont. Traduisez plutôt l’application en amont."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Please select an upstream app."
 msgid "Go to the upstream app"
 msgstr "Aller à l’application en amont"
 
@@ -8675,7 +8671,6 @@ msgid "Refresh"
 msgstr "Reactualiser"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "You do not have permission to edit locations."
 msgid "You need permission to edit this app to translate it."
 msgstr ""
 "Vous devez avoir la permission de modifier cette application pour la "
@@ -8709,28 +8704,76 @@ msgid "Language"
 msgstr "Langue"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "app translation"
 msgid "Last AI translated"
 msgstr "Dernière traduction IA"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translations"
 msgid "Translation progress"
 msgstr "Progression de la traduction"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid ""
+#| "To translate the remaining labels yourself, use <a href=\"#bulk-application-"
+#| "translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+#| "application-translations\" >Bulk Application Translations</a >."
 msgid ""
-"To translate the remaining labels yourself, use <a href=\"#bulk-application-"
-"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-"application-translations\" >Bulk Application Translations</a >."
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
 msgstr ""
-"Pour traduire vous-même les libellés restants, utilisez <a href=\"#bulk-"
-"application-translations\" data-bs-toggle=\"collapse\" data-bs-"
-"target=\"#bulk-application-translations\" >Traductions groupées de "
-"l’application</a >."
+"Relancer AI Translate peut traduire le reste. Si ce n’est pas le cas, "
+"traduisez-les vous-même avec <a href=\"#bulk-application-translations\" "
+"data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-application-"
+"translations\" >Traductions groupées des applications</a >."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Translate Me"
+#| msgid "Search labels"
+msgid "Show labels"
+msgstr "Afficher les libellés"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Search labels"
+msgid "Hide labels"
+msgstr "Masquer les libellés"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "The translation couldn't be queued. Run it again."
+msgid "The labels couldn't be loaded. Try again."
+msgstr "Impossible de charger les libellés. Réessayez."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Loading"
+msgid "Loading…"
+msgstr "Chargement…"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+"La liste des libellés n’est plus disponible. Relancez AI Translate pour voir"
+" quels libellés ne peuvent pas être traduits."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "No longer available"
+msgid "No longer in the app"
+msgstr "N’est plus dans l’application"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Ouvert"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#| msgid "Show All Dates"
+msgid "Show all labels"
+msgstr "Afficher tous les libellés"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 msgid "AI Translate"
 msgstr "Traduction IA"
 
@@ -11190,6 +11233,17 @@ msgstr ""
 "        Cela peut être modifié dans les paramètres de l'application, dans l'onglet <strong>Paramètres avancés</strong>,\n"
 "        section <strong>Paramètres Android</strong>.\n"
 "      "
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "Public Webforms"
+msgid "Public Webform"
+msgstr "Formulaire Web public"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#| msgid "No public webforms match these filters."
+msgid "Create public webform from latest released version"
+msgstr ""
+"Créer un formulaire Web public à partir de la dernière version publiée"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
@@ -15535,6 +15589,7 @@ msgstr "Modifier le widget"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -16723,6 +16778,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -22083,7 +22139,6 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> l'utilisation agrégée des données</a>"
 
 #: corehq/apps/domain/forms.py
-#| msgid "CommCare Companion (Beta)"
 msgid "Opt out of CommCare Companion"
 msgstr "Se désinscrire de CommCare Companion"
 
@@ -22482,11 +22537,6 @@ msgid "Partner Contact Emails"
 msgstr "Contact emails de partneraire"
 
 #: corehq/apps/domain/forms.py
-#| msgid ""
-#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-#| "hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-#| "<span data-bind=\"text: end_date\"></span> the project space will be "
-#| "automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
 "hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
@@ -23202,6 +23252,7 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 msgid "Please note:"
 msgstr "Veuillez noter :"
 
@@ -32912,6 +32963,34 @@ msgstr "Modifié le"
 msgid "Update Randomness"
 msgstr "Mettre à jour l'aléatoire"
 
+#: corehq/apps/hqadmin/template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "Par exemple, Agriculture"
+
+#: corehq/apps/hqadmin/template_apps/forms.py
+#| msgid "A case type with this name already exists."
+msgid "A sector with this name already exists."
+msgstr "Un secteur portant ce nom existe déjà."
+
+#: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
+#| msgid "Manage Tables"
+msgid "Manage Template Apps"
+msgstr "Gérer les applications modèles"
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "{} cannot be deleted"
+msgid "Sector label deleted."
+msgstr "Libellé de secteur supprimé."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+#| msgid "Search labels"
+msgid "Sector label saved."
+msgstr "Libellé de secteur enregistré."
+
+#: corehq/apps/hqadmin/template_apps/views.py
+msgid "Sector label added."
+msgstr "Libellé de secteur ajouté."
+
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "Nom du domaine"
@@ -33207,6 +33286,51 @@ msgstr "Peut attribuer le statut de superutilisateur·rice"
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Feature Flag Edit Permissions"
 msgstr "Autorisations de modification des Feature Flags"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Manage Forms"
+msgid "Manage sectors"
+msgstr "Gérer les secteurs"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#| msgid "Template Name"
+msgid "Template Apps"
+msgstr "Applications modèles"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"Les libellés de secteur sont partagés entre les applications modèles. "
+"Renommer un libellé met à jour tous les modèles qui l’utilisent."
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Use question labels"
+msgid "New sector label"
+msgstr "Nouveau libellé de secteur"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Add User"
+msgid "Add sector"
+msgstr "Ajouter un secteur"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Search labels"
+msgid "Sector label"
+msgstr "Libellé de secteur"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#| msgid "Template String"
+msgid "Templates using it"
+msgstr "Modèles qui l’utilisent"
+
+#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr ""
+"Aucun libellé de secteur pour le moment. Ajoutez le premier libellé ci-"
+"dessus."
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -35167,7 +35291,9 @@ msgstr "Page de statut"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py corehq/apps/users/views/web.py
+#: corehq/apps/settings/views.py
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/users/views/web.py
 msgid "Project"
 msgstr "Projet"
 
@@ -39462,8 +39588,12 @@ msgstr ""
 " déjà envoyés peuvent être utilisés jusqu'à leur expiration."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Comment les répondants reçoivent leur lien à usage unique"
+msgid "A branded email with a single-use link."
+msgstr "Un e-mail personnalisé avec un lien à usage unique."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
+msgstr "Un court texte avec un lien raccourci. Facturé par message envoyé."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "Open to Requests"
@@ -39476,12 +39606,14 @@ msgstr ""
 "unique."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Un e-mail personnalisé avec un lien à usage unique."
+msgid "How Respondents Receive Their One-time Link"
+msgstr "Comment les répondants reçoivent leur lien à usage unique"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A short text with a shortened link. Billed per message sent."
-msgstr "Un court texte avec un lien raccourci. Facturé par message envoyé."
+msgid "Choose at least one way for respondents to receive one-time links."
+msgstr ""
+"Choisissez au moins un moyen permettant aux personnes répondantes de "
+"recevoir des liens à usage unique."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -39496,12 +39628,6 @@ msgstr "Créer un formulaire web public"
 #: corehq/apps/public_webforms/forms.py
 msgid "Please select an application, menu, and form."
 msgstr "Veuillez sélectionner une application, un menu et un formulaire."
-
-#: corehq/apps/public_webforms/forms.py
-msgid "The selected form can't be used for a public webform."
-msgstr ""
-"Le formulaire sélectionné ne peut pas être utilisé pour un formulaire web "
-"public."
 
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 msgid "Edit Public Webform"
@@ -39533,13 +39659,6 @@ msgid ""
 msgstr ""
 "Votre lien à usage unique pour {form_name} :\n"
 "{url}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Ouvert"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -39728,6 +39847,24 @@ msgstr ""
 "          Seuls les formulaires de <strong>inscription</strong> et <strong>enquête</strong>\n"
 "          sont éligibles. Les formulaires qui mettent à jour des dossiers existants ne peuvent pas être rendus publics.\n"
 "        "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+"\n"
+"    Les liens par SMS nécessitent la messagerie, qui est désactivée pour ce projet.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Messaging"
+msgid "Enable Messaging"
+msgstr "Activer la messagerie"
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
@@ -47447,6 +47584,193 @@ msgstr "et"
 msgid "Add Day and Time Window"
 msgstr "Ajouter une fenêtre de jour et d'heure"
 
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "            Thanks for using %(cc_name)s!\n"
+#| "          "
+msgid ""
+"\n"
+"            Enable messaging for %(domain_name)s\n"
+"          "
+msgstr ""
+"\n"
+"            Activer la messagerie pour %(domain_name)s\n"
+"          "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#, python-format
+msgid ""
+"\n"
+"              %(billing_account)s\n"
+"              will be charged for every SMS this project sends and receives.\n"
+"            "
+msgstr ""
+"\n"
+"              %(billing_account)s\n"
+"              sera facturé pour chaque SMS envoyé et reçu par ce projet.\n"
+"            "
+
+#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
+#| msgid ""
+#| "\n"
+#| "                To select a range of fields hold the Shift key and select\n"
+#| "                the first and last field in the range.\n"
+#| "              "
+msgid ""
+"\n"
+"                A public webform with SMS turned on sends a text to any phone\n"
+"                number a respondent enters, and each text is charged.\n"
+"              "
+msgstr ""
+"\n"
+"                Un formulaire Web public avec l’envoi de SMS activé envoie un texto à tout numéro de téléphone\n"
+"                saisi par une personne répondante, et chaque texto est facturé.\n"
+"              "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Role is required for web users."
+msgid "Action is required to enable messaging."
+msgstr "Une action est requise pour activer la messagerie."
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#| msgid "Outgoing Messaging"
+msgid "How to Enable Messaging"
+msgstr "Comment activer la messagerie"
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        To enable messaging features for this project space, please do at least\n"
+"        <strong>one</strong> of the following:\n"
+"      "
+msgstr ""
+"\n"
+"        Pour activer les fonctionnalités de messagerie pour cet espace de projet, veuillez effectuer au moins\n"
+"        <strong>une</strong> des actions suivantes :\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  <a href=\"%(login_url)s\">Login</a> to access your account.\n"
+#| "                "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+"          account.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Enregistrer une carte de paiement</a> sur votre compte\n"
+"          utilisateur.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#| "              has no reports.\n"
+#| "            "
+msgid ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+"          for this project space.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(billing_info_url)s\">Activer les paiements automatiques</a>\n"
+"          pour cet espace de projet.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+"          or\n"
+"          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+"          totaling %(self_enable_payment_threshold)s or more.\n"
+"        "
+msgstr ""
+"\n"
+"          <a href=\"%(pay_invoices_url)s\">Payer des factures</a>\n"
+"          ou\n"
+"          <a href=\"%(purchase_credits_url)s\">acheter des crédits prépayés</a>\n"
+"          pour un montant total d’au moins %(self_enable_payment_threshold)s.\n"
+"        "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+msgid ""
+"\n"
+"        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+"        charges can be billed correctly.\n"
+"      "
+msgstr ""
+"\n"
+"        Ensuite, revenez sur cette page pour activer la messagerie. Cela nous aide à nous assurer que les frais liés aux SMS\n"
+"        peuvent être facturés correctement.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#, python-format
+msgid ""
+"\n"
+"        If none of these options are available for you, please email\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"        to request access to messaging features. Include your full name and the\n"
+"        name of the organization you work for.\n"
+"      "
+msgstr ""
+"\n"
+"        Si aucune de ces options ne vous est proposée, veuillez envoyer un e-mail à\n"
+"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"        pour demander l’accès aux fonctionnalités de messagerie. Indiquez votre nom complet ainsi que le\n"
+"        nom de l’organisation pour laquelle vous travaillez.\n"
+"      "
+
+#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#: corehq/apps/sms/templates/sms/wall.html
+#| msgid "Back to Forms"
+msgid "Back to Home"
+msgstr "Retour à l’accueil"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "Turning on messaging will cost this project money."
+msgstr "L’activation de la messagerie entraînera des frais pour ce projet."
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid ""
+"\n"
+"      This project is charged for every SMS it sends and receives. The price of\n"
+"      each SMS depends on the country of the phone number. Charges appear on the\n"
+"      project's monthly CommCare invoice.\n"
+"    "
+msgstr ""
+"\n"
+"      Ce projet est facturé pour chaque SMS envoyé et reçu. Le prix de\n"
+"      chaque SMS dépend du pays associé au numéro de téléphone. Les frais apparaissent sur la\n"
+"      facture mensuelle CommCare du projet.\n"
+"    "
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+msgid "See SMS prices by country"
+msgstr "Voir les tarifs des SMS par pays"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Usage Charge"
+msgid "Who is Charged"
+msgstr "Personne facturée"
+
+#: corehq/apps/sms/templates/sms/partials/wall_enable.html
+#| msgid "Invoice No."
+msgid "Invoices Emailed to"
+msgstr "Factures envoyées par e-mail à"
+
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Filter Type"
 msgstr "Type de filtre"
@@ -47468,31 +47792,36 @@ msgid "Verification Pending"
 msgstr "Vérification en cours"
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Request Access to Messaging Features"
-msgstr "Demander l'accès aux fonctionnalités de messagerie"
-
-#: corehq/apps/sms/templates/sms/wall.html
-#, python-format
 msgid ""
 "\n"
-"      To enable messaging features, please request access by sending an email to\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
-"      work email address containing the following information:\n"
-"    "
+"        Messaging lets this project send and receive SMS, including one-time\n"
+"        links for public webforms, broadcasts, and conditional alerts.\n"
+"      "
 msgstr ""
 "\n"
-"      Pour activer les fonctionnalités de messagerie, veuillez demander l'accès en envoyant un e-mail à\n"
-"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> depuis votre\n"
-"      adresse e-mail professionnelle contenant les informations suivantes :\n"
-"    "
+"        La messagerie permet à ce projet d’envoyer et de recevoir des SMS, notamment des liens à usage unique\n"
+"        pour les formulaires Web publics, les diffusions et les alertes conditionnelles.\n"
+"      "
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Your full name"
-msgstr "Votre nom complet"
+#| msgid ""
+#| "Filtering by unknown forms is currently unavailable for this project."
+msgid "Messaging is currently disabled for this project space."
+msgstr "La messagerie est actuellement désactivée pour cet espace de projet."
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "The organization you work for"
-msgstr "L'organisation pour laquelle vous travaillez"
+#| msgid ""
+#| "\n"
+#| "      Please contact a project administrator to restore access.\n"
+#| "    "
+msgid ""
+"\n"
+"            Please contact your project administrator to enable messaging.\n"
+"          "
+msgstr ""
+"\n"
+"            Veuillez contacter la personne responsable de l’administration de votre projet pour activer la messagerie.\n"
+"          "
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "WhatsApp Templates"
@@ -47550,6 +47879,15 @@ msgstr "1 semaine"
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr "30 jours"
+
+#: corehq/apps/sms/views.py
+#| msgid "{} fields saved successfully."
+msgid "Messaging enabled successfully."
+msgstr "Messagerie activée avec succès."
+
+#: corehq/apps/sms/views.py
+msgid "Messaging cannot be enabled right now."
+msgstr "Impossible d’activer la messagerie pour le moment."
 
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Compose SMS Message"
@@ -49971,6 +50309,45 @@ msgstr "Domaines actifs "
 msgid "Last Usage"
 msgstr "Dernière utilisation"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr "L’IA n’a pas renvoyé de traduction."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The payee is not allowed to receive the deposit transaction."
+msgid "The app didn't accept the AI's translation."
+msgstr "L’application n’a pas accepté la traduction de l’IA."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr "L’IA a renvoyé une traduction vide."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The deposit transaction was rejected by the payer."
+msgid "The AI's translation has characters the app can't save."
+msgstr ""
+"La traduction de l’IA contient des caractères que l’application ne peut pas "
+"enregistrer."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr "L’IA a modifié ou omis une valeur insérée depuis une autre question."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr ""
+"L’IA a modifié la mise en forme, par exemple le texte en gras ou une liste."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "The message was blank."
+msgid "The AI changed a web link."
+msgstr "L’IA a modifié un lien Web."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#| msgid "No labels could be translated."
+msgid "The label couldn't be translated."
+msgstr "Le libellé n’a pas pu être traduit."
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 msgid "Remote apps can't be translated with AI."
 msgstr "Les applications distantes ne peuvent pas être traduites avec l’IA."
@@ -50253,9 +50630,6 @@ msgstr ""
 "terminer. Veuillez réessayer."
 
 #: corehq/apps/translations/tasks.py
-#| msgid ""
-#| "Something went wrong while translating the app. Review its translations and "
-#| "run it again."
 msgid ""
 "Something went wrong and the translation didn't finish. Run it again, and "
 "contact support if it keeps failing."
@@ -50264,17 +50638,8 @@ msgstr ""
 "contactez le support si le problème persiste."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "No strings could be translated."
 msgid "No labels could be translated."
 msgstr "Aucun libellé n’a pu être traduit."
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
-"Plus de {percent}% des traductions ont échoué à la validation et ont été "
-"ignorées."
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
@@ -50323,7 +50688,6 @@ msgid "Please select language to validate."
 msgstr "Veuillez sélectionner une langue à valider."
 
 #: corehq/apps/translations/views.py
-#| msgid "AI translation is no longer available for this project."
 msgid "AI translation isn't available for this project."
 msgstr "La traduction IA n’est pas disponible pour ce projet."
 
@@ -50332,9 +50696,42 @@ msgid "This language can't be translated with AI."
 msgstr "Cette langue ne peut pas être traduite avec l’IA."
 
 #: corehq/apps/translations/views.py
-#| msgid "This user is already an enterprise administrator."
 msgid "This language is already being translated."
 msgstr "Cette langue est déjà en cours de traduction."
+
+#: corehq/apps/translations/views.py
+#| msgid "case list"
+msgid "Case list"
+msgstr "Liste des dossiers"
+
+#: corehq/apps/translations/views.py
+#| msgid "case detail"
+msgid "Case detail"
+msgstr "Détail du dossier"
+
+#: corehq/apps/translations/views.py
+#| msgid "Case Search"
+msgid "Case search"
+msgstr "Recherche de dossiers"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr "indication"
+
+#: corehq/apps/translations/views.py
+#| msgid "Help Text"
+msgid "help text"
+msgstr "texte d’aide"
+
+#: corehq/apps/translations/views.py
+#| msgid "Validation Message"
+msgid "validation message"
+msgstr "message de validation"
+
+#: corehq/apps/translations/views.py
+#| msgid "Choices"
+msgid "choice"
+msgstr "choix"
 
 #: corehq/apps/user_importer/exceptions.py
 msgid ""
@@ -61549,6 +61946,41 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr ""
+#~ "Le formulaire sélectionné ne peut pas être utilisé pour un formulaire web "
+#~ "public."
+
+#~ msgid "Request Access to Messaging Features"
+#~ msgstr "Demander l'accès aux fonctionnalités de messagerie"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "      To enable messaging features, please request access by sending an email to\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
+#~ "      work email address containing the following information:\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Pour activer les fonctionnalités de messagerie, veuillez demander l'accès en envoyant un e-mail à\n"
+#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> depuis votre\n"
+#~ "      adresse e-mail professionnelle contenant les informations suivantes :\n"
+#~ "    "
+
+#~ msgid "Your full name"
+#~ msgstr "Votre nom complet"
+
+#~ msgid "The organization you work for"
+#~ msgstr "L'organisation pour laquelle vous travaillez"
+
+#, python-format, python-brace-format
+#~ msgid ""
+#~ "More than {percent}% of translations failed validation and were skipped."
+#~ msgstr ""
+#~ "Plus de {percent}% des traductions ont échoué à la validation et ont été "
+#~ "ignorées."
 
 #~ msgid "Space-separated list of privilege strings from corehq.privileges"
 #~ msgstr ""

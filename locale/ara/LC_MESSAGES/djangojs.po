@@ -1068,12 +1068,31 @@ msgid "%(name)s (%(code)s)"
 msgstr "%(name)s ‏(%(code)s)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "%(count)s label couldn't be translated"
+msgid_plural "%(count)s labels couldn't be translated"
+msgstr[0] "تعذّرت ترجمة %(count)s من التسميات"
+msgstr[1] "تعذّرت ترجمة تسمية واحدة (%(count)s)"
+msgstr[2] "تعذّرت ترجمة تسميتين (%(count)s)"
+msgstr[3] "تعذّرت ترجمة %(count)s تسميات"
+msgstr[4] "تعذّرت ترجمة %(count)s تسمية"
+msgstr[5] "تعذّرت ترجمة %(count)s تسمية"
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+msgid "Showing the first %(shown)s of %(count)s labels."
+msgstr "عرض أول %(shown)s من أصل %(count)s تسمية."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "You need permission to edit this app to translate it."
 msgstr "تحتاج إلى إذن لتعديل هذا التطبيق من أجل ترجمته."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "The translation couldn't be started. Try again."
 msgstr "تعذّر بدء الترجمة. حاول مرة أخرى."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
+#| msgid "%(count)s failed"
+msgid "and %(count)s more"
+msgstr "و%(count)s أخرى"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "Not yet supported"
@@ -1084,17 +1103,14 @@ msgid "Use the manual translation options below"
 msgstr "استخدم خيارات الترجمة اليدوية أدناه"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Settings"
 msgid "Starting…"
 msgstr "جارٍ البدء…"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Requeued"
 msgid "Queued"
 msgstr "في قائمة الانتظار"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Add Translation"
 msgid "Translating…"
 msgstr "جارٍ الترجمة…"
 
@@ -1103,7 +1119,6 @@ msgid "Batch %(batch)s of %(total)s"
 msgstr "الدفعة %(batch)s من %(total)s"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Auto fill translations"
 msgid "Applying translations…"
 msgstr "جارٍ تطبيق الترجمات…"
 
@@ -1129,22 +1144,20 @@ msgid "Every label already has a translation."
 msgstr "كل تسمية لديها ترجمة بالفعل."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Add Translation"
 msgid "AI translated"
 msgstr "تمت الترجمة بواسطة الذكاء الاصطناعي"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s label translated in this run"
 msgid_plural "%(count)s labels translated in this run"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "تُرجمت %(count)s من التسميات في هذه الجولة"
+msgstr[1] "تُرجمت تسمية واحدة (%(count)s) في هذه الجولة"
+msgstr[2] "تُرجمت تسميتان (%(count)s) في هذه الجولة"
+msgstr[3] "تُرجمت %(count)s تسميات في هذه الجولة"
+msgstr[4] "تُرجمت %(count)s تسمية في هذه الجولة"
+msgstr[5] "تُرجمت %(count)s تسمية في هذه الجولة"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Form submission failed with error"
 msgid "Finished with errors"
 msgstr "اكتمل مع وجود أخطاء"
 
@@ -1153,22 +1166,8 @@ msgid "%(translated)s of %(total)s labels translated (%(percent)s%)"
 msgstr "تمت ترجمة %(translated)s من أصل %(total)s تسمية (%(percent)s٪)"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "%(count)s skipped"
-msgstr "تم تخطي %(count)s"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "%(count)s failed"
-msgstr "فشل %(count)s"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s changed during the run"
 msgstr "تغير %(count)s أثناء العملية"
-
-#: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-msgid "Run AI Translate again to retry the labels that weren't translated."
-msgstr ""
-"شغّل الترجمة بالذكاء الاصطناعي مرة أخرى لإعادة محاولة ترجمة التسميات التي لم"
-" تُترجم."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "No AI run yet"
@@ -1177,15 +1176,14 @@ msgstr "لم يتم تشغيل الذكاء الاصطناعي بعد"
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
 msgid "%(count)s label translated in the last run"
 msgid_plural "%(count)s labels translated in the last run"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-msgstr[4] ""
-msgstr[5] ""
+msgstr[0] "تُرجمت %(count)s من التسميات في الجولة السابقة"
+msgstr[1] "تُرجمت تسمية واحدة (%(count)s) في الجولة السابقة"
+msgstr[2] "تُرجمت تسميتان (%(count)s) في الجولة السابقة"
+msgstr[3] "تُرجمت %(count)s تسميات في الجولة السابقة"
+msgstr[4] "تُرجمت %(count)s تسمية في الجولة السابقة"
+msgstr[5] "تُرجمت %(count)s تسمية في الجولة السابقة"
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/ai_translations.js
-#| msgid "Auto fill translations"
 msgid "Partially translated"
 msgstr "تمت الترجمة جزئيًا"
 
@@ -1380,47 +1378,10 @@ msgstr "آخر حفظ"
 msgid "[unknown]"
 msgstr "[غير معروف]"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "Drag question here"
-msgstr "اسحب السؤال هنا"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is equal to"
-msgstr "يساوي"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is not equal to"
-msgstr "لا يساوي"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than"
-msgstr "أقل من"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is less than or equal to"
-msgstr "أقل من أو يساوي"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than"
-msgstr "أكبر من"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "is greater than or equal to"
-msgstr "أكبر من أو يساوي"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "has selected value"
-msgstr "لديه قيمة محددة"
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ALL of the expressions are true."
-msgstr "صحيح عندما تكون جميع التعابير صحيحة."
-
-#: corehq/apps/app_manager/static/app_manager/js/vellum/117.js
-msgid "True when ANY of the expressions are true."
-msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
-
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "loadXFormOrError"
 msgstr "تحميل XForm أو خطأ"
 
@@ -1445,10 +1406,16 @@ msgid "getMainProperties"
 msgstr "getMainProperties"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "createXML"
 msgstr "إنشاءXML"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "getData"
 msgstr "الحصول على البيانات"
 
@@ -1457,14 +1424,99 @@ msgid "checkMove"
 msgstr "checkMove"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/150.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
 msgid "jstree"
 msgstr "شجرة JS"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/730.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getCurrentMugInput"
+msgstr "الحصول على إدخال الكوب الحالي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getMugByPath"
+msgstr "getMugByPath"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "loadXML"
+msgstr "تحميل XML"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "addQuestion"
+msgstr "إضافة سؤال"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "nodeIDFromLabel"
+msgstr "معرّف العقدة من التسمية"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "getSections"
+msgstr "الحصول على الأقسام"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/1664.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/3333.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4437.js
+msgid "collapseSection"
+msgstr "طي القسم"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "Drag question here"
+msgstr "اسحب السؤال هنا"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is equal to"
+msgstr "يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is not equal to"
+msgstr "لا يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than"
+msgstr "أقل من"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is less than or equal to"
+msgstr "أقل من أو يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than"
+msgstr "أكبر من"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "is greater than or equal to"
+msgstr "أكبر من أو يساوي"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "has selected value"
+msgstr "لديه قيمة محددة"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ALL of the expressions are true."
+msgstr "صحيح عندما تكون جميع التعابير صحيحة."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4117.js
+msgid "True when ANY of the expressions are true."
+msgstr "صحيح عندما يكون أي من التعابير صحيحًا."
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/4730.js
 msgid "{path} is not a valid data parent"
 msgstr "{path} ليس أصل بيانات صالح"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/96.js
+#: corehq/apps/app_manager/static/app_manager/js/vellum/8096.js
 msgid "\n"
 msgstr "\n"
 
@@ -3134,26 +3186,42 @@ msgstr "جميع الإجراءات"
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Accepted"
 msgid_plural "%(count)s Invitations Accepted"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "تم قبول %(count)s من الدعوات"
+msgstr[1] "تم قبول دعوة واحدة (%(count)s)"
+msgstr[2] "تم قبول دعوتين (%(count)s)"
+msgstr[3] "تم قبول %(count)s دعوات"
+msgstr[4] "تم قبول %(count)s دعوة"
+msgstr[5] "تم قبول %(count)s دعوة"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Pending"
 msgid_plural "%(count)s Invitations Pending"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "هناك %(count)s من الدعوات قيد الانتظار"
+msgstr[1] "هناك دعوة واحدة (%(count)s) قيد الانتظار"
+msgstr[2] "هناك دعوتان (%(count)s) قيد الانتظار"
+msgstr[3] "هناك %(count)s دعوات قيد الانتظار"
+msgstr[4] "هناك %(count)s دعوة قيد الانتظار"
+msgstr[5] "هناك %(count)s دعوة قيد الانتظار"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Invitation Rejected"
 msgid_plural "%(count)s Invitations Rejected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "تم رفض %(count)s من الدعوات"
+msgstr[1] "تم رفض دعوة واحدة (%(count)s)"
+msgstr[2] "تم رفض دعوتين (%(count)s)"
+msgstr[3] "تم رفض %(count)s دعوات"
+msgstr[4] "تم رفض %(count)s دعوة"
+msgstr[5] "تم رفض %(count)s دعوة"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "%(count)s Project Space Participating"
 msgid_plural "%(count)s Project Spaces Participating"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "تشارك %(count)s من مساحات المشاريع"
+msgstr[1] "تشارك مساحة مشروع واحدة (%(count)s)"
+msgstr[2] "تشارك مساحتا مشروع (%(count)s)"
+msgstr[3] "تشارك %(count)s مساحات مشاريع"
+msgstr[4] "تشارك %(count)s مساحة مشروع"
+msgstr[5] "تشارك %(count)s مساحة مشروع"
 
 #: corehq/apps/registry/static/registry/js/registry_text.js
 msgid "Rejected"
@@ -4436,6 +4504,14 @@ msgstr "فشل! الاستجابة هي: "
 msgid "CommCare HQ was unable to make the request: "
 msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
+#~ msgid "%(count)s skipped"
+#~ msgstr "تم تخطي %(count)s"
+
+#~ msgid "Run AI Translate again to retry the labels that weren't translated."
+#~ msgstr ""
+#~ "شغّل الترجمة بالذكاء الاصطناعي مرة أخرى لإعادة محاولة ترجمة التسميات التي لم"
+#~ " تُترجم."
+
 #~ msgid "Seconds"
 #~ msgstr "ثوانٍ"
 
@@ -5306,27 +5382,6 @@ msgstr "تعذر على CommCare HQ تنفيذ الطلب: "
 
 #~ msgid "No Translation Data"
 #~ msgstr "لا توجد بيانات ترجمة"
-
-#~ msgid "getCurrentMugInput"
-#~ msgstr "الحصول على إدخال الكوب الحالي"
-
-#~ msgid "getMugByPath"
-#~ msgstr "getMugByPath"
-
-#~ msgid "loadXML"
-#~ msgstr "تحميل XML"
-
-#~ msgid "addQuestion"
-#~ msgstr "إضافة سؤال"
-
-#~ msgid "nodeIDFromLabel"
-#~ msgstr "معرّف العقدة من التسمية"
-
-#~ msgid "getSections"
-#~ msgstr "الحصول على الأقسام"
-
-#~ msgid "collapseSection"
-#~ msgstr "طي القسم"
 
 #~ msgid "Active"
 #~ msgstr "نشط"

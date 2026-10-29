@@ -3,6 +3,7 @@ from django.conf import settings
 from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.document_types import SMS_DOC_TYPE
 from corehq.apps.change_feed.producer import producer
 
 
@@ -25,7 +26,7 @@ def change_meta_from_sms(sms):
         document_id=sms.couch_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.SMS,
-        document_type=topics.SMS,
+        document_type=SMS_DOC_TYPE,
         document_subtype=None,
         domain=sms.domain,
         is_deletion=False,
