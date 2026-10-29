@@ -99,6 +99,10 @@ class UserInvitationView(object):
         domain_obj = Domain.get_by_name(invitation.domain)
         allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
 
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(invitation.email)
+
         if request.user.is_authenticated:
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
@@ -117,7 +121,7 @@ class UserInvitationView(object):
                                                  current=request.couch_user.username))
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
 
-            if not is_invited_user and allow_invite_email_only:
+            if not is_invited_user and (allow_invite_email_only or idp):
                 context.update({
                     'email_mismatch_blocked': True,
                     'invited_user': invitation.email,
@@ -151,10 +155,6 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
-            idp = None
-            if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_required_identity_provider(invitation.email)
-
             if request.method == "POST":
                 form = AcceptedWebUserInvitationForm(
                     request.POST,

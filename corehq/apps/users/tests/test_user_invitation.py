@@ -7,9 +7,11 @@ from corehq.apps.users.views.web import UserInvitationView, AcceptedWebUserInvit
 
 from django import forms
 from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.domain.models import Domain
+from corehq.apps.sso.models import AuthenticatedEmailDomain, LoginEnforcementType
+from corehq.apps.sso.tests import generator
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import InvitationHistory
 from corehq.apps.users.model_log import InviteModelAction
@@ -227,6 +229,28 @@ class TestUserInvitation(TestCase):
         UserInvitationView()(request, invite_uuid, domain=self.domain)
         self.assertTrue(WebUser.get_by_username("invitee@dimagi.com").is_member_of(self.domain))
 
+    @override_settings(ENFORCE_SSO_LOGIN=True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_required_sso_blocks_other_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        self._require_sso_for_invited_email()
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("other@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertFalse(WebUser.get_by_username("other@dimagi.com").is_member_of(self.domain))
+
+    @override_settings(ENFORCE_SSO_LOGIN=True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_required_sso_accepts_invited_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        self._require_sso_for_invited_email()
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("invitee@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertTrue(WebUser.get_by_username("invitee@dimagi.com").is_member_of(self.domain))
+
     def _setup_signed_in_invitation_and_request(self, username):
         invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
         inviter = WebUser.create(
@@ -258,3 +282,10 @@ class TestUserInvitation(TestCase):
             role="admin",
         )
         return request, invite_uuid
+
+    def _require_sso_for_invited_email(self):
+        idp = generator.create_idp('dimagi', generator.get_billing_account_for_idp())
+        idp.is_active = True
+        idp.login_enforcement_type = LoginEnforcementType.GLOBAL
+        idp.save()
+        AuthenticatedEmailDomain.objects.create(email_domain="dimagi.com", identity_provider=idp)
