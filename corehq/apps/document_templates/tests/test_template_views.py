@@ -1,4 +1,5 @@
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
@@ -25,18 +26,35 @@ def _post(view_class, template_id, data=None, domain=DOMAIN):
 
 class TestDeleteDocumentTemplateView(TestCase):
 
-    def test_deletes_the_template_and_redirects_to_the_list(self):
+    def test_marks_the_template_deleted_and_redirects_to_the_list(self):
         template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', variables={})
         response = _post(DeleteDocumentTemplateView, template.pk)
         assert response.status_code == 302
         assert response.url == reverse('document_templates', args=[DOMAIN])
-        assert not Template.objects.filter(pk=template.pk).exists()
+        template.refresh_from_db()
+        assert template.deleted
+
+    def test_deleted_template_cannot_be_deleted_again(self):
+        template = Template.objects.create(
+            domain=DOMAIN, name='Gone', slug='gone', variables={}, deleted=True,
+        )
+        with self.assertRaises(Http404):
+            _post(DeleteDocumentTemplateView, template.pk)
+
+    def test_slug_of_a_deleted_template_can_be_reused(self):
+        Template.objects.create(domain=DOMAIN, name='Old', slug='welcome', variables={}, deleted=True)
+        Template.objects.create(domain=DOMAIN, name='New', slug='welcome', variables={})
+
+    def test_active_slug_is_still_unique(self):
+        Template.objects.create(domain=DOMAIN, name='A', slug='welcome', variables={})
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Template.objects.create(domain=DOMAIN, name='B', slug='welcome', variables={})
 
     def test_keeps_other_templates(self):
         template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', variables={})
         other = Template.objects.create(domain=DOMAIN, name='Other', slug='other', variables={})
         _post(DeleteDocumentTemplateView, template.pk)
-        assert list(Template.objects.all()) == [other]
+        assert list(Template.objects.filter(deleted=False)) == [other]
 
     def test_cannot_delete_a_template_of_another_domain(self):
         template = Template.objects.create(domain=OTHER_DOMAIN, name='Theirs', slug='theirs', variables={})

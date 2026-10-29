@@ -466,6 +466,7 @@ django_prbac
  0001_initial
 document_templates
  0001_initial
+ 0002_template_deleted
 domain
  0001_initial
  0002_auto_20171020_1428
