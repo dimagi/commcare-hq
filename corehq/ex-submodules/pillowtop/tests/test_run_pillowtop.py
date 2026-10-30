@@ -150,9 +150,11 @@ def test_restart_exited_processes():
 
     assert events == ['close', 'start pillow1', 'close', 'start pillow3']
     assert [pillow for pillow, process in processes_incl_restarted] == pillows
-    assert processes_incl_restarted[1] == processes[1]  # pillow2 is still running
-    assert processes_incl_restarted[0][1] is not processes[0][1]
-    assert processes_incl_restarted[2][1] is not processes[2][1]
+    original_processes = [process for pillow, process in processes]
+    current_processes = [process for pillow, process in processes_incl_restarted]
+    assert current_processes[0] is not original_processes[0]  # pillow1 restarted
+    assert current_processes[1] is original_processes[1]  # pillow2 still running
+    assert current_processes[2] is not original_processes[2]  # pillow3 restarted
 
 
 def fake_pillows(*names):
