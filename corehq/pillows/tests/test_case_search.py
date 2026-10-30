@@ -32,6 +32,12 @@ class TestCaseSearchPillowProcessor:
             assert not errors
 
 
+def test_resumable_reindexer_is_partial():
+    with patch.object(mod, 'domain_needs_search_index', lambda domain: True):
+        reindexer = mod.ResumableCaseSearchReindexerFactory(domain='test').build()
+    assert reindexer.partial
+
+
 @define
 class FakeChange:
     id = field()

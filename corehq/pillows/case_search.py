@@ -246,5 +246,6 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             adapter=case_search_adapter,
+            partial=True,
             **self.options
         )

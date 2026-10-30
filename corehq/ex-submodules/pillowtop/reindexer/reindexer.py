@@ -26,6 +26,11 @@ MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
 
 
 class Reindexer(metaclass=ABCMeta):
+
+    # True if the reindex covers only part of the index, e.g. one domain
+    # or one shard.
+    partial = False
+
     def clean(self):
         """
             Cleans the index.
@@ -245,8 +250,9 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
     def __init__(self, doc_provider, adapter,
                  doc_filter=None, chunk_size=1000, pillow=None,
-                 reset=False, in_place=False):
+                 reset=False, in_place=False, partial=False):
         self.reset = reset
+        self.partial = partial
         self.in_place = in_place
         self.doc_provider = doc_provider
         self.adapter = adapter

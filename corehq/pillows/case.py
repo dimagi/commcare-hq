@@ -171,5 +171,6 @@ class SqlCaseReindexerFactory(ReindexerFactory):
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             adapter=case_adapter,
+            partial=any([limit_to_db, domain, start_date, end_date]),
             **self.options
         )
