@@ -1,3 +1,5 @@
+import pytest
+from django.db import DataError
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.custom_data_fields.models import Field, CustomDataFieldsDefinition, SYSTEM_PREFIX
 
@@ -88,3 +90,19 @@ class CustomDataFieldsDefinitionTests(TestCase):
         filtered_fields = self.definition.get_fields(field_filter_config=custom_required_only_config)
         self.assertEqual(len(filtered_fields), 1)
         self.assertEqual(filtered_fields[0].slug, 'web_user_required')
+
+    def test_failed_set_fields_keeps_existing_fields(self):
+        too_long_label = 'x' * 256
+        with pytest.raises(DataError):
+            self.definition.set_fields([
+                Field(slug='regular_field', label='Regular'),
+                Field(slug='sector', label=too_long_label),
+            ])
+
+        definition = CustomDataFieldsDefinition.objects.get(id=self.definition.id)
+        assert [f.slug for f in definition.get_fields()] == [
+            'regular_field',
+            'required_field',
+            'web_user_required',
+            'commcare_system_field',
+        ]
