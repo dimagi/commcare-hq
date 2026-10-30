@@ -67,9 +67,9 @@ def test_bootstrap_reference_data_restores_seeded_rows():
 
     def get_seeded_rows():
         return {
-            'permissions': set(Permission.objects.values_list('value', flat=True)),
-            'sample_percentages': list(IntegritySamplePercentage.objects.values_list('percentage', flat=True)),
-            'toggle_tags': set(ToggleEditPermission.objects.values_list('tag_slug', flat=True)),
+            'permissions': sorted(Permission.objects.values_list('value', flat=True)),
+            'sample_percentages': sorted(IntegritySamplePercentage.objects.values_list('percentage', flat=True)),
+            'toggle_tags': sorted(ToggleEditPermission.objects.values_list('tag_slug', flat=True)),
         }
 
     seeded = get_seeded_rows()
