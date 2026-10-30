@@ -78,5 +78,6 @@ def _apply_pending_backfills(domain):
     for case_type, ops in pending_ops.items():
         if (table := CaseTable(domain, case_type).reflect()) is not None:
             column_names = {name for op in ops for name in op.args['columns']}
-            backfill_typed_columns(table, [col for col in table.c if col.name in column_names])
+            if columns := [col for col in table.c if col.name in column_names]:
+                backfill_typed_columns(table, columns)
         PendingOperation.objects.filter(id__in=[op.id for op in ops]).delete()

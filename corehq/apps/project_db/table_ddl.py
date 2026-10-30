@@ -346,7 +346,7 @@ def _get_case_types(domain):
 def update_table(conn, table):
     """Add columns and indexes present in ``table`` but missing from the database.
 
-    Returns the names of new typed columns whose that need backfilling
+    Returns the names of new typed columns that need backfilling
     """
     inspector = sqlalchemy.inspect(conn)
     schema = table.schema
