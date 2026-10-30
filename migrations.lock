@@ -366,6 +366,7 @@ data_analytics
  0013_domainmetrics_bulk_case_editing_sessions_and_more
  0014_domainmetrics_users_with_web_apps_submission_in_last_30_days_and_more
  0015_domainmetrics_public_webform_submissions_and_more
+ 0016_domainmetrics_questions_locked
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -489,6 +490,7 @@ domain
  0022_domainauditrecordentry_cp_n_enterprise_console_exports_and_more
  0023_domainauditrecordentry_cp_n_questions_locked
  0024_chatbotdomainsettings
+ 0025_stop_declaring_cp_n_questions_locked
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration

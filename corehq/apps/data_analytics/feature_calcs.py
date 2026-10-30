@@ -8,6 +8,7 @@ from dimagi.utils.couch.cache import cache_core
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
+from corehq.apps.app_manager.exceptions import DangerousXmlException, XFormException
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_cleaning.models import BulkEditSession
@@ -83,6 +84,22 @@ def calc_has_save_to_case(domain_context):
         for app in domain_context.apps
         for form in app.get_forms(bare=True)
     )
+
+
+def calc_questions_locked(domain_context):
+    return sum(
+        _count_locked_questions(form)
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+        if form.form_type != 'shadow_form'
+    )
+
+
+def _count_locked_questions(form):
+    try:
+        return len(form.wrapped_xform().locked_question_paths)
+    except (XFormException, DangerousXmlException):
+        return 0
 
 
 def calc_bulk_case_editing_sessions(domain_context):
@@ -279,6 +296,8 @@ FEATURE_METRICS = [
               calc_has_app_profiles),
     MetricDef('has_save_to_case', 'cp_has_save_to_case',
               calc_has_save_to_case),
+    MetricDef('questions_locked', 'cp_n_questions_locked',
+              calc_questions_locked, is_boolean=False),
     MetricDef('bulk_case_editing_sessions',
               'cp_n_bulk_case_editing_sessions',
               calc_bulk_case_editing_sessions, is_boolean=False),
