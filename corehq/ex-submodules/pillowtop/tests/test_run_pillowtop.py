@@ -4,7 +4,11 @@ import pytest
 from testil import Config
 from unmagic import fixture
 
-from ..run_pillowtop import run_pillow_by_name
+from ..run_pillowtop import (
+    restart_exited_processes,
+    run_pillow_by_name,
+    start_pillows,
+)
 
 
 def test_run_pillow_by_name_single_process():
@@ -104,6 +108,85 @@ def test_run_pillow_by_name_with_too_few_gevent_workers(workers):
             processor_chunk_size=100,
         )
     assert not started
+
+
+def test_start_pillows_closes_db_connections_before_forking():
+    events = patch_processes()
+    with patch('pillowtop.run_pillowtop.wait', side_effect=KeyboardInterrupt), pytest.raises(SystemExit):
+        start_pillows(fake_pillows('pillow1', 'pillow2'))
+
+    assert events == ['close', 'start pillow1', 'close', 'start pillow2']
+
+
+def test_start_pillows_restarts_exited_processes():
+    events = patch_processes()
+    waits = []
+
+    def wait(sentinels):
+        waits.append(sorted(sentinels))
+        if len(waits) == 1:
+            FakeProcess.exited.add('pillow2')
+        else:
+            raise KeyboardInterrupt  # stop start_pillows looping
+
+    with (
+        patch('pillowtop.run_pillowtop.wait', wait),
+        patch('pillowtop.run_pillowtop.time.sleep'),
+        pytest.raises(SystemExit),
+    ):
+        start_pillows(fake_pillows('pillow1', 'pillow2'))
+
+    assert waits == [['pillow1', 'pillow2'], ['pillow1', 'pillow2']]
+    assert events == ['close', 'start pillow1', 'close', 'start pillow2', 'close', 'start pillow2']
+
+
+def test_restart_exited_processes():
+    events = patch_processes()
+    pillows = fake_pillows('pillow1', 'pillow2', 'pillow3')
+    processes = [(pillow, FakeProcess(pillow.run)) for pillow in pillows]
+    FakeProcess.exited.update({'pillow1', 'pillow3'})
+
+    processes_incl_restarted = restart_exited_processes(processes)
+
+    assert events == ['close', 'start pillow1', 'close', 'start pillow3']
+    assert [pillow for pillow, process in processes_incl_restarted] == pillows
+    original_processes = [process for pillow, process in processes]
+    current_processes = [process for pillow, process in processes_incl_restarted]
+    assert current_processes[0] is not original_processes[0]  # pillow1 restarted
+    assert current_processes[1] is original_processes[1]  # pillow2 still running
+    assert current_processes[2] is not original_processes[2]  # pillow3 restarted
+
+
+def fake_pillows(*names):
+    return [Config(pillow_id=name, run=lambda name=name: name) for name in names]
+
+
+class FakeProcess:
+    events = None
+    exited = None
+
+    def __init__(self, target):
+        self.name = self.pid = self.sentinel = target()
+        self.exitcode = None
+
+    def start(self):
+        self.events.append(f"start {self.name}")
+        self.exited.discard(self.name)
+
+    def is_alive(self):
+        return self.name not in self.exited
+
+
+@fixture
+def patch_processes():
+    events = []
+    with (
+        patch.object(FakeProcess, 'events', events),
+        patch.object(FakeProcess, 'exited', set()),
+        patch('pillowtop.run_pillowtop.multiprocessing.Process', FakeProcess),
+        patch('pillowtop.run_pillowtop.close_db_connections', lambda: events.append('close')),
+    ):
+        yield events
 
 
 @fixture

@@ -1,14 +1,19 @@
 import multiprocessing
 import sys
+import time
+from multiprocessing.connection import wait
 
 import gevent
+from django.db import connections
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.sql_db.connections import cleanup_connections
+from corehq.sql_db.connections import cleanup_connections, connection_manager
 
 from pillowtop import get_all_pillow_instances
 from pillowtop.utils import get_pillow_by_name
+
+RESTART_DELAY = 5  # seconds
 
 
 def run_pillow_by_name(
@@ -84,23 +89,51 @@ def run_gevent_worker(pillow_name, *, process_number, **kw):
 def start_pillows(pillows=None):
     """
     Actual runner for running pillow processes. Use this to run pillows.
+
+    Each pillow runs in its own process, which is restarted if it exits.
     """
     run_pillows = pillows or get_all_pillow_instances()
 
     try:
+        print("[pillowtop] Starting pillow processes")
+        processes = [(pillow, _start_process(pillow)) for pillow in run_pillows]
+        print("[pillowtop] all processes started, pids: %s" % ([p.pid for __, p in processes]))
         while True:
-            jobs = []
-            print("[pillowtop] Starting pillow processes")
-            for pillow_class in run_pillows:
-                p = multiprocessing.Process(target=pillow_class.run)
-                p.start()
-                jobs.append(p)
-            print("[pillowtop] all processes started, pids: %s" % ([x.pid for x in jobs]))
-            for j in jobs:
-                j.join()
-            print("[pillowtop] All processes complete, restarting")
+            wait([process.sentinel for __, process in processes])
+            # Avoid a tight loop if a pillow exits as soon as it starts
+            time.sleep(RESTART_DELAY)
+            processes = restart_exited_processes(processes)
     except KeyboardInterrupt:
         sys.exit()
+
+
+def restart_exited_processes(processes):
+    """
+    :param processes: A list of (pillow, process) tuples
+    :returns: The list with exited processes replaced by new ones
+    """
+    processes_incl_restarted = []
+    for pillow, process in processes:
+        if not process.is_alive():
+            print(f"[pillowtop] {pillow.pillow_id} process {process.pid} exited "
+                  f"with code {process.exitcode}, restarting")
+            process = _start_process(pillow)
+        processes_incl_restarted.append((pillow, process))
+    return processes_incl_restarted
+
+
+def _start_process(pillow):
+    # Pillow instances can open DB connections when they are created.
+    # A forked process must not share them.
+    close_db_connections()
+    process = multiprocessing.Process(target=pillow.run)
+    process.start()
+    return process
+
+
+def close_db_connections():
+    connections.close_all()
+    connection_manager.dispose_all()
 
 
 def start_pillow(pillow_instance):
