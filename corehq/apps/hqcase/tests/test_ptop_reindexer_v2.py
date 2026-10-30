@@ -21,6 +21,18 @@ def test_cleanup_cleans_when_reindexer_can_clean():
     assert stderr == ''
 
 
+def test_cleanup_refuses_partial_reindex():
+    calls, stderr = run_command(PartialReindexer, '--cleanup', '--noinput')
+    assert calls == ['exit 1']
+    assert 'cannot --cleanup when limited to part of the index' in stderr
+
+
+def test_partial_reindex_without_cleanup():
+    calls, stderr = run_command(PartialReindexer)
+    assert calls == ['reindex']
+    assert stderr == ''
+
+
 def test_no_cleanup_does_not_clean():
     calls, stderr = run_command(NoCleanReindexer)
     assert calls == ['reindex']
@@ -57,3 +69,7 @@ class NoCleanReindexer(Reindexer):
 class CleanReindexer(NoCleanReindexer):
     def clean(self):
         self.calls.append('clean')
+
+
+class PartialReindexer(CleanReindexer):
+    partial = True

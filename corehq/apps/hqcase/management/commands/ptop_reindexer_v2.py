@@ -142,6 +142,13 @@ class Command(SubCommand):
                     "--cleanup. Run it without --cleanup to reindex without "
                     "cleaning."
                 )
+            elif reindexer.partial:
+                raise CommandError(
+                    f"The {self.subcommand} reindexer cannot --cleanup when "
+                    "limited to part of the index (e.g. with --domain or "
+                    "--limit-to-db). Cleaning would delete documents that "
+                    "this reindex would not restore."
+                )
             elif noinput or confirm():
                 reindexer.clean()
 
