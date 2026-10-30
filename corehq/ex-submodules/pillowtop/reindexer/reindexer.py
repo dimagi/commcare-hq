@@ -41,6 +41,11 @@ class Reindexer(metaclass=ABCMeta):
         raise NotImplementedError
 
 
+def supports_clean(reindexer):
+    """Return whether ``reindexer`` overrides the no-op ``Reindexer.clean()``"""
+    return getattr(type(reindexer), 'clean', Reindexer.clean) is not Reindexer.clean
+
+
 class ReindexerFactory(metaclass=ABCMeta):
     slug = None
     arg_contributors = None
