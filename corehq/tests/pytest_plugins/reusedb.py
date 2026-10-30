@@ -18,6 +18,7 @@ import sys
 import warnings
 from contextlib import ExitStack, contextmanager, nullcontext
 from functools import partial
+from importlib import import_module
 from unittest.mock import Mock, patch
 
 import pytest
@@ -378,7 +379,8 @@ def flush_databases():
             db.flush()
         except (ResourceNotFound, HTTPError):
             pass
-    call_command('flush', interactive=False)
+    for connection, db_name, _ in get_sql_databases():
+        call_command('flush', interactive=False, database=connection.alias)
     bootstrap_migrated_db_state()
 
 
@@ -388,6 +390,21 @@ def bootstrap_migrated_db_state():
     from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
     bootstrap_accounting()
     bootstrap_smsbillables()
+    bootstrap_reference_data()
+
+
+@unit_testing_only
+def bootstrap_reference_data():
+    """Restore rows created by data migrations. Safe to call repeatedly."""
+    from django.apps import apps
+
+    from corehq.apps.users.models_role import Permission
+
+    Permission.create_all()
+    ota_migration = import_module('corehq.apps.ota.migrations.0012_integritysamplepercentage')
+    ota_migration.create_integrity_sample_percentage(apps, schema_editor=None)
+    toggles_migration = import_module('corehq.toggles.migrations.0006_alter_toggleeditpermission_tag_slug')
+    toggles_migration._sync_toggle_edit_permissions(apps, schema_editor=None)
 
 
 class HqDbBlocker(DjangoDbBlocker):
