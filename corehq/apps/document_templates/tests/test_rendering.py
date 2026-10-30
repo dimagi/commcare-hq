@@ -121,6 +121,10 @@ def _markups(flowables):
     ('# Title', ['Title']),
     ('> quoted', ['quoted']),
     ('<style>p { color: red }</style>text', ['text']),
+    ('a [[blank:3]] b', ['a <u>&nbsp;&nbsp;&nbsp;</u> b']),
+    ('[[blank]]', [f'<u>{"&nbsp;" * 20}</u>']),
+    ('[[blank:999]]', [f'<u>{"&nbsp;" * 100}</u>']),
+    ('[[blank:x]] [[blanks]]', ['[[blank:x]] [[blanks]]']),
     ('', []),
 ])
 def test_markdown_to_flowables_paragraphs(markdown_text, expected):
@@ -169,6 +173,13 @@ def test_render_pdf_starts_each_document_on_a_new_page():
     one = render_pdf([_document(body='Hello')])
     two = render_pdf([_document(body='Hello'), _document(body='World')])
     assert two.count(b'/Type /Page\n') == one.count(b'/Type /Page\n') + 1
+
+
+def test_blank_is_underlined():
+    [paragraph] = _markdown_to_flowables('a [[blank:5]] b')
+    paragraph.wrap(400, 100)
+    frags = paragraph.blPara.lines[0].words
+    assert [frag.text for frag in frags if frag.us_lines] == ['\xa0'] * 5
 
 
 def test_render_pdf_clips_overflowing_areas():
