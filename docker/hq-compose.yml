@@ -36,7 +36,7 @@ services:
         condition: service_healthy
       couch:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
       elasticsearch6:
         condition: service_healthy
@@ -94,16 +94,16 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/opt/couchdb/data
 
-  redis:
-    image: docker.io/redis:7
+  valkey:
+    image: docker.io/valkey/valkey:7
     expose:
       - "6379"
     healthcheck:
-      test: bash -c 'exec 6<>/dev/tcp/redis/6379'
+      test: bash -c 'exec 6<>/dev/tcp/valkey/6379'
       interval: 10s
       retries: 10
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-redis:}/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-valkey:}/data
 
   elasticsearch6:
     build:
