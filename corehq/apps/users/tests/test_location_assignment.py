@@ -4,11 +4,13 @@ from django.test import TestCase
 from corehq.apps.es.tests.utils import es_test
 
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.commtrack.util import location_map_case_id
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.client import manager
 from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.models import CommCareCase
 from corehq.util.es.testing import sync_users_to_es
 
 
@@ -138,6 +140,76 @@ class CCUserLocationAssignmentTest(TestCase):
     def assertNonPrimaryLocation(self, expected):
         self.assertNotEqual(self.user.location_id, expected)
         self.assertTrue(expected in self.user.assigned_location_ids)
+
+
+class CCUserMappingCaseChangesTest(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'my-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        # Required so non-administrative LocationTypes stay non-administrative
+        # LocationType.save forces administrative=True on non-commtrack domains
+        cls.domain_obj.commtrack_enabled = True
+        cls.domain_obj.save()
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.loc1 = make_loc('1', 'loc1', cls.domain)
+        cls.loc2 = make_loc('2', 'loc2', cls.domain)
+        cls.loc_ids = [loc.location_id for loc in [cls.loc1, cls.loc2]]
+
+    def setUp(self):
+        super().setUp()
+        self.user = CommCareUser.create(
+            domain=self.domain,
+            username='cc1',
+            password='***',
+            created_by=None,
+            created_via=None,
+            last_login=datetime.now()
+        )
+        self.addCleanup(self.user.delete, None, None)
+
+    def test_set_location_creates_mapping_case(self):
+        self.user.set_location(self.loc1)
+
+        mapping = CommCareCase.objects.get_case(
+            location_map_case_id(self.user), self.domain,
+        )
+        assert len(mapping.live_indices) == 1
+
+    def test_set_location_updates_mapping_case_in_place(self):
+        self.user.set_location(self.loc1)
+        case_id = location_map_case_id(self.user)
+        referenced_id = (
+            CommCareCase.objects.get_case(case_id, self.domain)
+            .live_indices[0].referenced_id
+        )
+
+        # update location
+        self.user.set_location(self.loc2)
+
+        mapping = CommCareCase.objects.get_case(case_id, self.domain)
+        # there should be both a create and update form
+        # proving it was updated in place
+        assert len(mapping.xform_ids) == 2
+        current_refs = {
+            live_index.referenced_id for live_index in mapping.live_indices
+        }
+        assert len(current_refs) == 1
+        assert referenced_id not in current_refs
+
+    def test_unset_location_clears_mapping_case_indices(self):
+        self.user.set_location(self.loc1)
+        case_id = location_map_case_id(self.user)
+
+        self.user.unset_location()
+
+        mapping = CommCareCase.objects.get_case(case_id, self.domain)
+
+        assert len(mapping.xform_ids) == 2
+        assert mapping.live_indices == []
 
 
 class WebUserLocationAssignmentTest(TestCase):
