@@ -126,7 +126,6 @@ so you can connect to them directly.
 * Zookeeper (2181)
 * Kafka (9092)
 * Garage (S3 API, 3900)
-* MinIO (9980), only needed to migrate old blobs; see below
 
 CommCare HQ and the services
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
