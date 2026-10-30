@@ -77,6 +77,11 @@ INLINE_TAGS = {
 }
 VOID_TAGS = {'br', 'hr', 'img', 'meta'}
 
+# ``[[blank]]`` or ``[[blank:30]]``: an underlined space for filling in by hand, in characters
+BLANK = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
+DEFAULT_BLANK_LENGTH = 20
+MAX_BLANK_LENGTH = 100
+
 
 def _escape_markdown(text):
     return re.sub(r'([\\`*_{}\[\]()>#+\-.!])', r'\\\1', text)
@@ -344,10 +349,15 @@ def _inline_children(element):
     return _join(_inline(child) for child in element.children)
 
 
+def _blank(match):
+    length = min(int(match[1] or DEFAULT_BLANK_LENGTH), MAX_BLANK_LENGTH)
+    return f'<u>{"&nbsp;" * length}</u>'
+
+
 def _inline(child):
     """Paragraph markup for an inline element or text; user text is escaped, the tags are ours"""
     if isinstance(child, str):
-        return escape(child)
+        return BLANK.sub(_blank, escape(child))
     if child.tag == 'br':
         return '<br/>'
     inner = _inline_children(child)
