@@ -1,8 +1,13 @@
 """Translate user-supplied SQL into SQLAlchemy Core expressions.
 
-Only a strict subset of SQL is supported; anything outside it errors.
-See describe.py for a text description of this subset, which should be
-kept up-to-date.
+Only an explicitly articulated subset of SQL is supported, all else errors. The
+goal of this is tool is safety, not correctness - it parses, interprets,
+and rewrites queries, but correctness is the responsibility of the author.
+Queries must always be tested against PostgreSQL - it is not generally
+UserSQL's job to anticipate possible errors at parse time.
+
+describe.py should be kept up-to-date with this file - it describes what SQL
+constructs are supported.
 """
 import operator
 import re
@@ -20,6 +25,8 @@ from sqlalchemy import (
     and_,
     bindparam,
     cast,
+    column,
+    distinct,
     func,
     literal_column,
     not_,
@@ -35,7 +42,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, OperationalError, ProgrammingError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.base import Executable
-from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.sql.expression import ClauseElement, Label
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -264,21 +271,28 @@ def _unpack(node, *args):
 
 
 def _convert_select(node, tables):
-    expressions, from_, joins, where, distinct, order = _unpack(
-        node, 'expressions', 'from_', 'joins', 'where', 'distinct', 'order')
+    expressions, from_, joins, where, group, having, distinct, order = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'group', 'having', 'distinct', 'order')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
     selectable = _convert_table_ref(from_.this, tables)
     for join in joins or []:
         selectable = _convert_join(join, selectable, tables)
-    query = select(_convert_projection(expressions, selectable.c)).select_from(selectable)
+    projection = _convert_projection(expressions, selectable.c)
+    query = select(projection).select_from(selectable)
     if distinct is not None:
         query = query.distinct(*_convert_distinct_on(distinct, selectable.c))
     if where is not None:
         predicate, = _unpack(where, 'this')
         query = query.where(_convert_predicate(predicate, selectable.c))
+    if group is not None:
+        query = query.group_by(*_convert_group(group, selectable.c))
+    if having is not None:
+        predicate, = _unpack(having, 'this')
+        query = query.having(_convert_predicate(predicate, selectable.c))
     if order is not None:
-        query = query.order_by(*_convert_order(order, selectable.c))
+        aliases = {p.name for p in projection if isinstance(p, Label)}
+        query = query.order_by(*_convert_order(order, selectable.c, aliases))
     return query
 
 
@@ -293,17 +307,20 @@ def _convert_distinct_on(node, columns):
     return [_convert_column(e, columns) for e in on_expressions]
 
 
-def _convert_order(node, columns):
-    """Convert an ORDER BY clause to a list of sort keys"""
+def _convert_group(node, columns):
+    """Convert a GROUP BY clause to a list of columns"""
+    group_expressions, = _unpack(node, 'expressions')
+    return [_convert_column(e, columns) for e in group_expressions]
+
+
+def _convert_order(node, columns, aliases):
+    """Convert an ORDER BY clause to yield sort keys"""
     order_expressions, = _unpack(node, 'expressions')
-    return [_convert_sort_key(e, columns) for e in order_expressions]
-
-
-def _convert_sort_key(node, columns):
-    expression, desc, nulls_first = _unpack(node, 'this', 'desc', 'nulls_first')
-    col = _convert_column(expression, columns)
-    sort_key = col.desc() if desc else col.asc()
-    return nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
+    for e in order_expressions:
+        expression, desc, nulls_first = _unpack(e, 'this', 'desc', 'nulls_first')
+        value = _convert_column(expression, columns, aliases)
+        sort_key = value.desc() if desc else value.asc()
+        yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
 
 def _convert_join(node, selectable, tables):
@@ -334,15 +351,57 @@ def _convert_projection(expressions, columns):
 def _convert_projected_column(node, columns):
     if isinstance(node, exp.Alias):
         expression, alias = _unpack(node, 'this', 'alias')
-        return _convert_column(expression, columns).label(alias.name)
-    return _convert_column(node, columns)
+        return _convert_value(expression, columns).label(alias.name)
+    return _convert_value(node, columns)
 
 
-def _convert_column(node, columns):
+AGGREGATES = {
+    exp.Count: func.count,
+    exp.Sum: func.sum,
+    exp.Avg: func.avg,
+    exp.Min: func.min,
+    exp.Max: func.max,
+    exp.GroupConcat: func.string_agg,
+    exp.ArrayAgg: func.array_agg,
+}
+
+
+def _convert_aggregate(node, columns):
+    if isinstance(node, exp.Filter):
+        agg, where = _unpack(node, 'this', 'expression')
+        if type(agg) not in AGGREGATES:
+            raise UnsupportedSQL(f"FILTER requires an aggregate, got {str(agg)}")
+        predicate, = _unpack(where, 'this')
+        return (_convert_aggregate(agg, columns)
+                .filter(_convert_predicate(predicate, columns)))
+    aggregate = AGGREGATES[type(node)]
+    if isinstance(node, exp.GroupConcat):
+        expression, separator = _unpack(node, 'this', 'separator')
+        return aggregate(_convert_aggregated_value(expression, columns),
+                         _convert_value(separator, columns))
+    expression, _ = _unpack(node, 'this', 'big_int')
+    if expression is None or expression == exp.Star():
+        return aggregate()
+    return aggregate(_convert_aggregated_value(expression, columns))
+
+
+def _convert_aggregated_value(node, columns):
+    """Convert the value an aggregate is over, optionally prefixed by DISTINCT"""
+    if isinstance(node, exp.Distinct):
+        expressions, = _unpack(node, 'expressions')
+        if len(expressions) != 1:
+            raise UnsupportedSQL("DISTINCT in an aggregate takes exactly one value")
+        return distinct(_convert_value(expressions[0], columns))
+    return _convert_value(node, columns)
+
+
+def _convert_column(node, columns, aliases=None):
     """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
+    if qualifier is None and aliases and identifier.name in aliases:
+        return column(identifier.name)
     candidates = [col for col in columns
                   if (qualifier is None or col.table.name == qualifier.name)
                   and col.name == identifier.name]
@@ -534,6 +593,8 @@ def _convert_value(node, columns):
         return _convert_placeholder(node)
     if isinstance(node, (exp.Add, exp.Sub)):
         return _convert_arithmetic(node, columns)
+    if type(node) in AGGREGATES or isinstance(node, exp.Filter):
+        return _convert_aggregate(node, columns)
     if isinstance(node, exp.Func):
         return _convert_value_function(node, columns)
     return _convert_column(node, columns)

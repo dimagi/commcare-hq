@@ -12,6 +12,7 @@ from sqlalchemy import (
     bindparam,
     cast,
     column,
+    distinct,
     func,
     literal_column,
     not_,
@@ -100,6 +101,15 @@ def _within_distance(coordinates, meters):
     ('SELECT case_id AS "My Id" FROM client',
      select([CLIENT.c.case_id.label('My Id')])),
 
+    # Values other than columns may be selected
+    ("SELECT 'x' AS foo FROM client",
+     select([_bind_literal('literal', 'x').label('foo')]).select_from(CLIENT)),
+    ('SELECT :p FROM client', select([bindparam('p')]).select_from(CLIENT)),
+    ('SELECT name, today() AS d FROM client',
+     select([CLIENT.c.name, func.current_date().label('d')])),
+    ("SELECT string_to_array(name, ' ') FROM client",
+     select([_string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' '))])),
+
     ("SELECT * FROM client WHERE name = 'x'",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     ("SELECT * FROM client WHERE name = ('x')",
@@ -151,6 +161,61 @@ def _within_distance(coordinates, meters):
     ('SELECT DISTINCT ON (case_id, name) name FROM client',
      select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
 
+    # GROUP BY
+    ('SELECT name FROM client GROUP BY name',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)),
+    ('SELECT name FROM client GROUP BY name, case_id',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name, CLIENT.c.case_id)),
+    (f'SELECT visit.name {JOIN_SQL} GROUP BY client.name, visit.name',
+     select([VISIT.c.name]).select_from(CLIENT_VISIT)
+     .group_by(CLIENT.c.name, VISIT.c.name)),
+
+    # aggregations
+    ('SELECT count(*) FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count() FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count(name) FROM client', select([func.count(CLIENT.c.name)])),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)),
+    ('SELECT sum(case_id) FROM client', select([func.sum(CLIENT.c.case_id)])),
+    ('SELECT avg(case_id) FROM client', select([func.avg(CLIENT.c.case_id)])),
+    ('SELECT min(case_id) FROM client', select([func.min(CLIENT.c.case_id)])),
+    ('SELECT max(case_id) FROM client', select([func.max(CLIENT.c.case_id)])),
+    ('SELECT name, max(case_id) AS latest FROM client GROUP BY name',
+     select([CLIENT.c.name, func.max(CLIENT.c.case_id).label('latest')])
+     .group_by(CLIENT.c.name)),
+    ("SELECT string_agg(name, ', ') FROM client",
+     select([func.string_agg(CLIENT.c.name, _bind_literal('literal', ', '))])),
+    ('SELECT string_agg(name, :sep) FROM client',
+     select([func.string_agg(CLIENT.c.name, bindparam('sep'))])),
+    ('SELECT array_agg(name) FROM client', select([func.array_agg(CLIENT.c.name)])),
+    # Aggregates take any value, not just columns
+    ('SELECT max(name + make_interval(days => 30)) FROM client',
+     select([func.max(CLIENT.c.name + _interval('days', 30))])),
+    ('SELECT count(:p) FROM client', select([func.count(bindparam('p'))]).select_from(CLIENT)),
+    ('SELECT count(DISTINCT name) FROM client', select([func.count(distinct(CLIENT.c.name))])),
+    ('SELECT sum(DISTINCT case_id) FROM client',
+     select([func.sum(distinct(CLIENT.c.case_id))])),
+    ('SELECT array_agg(DISTINCT name) FROM client',
+     select([func.array_agg(distinct(CLIENT.c.name))])),
+    ("SELECT string_agg(DISTINCT name, ', ') FROM client",
+     select([func.string_agg(distinct(CLIENT.c.name), _bind_literal('literal', ', '))])),
+    ("SELECT sum(case_id) FILTER (WHERE name = 'x') AS n FROM client",
+     select([func.sum(CLIENT.c.case_id)
+             .filter(CLIENT.c.name == _bind_literal('literal', 'x')).label('n')])),
+    ("SELECT name FROM client GROUP BY name HAVING count(*) FILTER (WHERE name = :n) > 1",
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count().filter(CLIENT.c.name == bindparam('n'))
+             > _bind_literal('literal', 1))),
+
+    # HAVING
+    ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count() > _bind_literal('literal', 1))),
+    ('SELECT name FROM client GROUP BY name HAVING max(case_id) > :since AND name <> :n',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(and_(func.max(CLIENT.c.case_id) > bindparam('since'),
+                  CLIENT.c.name != bindparam('n')))),
+
     # ORDER BY - each key gets its own direction and default NULLS placement
     ('SELECT * FROM client ORDER BY name, case_id DESC',
      select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
@@ -158,6 +223,20 @@ def _within_distance(coordinates, meters):
     # An explicit NULLS placement overrides the direction's default
     ('SELECT name FROM client ORDER BY name DESC NULLS LAST',
      select([CLIENT.c.name]).order_by(nullslast(CLIENT.c.name.desc()))),
+    # An alias takes precedence over a column of the same name, unless qualified
+    ('SELECT name AS n FROM client ORDER BY n',
+     select([CLIENT.c.name.label('n')]).order_by(nullslast(column('n').asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(column('name').asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY client.name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(CLIENT.c.name.asc()))),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name ORDER BY n DESC',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)
+     .order_by(nullsfirst(column('n').desc()))),
+    # Ambiguous aliases are passed through for PostgreSQL to reject
+    ('SELECT name AS x, case_id AS x FROM client ORDER BY x',
+     select([CLIENT.c.name.label('x'), CLIENT.c.case_id.label('x')])
+     .order_by(nullslast(column('x').asc()))),
 
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
@@ -313,8 +392,6 @@ def _compiled(query):
 
     # Not (yet) supported
     'SELECT * FROM client LIMIT 5',       # extra clause
-    # Only columns may be selected, aliased or not
-    "SELECT 'x' AS foo FROM client",      # aliased literal
     'SELECT * FROM (SELECT * FROM client) AS t',  # subquery is not a table
     'SELECT * FROM generate_series(1, 10)',  # table valued function not supported
     "INSERT INTO client VALUES ('x')",    # not a SELECT
@@ -336,7 +413,23 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
     'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
     'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
-    'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
+    'SELECT name FROM client ORDER BY count(*)',    # ORDER BY an aggregation (needs aliasing)
+    'SELECT name FROM client GROUP BY 1',           # GROUP BY an ordinal
+    'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
+    'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
+    'SELECT count(missing) FROM client',            # count an unknown column
+    'SELECT count(name, case_id) FROM client',      # count with two arguments
+    "SELECT now() FILTER (WHERE name = 'x') FROM client",  # FILTER on a non-aggregate
+    "SELECT count(*) FILTER (WHERE name LIKE 'x') FROM client",  # unsupported predicate
+    'SELECT max(name, case_id) FROM client',        # max with two arguments
+    'SELECT sum(missing) FROM client',              # aggregate an unknown column
+    'SELECT count(DISTINCT name, case_id) FROM client',  # DISTINCT over two values
+    'SELECT count(DISTINCT *) FROM client',         # DISTINCT over *
+    'SELECT string_agg(name) FROM client',          # string_agg without a separator
+    "SELECT string_agg(name, ', ' ORDER BY case_id) FROM client",  # ordered string_agg
+    'SELECT array_agg(name ORDER BY case_id) FROM client',  # ordered array_agg
+    'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
+    'SELECT name FROM client GROUP BY name HAVING name LIKE :n',  # unsupported predicate
     'SELECT * FROM client WHERE case_id = -1',    # negative number
     "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
@@ -381,8 +474,8 @@ def _compiled(query):
     "SELECT * FROM client WHERE similar_name(name)",
     "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
 
-    # Only columns can be selected or ordered by
-    "SELECT string_to_array(name, ' ') FROM client",
+    # Only columns and aliases can be ordered by
+    "SELECT name FROM client ORDER BY string_to_array(name, ' ')",
 
     # Only `JOIN` and `LEFT JOIN` are supported for now.
     'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
