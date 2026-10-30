@@ -91,6 +91,7 @@ IGNORE_MODELS = {
     "pillow_retry.PillowError",
     "pillowtop.DjangoPillowCheckpoint",
     "pillowtop.KafkaCheckpoint",
+    "project_db.PendingOperation",
     "project_limits.DynamicRateDefinition",
     "project_limits.SystemLimit",
     "project_limits.RateLimitedTwoFactorLog",

@@ -937,6 +937,7 @@ products
  0001_initial
 project_db
  0001_setup_projectdb
+ 0002_pendingoperation
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog

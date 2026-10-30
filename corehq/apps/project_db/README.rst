@@ -62,6 +62,11 @@ created if absent, and new columns and indexes are added, but existing ones are
 never dropped or rewritten. A new case property becomes a new column; a new
 case type becomes a new table.
 
+Pending syncs and backfills of new typed columns are recorded as
+``PendingOperation`` rows.  The ``process_pending_operations`` task applies all
+pending operations and deletes the record. As a safeguard, an hourly task
+requeues any unprocessed operations.
+
 Access control
 --------------
 

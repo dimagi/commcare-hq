@@ -519,6 +519,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
                   extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    ModelDeletion('project_db', 'PendingOperation', 'domain'),
     CustomDeletion('project_db', drop_project_db, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
