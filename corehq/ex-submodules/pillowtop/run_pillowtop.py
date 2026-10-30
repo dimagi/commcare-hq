@@ -112,14 +112,14 @@ def restart_exited_processes(processes):
     :param processes: A list of (pillow, process) tuples
     :returns: The list with exited processes replaced by new ones
     """
-    restarted = []
+    processes_incl_restarted = []
     for pillow, process in processes:
         if not process.is_alive():
             print(f"[pillowtop] {pillow.pillow_id} process {process.pid} exited "
                   f"with code {process.exitcode}, restarting")
             process = _start_process(pillow)
-        restarted.append((pillow, process))
-    return restarted
+        processes_incl_restarted.append((pillow, process))
+    return processes_incl_restarted
 
 
 def _start_process(pillow):
