@@ -532,6 +532,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'DashboardReport',
         'DashboardGauge'
     ]),
+    ModelDeletion('document_templates', 'Template', 'domain'),
 ]
 
 
