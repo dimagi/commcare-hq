@@ -38,6 +38,7 @@ from pillowtop.reindexer.reindexer import (
     PillowChangeProviderReindexer,
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
+    clean_index,
 )
 
 _assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
@@ -148,6 +149,26 @@ def domain_args(parser):
     )
 
 
+class CaseSearchReindexer(PillowChangeProviderReindexer):
+    """Reindexes the case search index from SQL cases.
+
+    Unlike ``ElasticPillowReindexer``, this does not change the index
+    settings for the reindex, because the reindex can be limited to one
+    domain or shard of an index that is in use.
+    """
+
+    def __init__(self, pillow_or_processor, change_provider, partial=False):
+        super().__init__(pillow_or_processor, change_provider)
+        self.partial = partial
+
+    def clean(self):
+        clean_index(case_search_adapter.index_name)
+
+    def reindex(self):
+        initialize_index_and_mapping(case_search_adapter)
+        super().reindex()
+
+
 class CaseSearchReindexerFactory(ReindexerFactory):
     slug = 'case-search'
     arg_contributors = [
@@ -163,7 +184,6 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(case_search_adapter)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -178,9 +198,10 @@ class CaseSearchReindexerFactory(ReindexerFactory):
             # The db hasn't been intialized yet, so skip this reindex and complain.
             return _fail_gracefully_and_tell_admins()
         else:
-            return PillowChangeProviderReindexer(
+            return CaseSearchReindexer(
                 get_case_search_processor(),
                 change_provider=change_provider,
+                partial=domain is not None or limit_to_db is not None,
             )
 
 
@@ -246,5 +267,6 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             adapter=case_search_adapter,
+            partial=True,
             **self.options
         )
