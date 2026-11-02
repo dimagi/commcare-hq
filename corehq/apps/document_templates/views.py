@@ -39,8 +39,7 @@ VARIABLE_FIELD_PREFIX = 'var_'
 
 def get_variable_names():
     # TODO: replace with the real list of variable names
-    return ['var1', 'var2']
-
+    return ['header', 'address', 'body', 'footer']
 
 class TemplateForm(forms.Form):
     name = forms.CharField(max_length=255)
