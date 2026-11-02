@@ -46,11 +46,10 @@ class TemplateForm(forms.ModelForm):
         model = Template
         fields = ['name', 'slug']
 
-    def __init__(self, *args, domain, variable_names, existing_slugs=(), **kwargs):
+    def __init__(self, *args, domain, variable_names, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.domain = domain
         self.variable_names = variable_names
-        self.existing_slugs = set(existing_slugs)
         saved_variables = self.instance.variables or {}
         for variable_name in variable_names:
             variable = saved_variables.get(variable_name)
@@ -63,7 +62,10 @@ class TemplateForm(forms.ModelForm):
 
     def clean_slug(self):
         slug = self.cleaned_data['slug']
-        if slug in self.existing_slugs:
+        others = Template.objects.filter(
+            domain=self.instance.domain, slug=slug, deleted=False,
+        ).exclude(pk=self.instance.pk)
+        if others.exists():
             raise forms.ValidationError(gettext('A template with this slug already exists.'))
         return slug
 
@@ -100,12 +102,8 @@ class NewDocumentTemplateView(BaseMessagingSectionView):
             data,
             domain=self.domain,
             variable_names=get_variable_names(),
-            existing_slugs=self.get_existing_slugs(),
             instance=self.instance,
         )
-
-    def get_existing_slugs(self):
-        return Template.objects.filter(domain=self.domain, deleted=False).values_list('slug', flat=True)
 
     @property
     def page_context(self):
@@ -135,9 +133,6 @@ class EditDocumentTemplateView(NewDocumentTemplateView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.document_template.pk])
-
-    def get_existing_slugs(self):
-        return super().get_existing_slugs().exclude(pk=self.document_template.pk)
 
     @property
     def instance(self):
