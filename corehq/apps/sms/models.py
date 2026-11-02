@@ -1115,6 +1115,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
     ERROR_CONNECT_USER_NOT_FOUND = 'CONNECT_USER_NOT_FOUND'
+    ERROR_CONNECT_GATEWAY = 'CONNECT_GATEWAY_ERROR'
     ERROR_USER_NOT_SUPPORTED = 'USER_NOT_SUPPORTED'
 
     ERROR_MESSAGES = {
@@ -1174,6 +1175,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
         FILTER_MISMATCH: gettext_noop("Recipient did not match filters:"),
         ERROR_CONNECT_USER_NOT_FOUND: gettext_noop("Connect user not found for recipient."),
+        ERROR_CONNECT_GATEWAY: gettext_noop("Connect Messaging Gateway Error"),
         ERROR_USER_NOT_SUPPORTED:
             gettext_noop("Only Mobile workers with Connect accounts are supported as recipients "
                 "for Connect Message and Surveys."),
