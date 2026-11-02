@@ -7,7 +7,7 @@ from django.utils.translation import gettext, gettext_lazy
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
-from corehq.apps.document_templates.models import Template, Variable
+from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -34,11 +34,11 @@ class DocumentTemplatesView(BaseMessagingSectionView):
         }
 
 
-VARIABLE_FIELD_PREFIX = 'var_'
+AREA_FIELD_PREFIX = 'area_'
 
 
-def get_variable_names():
-    # TODO: replace with the real list of variable names
+def get_area_names():
+    # TODO: replace with the real list of area names
     return ['header', 'address', 'body', 'footer']
 
 class TemplateForm(forms.ModelForm):
@@ -46,17 +46,17 @@ class TemplateForm(forms.ModelForm):
         model = Template
         fields = ['name', 'slug']
 
-    def __init__(self, *args, domain, variable_names, **kwargs):
+    def __init__(self, *args, domain, area_names, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.domain = domain
-        self.variable_names = variable_names
-        saved_variables = self.instance.variables or {}
-        for variable_name in variable_names:
-            variable = saved_variables.get(variable_name)
-            self.fields[self._field_name(variable_name)] = forms.CharField(
-                label=variable_name,
+        self.area_names = area_names
+        saved_areas = self.instance.areas or {}
+        for area_name in area_names:
+            area = saved_areas.get(area_name)
+            self.fields[self._field_name(area_name)] = forms.CharField(
+                label=area_name,
                 required=False,
-                initial=variable.value if variable else '',
+                initial=area.value if area else '',
                 widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             )
 
@@ -70,20 +70,20 @@ class TemplateForm(forms.ModelForm):
         return slug
 
     @staticmethod
-    def _field_name(variable_name):
-        return f'{VARIABLE_FIELD_PREFIX}{variable_name}'
+    def _field_name(area_name):
+        return f'{AREA_FIELD_PREFIX}{area_name}'
 
-    def variable_fields(self):
-        return [self[self._field_name(name)] for name in self.variable_names]
+    def area_fields(self):
+        return [self[self._field_name(name)] for name in self.area_names]
 
-    def get_variables(self):
+    def get_areas(self):
         return {
-            variable_name: Variable(value=self.cleaned_data[self._field_name(variable_name)])
-            for variable_name in self.variable_names
+            area_name: Area(value=self.cleaned_data[self._field_name(area_name)])
+            for area_name in self.area_names
         }
 
     def save(self, commit=True):
-        self.instance.variables = self.get_variables()
+        self.instance.areas = self.get_areas()
         return super().save(commit=commit)
 
 
@@ -99,7 +99,7 @@ class BaseDocumentTemplateFormView(BaseMessagingSectionView, ModelFormMixin, Pro
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['domain'] = self.domain
-        kwargs['variable_names'] = get_variable_names()
+        kwargs['area_names'] = get_area_names()
         return kwargs
 
     def get_success_url(self):
