@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy
 
 from corehq import toggles
-from corehq.apps.document_templates.models import Template
+from corehq.apps.document_templates.models import Template, Variable
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -70,8 +70,8 @@ class TemplateForm(forms.Form):
     def initial_from_template(cls, template, variable_names):
         initial = {'name': template.name, 'slug': template.slug}
         for variable_name in variable_names:
-            variable = template.variables.get(variable_name, {})
-            initial[cls._field_name(variable_name)] = variable.get('value', '')
+            variable = template.variables.get(variable_name)
+            initial[cls._field_name(variable_name)] = variable.value if variable else ''
         return initial
 
     def variable_fields(self):
@@ -79,10 +79,7 @@ class TemplateForm(forms.Form):
 
     def get_variables(self):
         return {
-            variable_name: {
-                'type': 'markdown',
-                'value': self.cleaned_data[self._field_name(variable_name)],
-            }
+            variable_name: Variable(value=self.cleaned_data[self._field_name(variable_name)])
             for variable_name in self.variable_names
         }
 

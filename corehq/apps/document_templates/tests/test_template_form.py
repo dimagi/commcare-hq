@@ -2,6 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from corehq.apps.document_templates.models import Variable
 from corehq.apps.document_templates.views import TemplateForm
 
 
@@ -40,7 +41,7 @@ def test_valid_slug_is_accepted(slug):
 def test_variables_are_optional():
     form = TemplateForm({'name': 'Welcome', 'slug': 'welcome'}, variable_names=['var1'])
     assert form.is_valid()
-    assert form.get_variables() == {'var1': {'type': 'markdown', 'value': ''}}
+    assert form.get_variables() == {'var1': Variable(value='')}
 
 
 def test_get_variables_uses_plain_names_as_keys():
@@ -50,8 +51,8 @@ def test_get_variables_uses_plain_names_as_keys():
     )
     assert form.is_valid()
     assert form.get_variables() == {
-        'var1': {'type': 'markdown', 'value': '# Hi'},
-        'var2': {'type': 'markdown', 'value': 'Bye'},
+        'var1': Variable(value='# Hi'),
+        'var2': Variable(value='Bye'),
     }
 
 
@@ -88,14 +89,14 @@ def test_unknown_variable_fields_are_ignored():
         variable_names=['var1'],
     )
     assert form.is_valid()
-    assert form.get_variables() == {'var1': {'type': 'markdown', 'value': 'Hi'}}
+    assert form.get_variables() == {'var1': Variable(value='Hi')}
 
 
 def test_initial_from_template_uses_saved_values():
     template = SimpleNamespace(
         name='Welcome',
         slug='welcome',
-        variables={'body': {'type': 'markdown', 'value': 'Hi'}},
+        variables={'body': Variable(value='Hi')},
     )
     initial = TemplateForm.initial_from_template(template, ['body', 'footer'])
     assert initial == {'name': 'Welcome', 'slug': 'welcome', 'var_body': 'Hi', 'var_footer': ''}

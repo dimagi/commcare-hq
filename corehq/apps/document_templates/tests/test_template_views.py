@@ -4,11 +4,11 @@ from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from corehq.apps.document_templates.models import Template
-from corehq.apps.document_templates.rendering import get_variable_names
+from corehq.apps.document_templates.models import Template, Variable
 from corehq.apps.document_templates.views import (
     DeleteDocumentTemplateView,
     EditDocumentTemplateView,
+    get_variable_names,
 )
 
 DOMAIN = 'document-templates-test'
@@ -72,13 +72,13 @@ class TestEditDocumentTemplateView(TestCase):
     def test_updates_name_slug_and_variables(self):
         template = Template.objects.create(
             domain=DOMAIN, name='Welcome', slug='welcome',
-            variables={'body': {'type': 'markdown', 'value': 'Old'}},
+            variables={'body': Variable(value='Old')},
         )
         response = _post(EditDocumentTemplateView, template.pk, self._data())
         assert response.status_code == 302
         template.refresh_from_db()
         assert (template.name, template.slug) == ('Renamed', 'renamed')
-        assert template.variables['body'] == {'type': 'markdown', 'value': 'New **body**'}
+        assert template.variables['body'] == Variable(value='New **body**')
 
     def test_can_save_without_changing_the_slug(self):
         template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', variables={})
@@ -98,13 +98,13 @@ class TestEditDocumentTemplateView(TestCase):
     def test_variables_are_rewritten_from_the_current_template_variables(self):
         template = Template.objects.create(
             domain=DOMAIN, name='Welcome', slug='welcome',
-            variables={'removed': {'type': 'markdown', 'value': 'Gone'}},
+            variables={'removed': Variable(value='Gone')},
         )
         _post(EditDocumentTemplateView, template.pk, self._data())
         template.refresh_from_db()
         # jsonb does not keep key order
         assert set(template.variables) == set(get_variable_names())
-        assert template.variables['header']['value'] == ''
+        assert template.variables['header'].value == ''
 
     def test_cannot_edit_a_template_of_another_domain(self):
         template = Template.objects.create(domain=OTHER_DOMAIN, name='Theirs', slug='theirs', variables={})
