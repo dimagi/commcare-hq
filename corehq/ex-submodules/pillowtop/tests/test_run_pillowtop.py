@@ -115,7 +115,7 @@ def test_start_pillows_closes_db_connections_before_forking():
     with patch('pillowtop.run_pillowtop.wait', side_effect=KeyboardInterrupt), pytest.raises(SystemExit):
         start_pillows(fake_pillows('pillow1', 'pillow2'))
 
-    assert events == ['close', 'start pillow1', 'close', 'start pillow2']
+    assert events == ['close', 'start pillow1', 'start pillow2']
 
 
 def test_start_pillows_restarts_exited_processes():
@@ -137,7 +137,7 @@ def test_start_pillows_restarts_exited_processes():
         start_pillows(fake_pillows('pillow1', 'pillow2'))
 
     assert waits == [['pillow1', 'pillow2'], ['pillow1', 'pillow2']]
-    assert events == ['close', 'start pillow1', 'close', 'start pillow2', 'close', 'start pillow2']
+    assert events == ['close', 'start pillow1', 'start pillow2', 'start pillow2']
 
 
 def test_restart_exited_processes():
@@ -148,7 +148,7 @@ def test_restart_exited_processes():
 
     processes_incl_restarted = restart_exited_processes(processes)
 
-    assert events == ['close', 'start pillow1', 'close', 'start pillow3']
+    assert events == ['start pillow1', 'start pillow3']
     assert [pillow for pillow, process in processes_incl_restarted] == pillows
     original_processes = [process for pillow, process in processes]
     current_processes = [process for pillow, process in processes_incl_restarted]

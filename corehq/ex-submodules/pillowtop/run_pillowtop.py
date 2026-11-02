@@ -96,6 +96,9 @@ def start_pillows(pillows=None):
 
     try:
         print("[pillowtop] Starting pillow processes")
+        # Pillow instances can open DB connections when they are created.
+        # A forked process must not share them.
+        close_db_connections()
         processes = [(pillow, _start_process(pillow)) for pillow in run_pillows]
         print("[pillowtop] all processes started, pids: %s" % ([p.pid for __, p in processes]))
         while True:
@@ -123,9 +126,6 @@ def restart_exited_processes(processes):
 
 
 def _start_process(pillow):
-    # Pillow instances can open DB connections when they are created.
-    # A forked process must not share them.
-    close_db_connections()
     process = multiprocessing.Process(target=pillow.run)
     process.start()
     return process
