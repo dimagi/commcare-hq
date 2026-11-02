@@ -1,6 +1,7 @@
+import pytest
 from django.test import SimpleTestCase
 
-from corehq.apps.custom_data_fields.edit_model import CustomDataFieldsForm
+from corehq.apps.custom_data_fields.edit_model import CustomDataFieldForm, CustomDataFieldsForm
 
 
 class TestCustomDataFieldsVerification(SimpleTestCase):
@@ -75,3 +76,28 @@ class TestCustomDataFieldsVerification(SimpleTestCase):
                 "fields": '{"food": "cake"}',
             }])
         )
+
+
+@pytest.mark.parametrize("key, value, error", [
+    ('label', 'x' * 256, 'Labels must be at most 255 characters.'),
+    ('slug', 'x' * 128, 'Property names must be at most 127 characters.'),
+    ('regex_msg', 'x' * 256, 'Regex error messages must be at most 255 characters.'),
+    ('regex', 'x' * 128, 'Regular expressions must be at most 127 characters (this one has 128).'),
+])
+def test_field_form_rejects_values_too_long_for_db(key, value, error):
+    raw = {'slug': 'sector', 'label': 'Sector', key: value}
+    form = CustomDataFieldForm(raw)
+    assert not form.is_valid()
+    assert form.errors[key] == [error]
+
+
+@pytest.mark.parametrize("key, value", [
+    ('label', 'x' * 255),
+    ('slug', 'x' * 127),
+    ('regex_msg', 'x' * 255),
+    ('regex', 'x' * 127),
+])
+def test_field_form_accepts_values_at_limit(key, value):
+    raw = {'slug': 'sector', 'label': 'Sector', key: value}
+    form = CustomDataFieldForm(raw)
+    assert form.is_valid(), form.errors
