@@ -41,18 +41,23 @@ def get_variable_names():
     # TODO: replace with the real list of variable names
     return ['header', 'address', 'body', 'footer']
 
-class TemplateForm(forms.Form):
-    name = forms.CharField(max_length=255)
-    slug = forms.SlugField(max_length=50)
+class TemplateForm(forms.ModelForm):
+    class Meta:
+        model = Template
+        fields = ['name', 'slug']
 
-    def __init__(self, *args, variable_names, existing_slugs=(), **kwargs):
+    def __init__(self, *args, domain, variable_names, existing_slugs=(), **kwargs):
         super().__init__(*args, **kwargs)
+        self.instance.domain = domain
         self.variable_names = variable_names
         self.existing_slugs = set(existing_slugs)
+        saved_variables = self.instance.variables or {}
         for variable_name in variable_names:
+            variable = saved_variables.get(variable_name)
             self.fields[self._field_name(variable_name)] = forms.CharField(
                 label=variable_name,
                 required=False,
+                initial=variable.value if variable else '',
                 widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             )
 
@@ -66,14 +71,6 @@ class TemplateForm(forms.Form):
     def _field_name(variable_name):
         return f'{VARIABLE_FIELD_PREFIX}{variable_name}'
 
-    @classmethod
-    def initial_from_template(cls, template, variable_names):
-        initial = {'name': template.name, 'slug': template.slug}
-        for variable_name in variable_names:
-            variable = template.variables.get(variable_name)
-            initial[cls._field_name(variable_name)] = variable.value if variable else ''
-        return initial
-
     def variable_fields(self):
         return [self[self._field_name(name)] for name in self.variable_names]
 
@@ -83,6 +80,10 @@ class TemplateForm(forms.Form):
             for variable_name in self.variable_names
         }
 
+    def save(self, commit=True):
+        self.instance.variables = self.get_variables()
+        return super().save(commit=commit)
+
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
@@ -90,16 +91,17 @@ class NewDocumentTemplateView(BaseMessagingSectionView):
     urlname = 'new_document_template'
     page_title = gettext_lazy('New Template')
     template_name = 'document_templates/template_form.html'
-    initial = None
+    instance = None
 
     @cached_property
     def form(self):
         data = self.request.POST if self.request.method == 'POST' else None
         return TemplateForm(
             data,
+            domain=self.domain,
             variable_names=get_variable_names(),
             existing_slugs=self.get_existing_slugs(),
-            initial=self.initial,
+            instance=self.instance,
         )
 
     def get_existing_slugs(self):
@@ -110,12 +112,7 @@ class NewDocumentTemplateView(BaseMessagingSectionView):
         return {'form': self.form}
 
     def save_template(self):
-        return Template.objects.create(
-            domain=self.domain,
-            name=self.form.cleaned_data['name'],
-            slug=self.form.cleaned_data['slug'],
-            variables=self.form.get_variables(),
-        )
+        return self.form.save()
 
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
@@ -143,16 +140,8 @@ class EditDocumentTemplateView(NewDocumentTemplateView):
         return super().get_existing_slugs().exclude(pk=self.document_template.pk)
 
     @property
-    def initial(self):
-        return TemplateForm.initial_from_template(self.document_template, get_variable_names())
-
-    def save_template(self):
-        template = self.document_template
-        template.name = self.form.cleaned_data['name']
-        template.slug = self.form.cleaned_data['slug']
-        template.variables = self.form.get_variables()
-        template.save()
-        return template
+    def instance(self):
+        return self.document_template
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
