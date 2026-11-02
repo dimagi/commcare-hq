@@ -116,6 +116,13 @@ def restart_exited_processes(processes):
     :returns: The list with exited processes replaced by new ones
     """
     processes_incl_restarted = []
+    # The `_start_process()` call below ASSUMES that nothing has opened
+    # a database connection in this parent process. That's currently true,
+    # but if that changes then `run_ptop` will start crashing with
+    # `django.db.utils.OperationalError: server closed the connection
+    # unexpectedly // django.db.utils.InterfaceError: connection already
+    # closed`. If that happens, replace this comment with
+    # `close_db_connections()`
     for pillow, process in processes:
         if not process.is_alive():
             print(f"[pillowtop] {pillow.pillow_id} process {process.pid} exited "
