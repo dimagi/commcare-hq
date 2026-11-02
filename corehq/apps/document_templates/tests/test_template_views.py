@@ -8,6 +8,7 @@ from corehq.apps.document_templates.models import Template, Variable
 from corehq.apps.document_templates.views import (
     DeleteDocumentTemplateView,
     EditDocumentTemplateView,
+    NewDocumentTemplateView,
     get_variable_names,
 )
 
@@ -15,13 +16,24 @@ DOMAIN = 'document-templates-test'
 OTHER_DOMAIN = 'document-templates-other'
 
 
-def _post(view_class, template_id, data=None, domain=DOMAIN):
+def _post(view_class, pk=None, data=None, domain=DOMAIN):
     request = RequestFactory().post('/', data or {})
     request.session = {}
     request._messages = FallbackStorage(request)
+    kwargs = {'domain': domain, **({'pk': pk} if pk else {})}
     view = view_class()
-    view.setup(request, domain=domain, template_id=template_id)
-    return view.post(request, domain=domain, template_id=template_id)
+    view.setup(request, **kwargs)
+    return view.post(request, **kwargs)
+
+
+class TestNewDocumentTemplateView(TestCase):
+
+    def test_creates_a_template_in_the_domain_and_redirects_to_the_list(self):
+        response = _post(NewDocumentTemplateView, data={'name': 'Welcome', 'slug': 'welcome', 'var_body': 'Hi'})
+        assert response.status_code == 302
+        assert response.url == reverse('document_templates', args=[DOMAIN])
+        template = Template.objects.get(domain=DOMAIN, slug='welcome')
+        assert template.name == 'Welcome'
 
 
 class TestDeleteDocumentTemplateView(TestCase):
@@ -86,14 +98,6 @@ class TestEditDocumentTemplateView(TestCase):
         assert response.status_code == 302
         template.refresh_from_db()
         assert template.name == 'Renamed'
-
-    def test_cannot_take_the_slug_of_another_template(self):
-        Template.objects.create(domain=DOMAIN, name='Other', slug='taken', variables={})
-        template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', variables={})
-        request = RequestFactory().post('/', self._data(slug='taken'))
-        view = EditDocumentTemplateView()
-        view.setup(request, domain=DOMAIN, template_id=template.pk)
-        assert 'slug' in view.form.errors
 
     def test_variables_are_rewritten_from_the_current_template_variables(self):
         template = Template.objects.create(

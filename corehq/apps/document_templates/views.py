@@ -3,8 +3,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
 from corehq.apps.document_templates.models import Template, Variable
@@ -89,54 +89,51 @@ class TemplateForm(forms.ModelForm):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class NewDocumentTemplateView(BaseMessagingSectionView):
+class BaseDocumentTemplateFormView(BaseMessagingSectionView, ModelFormMixin, ProcessFormView):
+    template_name = 'document_templates/template_form.html'
+    form_class = TemplateForm
+
+    def get_queryset(self):
+        return Template.objects.filter(domain=self.domain, deleted=False)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['variable_names'] = get_variable_names()
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(DocumentTemplatesView.urlname, args=[self.domain])
+
+
+class NewDocumentTemplateView(BaseDocumentTemplateFormView):
     urlname = 'new_document_template'
     page_title = gettext_lazy('New Template')
-    template_name = 'document_templates/template_form.html'
-    instance = None
 
-    @cached_property
-    def form(self):
-        data = self.request.POST if self.request.method == 'POST' else None
-        return TemplateForm(
-            data,
-            domain=self.domain,
-            variable_names=get_variable_names(),
-            instance=self.instance,
-        )
-
-    @property
-    def page_context(self):
-        return {'form': self.form}
-
-    def save_template(self):
-        return self.form.save()
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        if not self.form.is_valid():
-            return self.get(request, *args, **kwargs)
-
-        self.save_template()
-        return HttpResponseRedirect(
-            reverse(DocumentTemplatesView.urlname, args=[self.domain])
-        )
+        self.object = None
+        return super().post(request, *args, **kwargs)
 
 
-class EditDocumentTemplateView(NewDocumentTemplateView):
+class EditDocumentTemplateView(BaseDocumentTemplateFormView):
     urlname = 'edit_document_template'
     page_title = gettext_lazy('Edit Document Template')
 
-    @cached_property
-    def document_template(self):
-        return get_object_or_404(Template, domain=self.domain, pk=self.kwargs['template_id'], deleted=False)
-
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.document_template.pk])
+        return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
 
-    @property
-    def instance(self):
-        return self.document_template
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
@@ -146,10 +143,10 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
 
     @property
     def page_url(self):
-        return reverse(self.urlname, args=[self.domain, self.kwargs['template_id']])
+        return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
 
     def post(self, request, *args, **kwargs):
-        template = get_object_or_404(Template, domain=self.domain, pk=kwargs['template_id'], deleted=False)
+        template = get_object_or_404(Template, domain=self.domain, pk=kwargs['pk'], deleted=False)
         template.deleted = True
         template.save(update_fields=['deleted'])
         return HttpResponseRedirect(
