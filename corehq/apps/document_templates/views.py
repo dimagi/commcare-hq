@@ -1,13 +1,27 @@
+import json
+
 from django import forms
-from django.http import HttpResponseRedirect
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
 from corehq.apps.document_templates.models import Area, Template
+from corehq.apps.document_templates.rendering import (
+    DocumentRenderError,
+    get_area_names,
+    get_preview_context,
+    render_preview,
+)
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -36,10 +50,6 @@ class DocumentTemplatesView(BaseMessagingSectionView):
 
 AREA_FIELD_PREFIX = 'area_'
 
-
-def get_area_names():
-    # TODO: replace with the real list of area names
-    return ['header', 'address', 'body', 'footer']
 
 class TemplateForm(forms.ModelForm):
     class Meta:
@@ -152,3 +162,50 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
         return HttpResponseRedirect(
             reverse(DocumentTemplatesView.urlname, args=[self.domain])
         )
+
+
+def _posted_area_values(request):
+    """The area values of the template form, as posted (the rest of the form is ignored)"""
+    return {
+        name: request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')
+        for name in get_area_names()
+    }
+
+
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class PreviewVariablesView(BaseMessagingSectionView):
+    """HTMX partial for the preview modal: the context the posted values need"""
+
+    urlname = 'preview_document_variables'
+    http_method_names = ['post']
+    template_name = 'document_templates/partials/preview_modal_body.html'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            context = get_preview_context(_posted_area_values(request))
+        except DocumentRenderError as error:
+            template_context = {'error': str(error)}
+        else:
+            template_context = {'context_json': json.dumps(context, indent=2)}
+        return HttpResponse(render_to_string(self.template_name, template_context))
+
+
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class PreviewDocumentView(BaseMessagingSectionView):
+    """The rendered document as a PDF, for opening in a new tab"""
+
+    urlname = 'preview_document'
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        try:
+            context = json.loads(request.POST.get('context') or '{}')
+            if not isinstance(context, dict):
+                raise ValueError(gettext('The context must be a JSON object.'))
+            pdf = render_preview(_posted_area_values(request), context)
+        except (ValueError, DocumentRenderError) as error:
+            return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
