@@ -74,6 +74,7 @@ class PublicWebform(models.Model):
     form_unique_id = models.CharField()
     endpoint_id = models.CharField()
     session_type = models.CharField(choices=PublicWebformType)
+    direct_access = models.BooleanField(default=False)
     allow_sms = models.BooleanField()
     allow_email = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
