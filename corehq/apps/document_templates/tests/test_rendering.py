@@ -1,11 +1,12 @@
 import pytest
-from reportlab.platypus import Paragraph
+from reportlab.platypus import ListFlowable, Paragraph
 
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
+    _markdown_to_flowables,
+    _markdown_to_sanitized_html,
     _parse_variable_names,
     _render_areas,
-    _text_to_flowables,
     get_area_names,
     get_preview_context,
     render_pdf,
@@ -19,7 +20,7 @@ def test_get_area_names():
     assert get_area_names() == ['header', 'address', 'body', 'footer']
 
 
-@pytest.mark.parametrize('area_value, expected', [
+@pytest.mark.parametrize('text, expected', [
     ('', []),
     ('no variables here', []),
     ('{{ b }} {{ a }}', ['b', 'a']),
@@ -29,8 +30,23 @@ def test_get_area_names():
     ('{% set x = 1 %}{{ x }} {{ y }}', ['y']),
     ('{% if a %}{{ b }}{% endif %}', ['a', 'b']),
 ])
-def test_parse_variable_names(area_value, expected):
-    assert _parse_variable_names(area_value) == expected
+def test_parse_variable_names(text, expected):
+    assert _parse_variable_names(text) == expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('', ''),
+    ('**bold**', '<p><strong>bold</strong></p>'),
+    ('line one\nline two', '<p>line one<br>\nline two</p>'),
+    ('Dear {{ first_name }}', '<p>Dear {{ first_name }}</p>'),
+    ('{{ x | default("a") }}', '<p>{{ x | default("a") }}</p>'),
+    ('<script>alert(1)</script>', 'alert(1)'),
+    ('<img src="https://a.test/h.png" onerror="x()">', '<p><img src="https://a.test/h.png"></p>'),
+    ('<img src="javascript:x">', '<p><img></p>'),
+    ('![h](data:image/png;base64,AAAA)', '<p><img src="data:image/png;base64,AAAA"></p>'),
+])
+def test_markdown_to_sanitized_html(value, expected):
+    assert _markdown_to_sanitized_html(value) == expected
 
 
 def test_preview_context_lists_variables_used_in_areas():
@@ -53,6 +69,22 @@ def test_render_areas_fills_in_the_context():
     assert rendered == {**VALUES, 'address': 'Ada', 'body': 'Dear Ada'}
 
 
+@pytest.mark.parametrize('value, expected', [
+    ('**x**', r'\*\*x\*\*'),
+    ('<script>x</script>', '&lt;script&gt;x&lt;/script&gt;'),
+    ('[a](http://b.test)', r'\[a\]\(http://b\.test\)'),
+    ('# not a heading', r'\# not a heading'),
+])
+def test_render_areas_makes_context_values_literal(value, expected):
+    rendered = _render_areas({**VALUES, 'body': '{{ name }}'}, {'name': value})
+    assert rendered['body'] == expected
+
+
+def test_render_areas_keeps_authors_markdown():
+    rendered = _render_areas({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
+    assert rendered['body'] == '**Dear** Ada'
+
+
 def test_render_areas_requires_every_variable():
     with pytest.raises(DocumentRenderError, match="body: 'name' is undefined"):
         _render_areas({**VALUES, 'body': '{{ name }}'}, {})
@@ -68,30 +100,59 @@ def test_render_areas_reports_a_syntax_error():
         _render_areas({**VALUES, 'footer': '{% if %}'}, {})
 
 
+def test_markdown_emphasis_mangles_dunder_names_in_values():
+    # Python-Markdown turns __word__ into <strong>, so such names cannot be used in a value
+    html = _markdown_to_sanitized_html("{{ ''.__class__.__mro__ }}")
+    assert html == "<p>{{ ''.<strong>class</strong>.<strong>mro</strong> }}</p>"
+
+
 def _markups(flowables):
     return [flowable.text for flowable in flowables]
 
 
-@pytest.mark.parametrize('text, expected', [
+@pytest.mark.parametrize('markdown_text, expected', [
     ('plain', ['plain']),
+    ('**b** *i*', ['<b>b</b> <i>i</i>']),
     ('line one\nline two', ['line one<br/>line two']),
-    ('line one\r\nline two', ['line one<br/>line two']),
-    ('one\n\ntwo', ['one', 'two']),
-    ('one\r\n\r\ntwo', ['one', 'two']),
-    ('one\n  \n\n two ', ['one', 'two']),
     ('a < b & c', ['a &lt; b &amp; c']),
-    ('**not bold** # not a heading', ['**not bold** # not a heading']),
+    ('`code`', ['<font name="Courier">code</font>']),
+    ('[link](https://a.test)', ['<a href="https://a.test" color="#0b57d0">link</a>']),
+    ('one\n\ntwo', ['one', 'two']),
+    ('# Title', ['Title']),
+    ('> quoted', ['quoted']),
+    ('<style>p { color: red }</style>text', ['text']),
     ('', []),
-    ('\n\n', []),
 ])
-def test_text_to_flowables(text, expected):
-    flowables = _text_to_flowables(text)
+def test_markdown_to_flowables_paragraphs(markdown_text, expected):
+    flowables = _markdown_to_flowables(markdown_text)
     assert all(isinstance(flowable, Paragraph) for flowable in flowables)
     assert _markups(flowables) == expected
 
 
+@pytest.mark.parametrize('markdown_text, style_name', [
+    ('# One', 'Heading1'),
+    ('## Two', 'Heading2'),
+    ('###### Six', 'Heading3'),
+    ('> quoted', 'quote'),
+])
+def test_markdown_to_flowables_styles(markdown_text, style_name):
+    assert _markdown_to_flowables(markdown_text)[0].style.name == style_name
+
+
+@pytest.mark.parametrize('markdown_text, bullet_type, items', [
+    ('- a\n- **b**', 'bullet', ['a', '<b>b</b>']),
+    ('1. a\n2. b', '1', ['a', 'b']),
+])
+def test_markdown_to_flowables_lists(markdown_text, bullet_type, items):
+    [flowable] = _markdown_to_flowables(markdown_text)
+    assert isinstance(flowable, ListFlowable)
+    assert flowable._flowables[0].__class__.__name__ == 'ListItem'
+    assert flowable._bulletType == bullet_type
+    assert [item._flowables[0].text for item in flowable._flowables] == items
+
+
 def _document(**areas):
-    return {area: {'type': 'text', 'value': areas.get(area, '')} for area in VALUES}
+    return {area: {'type': 'markdown', 'value': areas.get(area, '')} for area in VALUES}
 
 
 def test_render_pdf_returns_a_pdf():
