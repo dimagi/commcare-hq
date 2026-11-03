@@ -1300,6 +1300,7 @@ class MessagingTab(UITab):
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
         '/a/{domain}/email/',
+        '/a/{domain}/document_templates/',
     )
 
     @property
@@ -1541,6 +1542,18 @@ class MessagingTab(UITab):
         return connect_urls
 
     @property
+    def document_templates_urls(self):
+        from corehq.apps.document_templates.views import DocumentTemplatesView
+
+        document_templates_urls = []
+        if toggles.DOCUMENT_TEMPLATES.enabled(self.domain):
+            document_templates_urls.append({
+                'title': DocumentTemplatesView.page_title,
+                'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
+            })
+        return document_templates_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1592,7 +1605,8 @@ class MessagingTab(UITab):
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),
-            (_("Connect Messsaging"), self.connect_urls),
+            (_("Connect Messaging"), self.connect_urls),
+            (_("Document Templates"), self.document_templates_urls),
         ):
             if urls:
                 items.append((title, urls))
