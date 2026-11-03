@@ -277,7 +277,7 @@ def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
 @travel(datetime(2026, 10, 1), tick=False)
 def test_edit_allows_a_past_expiry_only_if_unchanged(entered, expected):
     form = _edit_form(
-        _webform(expires_at=datetime(2026, 9, 1, 21, 0)),
+        _webform(expires_at=datetime(2026, 9, 1, 21, 0)),  # 17:00 in 'America/New_York' timezone
         _edit_data(expires_at=entered),
     )
     assert form.is_valid() is expected
