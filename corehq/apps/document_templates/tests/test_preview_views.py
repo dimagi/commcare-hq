@@ -1,5 +1,3 @@
-import json
-
 from django.test import RequestFactory
 
 from corehq.apps.document_templates.views import (
@@ -14,45 +12,51 @@ def _post(view_class, data):
     return view_class().post(RequestFactory().post('/', data))
 
 
-def test_variables_view_returns_the_context_as_json():
-    response = _post(PreviewVariablesView, VALUES)
-    assert response.status_code == 200
-    assert '<textarea' in response.content.decode()
-    assert '&quot;name&quot;: &quot;&quot;' in response.content.decode()
+def test_variables_view_has_an_input_for_each_variable():
+    values = {**VALUES, 'area_address': '{{ street }}', 'area_body': 'Dear {{ name }} {{ name }}'}
+    content = _post(PreviewVariablesView, values).content.decode()
+    assert 'name="context_street"' in content
+    assert content.count('name="context_name"') == 1
+
+
+def test_variables_view_without_variables_has_no_inputs():
+    content = _post(PreviewVariablesView, {**VALUES, 'area_body': 'Hello'}).content.decode()
+    assert '<input' not in content
+    assert 'does not use any variables' in content
 
 
 def test_variables_view_shows_a_template_error():
     response = _post(PreviewVariablesView, {**VALUES, 'area_body': '{% if %}'})
     content = response.content.decode()
     assert 'alert-danger' in content
-    assert '<textarea' not in content
+    assert '<input' not in content
 
 
 def test_preview_view_renders_a_pdf():
-    response = _post(PreviewDocumentView, {**VALUES, 'context': json.dumps({'name': 'Ada'})})
+    response = _post(PreviewDocumentView, {**VALUES, 'context_name': 'Ada'})
     assert response.status_code == 200
     assert response['Content-Type'] == 'application/pdf'
     assert response.content.startswith(b'%PDF')
 
 
-def test_preview_view_rejects_invalid_json():
-    response = _post(PreviewDocumentView, {**VALUES, 'context': '{not json'})
+def test_preview_view_leaves_unfilled_variables_empty():
+    response = _post(PreviewDocumentView, VALUES)
+    assert response.status_code == 200
+    assert response.content.startswith(b'%PDF')
+
+
+def test_preview_view_ignores_context_for_unused_variables():
+    response = _post(PreviewDocumentView, {**VALUES, 'context_name': 'Ada', 'context_other': 'x'})
+    assert response.status_code == 200
+
+
+def test_preview_view_reports_a_template_error():
+    response = _post(PreviewDocumentView, {**VALUES, 'area_body': '{% if %}'})
     assert response.status_code == 400
-
-
-def test_preview_view_rejects_a_context_that_is_not_an_object():
-    response = _post(PreviewDocumentView, {**VALUES, 'context': '["a"]'})
-    assert response.status_code == 400
-    assert 'JSON object' in response.content.decode()
-
-
-def test_preview_view_reports_a_missing_variable():
-    response = _post(PreviewDocumentView, {**VALUES, 'context': '{}'})
-    assert response.status_code == 400
-    assert 'name' in response.content.decode()
+    assert 'syntax error in body' in response.content.decode()
 
 
 def test_preview_view_escapes_errors():
-    response = _post(PreviewDocumentView, {**VALUES, 'context': '<script>'})
+    response = _post(PreviewDocumentView, {**VALUES, 'area_body': '{% if <script> %}'})
     assert response.status_code == 400
     assert '<script>' not in response.content.decode()
