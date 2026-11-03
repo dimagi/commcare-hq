@@ -34,18 +34,6 @@ def _processing_queued_key(domain):
     return f'project-db-processing-queued-{domain}'
 
 
-@periodic_task(run_every=crontab(minute=0), queue='background_queue')
-def queue_stale_pending_operations():
-    """Requeue processing for domains whose operations were lost or failed"""
-    cutoff = timezone.now() - timedelta(hours=1)
-    domains = (
-        PendingOperation.objects.filter(created_on__lt=cutoff)
-        .values_list('domain', flat=True).distinct()
-    )
-    for domain in domains:
-        _queue_processing(domain)
-
-
 @task(bind=True, queue='background_queue', ignore_result=True, default_retry_delay=30)
 def _process_pending_operations(self, domain):
     with _ProcessingLock(domain):
@@ -98,3 +86,15 @@ def _apply_pending_backfills(domain):
             if columns := [col for col in table.c if col.name in column_names]:
                 backfill_typed_columns(table, columns)
         PendingOperation.objects.filter(id__in=[op.id for op in ops]).delete()
+
+
+@periodic_task(run_every=crontab(minute=0), queue='background_queue')
+def queue_stale_pending_operations():
+    """Requeue processing for domains whose operations were lost or failed"""
+    cutoff = timezone.now() - timedelta(hours=1)
+    domains = (
+        PendingOperation.objects.filter(created_on__lt=cutoff)
+        .values_list('domain', flat=True).distinct()
+    )
+    for domain in domains:
+        _queue_processing(domain)
