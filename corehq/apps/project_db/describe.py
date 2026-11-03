@@ -36,6 +36,8 @@ Supported SQL:
    each side is given a different alias.
  * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
    literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
+ * Pattern matching with LIKE, and ILIKE to ignore case, where % matches any
+   text and _ any single character. Escape them with a backslash, as in '100\\%'.
  * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
    columns: @> holds all of these, <@ holds only these, && holds any of these.
  * string_to_array(value, '<delimiter>'), which splits text into an array to
@@ -71,7 +73,7 @@ Not supported:
  * ORDER BY inside an aggregate.
  * Arithmetic, apart from shifting a date or time by an interval.
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
- * LIMIT, LIKE and BETWEEN.
+ * LIMIT, BETWEEN, SIMILAR TO, and LIKE with ESCAPE or ANY.
  * Negative numbers.
  * Subqueries and CTEs.
  * INTERSECT and EXCEPT.

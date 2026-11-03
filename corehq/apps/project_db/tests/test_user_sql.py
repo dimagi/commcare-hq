@@ -324,6 +324,17 @@ def _within_distance(coordinates, meters):
          _string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' ')).bool_op('&&')(
              _bind_literal('array', ['fever'])))),
 
+    ("SELECT * FROM client WHERE name LIKE 'x%'",
+     select([CLIENT]).where(CLIENT.c.name.like(_bind_literal('literal', 'x%')))),
+    ('SELECT * FROM client WHERE name ILIKE :name',
+     select([CLIENT]).where(CLIENT.c.name.ilike(bindparam('name')))),
+    ("SELECT * FROM client WHERE name NOT LIKE 'x%'",
+     select([CLIENT]).where(not_(CLIENT.c.name.like(_bind_literal('literal', 'x%'))))),
+    ("SELECT * FROM client WHERE name NOT ILIKE 'x%'",
+     select([CLIENT]).where(not_(CLIENT.c.name.ilike(_bind_literal('literal', 'x%'))))),
+    ("SELECT * FROM client WHERE name ~~* 'x%'",  # operator spelling of ILIKE
+     select([CLIENT]).where(CLIENT.c.name.ilike(_bind_literal('literal', 'x%')))),
+
     ('SELECT * FROM client WHERE sounds_like(name, :name)',
      select([CLIENT]).where(
          func.dmetaphone(CLIENT.c.name) == func.dmetaphone(bindparam('name')))),
@@ -420,7 +431,7 @@ def _compiled(query):
     'SELECT count(missing) FROM client',            # count an unknown column
     'SELECT count(name, case_id) FROM client',      # count with two arguments
     "SELECT now() FILTER (WHERE name = 'x') FROM client",  # FILTER on a non-aggregate
-    "SELECT count(*) FILTER (WHERE name LIKE 'x') FROM client",  # unsupported predicate
+    "SELECT count(*) FILTER (WHERE name SIMILAR TO 'x') FROM client",  # unsupported predicate
     'SELECT max(name, case_id) FROM client',        # max with two arguments
     'SELECT sum(missing) FROM client',              # aggregate an unknown column
     'SELECT count(DISTINCT name, case_id) FROM client',  # DISTINCT over two values
@@ -429,9 +440,12 @@ def _compiled(query):
     "SELECT string_agg(name, ', ' ORDER BY case_id) FROM client",  # ordered string_agg
     'SELECT array_agg(name ORDER BY case_id) FROM client',  # ordered array_agg
     'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
-    'SELECT name FROM client GROUP BY name HAVING name LIKE :n',  # unsupported predicate
+    'SELECT name FROM client GROUP BY name HAVING name SIMILAR TO :n',  # unsupported predicate
     'SELECT * FROM client WHERE case_id = -1',    # negative number
-    "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
+    "SELECT * FROM client WHERE name SIMILAR TO 'x%'",
+    "SELECT * FROM client WHERE name LIKE 'x!%' ESCAPE '!'",
+    "SELECT * FROM client WHERE name LIKE ANY (ARRAY['a%', 'b%'])",
+    "SELECT * FROM client WHERE name LIKE missing",  # unknown column
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
 
     # Query parameters must be named, and the name must be a plain identifier

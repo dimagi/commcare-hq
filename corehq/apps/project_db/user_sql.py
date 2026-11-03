@@ -458,6 +458,12 @@ def _convert_predicate(node, columns):
         if not values:
             raise UnsupportedSQL("IN requires at least one value")
         return operand.in_([_convert_value(v, columns) for v in values])
+    if isinstance(node, (exp.Like, exp.ILike)):
+        left, right, negate = _unpack(node, 'this', 'expression', 'negate')
+        value = _convert_value(left, columns)
+        pattern = _convert_value(right, columns)
+        match = value.ilike(pattern) if isinstance(node, exp.ILike) else value.like(pattern)
+        return not_(match) if negate else match
     if combine := BOOLEAN_OPS.get(type(node)):
         left, right = _unpack(node, 'this', 'expression')
         return combine(_convert_predicate(left, columns),
