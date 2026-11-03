@@ -27,6 +27,7 @@ from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
 )
 from corehq.apps.public_webforms.utils import public_webforms_enabled
+from corehq.util.strings import get_masked_email, get_masked_string
 
 
 class BasePublicWebformView(BasePageView):
@@ -95,6 +96,14 @@ class PublicWebformRequestView(BasePublicWebformView):
                 'webform_id': self.webform.id,
                 'delivery': 'email' if session.email else 'sms',
             })
+
+        if phone_number := self.form.cleaned_data.get('phone_number'):
+            request.session['masked_phone_number'] = get_masked_string(
+                phone_number, reveal_length=4, reverse_reveal=True
+            )
+        elif email := self.form.cleaned_data.get('email'):
+            request.session['masked_email'] = get_masked_email(email)
+
         return HttpResponseRedirect(reverse(
             PublicWebformLinkSentView.urlname,
             kwargs={'public_id': self.webform.public_id.hex},
@@ -119,6 +128,11 @@ class PublicWebformLinkSentView(BasePublicWebformView):
     urlname = 'public_webform_link_sent'
     template_name = 'public_webforms/public/webform_link_sent.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.masked_phone_number = request.session.pop('masked_phone_number', None)
+        self.masked_email = request.session.pop('masked_email', None)
+        return super().dispatch(request, *args, **kwargs)
+
     @property
     def page_context(self):
         context = super().page_context
@@ -132,6 +146,8 @@ class PublicWebformLinkSentView(BasePublicWebformView):
                 PublicWebformRequestView.urlname,
                 kwargs={'public_id': self.webform.public_id.hex},
             ) if self.webform.is_open else None,
+            'masked_phone_number': self.masked_phone_number,
+            'masked_email': self.masked_email,
         })
         return context
 
