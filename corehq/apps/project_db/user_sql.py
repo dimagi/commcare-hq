@@ -325,17 +325,18 @@ def _convert_order(node, columns, aliases):
 
 def _convert_join(node, selectable, tables):
     """Join another table onto ``selectable``"""
-    table_ref, on, side = _unpack(node, 'this', 'on', 'side')
+    table_ref, on, side, kind = _unpack(node, 'this', 'on', 'side', 'kind')
     table = _convert_table_ref(table_ref, tables)
     if table.name in {col.table.name for col in selectable.c}:
         raise UnsupportedSQL(f"table name used more than once: {table.name}")
     predicate = _convert_predicate(on, list(selectable.c) + list(table.c))
 
-    if not side:
+    if not side and kind in (None, 'INNER'):
         return selectable.join(table, predicate)
-    if side == 'LEFT':
+    if side == 'LEFT' and kind in (None, 'OUTER'):
         return selectable.outerjoin(table, predicate)
-    raise UnsupportedSQL(f"{side} JOIN not supported")
+    join_type = ' '.join(filter(None, [side, kind]))
+    raise UnsupportedSQL(f"{join_type} JOIN not supported")
 
 
 def _convert_projection(expressions, columns):
