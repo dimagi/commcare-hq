@@ -19,6 +19,13 @@ def test_variables_view_has_an_input_for_each_variable():
     assert content.count('name="context_name"') == 1
 
 
+def test_variables_view_keeps_values_already_entered():
+    values = {**VALUES, 'context_name': 'Ada "Lovelace"', 'context_removed': 'x'}
+    content = _post(PreviewVariablesView, values).content.decode()
+    assert 'value="Ada &quot;Lovelace&quot;"' in content
+    assert 'context_removed' not in content
+
+
 def test_variables_view_without_variables_has_no_inputs():
     content = _post(PreviewVariablesView, {**VALUES, 'area_body': 'Hello'}).content.decode()
     assert '<input' not in content

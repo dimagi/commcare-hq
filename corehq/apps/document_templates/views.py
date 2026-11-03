@@ -171,9 +171,17 @@ def _posted_area_values(request):
     }
 
 
+def _posted_context(request, names):
+    """The values posted for the variables ``names``; unfilled variables are empty"""
+    return {name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '') for name in names}
+
+
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
 class PreviewVariablesView(BaseMessagingSectionView):
-    """HTMX partial for the preview modal: the context the posted values need"""
+    """HTMX partial for the preview modal: an input for each variable the posted areas use
+
+    The form is posted with the request, so values already typed into the modal are kept.
+    """
 
     urlname = 'preview_document_variables'
     http_method_names = ['post']
@@ -181,11 +189,11 @@ class PreviewVariablesView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            names = list(get_preview_context(_posted_area_values(request)))
+            names = get_preview_context(_posted_area_values(request))
         except DocumentRenderError as error:
             template_context = {'error': str(error)}
         else:
-            template_context = {'names': names, 'field_prefix': CONTEXT_FIELD_PREFIX}
+            template_context = {'context': _posted_context(request, names), 'field_prefix': CONTEXT_FIELD_PREFIX}
         return HttpResponse(render_to_string(self.template_name, template_context))
 
 
@@ -199,10 +207,7 @@ class PreviewDocumentView(BaseMessagingSectionView):
     def post(self, request, *args, **kwargs):
         area_values = _posted_area_values(request)
         try:
-            context = {
-                name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '')
-                for name in get_preview_context(area_values)
-            }
+            context = _posted_context(request, get_preview_context(area_values))
             pdf = render_preview(area_values, context)
         except DocumentRenderError as error:
             return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
