@@ -9,7 +9,8 @@ Usage, in ``./manage.py shell``: paste this file, then
 
 Forms are registered oldest first so Connect receives them in submission order.
 If the shell drops partway through, run ``find_missing_forms()`` again: forms
-already registered now have a repeat record, so only the rest are returned.
+already registered now have a repeat record, so only the rest are returned,
+plus any the repeater filters out (listed by ``register_missing_forms()``).
 """
 import time
 from collections import Counter
@@ -142,8 +143,10 @@ def register_missing_forms(forms, dry_run=True, batch_size=100, pause_seconds=30
     rechecked for existing repeat records, so rerunning after an
     interruption won't create duplicates.
 
-    ``Repeater.register()`` applies the repeater's own filters (device
-    logs, xmlns allowlist, user blocklist) and queues the forward.
+    Forms the repeater's own filters reject (device logs, xmlns allowlist,
+    user blocklist) are counted as ``filtered`` rather than registered.
+    They never get a repeat record, so ``find_missing_forms()`` keeps
+    returning them; after a full run it should return only these.
     """
     if not dry_run and not check_domain(domain):
         return
@@ -153,20 +156,28 @@ def register_missing_forms(forms, dry_run=True, batch_size=100, pause_seconds=30
     total = len(form_ids)
     print(f"{'[dry run] ' if dry_run else ''}{total} forms to check")
     registered = skipped = 0
+    filtered = []
     for start in range(0, total, batch_size):
         batch = form_ids[start:start + batch_size]
         already = _forwarded_form_ids(batch, repeater_ids, domain)
         todo = [form_id for form_id in batch if form_id not in already]
         skipped += len(batch) - len(todo)
-        if not dry_run:
-            for form in XFormInstance.objects.get_forms(todo, ordered=True):
-                for repeater in repeaters:
+        for form in XFormInstance.objects.get_forms(todo, ordered=True):
+            allowed = [r for r in repeaters if r.allowed_to_forward(form)]
+            if not allowed:
+                filtered.append(form.form_id)
+                continue
+            if not dry_run:
+                for repeater in allowed:
                     repeater.register(form)
-        registered += len(todo)
+            registered += 1
         print(f"  {start + len(batch)}/{total} checked, {registered} "
-              f"{'would be ' if dry_run else ''}registered, {skipped} skipped")
+              f"{'would be ' if dry_run else ''}registered, {skipped} skipped, "
+              f"{len(filtered)} filtered by repeater")
         if not dry_run and start + batch_size < total:
             time.sleep(pause_seconds)
+    if filtered:
+        print(f"Filtered by repeater (not forwarded): {filtered}")
     if dry_run:
         print("Call register_missing_forms(forms, dry_run=False) to register.")
     return registered
