@@ -27,11 +27,12 @@ from jinja2 import (
     Environment,
     StrictUndefined,
     TemplateError,
+    TemplateRuntimeError,
     TemplateSyntaxError,
     meta,
     nodes,
 )
-from jinja2.sandbox import SandboxedEnvironment
+from jinja2.sandbox import SandboxedEnvironment, SecurityError, safe_range
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -82,6 +83,12 @@ BLANK = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
 DEFAULT_BLANK_LENGTH = 20
 MAX_BLANK_LENGTH = 100
 
+# Limits on author-written Jinja, in characters (areas), range items (loops) and bits (powers)
+MAX_AREA_LENGTH = 50_000
+MAX_RENDERED_LENGTH = 100_000
+MAX_LOOP_ITEMS = 10_000
+MAX_POWER_BITS = 10_000
+
 
 def _escape_markdown(text):
     return re.sub(r'([\\`*_{}\[\]()>#+\-.!])', r'\\\1', text)
@@ -92,7 +99,52 @@ def _escape_value(value):
     return _escape_markdown(html.escape(str(value)))
 
 
-_render_env = SandboxedEnvironment(undefined=StrictUndefined, finalize=_escape_value)
+class _LimitedSandbox(SandboxedEnvironment):
+    """A sandbox that refuses operators that can allocate unbounded memory
+
+    ponytail: ``~``, ``+`` and filters like ``center`` are not limited here;
+    the rendered text is capped after the fact (:func:`_render_area`). Add a
+    render time limit if that is not enough.
+    """
+    intercepted_binops = frozenset(['*', '**', '%'])
+
+    def call_binop(self, context, operator, left, right):
+        if operator == '**' and _power_bits(left, right) > MAX_POWER_BITS:
+            raise SecurityError('Power too big')
+        if operator == '%' and isinstance(left, str):
+            raise SecurityError('String formatting is not allowed')
+        if operator == '*' and _repeat_length(left, right) > MAX_RENDERED_LENGTH:
+            raise SecurityError('Repeated value too big')
+        return super().call_binop(context, operator, left, right)
+
+
+def _power_bits(base, exponent):
+    """An estimate of the size of ``base ** exponent`` in bits, for integers"""
+    if isinstance(base, int) and isinstance(exponent, int) and exponent > 0:
+        return base.bit_length() * exponent
+    return 0
+
+
+def _repeat_length(left, right):
+    for sequence, count in ((left, right), (right, left)):
+        if isinstance(sequence, (str, bytes, list, tuple)) and isinstance(count, int):
+            return len(sequence) * count
+    return 0
+
+
+def _budgeted_range(budget=MAX_LOOP_ITEMS):
+    """A ``range`` that can only produce ``budget`` items in total, so that nested loops end"""
+    def limited_range(*args):
+        nonlocal budget
+        items = safe_range(*args)
+        budget -= len(items)
+        if budget < 0:
+            raise TemplateRuntimeError('Too many loop iterations')
+        return items
+    return limited_range
+
+
+_render_env = _LimitedSandbox(undefined=StrictUndefined, finalize=_escape_value)
 
 
 class DocumentRenderError(Exception):
@@ -134,6 +186,7 @@ def get_preview_context(area_values):
     """The context a preview needs: each variable the areas use, with an empty string"""
     names = {}
     for area_name, text in area_values.items():
+        _check_area_length(area_name, text)
         try:
             names.update(dict.fromkeys(_parse_variable_names(text)))
         except TemplateSyntaxError as error:
@@ -150,15 +203,24 @@ def _render_areas(area_values, context):
     return {name: _render_area(name, text, context) for name, text in area_values.items()}
 
 
+def _check_area_length(name, text):
+    if len(text) > MAX_AREA_LENGTH:
+        raise DocumentRenderError(f'{name} is too long: {len(text)} of {MAX_AREA_LENGTH} characters')
+
+
 def _render_area(name, text, context):
+    _check_area_length(name, text)
     try:
-        return _render_env.from_string(text).render(context)
+        rendered = _render_env.from_string(text).render({**context, 'range': _budgeted_range()})
     except TemplateSyntaxError as error:
         raise DocumentRenderError(_syntax_error_message(name, error))
     except TemplateError as error:
         raise DocumentRenderError(f'{name}: {error}')
     except Exception as error:  # user-authored template: any runtime error is a render error
         raise DocumentRenderError(f'{name}: {type(error).__name__}: {error}')
+    if len(rendered) > MAX_RENDERED_LENGTH:
+        raise DocumentRenderError(f'{name} is too long once rendered: more than {MAX_RENDERED_LENGTH} characters')
+    return rendered
 
 
 def _syntax_error_message(area_name, error):
