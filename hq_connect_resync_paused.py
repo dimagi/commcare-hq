@@ -78,12 +78,22 @@ def _iter_forms_received_since(domain, received_from):
     )
 
 
-def _forwarded_form_ids(repeater_ids, domain):
-    """IDs of forms that already have a repeat record for one of ``repeater_ids``."""
-    return set(
-        RepeatRecord.objects.filter(domain=domain, repeater_id__in=repeater_ids)
-        .values_list("payload_id", flat=True)
-    )
+def _forwarded_form_ids(form_ids, repeater_ids, domain, chunk_size=1000):
+    """
+    The subset of ``form_ids`` that already have a repeat record for one of
+    ``repeater_ids``. Looks up by ``payload_id`` so Postgres uses that index,
+    instead of reading every repeat record the domain has.
+    """
+    forwarded = set()
+    for start in range(0, len(form_ids), chunk_size):
+        forwarded.update(
+            RepeatRecord.objects.filter(
+                payload_id__in=form_ids[start:start + chunk_size],
+                domain=domain,
+                repeater_id__in=repeater_ids,
+            ).values_list("payload_id", flat=True)
+        )
+    return forwarded
 
 
 def find_missing_forms(domain=DOMAIN, received_from=RECEIVED_FROM):
@@ -95,7 +105,7 @@ def find_missing_forms(domain=DOMAIN, received_from=RECEIVED_FROM):
     repeater_ids = [r.id for r in get_connect_repeaters(domain)]
     started = time.monotonic()
     forms = list(_iter_forms_received_since(domain, received_from))
-    forwarded = _forwarded_form_ids(repeater_ids, domain)
+    forwarded = _forwarded_form_ids([form_id for form_id, _, _ in forms], repeater_ids, domain)
     missing = sorted(
         (
             {"id": form_id, "received_on": received_on, "app_id": app_id}
@@ -145,11 +155,7 @@ def register_missing_forms(forms, dry_run=True, batch_size=100, pause_seconds=30
     registered = skipped = 0
     for start in range(0, total, batch_size):
         batch = form_ids[start:start + batch_size]
-        already = set(
-            RepeatRecord.objects.filter(
-                domain=domain, repeater_id__in=repeater_ids, payload_id__in=batch,
-            ).values_list("payload_id", flat=True)
-        )
+        already = _forwarded_form_ids(batch, repeater_ids, domain)
         todo = [form_id for form_id in batch if form_id not in already]
         skipped += len(batch) - len(todo)
         if not dry_run:
