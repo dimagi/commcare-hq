@@ -1,5 +1,3 @@
-import json
-
 from django import forms
 from django.http import (
     HttpResponse,
@@ -49,6 +47,7 @@ class DocumentTemplatesView(BaseMessagingSectionView):
 
 
 AREA_FIELD_PREFIX = 'area_'
+CONTEXT_FIELD_PREFIX = 'context_'
 
 
 class TemplateForm(forms.ModelForm):
@@ -182,11 +181,11 @@ class PreviewVariablesView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            context = get_preview_context(_posted_area_values(request))
+            names = list(get_preview_context(_posted_area_values(request)))
         except DocumentRenderError as error:
             template_context = {'error': str(error)}
         else:
-            template_context = {'context_json': json.dumps(context, indent=2)}
+            template_context = {'names': names, 'field_prefix': CONTEXT_FIELD_PREFIX}
         return HttpResponse(render_to_string(self.template_name, template_context))
 
 
@@ -198,12 +197,14 @@ class PreviewDocumentView(BaseMessagingSectionView):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
+        area_values = _posted_area_values(request)
         try:
-            context = json.loads(request.POST.get('context') or '{}')
-            if not isinstance(context, dict):
-                raise ValueError(gettext('The context must be a JSON object.'))
-            pdf = render_preview(_posted_area_values(request), context)
-        except (ValueError, DocumentRenderError) as error:
+            context = {
+                name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '')
+                for name in get_preview_context(area_values)
+            }
+            pdf = render_preview(area_values, context)
+        except DocumentRenderError as error:
             return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="preview.pdf"'
