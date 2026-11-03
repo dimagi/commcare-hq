@@ -2,6 +2,9 @@
 
 from django.db import migrations
 
+INDEX_NAME = 'builds_comm_couch_i_3b9fc6_idx'
+
+
 class Migration(migrations.Migration):
     atomic = False
 
@@ -12,6 +15,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.SeparateDatabaseAndState(
             state_operations=[
+                migrations.RemoveIndex(
+                    model_name='commcaremobilebuild',
+                    name=INDEX_NAME,
+                ),
                 migrations.RemoveField(
                     model_name='CommCareMobileBuild',
                     name='couch_id',
