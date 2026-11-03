@@ -5,6 +5,9 @@ from corehq.apps.document_templates.views import (
     DocumentTemplatesView,
     EditDocumentTemplateView,
     NewDocumentTemplateView,
+    PreviewDocumentView,
+    PreviewVariablesView,
+    RenderDocumentView,
 )
 
 urlpatterns = [
@@ -20,4 +23,11 @@ urlpatterns = [
         DeleteDocumentTemplateView.as_view(),
         name=DeleteDocumentTemplateView.urlname,
     ),
+    path(
+        'templates/preview/variables/',
+        PreviewVariablesView.as_view(),
+        name=PreviewVariablesView.urlname,
+    ),
+    path('templates/preview/', PreviewDocumentView.as_view(), name=PreviewDocumentView.urlname),
+    path('templates/render', RenderDocumentView.as_view(), name=RenderDocumentView.urlname),
 ]
