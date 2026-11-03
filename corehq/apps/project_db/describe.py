@@ -32,8 +32,9 @@ Supported SQL:
    WHERE condition, with optional AS aliases.
  * DISTINCT, and DISTINCT ON (columns).
  * A single table in the FROM clause, with an optional alias.
- * JOIN and LEFT JOIN, with an ON condition. A table can be joined to itself if
-   each side is given a different alias.
+ * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
+   condition. A table can be joined to itself if each side is given a
+   different alias.
  * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
    literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
  * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
@@ -75,6 +76,9 @@ Not supported:
  * Negative numbers.
  * Subqueries and CTEs.
  * INTERSECT and EXCEPT.
+ * ORDER BY on a UNION.
+ * RIGHT, FULL and CROSS JOIN. Write a RIGHT JOIN as a LEFT JOIN with the
+   tables swapped.
 
 This project has the following tables:
 {% for summary in table_summaries %}\
