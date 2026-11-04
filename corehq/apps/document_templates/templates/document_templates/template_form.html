@@ -45,15 +45,8 @@
       </div>
     </div>
 
-    {% for field in form.area_fields %}
-      <div class="row g-3 mb-3">
-        <div class="col-md-2">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold"
-            >{{ field.label }}</label
-          >
-        </div>
-        <div class="col-md-10">{{ field }}</div>
-      </div>
+    {% for area in form.areas %}
+      {% include "document_templates/partials/area_editor.html" %}
     {% endfor %}
 
     {# Actions #}
