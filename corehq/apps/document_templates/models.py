@@ -4,10 +4,15 @@ from django.db import models
 from corehq.util.jsonattrs import AttrsDict
 
 
+MARKDOWN = 'markdown'
+IMAGE = 'image'
+AREA_TYPES = (MARKDOWN, IMAGE)
+
+
 @define
 class Area:
     value = field(default='')
-    type = field(default='markdown')
+    type = field(default=MARKDOWN)
 
 
 class Template(models.Model):
