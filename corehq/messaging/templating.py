@@ -81,7 +81,24 @@ class MessagingTemplateRenderer:
         return string.Formatter().vformat(str(message), [], self.context_params)
 
 
-class SimpleMessagingTemplateParam:
+class MessagingTemplateParam:
+    """
+    A value that can be used in a messaging template. Subclasses expose
+    their data through get_template_value().
+    """
+
+    def get_template_value(self, item):
+        """
+        Returns the param for {param.item}, to be rendered or, for
+        {param.item.other}, looked up further.
+        """
+        raise NotImplementedError
+
+    def __getattr__(self, item):
+        return self.get_template_value(item)
+
+
+class SimpleMessagingTemplateParam(MessagingTemplateParam):
 
     def __init__(self, value):
         self.__value = value
@@ -93,21 +110,16 @@ class SimpleMessagingTemplateParam:
         """
         return str(self.__value)
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-
-        A simple value doesn't have any attributes, so trying to
-        access any attributes will always return another
-        SimpleMessagingTemplateParam that renders to the unknown value.
+        A simple value doesn't have any attributes, so this always
+        returns another SimpleMessagingTemplateParam that renders to the
+        unknown value.
         """
         return SimpleMessagingTemplateParam(UNKNOWN_VALUE)
 
 
-class SimpleDictTemplateParam:
+class SimpleDictTemplateParam(MessagingTemplateParam):
 
     def __init__(self, dict_of_values):
         self.__dict_of_values = dict_of_values
@@ -122,14 +134,9 @@ class SimpleDictTemplateParam:
         """
         return UNKNOWN_VALUE
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-
-        So we return a SimpleMessagingTemplateParam that either renders to the
+        Returns a SimpleMessagingTemplateParam that either renders to the
         item in the dictionary or to the unknown value if it doesn't exist.
         """
         if item in self.__dict_of_values:
@@ -143,7 +150,7 @@ class NestedDictTemplateParam(SimpleDictTemplateParam):
     def __init__(self, dict_of_values):
         self.__dict_of_values = dict_of_values
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """Works just like SimpleDictTemplateParam but it can contain nested dicts"""
         if val := self.__dict_of_values.get(item):
             if isinstance(val, dict):
@@ -241,13 +248,7 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
 
         return self.__last_modified_by_result
 
-    def __getattr__(self, item):
-        """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-        """
+    def get_template_value(self, item):
         if item == 'owner':
             return self.__get_owner_result()
         elif item == 'parent':
@@ -257,4 +258,4 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         elif item == 'last_modified_by':
             return self.__get_last_modified_by_result()
 
-        return super(CaseMessagingTemplateParam, self).__getattr__(item)
+        return super(CaseMessagingTemplateParam, self).get_template_value(item)
