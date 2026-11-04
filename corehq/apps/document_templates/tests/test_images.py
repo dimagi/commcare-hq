@@ -1,10 +1,7 @@
 import uuid
-from io import BytesIO
 
-from couchdbkit import ResourceNotFound
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase, override_settings
-from PIL import Image
 
 from corehq.apps.document_templates.images import (
     ImageError,
@@ -12,24 +9,11 @@ from corehq.apps.document_templates.images import (
     get_image_data,
     save_image,
 )
-from corehq.apps.hqmedia.models import CommCareImage
+
+from .utils import delete_image, make_image
 
 DOMAIN = 'document-templates-images-test'
 OTHER_DOMAIN = 'document-templates-images-other'
-
-
-def _image(format='PNG'):
-    image = Image.new('RGB', (10, 20), color=tuple(uuid.uuid4().bytes[:3]))
-    buffer = BytesIO()
-    image.save(buffer, format=format)
-    return buffer.getvalue()
-
-
-def _delete_image(image_id):
-    try:
-        CommCareImage.get(image_id).delete()
-    except ResourceNotFound:
-        pass  # saved twice, deleted already
 
 
 def _upload(data, name='logo.png'):
@@ -52,8 +36,8 @@ class TestSaveImage(SimpleTestCase):
 class TestImagesInHqmedia(TestCase):
 
     def _save(self, domain=DOMAIN, data=None):
-        image_id = save_image(domain, _upload(data or _image()), 'user')
-        self.addCleanup(_delete_image, image_id)
+        image_id = save_image(domain, _upload(data or make_image()), 'user')
+        self.addCleanup(delete_image, image_id)
         return image_id
 
     def test_saved_image_is_owned_by_the_domain(self):
@@ -62,12 +46,12 @@ class TestImagesInHqmedia(TestCase):
         assert DOMAIN in image.owners
 
     def test_saved_image_can_be_read_back(self):
-        data = _image()
+        data = make_image()
         image_id = self._save(data=data)
         assert get_image_data(DOMAIN, image_id) == data
 
     def test_same_image_uploaded_by_two_domains_is_owned_by_both(self):
-        data = _image()
+        data = make_image()
         image_id = self._save(DOMAIN, data)
         assert self._save(OTHER_DOMAIN, data) == image_id
         get_image(DOMAIN, image_id)
