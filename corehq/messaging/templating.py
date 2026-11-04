@@ -68,7 +68,7 @@ def _get_obj_template_info(obj):
     return {}
 
 
-class MessagingTemplateRenderer(object):
+class MessagingTemplateRenderer:
     context_params = None
 
     def __init__(self):
@@ -81,7 +81,7 @@ class MessagingTemplateRenderer(object):
         return string.Formatter().vformat(str(message), [], self.context_params)
 
 
-class SimpleMessagingTemplateParam(object):
+class SimpleMessagingTemplateParam:
 
     def __init__(self, value):
         # Define all internal attributes as private so that they can't be
@@ -109,7 +109,7 @@ class SimpleMessagingTemplateParam(object):
         return SimpleMessagingTemplateParam(UNKNOWN_VALUE)
 
 
-class SimpleDictTemplateParam(object):
+class SimpleDictTemplateParam:
 
     def __init__(self, dict_of_values):
         # Define all internal attributes as private so that they can't be
