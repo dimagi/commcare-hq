@@ -1,3 +1,4 @@
+import re
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -10,7 +11,7 @@ from corehq.apps.document_templates.case_documents import (
     render_case_documents,
 )
 from corehq.apps.document_templates.models import Area, Template
-from corehq.apps.document_templates.rendering import render_saved_template
+from corehq.apps.document_templates.rendering import render_saved_document
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_case,
@@ -22,6 +23,10 @@ OTHER_DOMAIN = 'document-templates-other'
 OWNER_ID = 'user1'  # the owner create_case gives cases by default
 GROUP_ID = 'group1'
 USER = SimpleNamespace(get_owner_ids=lambda domain: [OWNER_ID, GROUP_ID])
+
+
+def _page_count(pdf):
+    return len(re.findall(rb'/Type /Page\b(?!s)', pdf))
 
 
 class TestCaseIdLimits(SimpleTestCase):
@@ -63,16 +68,16 @@ class TestBuildCasePdf(TestCase):
         alice = self._case(document_template_slug='welcome', first_name='Alice')
         bob = self._case(document_template_slug='welcome', first_name='Bob')
         with patch(
-            'corehq.apps.document_templates.case_documents.render_saved_template', wraps=render_saved_template,
+            'corehq.apps.document_templates.case_documents.render_saved_document', wraps=render_saved_document,
         ) as render:
-            documents = self._build(bob, alice)
+            pdf = self._build(bob, alice)
         assert [call.args[1]['first_name'] for call in render.call_args_list] == ['Bob', 'Alice']
-        assert all(document.startswith(b'%PDF') for document in documents)
+        assert pdf.startswith(b'%PDF')
+        assert _page_count(pdf) == 2
 
     def test_repeated_case_ids_are_rendered_once(self):
         alice = self._case(document_template_slug='welcome', first_name='Alice')
-        documents = self._build(alice, alice)
-        assert len(documents) == 1
+        assert _page_count(self._build(alice, alice)) == 1
 
     def test_case_without_a_slug_fails_the_request(self):
         good = self._case(document_template_slug='welcome', first_name='Alice')
@@ -120,7 +125,7 @@ class TestBuildCasePdf(TestCase):
     def test_case_owned_by_one_of_the_users_groups_is_rendered(self):
         case = self._case(document_template_slug='welcome', first_name='Alice', owner_id=GROUP_ID)
         user = SimpleNamespace(get_owner_ids=lambda domain: ['another-user', GROUP_ID])
-        assert self._build(case, user=user)[0].startswith(b'%PDF')
+        assert self._build(case, user=user).startswith(b'%PDF')
 
     def test_closed_case_is_not_found(self):
         case = self._case(document_template_slug='welcome', first_name='Alice', closed=True)

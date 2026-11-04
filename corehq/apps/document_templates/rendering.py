@@ -277,7 +277,12 @@ def _syntax_error_message(area_name, error):
 
 
 def render_preview(areas, context):
-    """:returns: PDF bytes of the document template with ``areas`` and ``context``
+    """:returns: PDF bytes of the document template with ``areas`` and ``context``"""
+    return render_pdf([render_document(areas, context)])
+
+
+def render_document(areas, context):
+    """:returns: the document for :func:`render_pdf`, with the markdown areas rendered with ``context``
 
     :param areas: ``{area name: {'type': 'markdown', 'value': text}}``, or
         ``{'type': 'image', 'value': image bytes}`` for an area that is an image
@@ -289,7 +294,7 @@ def render_preview(areas, context):
         for name, area in areas.items()
     }
     _check_images(document)
-    return render_pdf([document])
+    return document
 
 
 def _check_images(document):
@@ -525,9 +530,14 @@ def image_area(domain, area_name, image_id):
 
 
 def render_saved_template(template, context):
+    """:returns: PDF bytes of :func:`render_saved_document`"""
+    return render_pdf([render_saved_document(template, context)])
+
+
+def render_saved_document(template, context):
     """Render a saved :class:`Template` with ``context`` for the variables its areas use
 
-    :returns: PDF bytes
+    :returns: the document for :func:`render_pdf`
     :raises DocumentRenderError: if the template is invalid or fails to render
     """
     areas = {
@@ -535,4 +545,4 @@ def render_saved_template(template, context):
         if area.type == 'image' else {'type': area.type, 'value': area.value}
         for name, area in template.areas.items()
     }
-    return render_preview(areas, context)
+    return render_document(areas, context)

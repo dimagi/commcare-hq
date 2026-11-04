@@ -377,19 +377,17 @@ class UploadAreaImageView(BaseMessagingSectionView):
 class RenderDocumentView(View):
     """Called from web apps with space separated case IDs as the request body
 
-    Responds with the rendered document as a PDF.
-    Only the first case's document is returned for now; combining several
-    cases is still to do.
+    Responds with one PDF containing the document of each case.
     """
     urlname = 'render_document'
 
     def post(self, request, domain):
         try:
-            documents = render_case_documents(domain, request.body.decode().split(), request.couch_user)
+            pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
         except CaseDocumentError as error:
             return JsonResponse({'error': str(error)}, status=400)
 
-        response = HttpResponse(documents[0], content_type='application/pdf')
+        response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = 'inline; filename="document.pdf"'
         response['X-Content-Type-Options'] = 'nosniff'
         return response

@@ -8,7 +8,7 @@ from corehq.apps.document_templates.case_documents import CaseDocumentError
 from corehq.apps.document_templates.views import RenderDocumentView
 
 DOMAIN = 'document-templates-test'
-DOCUMENTS = [b'%PDF one', b'%PDF two']
+PDF = b'%PDF one'
 COUCH_USER = SimpleNamespace(get_id='user-1')
 
 
@@ -36,12 +36,12 @@ class TestRenderDocumentViewErrors(SimpleTestCase):
 class TestRenderDocumentView(SimpleTestCase):
 
     def test_case_ids_are_split_on_whitespace(self):
-        with patch('corehq.apps.document_templates.views.render_case_documents', return_value=DOCUMENTS) as build:
+        with patch('corehq.apps.document_templates.views.render_case_documents', return_value=PDF) as build:
             _post('abc def  ghi')
         build.assert_called_once_with(DOMAIN, ['abc', 'def', 'ghi'], COUCH_USER)
 
-    def test_the_first_document_is_returned_as_a_pdf(self):
-        with patch('corehq.apps.document_templates.views.render_case_documents', return_value=DOCUMENTS):
+    def test_the_pdf_is_returned(self):
+        with patch('corehq.apps.document_templates.views.render_case_documents', return_value=PDF):
             response = _post('abc')
-        assert response.content == b'%PDF one'
+        assert response.content == PDF
         assert response['Content-Type'] == 'application/pdf'

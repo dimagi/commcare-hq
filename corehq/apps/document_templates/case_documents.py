@@ -12,7 +12,8 @@ from django.utils.translation import gettext as _
 from corehq.apps.document_templates.models import Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
-    render_saved_template,
+    render_pdf,
+    render_saved_document,
 )
 from corehq.form_processor.models import CommCareCase
 from corehq.util.timer import TimingContext
@@ -30,7 +31,7 @@ def render_case_documents(domain, case_ids, couch_user):
 
     :param case_ids: IDs of cases in ``domain``
     :param couch_user: only cases this user has access to are rendered
-    :returns: PDF documents (bytes), in the order of ``case_ids``
+    :returns: one PDF (bytes) with the document of each case, in the order of ``case_ids``
     :raises CaseDocumentError: if any case cannot be rendered, or the user
         has no access to it. Nothing is returned for the cases that could.
     """
@@ -45,13 +46,13 @@ def render_case_documents(domain, case_ids, couch_user):
     documents = []
     for case in cases:
         try:
-            documents.append(render_saved_template(
+            documents.append(render_saved_document(
                 templates[case.get_case_property(SLUG_PROPERTY)],
                 case.get_properties_in_api_format(),
             ))
         except DocumentRenderError as error:
             raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case.case_id, error=error))
-    return documents
+    return render_pdf(documents)
 
 
 def _get_cases(domain, case_ids, couch_user):
