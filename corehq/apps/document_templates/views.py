@@ -1,6 +1,3 @@
-import uuid
-from io import BytesIO
-
 from django import forms
 from django.http import (
     HttpResponse,
@@ -16,8 +13,6 @@ from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy
 from django.views import View
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
-from soil import DownloadBase
-from soil.util import expose_blob_download
 
 from corehq import toggles
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
@@ -35,7 +30,6 @@ from corehq.apps.document_templates.rendering import (
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.blobs import CODES, get_blob_db
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -231,16 +225,13 @@ class PreviewDocumentView(BaseMessagingSectionView):
         return response
 
 
-DOWNLOAD_EXPIRY_MINUTES = 60
-
-
 @method_decorator(login_and_domain_required, name='dispatch')
 @method_decorator(require_cloudcare_access, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
 class RenderDocumentView(View):
     """Called from web apps with space separated case IDs as the request body
 
-    Responds with the URL the rendered document can be downloaded from.
+    Responds with the rendered document as a PDF.
     Only the first case's document is returned for now; combining several
     cases is still to do.
     """
@@ -252,22 +243,7 @@ class RenderDocumentView(View):
         except CaseDocumentError as error:
             return JsonResponse({'error': str(error)}, status=400)
 
-        download_id = DownloadBase.new_id_prefix + uuid.uuid4().hex
-        get_blob_db().put(
-            BytesIO(documents[0]),
-            key=download_id,
-            domain=domain,
-            parent_id=domain,
-            type_code=CODES.tempfile,
-            timeout=DOWNLOAD_EXPIRY_MINUTES,
-        )
-        expose_blob_download(
-            download_id,
-            expiry=DOWNLOAD_EXPIRY_MINUTES * 60,
-            mimetype='application/pdf',
-            # inline: the browser shows the document in the new tab
-            content_disposition='inline; filename="document.pdf"',
-            download_id=download_id,
-            owner_ids=[request.couch_user.get_id],
-        )
-        return JsonResponse({'url': reverse('retrieve_download', args=[download_id]) + '?get_file'})
+        response = HttpResponse(documents[0], content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="document.pdf"'
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response

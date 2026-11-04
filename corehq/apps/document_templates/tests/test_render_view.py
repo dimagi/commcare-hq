@@ -2,8 +2,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from django.test import RequestFactory, SimpleTestCase, TestCase
-from soil import DownloadBase
+from django.test import RequestFactory, SimpleTestCase
 
 from corehq.apps.document_templates.case_documents import CaseDocumentError
 from corehq.apps.document_templates.views import RenderDocumentView
@@ -34,19 +33,15 @@ class TestRenderDocumentViewErrors(SimpleTestCase):
         assert response.status_code == 400
 
 
-class TestRenderDocumentView(TestCase):
+class TestRenderDocumentView(SimpleTestCase):
 
     def test_case_ids_are_split_on_whitespace(self):
         with patch('corehq.apps.document_templates.views.render_case_documents', return_value=DOCUMENTS) as build:
             _post('abc def  ghi')
         build.assert_called_once_with(DOMAIN, ['abc', 'def', 'ghi'], COUCH_USER)
 
-    def test_the_first_document_is_stored_for_the_requesting_user_only(self):
+    def test_the_first_document_is_returned_as_a_pdf(self):
         with patch('corehq.apps.document_templates.views.render_case_documents', return_value=DOCUMENTS):
             response = _post('abc')
-        url = json.loads(response.content)['url']
-        assert url.endswith('?get_file')
-        download = DownloadBase.get(url.rsplit('/', 1)[1].removesuffix('?get_file'))
-        assert download.owner_ids == ['user-1']
-        assert download.content_type == 'application/pdf'
-        assert b''.join(download.toHttpResponse().streaming_content) == b'%PDF one'
+        assert response.content == b'%PDF one'
+        assert response['Content-Type'] == 'application/pdf'
