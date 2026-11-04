@@ -214,7 +214,8 @@ class PreviewDocumentView(BaseMessagingSectionView):
         area_values = _posted_area_values(request)
         try:
             context = _posted_context(request, get_preview_context(area_values))
-            pdf = render_preview(area_values, context)
+            areas = {name: {'type': 'markdown', 'value': text} for name, text in area_values.items()}
+            pdf = render_preview(areas, context)
         except DocumentRenderError as error:
             return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
         response = HttpResponse(pdf, content_type='application/pdf')
