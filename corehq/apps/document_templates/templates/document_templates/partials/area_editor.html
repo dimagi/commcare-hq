@@ -5,11 +5,14 @@
     <label
       for="{{ area.type_field.id_for_label }}"
       class="form-label fw-semibold"
-      >{{ area.name }}</label
+      >{{ area.label }}</label
     >
     {{ area.type_field }}
   </div>
   <div class="col-md-10">
+    {% if area.description %}
+      <div class="form-text mt-0 mb-1">{{ area.description }}</div>
+    {% endif %}
     <div x-show="type === 'markdown'">{{ area.markdown_field }}</div>
     <div x-show="type === 'image'">
       {% include "document_templates/partials/area_image.html" with area=area.name image_id=area.image.image_id thumbnail_url=area.image.thumbnail_url error=area.image.error %}
