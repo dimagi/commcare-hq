@@ -10,6 +10,7 @@ from io import BytesIO
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.urls import reverse
 from django.utils.translation import gettext as _
 from PIL import Image
 
@@ -17,6 +18,7 @@ from corehq.apps.hqmedia.models import CommCareImage
 
 ALLOWED_FORMATS = ('PNG', 'JPEG')
 MAX_PIXELS = 4000  # width and height; reportlab decodes the image when it renders the PDF
+THUMBNAIL_PIXELS = 120
 
 
 class ImageError(Exception):
@@ -73,3 +75,8 @@ def get_image_data(domain, image_id):
     if not data:
         raise ImageError(_('The image does not exist.'))
     return data
+
+
+def get_thumbnail_url(image_id):
+    """The url of a small version of the image, for the editor"""
+    return reverse('hqmedia_download', args=['CommCareImage', image_id]) + f'?thumb={THUMBNAIL_PIXELS}'

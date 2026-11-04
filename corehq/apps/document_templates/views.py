@@ -1,5 +1,6 @@
 from django import forms
 from django.http import (
+    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -13,6 +14,11 @@ from django.utils.translation import gettext, gettext_lazy
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
+from corehq.apps.document_templates.images import (
+    ImageError,
+    get_thumbnail_url,
+    save_image,
+)
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
@@ -215,3 +221,40 @@ class PreviewDocumentView(BaseMessagingSectionView):
         response['Content-Disposition'] = 'inline; filename="preview.pdf"'
         response['X-Content-Type-Options'] = 'nosniff'
         return response
+
+
+def area_image_context(domain, area_name, image_id, error=None):
+    """The context of the image fields of an area in the editor"""
+    return {
+        'domain': domain,
+        'area': area_name,
+        'image_id': image_id,
+        'thumbnail_url': get_thumbnail_url(image_id) if image_id else '',
+        'error': error,
+    }
+
+
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class UploadAreaImageView(BaseMessagingSectionView):
+    """HTMX partial for the editor: stores the uploaded image and returns the image fields of the area
+
+    The form is posted with the request, so the image the area has now is kept
+    when the upload is rejected.
+    """
+
+    urlname = 'upload_document_template_image'
+    http_method_names = ['post']
+    template_name = 'document_templates/partials/area_image.html'
+
+    def post(self, request, *args, **kwargs):
+        area_name = kwargs['area']
+        if area_name not in get_area_names():
+            raise Http404()
+        image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{area_name}_image', '')
+        error = None
+        try:
+            image_id = save_image(self.domain, request.FILES.get('image_file'), request.couch_user.username)
+        except ImageError as exception:
+            error = str(exception)
+        context = area_image_context(self.domain, area_name, image_id, error)
+        return HttpResponse(render_to_string(self.template_name, context))
