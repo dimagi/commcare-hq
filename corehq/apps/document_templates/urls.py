@@ -7,6 +7,8 @@ from corehq.apps.document_templates.views import (
     NewDocumentTemplateView,
     PreviewDocumentView,
     PreviewVariablesView,
+    UploadAreaImageView,
+    RenderDocumentView,
 )
 
 urlpatterns = [
@@ -28,4 +30,10 @@ urlpatterns = [
         name=PreviewVariablesView.urlname,
     ),
     path('templates/preview/', PreviewDocumentView.as_view(), name=PreviewDocumentView.urlname),
+    path(
+        'templates/images/<str:area>/',
+        UploadAreaImageView.as_view(),
+        name=UploadAreaImageView.urlname,
+    ),
+    path('templates/render', RenderDocumentView.as_view(), name=RenderDocumentView.urlname),
 ]
