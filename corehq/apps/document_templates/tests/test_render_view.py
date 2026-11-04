@@ -11,12 +11,11 @@ from corehq.apps.document_templates.views import render_document
 DOMAIN = 'document-templates-test'
 PDF = b'%PDF one'
 COUCH_USER = SimpleNamespace(get_id='user-1')
-DOCUMENTS = [b'%PDF one', b'%PDF two']
 
 
 def _post(body):
     request = RequestFactory().post('/', body, content_type='text/plain')
-    request.couch_user = SimpleNamespace(get_id='user-1')
+    request.couch_user = COUCH_USER
     return inspect.unwrap(render_document)(request, DOMAIN)
 
 
@@ -37,7 +36,7 @@ def test_empty_body_is_a_400():
 def test_case_ids_are_split_on_whitespace():
     with patch('corehq.apps.document_templates.views.render_case_documents', return_value=PDF) as build:
         _post('abc def  ghi')
-    build.assert_called_once_with(DOMAIN, ['abc', 'def', 'ghi'])
+    build.assert_called_once_with(DOMAIN, ['abc', 'def', 'ghi'], COUCH_USER)
 
 
 def test_the_pdf_is_returned():
