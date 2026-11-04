@@ -4,6 +4,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+import _string
 import string
 
 UNKNOWN_VALUE = '(?)'
@@ -78,7 +79,42 @@ class MessagingTemplateRenderer:
         self.context_params[name] = value
 
     def render(self, message):
-        return string.Formatter().vformat(str(message), [], self.context_params)
+        return MessagingTemplateFormatter().vformat(str(message), [], self.context_params)
+
+
+class MessagingTemplateFormatter(string.Formatter):
+    """
+    A Formatter that resolves fields only through template params' own
+    data. A plain Formatter uses getattr() and indexing, which reach real
+    Python attributes like __class__ and from there any module's globals.
+    """
+
+    def get_field(self, field_name, args, kwargs):
+        """
+        Mirrors string.Formatter.get_field(), but resolves attributes with
+        get_template_value() instead of getattr(), and [index] lookups or
+        non-param values as unknown.
+
+        Uses the original's internal _string parser, as there is no public
+        one.
+        """
+        first, rest = _string.formatter_field_name_split(field_name)
+        obj = self.get_value(first, args, kwargs)
+        for is_attr, item in rest:
+            if is_attr and isinstance(obj, MessagingTemplateParam):
+                obj = obj.get_template_value(item)
+            else:
+                obj = SimpleMessagingTemplateParam(UNKNOWN_VALUE)
+        return obj, first
+
+    def convert_field(self, value, conversion):
+        """
+        Formatter calls this after get_field() for fields with a !r, !s or
+        !a conversion, which would render the param with repr(), str() or
+        ascii() instead of its own __format__. The conversion is ignored so
+        that params always render through __format__.
+        """
+        return value
 
 
 class MessagingTemplateParam:
