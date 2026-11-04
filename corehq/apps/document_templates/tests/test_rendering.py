@@ -1,0 +1,241 @@
+import pytest
+from reportlab.platypus import ListFlowable, Paragraph
+
+from corehq.apps.document_templates.rendering import (
+    DocumentRenderError,
+    MAX_AREA_LENGTH,
+    MAX_LOOP_ITEMS,
+    _markdown_to_flowables,
+    _markdown_to_sanitized_html,
+    _parse_variable_names,
+    _render_areas,
+    get_area_names,
+    get_preview_context,
+    render_pdf,
+    render_preview,
+)
+
+VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
+
+
+def test_get_area_names():
+    assert get_area_names() == ['header', 'address', 'body', 'footer']
+
+
+@pytest.mark.parametrize('text, expected', [
+    ('', []),
+    ('no variables here', []),
+    ('{{ b }} {{ a }}', ['b', 'a']),
+    ('{{ a }} {{ b }} {{ a }}', ['a', 'b']),
+    ('{{ a | safe }} {{ b | default("x") }}', ['a', 'b']),
+    ('{% for item in items %}{{ item }} {{ other }}{% endfor %}', ['items', 'other']),
+    ('{% set x = 1 %}{{ x }} {{ y }}', ['y']),
+    ('{% if a %}{{ b }}{% endif %}', ['a', 'b']),
+])
+def test_parse_variable_names(text, expected):
+    assert _parse_variable_names(text) == expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('', ''),
+    ('**bold**', '<p><strong>bold</strong></p>'),
+    ('line one\nline two', '<p>line one<br>\nline two</p>'),
+    ('Dear {{ first_name }}', '<p>Dear {{ first_name }}</p>'),
+    ('{{ x | default("a") }}', '<p>{{ x | default("a") }}</p>'),
+    ('<script>alert(1)</script>', 'alert(1)'),
+    ('<img src="https://a.test/h.png" onerror="x()">', '<p><img src="https://a.test/h.png"></p>'),
+    ('<img src="javascript:x">', '<p><img></p>'),
+    ('![h](data:image/png;base64,AAAA)', '<p><img src="data:image/png;base64,AAAA"></p>'),
+])
+def test_markdown_to_sanitized_html(value, expected):
+    assert _markdown_to_sanitized_html(value) == expected
+
+
+def test_preview_context_lists_variables_used_in_areas():
+    area_values = {**VALUES, 'address': '{{ name }}\n{{ street }}', 'body': 'Dear {{ name }}'}
+    assert get_preview_context(area_values) == {'name': '', 'street': ''}
+
+
+def test_preview_context_is_empty_without_variables():
+    assert get_preview_context(VALUES) == {}
+
+
+def test_preview_context_reports_a_syntax_error():
+    with pytest.raises(DocumentRenderError, match='syntax error in body, line 1'):
+        get_preview_context({**VALUES, 'body': '{% if %}'})
+
+
+def test_render_areas_fills_in_the_context():
+    area_values = {**VALUES, 'address': '{{ name }}', 'body': 'Dear {{ name }}'}
+    rendered = _render_areas(area_values, {'name': 'Ada'})
+    assert rendered == {**VALUES, 'address': 'Ada', 'body': 'Dear Ada'}
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('**x**', r'\*\*x\*\*'),
+    ('<script>x</script>', '&lt;script&gt;x&lt;/script&gt;'),
+    ('[a](http://b.test)', r'\[a\]\(http://b\.test\)'),
+    ('# not a heading', r'\# not a heading'),
+])
+def test_render_areas_makes_context_values_literal(value, expected):
+    rendered = _render_areas({**VALUES, 'body': '{{ name }}'}, {'name': value})
+    assert rendered['body'] == expected
+
+
+def test_render_areas_keeps_authors_markdown():
+    rendered = _render_areas({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
+    assert rendered['body'] == '**Dear** Ada'
+
+
+def test_render_areas_requires_every_variable():
+    with pytest.raises(DocumentRenderError, match="body: 'name' is undefined"):
+        _render_areas({**VALUES, 'body': '{{ name }}'}, {})
+
+
+def test_render_areas_is_sandboxed():
+    with pytest.raises(DocumentRenderError, match='Range too big'):
+        _render_areas({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
+
+
+@pytest.mark.parametrize('text, message', [
+    ("{{ 'x' * 10**9 }}", 'Repeated value too big'),
+    ("{{ 10**9 * 'x' }}", 'Repeated value too big'),
+    ("{{ [0] * 10**9 }}", 'Repeated value too big'),
+    ("{{ 2**10000 }}", 'Power too big'),
+    ("{{ 9**999**999 }}", 'Power too big'),
+    ("{{ '%1000000000d' % 1 }}", 'String formatting is not allowed'),
+    ("{% for a in range(1000) %}{% for b in range(1000) %}{% endfor %}{% endfor %}", 'Too many loop iterations'),
+    ("{% for a in range(MAX) %}{% endfor %}".replace('MAX', str(MAX_LOOP_ITEMS + 1)), 'Too many loop iterations'),
+    ("{{ 'x' * 50000 }}{{ 'x' * 50001 }}", 'too long once rendered'),
+])
+def test_render_areas_limits_resource_use(text, message):
+    with pytest.raises(DocumentRenderError, match=message):
+        _render_areas({**VALUES, 'body': text}, {})
+
+
+@pytest.mark.parametrize('text, expected', [
+    ('{% for i in range(3) %}{{ i }}{% endfor %}', '012'),
+    ("{{ 'ab' * 3 }}", 'ababab'),
+    ('{{ 2 ** 10 }}', '1024'),
+    ('{{ 7 % 4 }}', '3'),
+])
+def test_render_areas_allows_ordinary_use(text, expected):
+    assert _render_areas({**VALUES, 'body': text}, {})['body'] == expected
+
+
+def test_render_areas_range_budget_is_per_area():
+    text = '{% for i in range(6000) %}{% endfor %}'
+    assert _render_areas({**VALUES, 'body': text, 'footer': text}, {})
+
+
+def test_render_areas_rejects_a_long_area():
+    with pytest.raises(DocumentRenderError, match='body is too long'):
+        _render_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
+
+
+def test_preview_context_rejects_a_long_area():
+    with pytest.raises(DocumentRenderError, match='body is too long'):
+        get_preview_context({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)})
+
+
+def test_render_areas_reports_a_syntax_error():
+    with pytest.raises(DocumentRenderError, match='syntax error in footer, line 1'):
+        _render_areas({**VALUES, 'footer': '{% if %}'}, {})
+
+
+def test_markdown_emphasis_mangles_dunder_names_in_values():
+    # Python-Markdown turns __word__ into <strong>, so such names cannot be used in a value
+    html = _markdown_to_sanitized_html("{{ ''.__class__.__mro__ }}")
+    assert html == "<p>{{ ''.<strong>class</strong>.<strong>mro</strong> }}</p>"
+
+
+def _markups(flowables):
+    return [flowable.text for flowable in flowables]
+
+
+@pytest.mark.parametrize('markdown_text, expected', [
+    ('plain', ['plain']),
+    ('**b** *i*', ['<b>b</b> <i>i</i>']),
+    ('line one\nline two', ['line one<br/>line two']),
+    ('a < b & c', ['a &lt; b &amp; c']),
+    ('`code`', ['<font name="Courier">code</font>']),
+    ('[link](https://a.test)', ['<a href="https://a.test" color="#0b57d0">link</a>']),
+    ('one\n\ntwo', ['one', 'two']),
+    ('# Title', ['Title']),
+    ('> quoted', ['quoted']),
+    ('<style>p { color: red }</style>text', ['text']),
+    ('a [[blank:3]] b', ['a <u>&nbsp;&nbsp;&nbsp;</u> b']),
+    ('[[blank]]', [f'<u>{"&nbsp;" * 20}</u>']),
+    ('[[blank:999]]', [f'<u>{"&nbsp;" * 100}</u>']),
+    ('[[blank:x]] [[blanks]]', ['[[blank:x]] [[blanks]]']),
+    ('', []),
+])
+def test_markdown_to_flowables_paragraphs(markdown_text, expected):
+    flowables = _markdown_to_flowables(markdown_text)
+    assert all(isinstance(flowable, Paragraph) for flowable in flowables)
+    assert _markups(flowables) == expected
+
+
+@pytest.mark.parametrize('markdown_text, style_name', [
+    ('# One', 'Heading1'),
+    ('## Two', 'Heading2'),
+    ('###### Six', 'Heading3'),
+    ('> quoted', 'quote'),
+])
+def test_markdown_to_flowables_styles(markdown_text, style_name):
+    assert _markdown_to_flowables(markdown_text)[0].style.name == style_name
+
+
+@pytest.mark.parametrize('markdown_text, bullet_type, items', [
+    ('- a\n- **b**', 'bullet', ['a', '<b>b</b>']),
+    ('1. a\n2. b', '1', ['a', 'b']),
+])
+def test_markdown_to_flowables_lists(markdown_text, bullet_type, items):
+    [flowable] = _markdown_to_flowables(markdown_text)
+    assert isinstance(flowable, ListFlowable)
+    assert flowable._flowables[0].__class__.__name__ == 'ListItem'
+    assert flowable._bulletType == bullet_type
+    assert [item._flowables[0].text for item in flowable._flowables] == items
+
+
+def _document(**areas):
+    return {area: {'type': 'markdown', 'value': areas.get(area, '')} for area in VALUES}
+
+
+def test_render_pdf_returns_a_pdf():
+    assert render_pdf([_document(body='Hello')]).startswith(b'%PDF')
+
+
+def test_render_pdf_rejects_an_unknown_area_type():
+    document = {**_document(), 'body': {'type': 'image', 'value': 'x.png'}}
+    with pytest.raises(ValueError, match="Unknown area type: 'image'"):
+        render_pdf([document])
+
+
+def test_render_pdf_starts_each_document_on_a_new_page():
+    one = render_pdf([_document(body='Hello')])
+    two = render_pdf([_document(body='Hello'), _document(body='World')])
+    assert two.count(b'/Type /Page\n') == one.count(b'/Type /Page\n') + 1
+
+
+def test_blank_is_underlined():
+    [paragraph] = _markdown_to_flowables('a [[blank:5]] b')
+    paragraph.wrap(400, 100)
+    frags = paragraph.blPara.lines[0].words
+    assert [frag.text for frag in frags if frag.us_lines] == ['\xa0'] * 5
+
+
+def test_render_pdf_clips_overflowing_areas():
+    long_text = '\n\n'.join(['paragraph'] * 200)
+    render_pdf([_document(header=long_text, address=long_text, footer=long_text)])
+
+
+def test_render_pdf_flows_the_body_over_pages():
+    short = render_pdf([_document(body='paragraph')])
+    long = render_pdf([_document(body='\n\n'.join(['paragraph'] * 200))])
+    assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
+
+
+def test_render_preview_returns_a_pdf():
+    pdf = render_preview({**VALUES, 'body': 'Dear {{ name }}'}, {'name': 'Ada'})
+    assert pdf.startswith(b'%PDF')
