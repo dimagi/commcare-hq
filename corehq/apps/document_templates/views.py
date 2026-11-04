@@ -22,11 +22,25 @@ from corehq.apps.document_templates.rendering import (
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+
+
+class BaseDocumentTemplatesView(BaseMessagingSectionView):
+    """Document templates sit in the messaging section but have permissions of their own
+
+    Skips the messaging permission, privilege and access checks of
+    :class:`BaseMessagingSectionView`.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class DocumentTemplatesView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.view_document_templates), name='dispatch')
+class DocumentTemplatesView(BaseDocumentTemplatesView):
     urlname = 'document_templates'
     page_title = gettext_lazy('Document Templates')
     template_name = 'document_templates/template_list.html'
@@ -98,7 +112,8 @@ class TemplateForm(forms.ModelForm):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class BaseDocumentTemplateFormView(BaseMessagingSectionView, ModelFormMixin, ProcessFormView):
+@method_decorator(require_permission(HqPermissions.edit_document_templates), name='dispatch')
+class BaseDocumentTemplateFormView(BaseDocumentTemplatesView, ModelFormMixin, ProcessFormView):
     template_name = 'document_templates/template_form.html'
     form_class = TemplateForm
 
@@ -146,7 +161,8 @@ class EditDocumentTemplateView(BaseDocumentTemplateFormView):
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class DeleteDocumentTemplateView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.edit_document_templates), name='dispatch')
+class DeleteDocumentTemplateView(BaseDocumentTemplatesView):
     urlname = 'delete_document_template'
     http_method_names = ['post']
 
@@ -177,7 +193,8 @@ def _posted_context(request, names):
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class PreviewVariablesView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.view_document_templates), name='dispatch')
+class PreviewVariablesView(BaseDocumentTemplatesView):
     """HTMX partial for the preview modal: an input for each variable the posted areas use
 
     The form is posted with the request, so values already typed into the modal are kept.
@@ -198,7 +215,8 @@ class PreviewVariablesView(BaseMessagingSectionView):
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class PreviewDocumentView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.view_document_templates), name='dispatch')
+class PreviewDocumentView(BaseDocumentTemplatesView):
     """The rendered document as a PDF, for opening in a new tab"""
 
     urlname = 'preview_document'
