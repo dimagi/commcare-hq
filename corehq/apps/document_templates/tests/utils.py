@@ -7,10 +7,11 @@ from PIL import Image
 from corehq.apps.hqmedia.models import CommCareImage
 
 
-def make_image(format='PNG'):
-    """Return a small image with a random color, so each upload is distinct"""
+def make_image(format='PNG', size=(10, 20)):
+    """Return a half-transparent image with a random color, so each upload is distinct"""
     buffer = BytesIO()
-    Image.new('RGB', (10, 20), color=tuple(uuid.uuid4().bytes[:3])).save(buffer, format=format)
+    color = (*uuid.uuid4().bytes[:3], 128)
+    Image.new('RGBA', size, color=color).save(buffer, format=format)
     return buffer.getvalue()
 
 

@@ -3,6 +3,9 @@ from django.db import models
 
 from corehq.util.jsonattrs import AttrsDict
 
+MARKDOWN = 'markdown'
+IMAGE = 'image'
+
 
 @define
 class Area:
