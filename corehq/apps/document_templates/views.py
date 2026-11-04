@@ -248,7 +248,7 @@ class RenderDocumentView(View):
 
     def post(self, request, domain):
         try:
-            documents = render_case_documents(domain, request.body.decode().split())
+            documents = render_case_documents(domain, request.body.decode().split(), request.couch_user)
         except CaseDocumentError as error:
             return JsonResponse({'error': str(error)}, status=400)
 
