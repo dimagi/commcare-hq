@@ -50,6 +50,16 @@ class TestDocumentTemplatePermissions(TestCase):
                 with self.subTest(urlname=urlname, role=role):
                     assert self._status(role, method, urlname) == expected
 
+    def test_list_shows_edit_buttons_only_to_editors(self):
+        for role, can_edit in [('viewer', False), ('editor', True)]:
+            client = Client()
+            client.login(username=f'{role}@example.com', password=PASSWORD)
+            content = client.get(reverse('document_templates', args=[DOMAIN])).content.decode()
+            with self.subTest(role=role):
+                assert 'Welcome' in content
+                for text in ['New Document Template', 'delete-template-', '/templates/new']:
+                    assert (text in content) == can_edit
+
     def test_create_and_edit_need_edit(self):
         for urlname, args in [('new_document_template', []), ('edit_document_template', [self.template.pk])]:
             for role, expected in [('viewer', 403), ('editor', 200), ('nobody', 403)]:
