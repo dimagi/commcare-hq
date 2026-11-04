@@ -1251,15 +1251,14 @@ GeoPointEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 
 /**
- * An entry that sends the answer to a HQ endpoint (options.urlname) and sets
- * the response as answer.
+ * An entry that sends the answer to a HQ endpoint (options.urlname) and opens
+ * the returned PDF in a new tab. The answer itself is left unchanged.
  */
 function FetchValueEntry(question, options) {
     const self = this;
     EntrySingleAnswer.call(self, question, options);
     self.templateType = 'fetch_value';
 
-    const request = self.answer();
     const url = initialPageData.reverse(options.urlname);
 
     self.buttonLabel = ko.pureComputed(function () {
@@ -1272,7 +1271,7 @@ function FetchValueEntry(question, options) {
     self.onClick = function () {
         fetch(url, {
             method: 'POST',
-            body: request,
+            body: self.answer(),
             headers: {
                 "X-CSRFToken": document.getElementById("csrfTokenContainer").value,
             },
@@ -1281,14 +1280,16 @@ function FetchValueEntry(question, options) {
                 if (!response.ok) {
                     throw new Error("Request failed: " + response.status);
                 }
-                return response.text();
+                return response.blob();
             })
-            .then(function (body) {
-                self.rawAnswer(body);
+            .then(function (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+                // the new tab has started loading by then
+                setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60 * 1000);
             })
             .catch(function (error) {
                 window.console.error(error);
-                self.rawAnswer(constants.NO_ANSWER);
             });
     };
 }
