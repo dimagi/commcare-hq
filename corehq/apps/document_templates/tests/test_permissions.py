@@ -66,6 +66,11 @@ class TestDocumentTemplatePermissions(TestCase):
                 with self.subTest(urlname=urlname, role=role):
                     assert self._status(role, 'get', urlname, *args) == expected
 
+    def test_image_upload_needs_edit(self):
+        for role, expected in [('viewer', 403), ('editor', 200), ('nobody', 403)]:
+            with self.subTest(role=role):
+                assert self._status(role, 'post', 'upload_document_template_image', 'header') == expected
+
     def test_viewer_cannot_post_a_new_template(self):
         assert self._status('viewer', 'post', 'new_document_template') == 403
         assert Template.objects.filter(domain=DOMAIN).count() == 1

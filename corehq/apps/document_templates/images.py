@@ -1,11 +1,13 @@
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.apps.hqmedia.models import CommCareImage
 
 ALLOWED_FORMATS = ('PNG', 'JPEG')
+THUMBNAIL_PIXELS = 120
 
 
 class ImageError(Exception):
@@ -48,3 +50,7 @@ def get_image_data(domain, image_id):
     if not data:
         raise ImageError(_('The image does not exist.'))
     return data
+
+
+def get_thumbnail_url(image_id):
+    return reverse('hqmedia_download', args=['CommCareImage', image_id]) + f'?thumb={THUMBNAIL_PIXELS}'
