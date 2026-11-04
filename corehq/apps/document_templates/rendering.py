@@ -509,3 +509,13 @@ def _inline(child):
     if child.tag == 'code':
         return f'<font name="Courier">{inner}</font>'
     return inner  # span and anything unknown
+
+
+def render_saved_template(template, context):
+    """Render a saved :class:`Template` with ``context`` for the variables its areas use
+
+    :returns: PDF bytes
+    :raises DocumentRenderError: if the template is invalid or fails to render
+    """
+    area_values = {name: area.value for name, area in template.areas.items()}
+    return render_preview(area_values, context)

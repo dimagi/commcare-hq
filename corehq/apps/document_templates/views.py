@@ -6,6 +6,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -13,6 +14,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy
+from django.views import View
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
@@ -30,6 +32,12 @@ from corehq.apps.document_templates.models import (
     Area,
     Template,
 )
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.document_templates.case_documents import (
+    CaseDocumentError,
+    render_case_documents,
+)
+from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     get_area_definitions,
@@ -37,6 +45,7 @@ from corehq.apps.document_templates.rendering import (
     get_preview_context,
     render_preview,
 )
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -366,3 +375,27 @@ class UploadAreaImageView(BaseMessagingSectionView):
             error = str(exception)
         context = area_image_context(self.domain, area_name, image_id, error)
         return HttpResponse(render_to_string(self.template_name, context))
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+@method_decorator(require_cloudcare_access, name='dispatch')
+@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
+class RenderDocumentView(View):
+    """Called from web apps with space separated case IDs as the request body
+
+    Responds with the rendered document as a PDF.
+    Only the first case's document is returned for now; combining several
+    cases is still to do.
+    """
+    urlname = 'render_document'
+
+    def post(self, request, domain):
+        try:
+            documents = render_case_documents(domain, request.body.decode().split(), request.couch_user)
+        except CaseDocumentError as error:
+            return JsonResponse({'error': str(error)}, status=400)
+
+        response = HttpResponse(documents[0], content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="document.pdf"'
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
