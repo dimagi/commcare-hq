@@ -22,7 +22,7 @@ from corehq.apps.document_templates.rendering import (
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
-from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.decorators import get_permission_name, require_permission
 from corehq.apps.users.models import HqPermissions
 
 
@@ -56,7 +56,10 @@ class DocumentTemplatesView(BaseDocumentTemplatesView):
                 domain=self.domain,
                 deleted=False,
             )
-            .order_by('name')
+            .order_by('name'),
+            'can_edit': self.request.couch_user.has_permission(
+                self.domain, get_permission_name(HqPermissions.edit_document_templates)
+            ),
         }
 
 
