@@ -508,6 +508,7 @@ msgstr "%s Usajili"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -701,6 +702,8 @@ msgstr "Jina linahitajika kwa jukumu hili jipya."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1425,6 +1428,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -7906,6 +7911,7 @@ msgstr "Mipangilio ya Menyu"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -8057,6 +8063,7 @@ msgstr "Sakinisha CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -8539,10 +8546,6 @@ msgid "Translation progress"
 msgstr "Maendeleo ya tafsiri"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid ""
-#| "To translate the remaining labels yourself, use <a href=\"#bulk-application-"
-#| "translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-#| "application-translations\" >Bulk Application Translations</a >."
 msgid ""
 "Running AI Translate again may translate the rest. If it doesn't, translate "
 "them yourself with <a href=\"#bulk-application-translations\" data-bs-"
@@ -8556,22 +8559,18 @@ msgstr ""
 ">."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Search labels"
 msgid "Show labels"
 msgstr "Onyesha lebo"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Search labels"
 msgid "Hide labels"
 msgstr "Ficha lebo"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "The translation couldn't be queued. Run it again."
 msgid "The labels couldn't be loaded. Try again."
 msgstr "Lebo hazikuweza kupakiwa. Jaribu tena."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Loading"
 msgid "Loading…"
 msgstr "Inapakia…"
 
@@ -8584,7 +8583,6 @@ msgstr ""
 "ambazo haziwezi kutafsiriwa."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "No longer available"
 msgid "No longer in the app"
 msgstr "Haipo tena kwenye programu"
 
@@ -8597,7 +8595,6 @@ msgid "Open"
 msgstr "Fungua"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Show All Dates"
 msgid "Show all labels"
 msgstr "Onyesha lebo zote"
 
@@ -9855,6 +9852,7 @@ msgstr "Unakaribia kufuta programu hii"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -11037,12 +11035,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
-#| msgid "Public Webforms"
 msgid "Public Webform"
 msgstr "Fomu ya Wavuti ya Umma"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
-#| msgid "No public webforms match these filters."
 msgid "Create public webform from latest released version"
 msgstr ""
 "Unda fomu ya wavuti ya umma kutoka kwa toleo la hivi karibuni lililotolewa"
@@ -16504,6 +16500,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -16790,6 +16787,16 @@ msgstr "Hoja ya endpoint '{}' si sahihi"
 #: corehq/apps/case_search/utils.py
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "Vigezo vya mwisho wa '{}' si sahihi"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' query is invalid"
+msgid "Endpoint '{}' query timed out"
+msgstr "Muda wa kuuliza endpoint '{}' umeisha"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' query is invalid"
+msgid "Endpoint '{}' query failed"
+msgstr "Hoja kwa endpoint '{}' imeshindwa"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -17762,6 +17769,12 @@ msgid "A label is required for each field."
 msgstr "Lebo inahitajika kwa kila sehemu."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+#| msgid "Table ID must be between 1 and %(max_length)s characters."
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "Lebo lazima ziwe na urefu usiozidi herufi %(limit_value)d."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "Jina la sifa linahitajika kwa kila sehemu."
 
@@ -17772,6 +17785,27 @@ msgid ""
 msgstr ""
 "Sifa lazima zianze na herufi na ziwe na herufi, nambari, alama ya underscore"
 " au alama ya kuunganisha pekee."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr "Majina ya sifa lazima yawe na urefu usiozidi herufi %(limit_value)d."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has"
+" %(show_value)d)."
+msgstr ""
+"Semi za kawaida lazima ziwe na urefu usiozidi herufi %(limit_value)d (hii "
+"ina %(show_value)d)."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
+"Ujumbe wa hitilafu za regex lazima uwe na urefu usiozidi herufi "
+"%(limit_value)d."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -21420,6 +21454,66 @@ msgstr "Kanuni {name} imesasishwa, na imewekwa kwenye foleni ya kujaza upya"
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "Kanuni {name} haijasasishwa, kwa kuwa hakuna kilichobadilika"
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "Slug"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+#| msgid "Document Template"
+msgid "Document Templates"
+msgstr "Violezo vya Hati"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "Document Template"
+msgid "New Document Template"
+msgstr "Kiolezo Kipya cha Hati"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "Document Template"
+msgid "Delete Document Template"
+msgstr "Futa Kiolezo cha Hati"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  Je, una uhakika unataka kufuta kiolezo cha hati\n"
+"                  \"%(name)s\"? Kitendo hiki hakiwezi kutenduliwa.\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "No endpoints configured."
+msgid "No document templates configured."
+msgstr "Hakuna violezo vya hati vilivyosanidiwa."
+
+#: corehq/apps/document_templates/views.py
+#| msgid "A sector with this name already exists."
+msgid "A template with this slug already exists."
+msgstr "Kiolezo chenye slug hii tayari kipo."
+
+#: corehq/apps/document_templates/views.py
+#| msgid "Chat Template"
+msgid "New Template"
+msgstr "Kiolezo Kipya"
+
+#: corehq/apps/document_templates/views.py
+#| msgid "Document Template"
+msgid "Edit Document Template"
+msgstr "Hariri Kiolezo cha Hati"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -32510,22 +32604,18 @@ msgid "For example, Agriculture"
 msgstr "Kwa mfano, Kilimo"
 
 #: corehq/apps/hqadmin/template_apps/forms.py
-#| msgid "A case type with this name already exists."
 msgid "A sector with this name already exists."
 msgstr "Tayari kuna sekta yenye jina hili."
 
 #: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
-#| msgid "Manage Tables"
 msgid "Manage Template Apps"
 msgstr "Dhibiti Programu za Kiolezo"
 
 #: corehq/apps/hqadmin/template_apps/views.py
-#| msgid "{} cannot be deleted"
 msgid "Sector label deleted."
 msgstr "Lebo ya sekta imefutwa."
 
 #: corehq/apps/hqadmin/template_apps/views.py
-#| msgid "Search labels"
 msgid "Sector label saved."
 msgstr "Lebo ya sekta imehifadhiwa."
 
@@ -32822,12 +32912,10 @@ msgstr "Ruhusa ya Kuhariri Kipengele cha Bendera"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-#| msgid "Manage Forms"
 msgid "Manage sectors"
 msgstr "Dhibiti sekta"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-#| msgid "Template Name"
 msgid "Template Apps"
 msgstr "Programu za Kiolezo"
 
@@ -32840,22 +32928,18 @@ msgstr ""
 "lebo husasisha kila kiolezo kinachoitumia."
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Use question labels"
 msgid "New sector label"
 msgstr "Lebo mpya ya sekta"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Add User"
 msgid "Add sector"
 msgstr "Ongeza sekta"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Search labels"
 msgid "Sector label"
 msgstr "Lebo ya sekta"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Template String"
 msgid "Templates using it"
 msgstr "Violezo vinavyoitumia"
 
@@ -39295,7 +39379,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid "Messaging"
 msgid "Enable Messaging"
 msgstr "Washa huduma ya ujumbe"
 
@@ -39408,14 +39491,48 @@ msgid "Check Your Messages"
 msgstr "Angalia Ujumbe Wako"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
 msgstr ""
 "\n"
-"      Tumetuma kiungo kwa kutumia taarifa za mawasiliano ulizotoa.\n"
-"    "
+"        Karibu Tena kwenye %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Karibu Tena kwenye %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#| msgid ""
+#| "\n"
+#| "      We sent a link using the contact information you provided.\n"
+#| "    "
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
+msgstr ""
+"\n"
+"        Tumetuma kiungo kwa kutumia maelezo ya mawasiliano uliyotoa.\n"
+"      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
@@ -46715,6 +46832,11 @@ msgid "Connect user not found for recipient."
 msgstr "Mtumiaji wa Connect hakupatikana kwa mpokeaji."
 
 #: corehq/apps/sms/models.py
+#| msgid "Connect Messaging Users"
+msgid "Connect Messaging Gateway Error"
+msgstr "Hitilafu ya Lango la Ujumbe la Connect"
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -46951,10 +47073,6 @@ msgstr "Ongeza Siku na Dirisha la Muda"
 
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Thanks for using %(cc_name)s!\n"
-#| "          "
 msgid ""
 "\n"
 "            Enable messaging for %(domain_name)s\n"
@@ -46978,11 +47096,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#| msgid ""
-#| "\n"
-#| "                To select a range of fields hold the Shift key and select\n"
-#| "                the first and last field in the range.\n"
-#| "              "
 msgid ""
 "\n"
 "                A public webform with SMS turned on sends a text to any phone\n"
@@ -46995,12 +47108,10 @@ msgstr ""
 "              "
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#| msgid "Role is required for web users."
 msgid "Action is required to enable messaging."
 msgstr "Hatua inahitajika ili kuwasha huduma ya ujumbe."
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#| msgid "Outgoing Messaging"
 msgid "How to Enable Messaging"
 msgstr "Jinsi ya Kuwasha Huduma ya Ujumbe"
 
@@ -47018,10 +47129,6 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  <a href=\"%(login_url)s\">Login</a> to access your account.\n"
-#| "                "
 msgid ""
 "\n"
 "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
@@ -47035,11 +47142,6 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "              has no reports.\n"
-#| "            "
 msgid ""
 "\n"
 "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
@@ -47100,7 +47202,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid "Back to Forms"
 msgid "Back to Home"
 msgstr "Rudi kwenye Ukurasa wa Mwanzo"
 
@@ -47127,12 +47228,10 @@ msgid "See SMS prices by country"
 msgstr "Angalia bei za SMS kulingana na nchi"
 
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#| msgid "Usage Charge"
 msgid "Who is Charged"
 msgstr "Anayelipia"
 
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#| msgid "Invoice No."
 msgid "Invoices Emailed to"
 msgstr "Ankara Hutumwa kwa Barua Pepe kwa"
 
@@ -47169,16 +47268,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid ""
-#| "Filtering by unknown forms is currently unavailable for this project."
 msgid "Messaging is currently disabled for this project space."
 msgstr "Huduma ya ujumbe imezimwa kwa sasa katika nafasi hii ya mradi."
 
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid ""
-#| "\n"
-#| "      Please contact a project administrator to restore access.\n"
-#| "    "
 msgid ""
 "\n"
 "            Please contact your project administrator to enable messaging.\n"
@@ -47246,7 +47339,6 @@ msgid "30 Days"
 msgstr "Siku 30"
 
 #: corehq/apps/sms/views.py
-#| msgid "{} fields saved successfully."
 msgid "Messaging enabled successfully."
 msgstr "Huduma ya ujumbe imewashwa kwa mafanikio."
 
@@ -47711,10 +47803,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "Sihitajiki/bado haijazalishwa."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "Slug"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -49656,7 +49744,6 @@ msgid "The AI didn't return a translation."
 msgstr "AI haikutoa tafsiri."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The payee is not allowed to receive the deposit transaction."
 msgid "The app didn't accept the AI's translation."
 msgstr "Programu haikukubali tafsiri ya AI."
 
@@ -49665,7 +49752,6 @@ msgid "The AI returned an empty translation."
 msgstr "AI ilitoa tafsiri tupu."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The deposit transaction was rejected by the payer."
 msgid "The AI's translation has characters the app can't save."
 msgstr "Tafsiri ya AI ina herufi ambazo programu haiwezi kuhifadhi."
 
@@ -49679,12 +49765,10 @@ msgid "The AI changed the formatting, such as bold text or a list."
 msgstr "AI ilibadilisha uumbizaji, kama vile maandishi mazito au orodha."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The message was blank."
 msgid "The AI changed a web link."
 msgstr "AI ilibadilisha kiungo cha wavuti."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "No labels could be translated."
 msgid "The label couldn't be translated."
 msgstr "Lebo haikuweza kutafsiriwa."
 
@@ -50020,17 +50104,14 @@ msgid "This language is already being translated."
 msgstr "Lugha hii tayari inatafsiriwa."
 
 #: corehq/apps/translations/views.py
-#| msgid "case list"
 msgid "Case list"
 msgstr "Orodha ya kesi"
 
 #: corehq/apps/translations/views.py
-#| msgid "case detail"
 msgid "Case detail"
 msgstr "Maelezo ya kesi"
 
 #: corehq/apps/translations/views.py
-#| msgid "Case Search"
 msgid "Case search"
 msgstr "Utafutaji wa kesi"
 
@@ -50039,17 +50120,14 @@ msgid "hint"
 msgstr "kidokezo"
 
 #: corehq/apps/translations/views.py
-#| msgid "Help Text"
 msgid "help text"
 msgstr "maandishi ya usaidizi"
 
 #: corehq/apps/translations/views.py
-#| msgid "Validation Message"
 msgid "validation message"
 msgstr "ujumbe wa uthibitishaji"
 
 #: corehq/apps/translations/views.py
-#| msgid "Choices"
 msgid "choice"
 msgstr "chaguo"
 
@@ -60249,8 +60327,9 @@ msgid "WhatsApp Settings"
 msgstr "Mipangilio ya WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
-msgstr "Unganisha Ujumbe"
+#| msgid "Connect Messsaging"
+msgid "Connect Messaging"
+msgstr "Ujumbe wa Connect"
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
@@ -63877,9 +63956,6 @@ msgstr "Weka JSON halali"
 
 #~ msgid "Printing"
 #~ msgstr "Uchapishaji"
-
-#~ msgid "Document Template"
-#~ msgstr "Kiolezo cha Hati"
 
 #~ msgid "Opens file in new tab."
 #~ msgstr "Fungua faili kwenye tab mpya."

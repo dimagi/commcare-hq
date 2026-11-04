@@ -494,6 +494,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -678,6 +679,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1294,6 +1297,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -6709,6 +6714,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -6845,6 +6851,7 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -8313,6 +8320,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -14222,6 +14230,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -14507,6 +14516,14 @@ msgstr ""
 
 #: corehq/apps/case_search/utils.py
 msgid "Endpoint '{}' parameters are invalid"
+msgstr ""
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query timed out"
+msgstr ""
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query failed"
 msgstr ""
 
 #: corehq/apps/case_search/utils.py
@@ -15383,6 +15400,11 @@ msgid "A label is required for each field."
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr ""
 
@@ -15390,6 +15412,23 @@ msgstr ""
 msgid ""
 "Properties must start with a letter and consist only of letters, numbers, "
 "underscores or hyphens."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has "
+"%(show_value)d)."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
 msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_model.py
@@ -18647,6 +18686,50 @@ msgstr ""
 #: corehq/apps/data_interfaces/views.py
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+msgid "Document Templates"
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "New Document Template"
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "Delete Document Template"
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, python-format
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "No document templates configured."
+msgstr ""
+
+#: corehq/apps/document_templates/views.py
+msgid "A template with this slug already exists."
+msgstr ""
+
+#: corehq/apps/document_templates/views.py
+msgid "New Template"
+msgstr ""
+
+#: corehq/apps/document_templates/views.py
+msgid "Edit Document Template"
 msgstr ""
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
@@ -34239,10 +34322,26 @@ msgid "Check Your Messages"
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
@@ -40778,6 +40877,10 @@ msgid "Connect user not found for recipient."
 msgstr ""
 
 #: corehq/apps/sms/models.py
+msgid "Connect Messaging Gateway Error"
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -41642,10 +41745,6 @@ msgstr ""
 
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
-msgstr ""
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
 msgstr ""
 
 #: corehq/apps/sso/forms.py
@@ -52605,7 +52704,7 @@ msgid "WhatsApp Settings"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
+msgid "Connect Messaging"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

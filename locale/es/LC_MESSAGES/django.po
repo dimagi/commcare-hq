@@ -513,6 +513,7 @@ msgstr "%s Suscripción"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -707,6 +708,8 @@ msgstr "Se requiere un nombre para este nuevo rol."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1480,6 +1483,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -8028,6 +8033,7 @@ msgstr "Configuración del menú"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -8178,6 +8184,7 @@ msgstr "Instale CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -8664,10 +8671,6 @@ msgid "Translation progress"
 msgstr "Progreso de traducción"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid ""
-#| "To translate the remaining labels yourself, use <a href=\"#bulk-application-"
-#| "translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
-#| "application-translations\" >Bulk Application Translations</a >."
 msgid ""
 "Running AI Translate again may translate the rest. If it doesn't, translate "
 "them yourself with <a href=\"#bulk-application-translations\" data-bs-"
@@ -8680,22 +8683,18 @@ msgstr ""
 "application-translations\" >Traducciones masivas de la aplicación</a >."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Search labels"
 msgid "Show labels"
 msgstr "Mostrar etiquetas"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Search labels"
 msgid "Hide labels"
 msgstr "Ocultar etiquetas"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "The translation couldn't be queued. Run it again."
 msgid "The labels couldn't be loaded. Try again."
 msgstr "No se pudieron cargar las etiquetas. Inténtalo de nuevo."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Loading"
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -8708,7 +8707,6 @@ msgstr ""
 " con IA para ver qué etiquetas no se pueden traducir."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "No longer available"
 msgid "No longer in the app"
 msgstr "Ya no está en la aplicación"
 
@@ -8721,7 +8719,6 @@ msgid "Open"
 msgstr "Abrir"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
-#| msgid "Show All Dates"
 msgid "Show all labels"
 msgstr "Mostrar todas las etiquetas"
 
@@ -9968,6 +9965,7 @@ msgstr "Estás a punto de eliminar esta aplicación"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -11158,12 +11156,10 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
-#| msgid "Public Webforms"
 msgid "Public Webform"
 msgstr "Formulario web público"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
-#| msgid "No public webforms match these filters."
 msgid "Create public webform from latest released version"
 msgstr ""
 "Crear un formulario web público a partir de la última versión publicada"
@@ -16662,6 +16658,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -16950,6 +16947,16 @@ msgstr "La consulta del endpoint '{}' no es válida"
 #: corehq/apps/case_search/utils.py
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "Los parámetros del endpoint '{}' no son válidos"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' query is invalid"
+msgid "Endpoint '{}' query timed out"
+msgstr "La consulta del endpoint '{}' agotó el tiempo de espera"
+
+#: corehq/apps/case_search/utils.py
+#| msgid "Endpoint '{}' query is invalid"
+msgid "Endpoint '{}' query failed"
+msgstr "Error en la consulta del endpoint '{}'"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -17929,6 +17936,12 @@ msgid "A label is required for each field."
 msgstr "Se requiere una etiqueta para cada campo."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+#| msgid "Table ID must be between 1 and %(max_length)s characters."
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "Las etiquetas deben tener como máximo %(limit_value)d caracteres."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "Se requiere un nombre de propiedad para cada campo."
 
@@ -17939,6 +17952,29 @@ msgid ""
 msgstr ""
 "Las propiedades deben comenzar con una letra y solo pueden contener letras, "
 "números, guiones bajos o guiones."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+"Los nombres de las propiedades deben tener como máximo %(limit_value)d "
+"caracteres."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has"
+" %(show_value)d)."
+msgstr ""
+"Las expresiones regulares deben tener como máximo %(limit_value)d caracteres"
+" (esta tiene %(show_value)d)."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
+"Los mensajes de error de las expresiones regulares deben tener como máximo "
+"%(limit_value)d caracteres."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -21607,6 +21643,66 @@ msgstr ""
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "La regla {name} no fue actualizada, ya que no hubo cambios"
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "Slug"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+#| msgid "Document Template"
+msgid "Document Templates"
+msgstr "Plantillas de documentos"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "Document Template"
+msgid "New Document Template"
+msgstr "Nueva plantilla de documento"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "Document Template"
+msgid "Delete Document Template"
+msgstr "Eliminar plantilla de documento"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  ¿Seguro que quieres eliminar la plantilla de documento\n"
+"                  \"%(name)s\"? Esta acción no se puede deshacer.\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#| msgid "No endpoints configured."
+msgid "No document templates configured."
+msgstr "No hay plantillas de documentos configuradas."
+
+#: corehq/apps/document_templates/views.py
+#| msgid "A sector with this name already exists."
+msgid "A template with this slug already exists."
+msgstr "Ya existe una plantilla con este slug."
+
+#: corehq/apps/document_templates/views.py
+#| msgid "Chat Template"
+msgid "New Template"
+msgstr "Nueva plantilla"
+
+#: corehq/apps/document_templates/views.py
+#| msgid "Document Template"
+msgid "Edit Document Template"
+msgstr "Editar plantilla de documento"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -32795,22 +32891,18 @@ msgid "For example, Agriculture"
 msgstr "Por ejemplo, Agricultura"
 
 #: corehq/apps/hqadmin/template_apps/forms.py
-#| msgid "A case type with this name already exists."
 msgid "A sector with this name already exists."
 msgstr "Ya existe un sector con este nombre."
 
 #: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
-#| msgid "Manage Tables"
 msgid "Manage Template Apps"
 msgstr "Administrar aplicaciones de plantilla"
 
 #: corehq/apps/hqadmin/template_apps/views.py
-#| msgid "{} cannot be deleted"
 msgid "Sector label deleted."
 msgstr "Se eliminó la etiqueta del sector."
 
 #: corehq/apps/hqadmin/template_apps/views.py
-#| msgid "Search labels"
 msgid "Sector label saved."
 msgstr "Se guardó la etiqueta del sector."
 
@@ -33109,12 +33201,10 @@ msgstr "Permisos de edición de Feature Flag"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-#| msgid "Manage Forms"
 msgid "Manage sectors"
 msgstr "Administrar sectores"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-#| msgid "Template Name"
 msgid "Template Apps"
 msgstr "Aplicaciones de plantilla"
 
@@ -33128,22 +33218,18 @@ msgstr ""
 "que la usan."
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Use question labels"
 msgid "New sector label"
 msgstr "Nueva etiqueta de sector"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Add User"
 msgid "Add sector"
 msgstr "Añadir sector"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Search labels"
 msgid "Sector label"
 msgstr "Etiqueta del sector"
 
 #: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-#| msgid "Template String"
 msgid "Templates using it"
 msgstr "Plantillas que la usan"
 
@@ -39632,7 +39718,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid "Messaging"
 msgid "Enable Messaging"
 msgstr "Activar mensajería"
 
@@ -39745,14 +39830,48 @@ msgid "Check Your Messages"
 msgstr "Revisa tus mensajes"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
 msgstr ""
 "\n"
-"      Enviamos un enlace usando la información de contacto que proporcionó.\n"
-"    "
+"        Enviamos un enlace por mensaje de texto a %(masked_phone_number)s.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Enviamos un enlace por correo electrónico a %(masked_email)s.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#| msgid ""
+#| "\n"
+#| "      We sent a link using the contact information you provided.\n"
+#| "    "
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
+msgstr ""
+"\n"
+"        Enviamos un enlace usando la información de contacto que proporcionaste.\n"
+"      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
@@ -47132,6 +47251,11 @@ msgid "Connect user not found for recipient."
 msgstr "Usuario/a Connect no encontrado/a para el destinatario."
 
 #: corehq/apps/sms/models.py
+#| msgid "Connect Messaging Users"
+msgid "Connect Messaging Gateway Error"
+msgstr "Error de Connect Messaging Gateway"
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -47368,10 +47492,6 @@ msgstr "Añada Ventana de Día y Hora"
 
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Thanks for using %(cc_name)s!\n"
-#| "          "
 msgid ""
 "\n"
 "            Enable messaging for %(domain_name)s\n"
@@ -47395,11 +47515,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#| msgid ""
-#| "\n"
-#| "                To select a range of fields hold the Shift key and select\n"
-#| "                the first and last field in the range.\n"
-#| "              "
 msgid ""
 "\n"
 "                A public webform with SMS turned on sends a text to any phone\n"
@@ -47412,12 +47527,10 @@ msgstr ""
 "              "
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#| msgid "Role is required for web users."
 msgid "Action is required to enable messaging."
 msgstr "Se requiere una acción para activar la mensajería."
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#| msgid "Outgoing Messaging"
 msgid "How to Enable Messaging"
 msgstr "Cómo activar la mensajería"
 
@@ -47435,10 +47548,6 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  <a href=\"%(login_url)s\">Login</a> to access your account.\n"
-#| "                "
 msgid ""
 "\n"
 "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
@@ -47452,11 +47561,6 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "              <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "              has no reports.\n"
-#| "            "
 msgid ""
 "\n"
 "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
@@ -47517,7 +47621,6 @@ msgstr ""
 #: corehq/apps/sms/templates/sms/partials/wall_action_required.html
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid "Back to Forms"
 msgid "Back to Home"
 msgstr "Volver al inicio"
 
@@ -47544,12 +47647,10 @@ msgid "See SMS prices by country"
 msgstr "Consultar precios de SMS por país"
 
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#| msgid "Usage Charge"
 msgid "Who is Charged"
 msgstr "A quién se cobra"
 
 #: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#| msgid "Invoice No."
 msgid "Invoices Emailed to"
 msgstr "Facturas enviadas por correo electrónico a"
 
@@ -47586,17 +47687,11 @@ msgstr ""
 "      "
 
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid ""
-#| "Filtering by unknown forms is currently unavailable for this project."
 msgid "Messaging is currently disabled for this project space."
 msgstr ""
 "La mensajería está desactivada actualmente para este espacio del proyecto."
 
 #: corehq/apps/sms/templates/sms/wall.html
-#| msgid ""
-#| "\n"
-#| "      Please contact a project administrator to restore access.\n"
-#| "    "
 msgid ""
 "\n"
 "            Please contact your project administrator to enable messaging.\n"
@@ -47627,6 +47722,9 @@ msgid ""
 "      For example <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> would become <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>\n"
 "    "
 msgstr ""
+"\n"
+"      Por ejemplo, <code>cc_wa_template:daily_screening:en:{var1},{var2}</code> se convertiría en <code>cc_wa_template:daily_screening:en:{Hello dear user, }, {55}</code>\n"
+"    "
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "Template Name"
@@ -47661,7 +47759,6 @@ msgid "30 Days"
 msgstr "30 Días"
 
 #: corehq/apps/sms/views.py
-#| msgid "{} fields saved successfully."
 msgid "Messaging enabled successfully."
 msgstr "La mensajería se activó correctamente."
 
@@ -48130,10 +48227,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "Aún no es necesario/generado."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "Slug"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -50084,7 +50177,6 @@ msgid "The AI didn't return a translation."
 msgstr "La IA no devolvió ninguna traducción."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The payee is not allowed to receive the deposit transaction."
 msgid "The app didn't accept the AI's translation."
 msgstr "La aplicación no aceptó la traducción de la IA."
 
@@ -50093,7 +50185,6 @@ msgid "The AI returned an empty translation."
 msgstr "La IA devolvió una traducción vacía."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The deposit transaction was rejected by the payer."
 msgid "The AI's translation has characters the app can't save."
 msgstr ""
 "La traducción de la IA contiene caracteres que la aplicación no puede "
@@ -50108,12 +50199,10 @@ msgid "The AI changed the formatting, such as bold text or a list."
 msgstr "La IA cambió el formato, como el texto en negrita o una lista."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "The message was blank."
 msgid "The AI changed a web link."
 msgstr "La IA cambió un enlace web."
 
 #: corehq/apps/translations/app_translations/ai_failed_labels.py
-#| msgid "No labels could be translated."
 msgid "The label couldn't be translated."
 msgstr "No se pudo traducir la etiqueta."
 
@@ -50465,17 +50554,14 @@ msgid "This language is already being translated."
 msgstr "Este idioma ya está siendo traducido."
 
 #: corehq/apps/translations/views.py
-#| msgid "case list"
 msgid "Case list"
 msgstr "Lista de casos"
 
 #: corehq/apps/translations/views.py
-#| msgid "case detail"
 msgid "Case detail"
 msgstr "Detalles del caso"
 
 #: corehq/apps/translations/views.py
-#| msgid "Case Search"
 msgid "Case search"
 msgstr "Búsqueda de casos"
 
@@ -50484,17 +50570,14 @@ msgid "hint"
 msgstr "indicación"
 
 #: corehq/apps/translations/views.py
-#| msgid "Help Text"
 msgid "help text"
 msgstr "texto de ayuda"
 
 #: corehq/apps/translations/views.py
-#| msgid "Validation Message"
 msgid "validation message"
 msgstr "mensaje de validación"
 
 #: corehq/apps/translations/views.py
-#| msgid "Choices"
 msgid "choice"
 msgstr "opción"
 
@@ -59703,7 +59786,7 @@ msgstr "No se puede crear un paciente de OpenMRS para el caso "
 
 #: corehq/motech/openmrs/tasks.py
 msgid "<No name given>"
-msgstr ""
+msgstr "<No se proporcionó ningún nombre>"
 
 #: corehq/motech/openmrs/templates/openmrs/importers.html
 msgid "Add OpenMRS Importer"
@@ -60790,8 +60873,9 @@ msgid "WhatsApp Settings"
 msgstr "Ajustes de WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
-msgstr "Conectar mensajería"
+#| msgid "Connect Messsaging"
+msgid "Connect Messaging"
+msgstr "Connect Messaging"
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
@@ -64460,9 +64544,6 @@ msgstr "Ingrese un JSON válido"
 
 #~ msgid "Printing"
 #~ msgstr "Imprimir"
-
-#~ msgid "Document Template"
-#~ msgstr "Plantilla de Documento"
 
 #~ msgid "Opens file in new tab."
 #~ msgstr "Abre el archivo en una nueva pestaña."
