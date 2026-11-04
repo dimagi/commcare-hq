@@ -231,7 +231,7 @@ def render_document(request, domain):
     Responds with a PDF with a document for each case.
     """
     try:
-        pdf = render_case_documents(domain, request.body.decode().split())
+        pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
     except CaseDocumentError:
         return JsonResponse(
             {'error': gettext('Unable to render document.')}, status=400
