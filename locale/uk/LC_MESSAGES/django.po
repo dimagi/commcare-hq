@@ -546,6 +546,7 @@ msgstr "Підписка"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -747,6 +748,8 @@ msgstr "Для цієї нової ролі потрібне ім'я."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1423,6 +1426,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -8704,6 +8709,7 @@ msgstr "Налаштування меню"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
@@ -8857,6 +8863,7 @@ msgstr "Встановити CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -11303,6 +11310,7 @@ msgstr "Ви збираєтеся видалити цю програму"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -18559,6 +18567,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -18921,6 +18930,18 @@ msgstr "Тип місця '{}' не знайдено"
 #, fuzzy
 #| msgid "LocationType '{}' not found"
 msgid "Endpoint '{}' parameters are invalid"
+msgstr "Тип місця '{}' не знайдено"
+
+#: corehq/apps/case_search/utils.py
+#, fuzzy
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' query timed out"
+msgstr "Тип місця '{}' не знайдено"
+
+#: corehq/apps/case_search/utils.py
+#, fuzzy
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' query failed"
 msgstr "Тип місця '{}' не знайдено"
 
 #: corehq/apps/case_search/utils.py
@@ -19967,6 +19988,12 @@ msgid "A label is required for each field."
 msgstr "Для кожного поля потрібна мітка."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, fuzzy, python-format
+#| msgid "Table ID must be between 1 and 31 characters."
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "Ідентифікатор таблиці має містити від 1 до 31 символа."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "Для кожного поля потрібна назва властивості."
 
@@ -19977,6 +20004,23 @@ msgid ""
 msgstr ""
 "Властивості повинні починатися з літери та складатися лише з літер, цифр, "
 "підкреслень або дефісів."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has "
+"%(show_value)d)."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -24125,6 +24169,73 @@ msgstr "Правило {name} було оновлено і поставлено 
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "Правило {name} не було оновлено, оскільки нічого не змінилося"
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "Слаг"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Document Template"
+msgid "Document Templates"
+msgstr "Шаблон документа"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "Document Template"
+msgid "New Document Template"
+msgstr "Шаблон документа"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "Document Template"
+msgid "Delete Document Template"
+msgstr "Шаблон документа"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  Ви впевнені, що хочете остаточно видалити\n"
+"                  <strong>%(friendly_name)s</strong>?\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "SNS Endpoint Secret"
+msgid "No document templates configured."
+msgstr "Секрет кінцевої точки SNS"
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "A case type with this name already exists."
+msgid "A template with this slug already exists."
+msgstr "Тип кейсу з такою назвою вже існує."
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "Chat Template"
+msgid "New Template"
+msgstr "Шаблон чату"
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "Document Template"
+msgid "Edit Document Template"
+msgstr "Шаблон документа"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -43869,10 +43980,40 @@ msgid "Check Your Messages"
 msgstr "Повідомлення про зміну"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Ласкаво просимо назад до %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Ласкаво просимо назад до %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
@@ -51570,6 +51711,12 @@ msgid "Connect user not found for recipient."
 msgstr "Для одержувача не знайдено жодного FCM-токена."
 
 #: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Connect Messaging Users"
+msgid "Connect Messaging Gateway Error"
+msgstr "Підключити користувачів для повідомлень"
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -52599,10 +52746,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "Поки не потрібно/не згенеровано."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "Слаг"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -66197,7 +66340,9 @@ msgid "WhatsApp Settings"
 msgstr "Налаштування WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
+#, fuzzy
+#| msgid "Connect Messsaging"
+msgid "Connect Messaging"
 msgstr "Підключити месенджинг"
 
 #: corehq/tabs/tabclasses.py
@@ -70367,9 +70512,6 @@ msgstr "Введіть коректний JSON"
 
 #~ msgid "Printing"
 #~ msgstr "Друк"
-
-#~ msgid "Document Template"
-#~ msgstr "Шаблон документа"
 
 #~ msgid "Opens file in new tab."
 #~ msgstr "Відкриває файл у новій вкладці."
