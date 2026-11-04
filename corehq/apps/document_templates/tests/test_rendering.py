@@ -1,18 +1,25 @@
+from io import BytesIO
+
 import pytest
+from PIL import Image
 from reportlab.platypus import ListFlowable, Paragraph
 
+from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
-    DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_LOOP_ITEMS,
+    DocumentRenderError,
+    _image_flowable,
     _markdown_to_flowables,
     _markdown_to_sanitized_html,
     _parse_variable_names,
     _render_areas,
+    get_area_definitions,
     get_area_names,
     get_preview_context,
     render_pdf,
     render_preview,
+    render_saved_template,
 )
 
 VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
@@ -20,6 +27,15 @@ VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
 
 def test_get_area_names():
     assert get_area_names() == ['header', 'address', 'body', 'footer']
+
+
+def test_area_definitions_describe_the_size_and_position_of_each_area():
+    assert {area.name: (area.label, area.description) for area in get_area_definitions()} == {
+        'header': ('Header', '7 x 1 in, at the top of the first page. An image is centered.'),
+        'address': ('Address', '7 x 1.25 in, below the header on the first page. An image is left-aligned.'),
+        'body': ('Body', '7 in wide, below the address and over the pages that follow. An image is left-aligned.'),
+        'footer': ('Footer', '7 x 1 in, at the bottom of every page. An image is centered.'),
+    }
 
 
 @pytest.mark.parametrize('text, expected', [
@@ -207,8 +223,8 @@ def test_render_pdf_returns_a_pdf():
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
-    document = {**_document(), 'body': {'type': 'image', 'value': 'x.png'}}
-    with pytest.raises(ValueError, match="Unknown area type: 'image'"):
+    document = {**_document(), 'body': {'type': 'unknown', 'value': 'x'}}
+    with pytest.raises(ValueError, match="Unknown area type: 'unknown'"):
         render_pdf([document])
 
 
@@ -236,6 +252,90 @@ def test_render_pdf_flows_the_body_over_pages():
     assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
 
 
+def _areas(**areas):
+    """Markdown areas from text, and the areas that are given as ``{'type': ..., 'value': ...}``"""
+    def area(value):
+        return value if isinstance(value, dict) else {'type': 'markdown', 'value': value}
+
+    return {name: area(areas.get(name, '')) for name in VALUES}
+
+
 def test_render_preview_returns_a_pdf():
-    pdf = render_preview({**VALUES, 'body': 'Dear {{ name }}'}, {'name': 'Ada'})
+    pdf = render_preview(_areas(body='Dear {{ name }}'), {'name': 'Ada'})
     assert pdf.startswith(b'%PDF')
+
+
+def _png(size=(100, 50)):
+    buffer = BytesIO()
+    Image.new('RGBA', size, color=(200, 30, 30, 128)).save(buffer, format='PNG')
+    return buffer.getvalue()
+
+
+def _image(data):
+    return {'type': 'image', 'value': data}
+
+
+@pytest.mark.parametrize('image_size, frame, expected', [
+    ((100, 50), (504, 72), (100, 50)),  # never scaled up
+    ((2000, 100), (504, 72), (504, 25.2)),  # too wide
+    ((100, 1000), (504, 72), (7.2, 72)),  # too tall
+    ((4000, 4000), (504, 612), (504, 504)),
+])
+def test_image_is_scaled_down_to_fit_keeping_its_ratio(image_size, frame, expected):
+    flowable = _image_flowable(_png(image_size), *frame, 'LEFT')
+    assert (round(flowable.drawWidth, 1), round(flowable.drawHeight, 1)) == expected
+
+
+@pytest.mark.parametrize('alignment', ['LEFT', 'CENTER'])
+def test_image_is_aligned(alignment):
+    assert _image_flowable(_png(), 504, 72, alignment).hAlign == alignment
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_draws_an_image_in_any_area(area_name):
+    pdf = render_pdf([{**_document(), area_name: _image(_png())}])
+    assert b'/Subtype /Image' in pdf
+
+
+def test_render_pdf_draws_an_empty_image_area_as_blank():
+    assert b'/Subtype /Image' not in render_pdf([{**_document(), 'header': _image(b'')}])
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_fits_an_image_that_is_larger_than_the_area(area_name):
+    render_pdf([{**_document(), area_name: _image(_png((4000, 4000)))}])
+
+
+def test_render_pdf_moves_a_body_image_that_does_not_fit_below_the_address_to_the_next_page():
+    small = render_pdf([{**_document(), 'body': _image(_png((100, 50)))}])
+    tall = render_pdf([{**_document(), 'body': _image(_png((100, 4000)))}])
+    assert small.count(b'/Type /Page\n') == 1
+    assert tall.count(b'/Type /Page\n') == 2
+
+
+def test_render_preview_renders_markdown_around_an_image():
+    pdf = render_preview(_areas(header=_image(_png()), body='Dear {{ name }}'), {'name': 'Ada'})
+    assert b'/Subtype /Image' in pdf
+
+
+def test_render_preview_reports_an_image_that_cannot_be_read():
+    with pytest.raises(DocumentRenderError, match='header: the image cannot be read'):
+        render_preview(_areas(header=_image(b'not an image')), {})
+
+
+def test_render_saved_template_renders_markdown_areas_with_the_context():
+    template = Template(domain='domain', areas={'body': Area(value='Dear {{ name }}')})
+    assert render_saved_template(template, {'name': 'Ada'}).startswith(b'%PDF')
+
+
+def test_render_saved_template_reports_a_template_error():
+    template = Template(domain='domain', areas={'body': Area(value='{% if %}')})
+    with pytest.raises(DocumentRenderError, match='syntax error in body'):
+        render_saved_template(template, {})
+
+
+def test_render_saved_template_draws_an_image_area_without_an_image_as_blank():
+    template = Template(domain='domain', areas={'header': Area(type='image', value='')})
+    pdf = render_saved_template(template, {})
+    assert pdf.startswith(b'%PDF')
+    assert b'/Subtype /Image' not in pdf

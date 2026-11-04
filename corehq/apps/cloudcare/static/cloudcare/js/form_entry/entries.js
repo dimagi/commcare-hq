@@ -1250,6 +1250,52 @@ function GeoPointEntry(question, options) {
 GeoPointEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 
+/**
+ * An entry that sends the answer to a HQ endpoint (options.urlname) and opens
+ * the returned PDF in a new tab. The answer itself is left unchanged.
+ */
+function FetchValueEntry(question, options) {
+    const self = this;
+    EntrySingleAnswer.call(self, question, options);
+    self.templateType = 'fetch_value';
+
+    const url = initialPageData.reverse(options.urlname);
+
+    self.buttonLabel = ko.pureComputed(function () {
+        return (
+            ko.utils.unwrapObservable(question.caption_markdown) ||
+            ko.utils.unwrapObservable(question.caption)
+        );
+    });
+
+    self.onClick = function () {
+        fetch(url, {
+            method: 'POST',
+            body: self.answer(),
+            headers: {
+                "X-CSRFToken": document.getElementById("csrfTokenContainer").value,
+            },
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error("Request failed: " + response.status);
+                }
+                return response.blob();
+            })
+            .then(function (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+                // the new tab has started loading by then
+                setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60 * 1000);
+            })
+            .catch(function (error) {
+                window.console.error(error);
+            });
+    };
+}
+
+FetchValueEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+FetchValueEntry.prototype.EntrySingleAnswer = Entry;
 
 /**
  * Gets the entry based on the datatype of the Question
@@ -1290,6 +1336,11 @@ function getEntry(question) {
                     window.console.warn('No active entry for: ' + question.datatype());
                     entry = new UnsupportedEntry(question, options);
                 }
+            } else if (question.stylesContains(constants.RENDER_DOCUMENT)) {
+                entry = new FetchValueEntry(question, {
+                    broadcastStyles: broadcastStyles,
+                    urlname: "render_document",
+                });
             } else if (question.stylesContains(constants.NUMERIC)) {
                 entry = new PhoneEntry(question, options);
             } else {
