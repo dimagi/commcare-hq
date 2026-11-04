@@ -84,8 +84,6 @@ class MessagingTemplateRenderer:
 class SimpleMessagingTemplateParam:
 
     def __init__(self, value):
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__value = value
 
     def __format__(self, format_spec):
@@ -112,8 +110,6 @@ class SimpleMessagingTemplateParam:
 class SimpleDictTemplateParam:
 
     def __init__(self, dict_of_values):
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__dict_of_values = dict_of_values
 
     def __format__(self, format_spec):
@@ -163,8 +159,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
     def __init__(self, case):
         super(CaseMessagingTemplateParam, self).__init__(_get_case_template_info(case))
 
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__case = case
         self.__domain = case.domain
         self.__owner_result = None
