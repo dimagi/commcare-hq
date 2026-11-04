@@ -3,6 +3,7 @@ from io import BytesIO
 from django import forms
 from django.http import (
     FileResponse,
+    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -22,6 +23,11 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.document_templates.case_documents import (
     CaseDocumentError,
     render_case_documents,
+)
+from corehq.apps.document_templates.images import (
+    ImageError,
+    get_thumbnail_url,
+    save_image,
 )
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
@@ -258,3 +264,35 @@ def render_document(request, domain):
     response = FileResponse(BytesIO(pdf), filename='document.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
+
+
+def area_image_context(domain, area_name, image_id, error=None):
+    """The context of the image fields of an area in the editor"""
+    return {
+        'domain': domain,
+        'area': area_name,
+        'image_id': image_id,
+        'thumbnail_url': get_thumbnail_url(image_id) if image_id else '',
+        'error': error,
+    }
+
+
+@require_permission(HqPermissions.edit_document_templates)
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def upload_area_image(request, domain, area):
+    """HTMX partial for the editor: stores the uploaded image and returns the image fields of the area
+
+    The form is posted with the request, so the image the area has now is kept
+    when the upload is rejected.
+    """
+    if area not in get_area_names():
+        raise Http404()
+    image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{area}_image', '')
+    error = None
+    try:
+        image_id = save_image(domain, request.FILES.get('image_file'), request.couch_user.username)
+    except ImageError as exception:
+        error = str(exception)
+    context = area_image_context(domain, area, image_id, error)
+    return HttpResponse(render_to_string('document_templates/partials/area_image.html', context))
