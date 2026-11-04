@@ -269,6 +269,20 @@ class TestTemplateFormImages(TestCase):
         assert form.areas()[0].image['error'] == 'The image does not exist.'
 
 
+def test_areas_of_the_editor_have_a_label_and_a_description_from_the_definitions():
+    header, other = _form(area_names=['header', 'other']).areas()
+    assert header.label == 'Header'
+    assert header.description.startswith('7 x 1 in, at the top of the first page.')
+    assert (other.label, other.description) == ('other', '')
+
+
+def test_area_editor_shows_the_label_and_the_description():
+    [area] = _form(area_names=['footer']).areas()
+    html = render_to_string('document_templates/partials/area_editor.html', {'area': area, 'domain': DOMAIN})
+    assert '>Footer</label' in html.replace('\n', '').replace('  ', '')
+    assert 'at the bottom of every page.' in html
+
+
 def test_area_editor_has_the_type_dropdown_and_both_fields():
     [area] = _form(area_names=['header']).areas()
     html = render_to_string('document_templates/partials/area_editor.html', {'area': area, 'domain': DOMAIN})

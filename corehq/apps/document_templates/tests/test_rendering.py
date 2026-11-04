@@ -10,6 +10,7 @@ from corehq.apps.document_templates.rendering import (
     MAX_AREA_LENGTH,
     MAX_LOOP_ITEMS,
     _image_flowable,
+    get_area_definitions,
     _markdown_to_flowables,
     _markdown_to_sanitized_html,
     _parse_variable_names,
@@ -33,6 +34,15 @@ def _generate(values, context):
 
 def test_get_area_names():
     assert get_area_names() == ['header', 'address', 'body', 'footer']
+
+
+def test_area_definitions_describe_the_size_and_position_of_each_area():
+    assert {area.name: (area.label, area.description) for area in get_area_definitions()} == {
+        'header': ('Header', '7 x 1 in, at the top of the first page. An image is centered.'),
+        'address': ('Address', '7 x 1.25 in, below the header on the first page. An image is left-aligned.'),
+        'body': ('Body', '7 in wide, below the address and over the pages that follow. An image is left-aligned.'),
+        'footer': ('Footer', '7 x 1 in, at the bottom of every page. An image is centered.'),
+    }
 
 
 @pytest.mark.parametrize('text, expected', [

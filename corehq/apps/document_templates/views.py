@@ -41,6 +41,7 @@ from corehq.apps.document_templates.models import (
 )
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
+    get_area_definitions,
     get_area_names,
     generate_document,
     get_variable_names,
@@ -102,6 +103,8 @@ class AreaFields:
     :param image: the context of the image fields, see :func:`area_image_context`
     """
     name: str
+    label: str
+    description: str
     type: str
     type_field: forms.BoundField
     markdown_field: forms.BoundField
@@ -186,8 +189,11 @@ class TemplateForm(forms.ModelForm):
         image_id = image_field.value() or ''
         image_error = next(iter(image_field.errors), None)
         area_type = self[self._type_field_name(area_name)].value()
+        definition = {area.name: area for area in get_area_definitions()}.get(area_name)
         return AreaFields(
             name=area_name,
+            label=definition.label if definition else area_name,
+            description=definition.description if definition else '',
             type=area_type if area_type in AREA_TYPES else MARKDOWN,
             type_field=self[self._type_field_name(area_name)],
             markdown_field=self[self._field_name(area_name)],

@@ -24,7 +24,9 @@ from xml.sax.saxutils import escape, quoteattr
 import attrs
 import bleach
 import markdown
+from attrs import define
 from bleach.css_sanitizer import CSSSanitizer
+from django.utils.translation import gettext
 from jinja2 import (
     StrictUndefined,
     TemplateError,
@@ -57,7 +59,16 @@ from corehq.messaging.scheduling.const import (
     ALLOWED_HTML_TAGS,
 )
 
-_US_LETTER_AREAS = ('header', 'address', 'body', 'footer')
+# The US letter layout, see :func:`_us_letter`. Distances from the top edge of the page are in points.
+_MARGIN = 0.75 * inch
+_PAGE_HEIGHT = letter[1]
+_AREA_WIDTH = letter[0] - 2 * _MARGIN
+_HEADER_HEIGHT = 1 * inch
+_ADDRESS_TOP = 2.25 * inch
+_BODY_TOP = 3.5 * inch
+_FOOTER_HEIGHT = 1 * inch
+_BODY_HEIGHT = _PAGE_HEIGHT - 2 * _MARGIN - _FOOTER_HEIGHT  # on the pages after the first
+_ALIGNMENT = {'header': 'CENTER', 'address': 'LEFT', 'body': 'LEFT', 'footer': 'CENTER'}
 
 _css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
 _TAGS = set(ALLOWED_HTML_TAGS) | {'style'}
@@ -154,8 +165,43 @@ class DocumentRenderError(Exception):
     pass
 
 
+@define(frozen=True)
+class AreaDefinition:
+    """An area of a document template, and where it is on the page
+
+    :param description: its size and position, for the author
+    """
+    name: str
+    label: str
+    description: str
+
+
+def get_area_definitions():
+    def area(name, label, where, height=None):
+        width = _AREA_WIDTH / inch
+        if height:
+            size = gettext('{width:g} x {height:g} in').format(width=width, height=height / inch)
+        else:
+            size = gettext('{width:g} in wide').format(width=width)
+        if _ALIGNMENT[name] == 'CENTER':
+            image = gettext('An image is centered.')
+        else:
+            image = gettext('An image is left-aligned.')
+        return AreaDefinition(name, label, f'{size}, {where} {image}')
+
+    return [
+        area('header', gettext('Header'), gettext('at the top of the first page.'), _HEADER_HEIGHT),
+        area(
+            'address', gettext('Address'), gettext('below the header on the first page.'),
+            _BODY_TOP - _ADDRESS_TOP,
+        ),
+        area('body', gettext('Body'), gettext('below the address and over the pages that follow.')),
+        area('footer', gettext('Footer'), gettext('at the bottom of every page.'), _FOOTER_HEIGHT),
+    ]
+
+
 def get_area_names():
-    return list(_US_LETTER_AREAS)
+    return [area.name for area in get_area_definitions()]
 
 
 def _parse_variable_names(text):
@@ -283,47 +329,37 @@ def _us_letter(n, document):
 
     :returns: ``(page templates, flowables)`` for ``document``, the ``n``-th in the PDF
     """
-    margin = 0.75 * inch
-    page_height = letter[1]
-    width = letter[0] - 2 * margin
-    header_height = 1 * inch
-    address_top = 2.25 * inch  # distances from the top edge of the page
-    body_top = 3.5 * inch
-    footer_height = 1 * inch
-    body_height = page_height - 2 * margin - footer_height  # on the pages after the first
-    alignment = {'header': 'CENTER', 'address': 'LEFT', 'body': 'LEFT', 'footer': 'CENTER'}
-
     def frame(top, height, **kwargs):
         return Frame(
-            margin, page_height - top - height, width, height,
+            _MARGIN, _PAGE_HEIGHT - top - height, _AREA_WIDTH, height,
             leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0, **kwargs,
         )
 
     def flowables(area_name, height):
-        return _area_flowables(document.get(area_name), width, height, alignment[area_name])
+        return _area_flowables(document.get(area_name), _AREA_WIDTH, height, _ALIGNMENT[area_name])
 
     def draw(canvas, area_name, top, height):
         frame(top, height).addFromList(flowables(area_name, height), canvas)
 
     def draw_footer(canvas):
-        draw(canvas, 'footer', top=page_height - margin - footer_height, height=footer_height)
+        draw(canvas, 'footer', top=_PAGE_HEIGHT - _MARGIN - _FOOTER_HEIGHT, height=_FOOTER_HEIGHT)
 
     def draw_first_page(canvas, doc):
-        draw(canvas, 'header', top=margin, height=header_height)
-        draw(canvas, 'address', top=address_top, height=body_top - address_top)
+        draw(canvas, 'header', top=_MARGIN, height=_HEADER_HEIGHT)
+        draw(canvas, 'address', top=_ADDRESS_TOP, height=_BODY_TOP - _ADDRESS_TOP)
         draw_footer(canvas)
 
     def draw_later_page(canvas, doc):
         draw_footer(canvas)
 
     def body_frame(top):
-        return frame(top, page_height - top - margin - footer_height, id='body')
+        return frame(top, _PAGE_HEIGHT - top - _MARGIN - _FOOTER_HEIGHT, id='body')
 
     templates = [
-        PageTemplate(id=f'{n}-first', frames=[body_frame(body_top)], onPage=draw_first_page),
-        PageTemplate(id=f'{n}-later', frames=[body_frame(margin)], onPage=draw_later_page),
+        PageTemplate(id=f'{n}-first', frames=[body_frame(_BODY_TOP)], onPage=draw_first_page),
+        PageTemplate(id=f'{n}-later', frames=[body_frame(_MARGIN)], onPage=draw_later_page),
     ]
-    return templates, [NextPageTemplate(f'{n}-later'), *flowables('body', body_height)]
+    return templates, [NextPageTemplate(f'{n}-later'), *flowables('body', _BODY_HEIGHT)]
 
 
 def _area_flowables(area, width, height, alignment):
