@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from django import forms
 from django.http import (
     Http404,
@@ -16,10 +18,18 @@ from django.views.generic.edit import ModelFormMixin, ProcessFormView
 from corehq import toggles
 from corehq.apps.document_templates.images import (
     ImageError,
+    get_image,
+    get_image_data,
     get_thumbnail_url,
     save_image,
 )
-from corehq.apps.document_templates.models import Area, Template
+from corehq.apps.document_templates.models import (
+    AREA_TYPES,
+    IMAGE,
+    MARKDOWN,
+    Area,
+    Template,
+)
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     get_area_names,
@@ -56,6 +66,20 @@ AREA_FIELD_PREFIX = 'area_'
 CONTEXT_FIELD_PREFIX = 'context_'
 
 
+@dataclass
+class AreaFields:
+    """What the editor shows for an area
+
+    :param type: ``'markdown'`` or ``'image'``, to show the matching field
+    :param image: the context of the image fields, see :func:`area_image_context`
+    """
+    name: str
+    type: str
+    type_field: forms.BoundField
+    markdown_field: forms.BoundField
+    image: dict
+
+
 class TemplateForm(forms.ModelForm):
     class Meta:
         model = Template
@@ -67,12 +91,30 @@ class TemplateForm(forms.ModelForm):
         self.area_names = area_names
         saved_areas = self.instance.areas or {}
         for area_name in area_names:
-            area = saved_areas.get(area_name)
+            area = saved_areas.get(area_name) or Area()
+            is_image = area.type == IMAGE
+            # both values are kept in the form so switching the type does not lose what was typed;
+            # only the one of the selected type is saved
             self.fields[self._field_name(area_name)] = forms.CharField(
                 label=area_name,
                 required=False,
-                initial=area.value if area else '',
+                initial='' if is_image else area.value,
                 widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            )
+            self.fields[self._type_field_name(area_name)] = forms.ChoiceField(
+                choices=[(MARKDOWN, gettext_lazy('Markdown')), (IMAGE, gettext_lazy('Image'))],
+                required=False,
+                initial=area.type,
+                widget=forms.Select(attrs={
+                    'class': 'form-select',
+                    'x-model': 'type',
+                    'aria-label': gettext('Type of {area}').format(area=area_name),
+                }),
+            )
+            self.fields[self._image_field_name(area_name)] = forms.CharField(
+                required=False,
+                initial=area.value if is_image else '',
+                widget=forms.HiddenInput(),
             )
 
     def clean_slug(self):
@@ -84,18 +126,54 @@ class TemplateForm(forms.ModelForm):
             raise forms.ValidationError(gettext('A template with this slug already exists.'))
         return slug
 
+    def clean(self):
+        cleaned_data = super().clean()
+        for area_name in self.area_names:
+            image_id = cleaned_data.get(self._image_field_name(area_name))
+            if cleaned_data.get(self._type_field_name(area_name)) == IMAGE and image_id:
+                try:
+                    get_image(self.instance.domain, image_id)
+                except ImageError as error:
+                    self.add_error(self._image_field_name(area_name), str(error))
+        return cleaned_data
+
     @staticmethod
     def _field_name(area_name):
         return f'{AREA_FIELD_PREFIX}{area_name}'
 
-    def area_fields(self):
-        return [self[self._field_name(name)] for name in self.area_names]
+    @staticmethod
+    def _type_field_name(area_name):
+        return f'{AREA_FIELD_PREFIX}{area_name}_type'
+
+    @staticmethod
+    def _image_field_name(area_name):
+        return f'{AREA_FIELD_PREFIX}{area_name}_image'
+
+    def areas(self):
+        """The fields of each area, for the editor"""
+        return [self._area_fields(area_name) for area_name in self.area_names]
+
+    def _area_fields(self, area_name):
+        image_field = self[self._image_field_name(area_name)]
+        image_id = image_field.value() or ''
+        image_error = next(iter(image_field.errors), None)
+        area_type = self[self._type_field_name(area_name)].value()
+        return AreaFields(
+            name=area_name,
+            type=area_type if area_type in AREA_TYPES else MARKDOWN,
+            type_field=self[self._type_field_name(area_name)],
+            markdown_field=self[self._field_name(area_name)],
+            image=area_image_context(self.instance.domain, area_name, image_id, image_error),
+        )
 
     def get_areas(self):
-        return {
-            area_name: Area(value=self.cleaned_data[self._field_name(area_name)])
-            for area_name in self.area_names
-        }
+        areas = {}
+        for area_name in self.area_names:
+            if self.cleaned_data[self._type_field_name(area_name)] == IMAGE:
+                areas[area_name] = Area(type=IMAGE, value=self.cleaned_data[self._image_field_name(area_name)])
+            else:
+                areas[area_name] = Area(value=self.cleaned_data[self._field_name(area_name)])
+        return areas
 
     def save(self, commit=True):
         self.instance.areas = self.get_areas()
@@ -169,12 +247,37 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
         )
 
 
-def _posted_area_values(request):
-    """The area values of the template form, as posted (the rest of the form is ignored)"""
+def _posted_area_type(request, area_name):
+    area_type = request.POST.get(f'{AREA_FIELD_PREFIX}{area_name}_type')
+    return area_type if area_type in AREA_TYPES else MARKDOWN
+
+
+def _posted_markdown_values(request):
+    """The markdown of the areas that are markdown, as posted (the rest of the form is ignored)"""
     return {
         name: request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')
         for name in get_area_names()
+        if _posted_area_type(request, name) == MARKDOWN
     }
+
+
+def _posted_areas(request, domain):
+    """The areas as posted, for :func:`render_preview`: the image of an image area is looked up
+
+    :raises DocumentRenderError: if an image cannot be used
+    """
+    areas = {}
+    for name in get_area_names():
+        if _posted_area_type(request, name) == IMAGE:
+            image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', '')
+            try:
+                value = get_image_data(domain, image_id) if image_id else b''
+            except ImageError as error:
+                raise DocumentRenderError(f'{name}: {error}')
+            areas[name] = {'type': IMAGE, 'value': value}
+        else:
+            areas[name] = {'type': MARKDOWN, 'value': request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')}
+    return areas
 
 
 def _posted_context(request, names):
@@ -195,7 +298,7 @@ class PreviewVariablesView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            names = get_preview_context(_posted_area_values(request))
+            names = get_preview_context(_posted_markdown_values(request))
         except DocumentRenderError as error:
             template_context = {'error': str(error)}
         else:
@@ -211,11 +314,9 @@ class PreviewDocumentView(BaseMessagingSectionView):
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
-        area_values = _posted_area_values(request)
         try:
-            context = _posted_context(request, get_preview_context(area_values))
-            areas = {name: {'type': 'markdown', 'value': text} for name, text in area_values.items()}
-            pdf = render_preview(areas, context)
+            names = get_preview_context(_posted_markdown_values(request))
+            pdf = render_preview(_posted_areas(request, self.domain), _posted_context(request, names))
         except DocumentRenderError as error:
             return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
         response = HttpResponse(pdf, content_type='application/pdf')
