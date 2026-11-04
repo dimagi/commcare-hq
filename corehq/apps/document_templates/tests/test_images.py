@@ -15,6 +15,11 @@ from corehq.apps.document_templates.images import (
     get_image_data,
     save_image,
 )
+from corehq.apps.document_templates.models import Area, Template
+from corehq.apps.document_templates.rendering import (
+    DocumentRenderError,
+    render_saved_template,
+)
 from corehq.apps.hqmedia.models import CommCareImage
 
 DOMAIN = 'document-templates-images-test'
@@ -117,3 +122,27 @@ class TestImagesInHqmedia(TestCase):
     def test_missing_image_is_reported(self):
         with self.assertRaisesMessage(ImageError, 'does not exist'):
             get_image(DOMAIN, uuid.uuid4().hex)
+
+
+class TestRenderSavedTemplateWithImages(TestCase):
+
+    def _template(self, image_id, domain=DOMAIN):
+        return Template(domain=domain, areas={'header': Area(type='image', value=image_id)})
+
+    def _image_id(self, domain=DOMAIN):
+        image_id = save_image(domain, _upload(_image()), 'user')
+        self.addCleanup(_delete_image, image_id)
+        return image_id
+
+    def test_image_area_is_drawn(self):
+        pdf = render_saved_template(self._template(self._image_id()), {})
+        assert b'/Subtype /Image' in pdf
+
+    def test_image_of_another_project_is_reported(self):
+        template = self._template(self._image_id(OTHER_DOMAIN))
+        with self.assertRaisesMessage(DocumentRenderError, 'header: The image does not belong to this project.'):
+            render_saved_template(template, {})
+
+    def test_missing_image_is_reported(self):
+        with self.assertRaisesMessage(DocumentRenderError, 'header: The image does not exist.'):
+            render_saved_template(self._template('missing'), {})

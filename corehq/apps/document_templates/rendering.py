@@ -52,6 +52,7 @@ from reportlab.platypus import (
     Paragraph,
 )
 
+from corehq.apps.document_templates.images import ImageError, get_image_data
 from corehq.messaging.scheduling.const import (
     ALLOWED_CSS_PROPERTIES,
     ALLOWED_HTML_ATTRIBUTES,
@@ -511,11 +512,27 @@ def _inline(child):
     return inner  # span and anything unknown
 
 
+def image_area(domain, area_name, image_id):
+    """An image area for :func:`render_preview`, blank if there is no ``image_id``
+
+    :raises DocumentRenderError: if the image does not exist or ``domain`` does not own it
+    """
+    try:
+        value = get_image_data(domain, image_id) if image_id else b''
+    except ImageError as error:
+        raise DocumentRenderError(f'{area_name}: {error}')
+    return {'type': 'image', 'value': value}
+
+
 def render_saved_template(template, context):
     """Render a saved :class:`Template` with ``context`` for the variables its areas use
 
     :returns: PDF bytes
     :raises DocumentRenderError: if the template is invalid or fails to render
     """
-    area_values = {name: area.value for name, area in template.areas.items()}
-    return render_preview(area_values, context)
+    areas = {
+        name: image_area(template.domain, name, area.value)
+        if area.type == 'image' else {'type': area.type, 'value': area.value}
+        for name, area in template.areas.items()
+    }
+    return render_preview(areas, context)

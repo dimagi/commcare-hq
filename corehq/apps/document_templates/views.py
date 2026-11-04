@@ -18,10 +18,14 @@ from django.views import View
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.document_templates.case_documents import (
+    CaseDocumentError,
+    render_case_documents,
+)
 from corehq.apps.document_templates.images import (
     ImageError,
     get_image,
-    get_image_data,
     get_thumbnail_url,
     save_image,
 )
@@ -32,17 +36,12 @@ from corehq.apps.document_templates.models import (
     Area,
     Template,
 )
-from corehq.apps.cloudcare.decorators import require_cloudcare_access
-from corehq.apps.document_templates.case_documents import (
-    CaseDocumentError,
-    render_case_documents,
-)
-from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     get_area_definitions,
     get_area_names,
     get_preview_context,
+    image_area,
     render_preview,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -284,12 +283,7 @@ def _posted_areas(request, domain):
     areas = {}
     for name in get_area_names():
         if _posted_area_type(request, name) == IMAGE:
-            image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', '')
-            try:
-                value = get_image_data(domain, image_id) if image_id else b''
-            except ImageError as error:
-                raise DocumentRenderError(f'{name}: {error}')
-            areas[name] = {'type': IMAGE, 'value': value}
+            areas[name] = image_area(domain, name, request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', ''))
         else:
             areas[name] = {'type': MARKDOWN, 'value': request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')}
     return areas

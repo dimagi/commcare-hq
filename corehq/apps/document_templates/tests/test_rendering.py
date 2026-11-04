@@ -4,20 +4,22 @@ import pytest
 from PIL import Image
 from reportlab.platypus import ListFlowable, Paragraph
 
+from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
-    DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_LOOP_ITEMS,
+    DocumentRenderError,
     _image_flowable,
-    get_area_definitions,
     _markdown_to_flowables,
     _markdown_to_sanitized_html,
     _parse_variable_names,
     _render_areas,
+    get_area_definitions,
     get_area_names,
     get_preview_context,
     render_pdf,
     render_preview,
+    render_saved_template,
 )
 
 VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
@@ -319,3 +321,21 @@ def test_render_preview_renders_markdown_around_an_image():
 def test_render_preview_reports_an_image_that_cannot_be_read():
     with pytest.raises(DocumentRenderError, match='header: the image cannot be read'):
         render_preview(_areas(header=_image(b'not an image')), {})
+
+
+def test_render_saved_template_renders_markdown_areas_with_the_context():
+    template = Template(domain='domain', areas={'body': Area(value='Dear {{ name }}')})
+    assert render_saved_template(template, {'name': 'Ada'}).startswith(b'%PDF')
+
+
+def test_render_saved_template_reports_a_template_error():
+    template = Template(domain='domain', areas={'body': Area(value='{% if %}')})
+    with pytest.raises(DocumentRenderError, match='syntax error in body'):
+        render_saved_template(template, {})
+
+
+def test_render_saved_template_draws_an_image_area_without_an_image_as_blank():
+    template = Template(domain='domain', areas={'header': Area(type='image', value='')})
+    pdf = render_saved_template(template, {})
+    assert pdf.startswith(b'%PDF')
+    assert b'/Subtype /Image' not in pdf
