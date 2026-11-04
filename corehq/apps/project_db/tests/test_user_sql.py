@@ -147,6 +147,10 @@ def _within_distance(coordinates, meters):
      select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == _bind_literal('literal', 'x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
+    ('SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
+     select([CLIENT_VISIT])),
+    ('SELECT * FROM client LEFT OUTER JOIN visit ON client.case_id = visit.parent_id',
+     select([CLIENT.join(VISIT, ON, isouter=True)])),
 
     # Table aliases
     ('SELECT v.visit_id, p.visit_id '
@@ -477,9 +481,7 @@ def _compiled(query):
     # Only columns and aliases can be ordered by
     "SELECT name FROM client ORDER BY string_to_array(name, ' ')",
 
-    # Only `JOIN` and `LEFT JOIN` are supported for now.
-    'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
-    'SELECT * FROM client LEFT OUTER JOIN visit ON client.case_id = visit.parent_id',
+    # Only `[INNER] JOIN` and `LEFT [OUTER] JOIN` are supported for now.
     'SELECT * FROM client RIGHT JOIN visit ON client.case_id = visit.parent_id',
     'SELECT * FROM client FULL JOIN visit ON client.case_id = visit.parent_id',
     'SELECT * FROM client CROSS JOIN visit',
