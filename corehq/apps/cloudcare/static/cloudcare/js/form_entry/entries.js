@@ -1261,6 +1261,8 @@ function RenderDocumentEntry(question, options) {
 
     const url = initialPageData.reverse('render_document');
 
+    self.isLoading = ko.observable(false);
+
     self.buttonLabel = ko.pureComputed(function () {
         return (
             ko.utils.unwrapObservable(question.caption_markdown) ||
@@ -1269,6 +1271,7 @@ function RenderDocumentEntry(question, options) {
     });
 
     self.onClick = function () {
+        self.isLoading(true);
         fetch(url, {
             method: 'POST',
             body: self.answer(),
@@ -1290,6 +1293,9 @@ function RenderDocumentEntry(question, options) {
             })
             .catch(function (error) {
                 window.console.error(error);
+            })
+            .finally(function () {
+                self.isLoading(false);
             });
     };
 }
