@@ -275,6 +275,13 @@ class BasePublicWebformForm(forms.Form):
             or cleaned_data.get('allow_sms')
         ):
             self.add_error(None, _("Choose at least one verification method."))
+        expires_at = cleaned_data.get('expires_at')
+        if (
+            cleaned_data.get('direct_access')
+            and expires_at
+            and expires_at > datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90)
+        ):
+            self.add_error('expires_at', _("Webforms open to anyone with the link must close within 90 days."))
         return cleaned_data
 
 

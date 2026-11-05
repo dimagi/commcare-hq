@@ -121,6 +121,17 @@ def test_expires_at_must_be_in_the_future_when_modified(entered, expected):
     assert form.is_valid() is expected
 
 
+@pytest.mark.parametrize('direct_access, entered, expected', [
+    ('True', '2026-10-30 08:00:00', True),
+    ('True', '2026-10-30 08:00:01', False),
+    ('False', '2026-10-30 08:00:01', True),
+], ids=['direct-access-at-limit', 'direct-access-past-limit', 'one-time-link-past-limit'])
+@travel(TIMEZONE.localize(datetime(2026, 8, 1, 8)), tick=False)
+def test_direct_access_must_close_within_90_days(direct_access, entered, expected):
+    form = _form(_post_data(direct_access=direct_access, expires_at=entered))
+    assert form.is_valid() is expected
+
+
 @pytest.mark.parametrize('choice, expected', [
     ('False', False),
     ('True', True),
@@ -329,7 +340,7 @@ def test_edit_updates_the_webform():
         webform,
         _edit_data(
             label='Antenatal visit, round two',
-            expires_at='2026-12-01 17:00:00',
+            expires_at='2026-10-01 17:00:00',
             direct_access='True',
             allow_email=False,
             allow_sms=True,
@@ -343,7 +354,7 @@ def test_edit_updates_the_webform():
     updated.refresh_from_db()
 
     assert updated.label == 'Antenatal visit, round two'
-    assert updated.expires_at == datetime(2026, 12, 1, 22, 0)
+    assert updated.expires_at == datetime(2026, 10, 1, 21, 0)
     assert updated.direct_access
     assert not updated.allow_email
     assert updated.allow_sms
