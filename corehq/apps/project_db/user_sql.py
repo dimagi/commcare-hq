@@ -479,6 +479,8 @@ def _convert_predicate(node, columns):
                        _convert_value(right, columns))
     if isinstance(node, exp.Anonymous):
         return _convert_predicate_function(node, columns)
+    if isinstance(node, exp.Column):
+        return _convert_column(node, columns)
     raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
