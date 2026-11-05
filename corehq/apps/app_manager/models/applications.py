@@ -1977,6 +1977,8 @@ def _get_attachments(doc):
 
 def _create_app_from_doc(domain, doc):
     app_class = get_correct_app_class(doc)
+    if app_class is RemoteApp:
+        raise RemoteAppsUnsupported()
     app = app_class.from_source(doc, domain)
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()

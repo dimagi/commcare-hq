@@ -7,6 +7,7 @@ from corehq.apps.app_manager.exceptions import (
     RemoteAppsUnsupported,
 )
 from corehq.apps.app_manager.models import RemoteApp
+from corehq.apps.app_manager.models.applications import _create_app_from_doc
 
 
 @pytest.mark.parametrize(
@@ -32,6 +33,14 @@ def test_create_all_files_is_unsupported():
 def test_unsupported_is_an_app_editing_error():
     # Views and validators already handle AppEditingError
     assert issubclass(RemoteAppsUnsupported, AppEditingError)
+
+
+@pytest.mark.parametrize('doc_type', ['RemoteApp', 'RemoteApp-Deleted'])
+def test_apps_cannot_be_created_from_a_remote_app(doc_type):
+    source = _remote_app().to_json()
+    source['doc_type'] = doc_type
+    with pytest.raises(RemoteAppsUnsupported):
+        _create_app_from_doc('other-domain', source)
 
 
 def _remote_app():
