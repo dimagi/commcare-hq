@@ -6,6 +6,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -17,6 +18,11 @@ from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.document_templates.case_documents import (
+    CaseDocumentError,
+    render_case_documents,
+)
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
@@ -211,5 +217,25 @@ def preview_document(request, domain):
     except DocumentRenderError as error:
         return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
     response = FileResponse(BytesIO(pdf), filename='preview.pdf')
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def render_document(request, domain):
+    """Called from web apps with space separated case IDs as the request body
+
+    Responds with a PDF with a document for each case.
+    """
+    try:
+        pdf = render_case_documents(domain, request.body.decode().split())
+    except CaseDocumentError:
+        return JsonResponse(
+            {'error': gettext('Unable to render document.')}, status=400
+        )
+    response = FileResponse(BytesIO(pdf), filename='document.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
