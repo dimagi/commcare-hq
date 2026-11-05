@@ -13,8 +13,10 @@ from corehq.apps.document_templates.images import (
     _check_image,
     get_image,
     get_image_data,
+    load_images,
     save_image,
 )
+from corehq.apps.document_templates.models import Area
 from corehq.apps.hqmedia.models import CommCareImage
 
 DOMAIN = 'document-templates-images-test'
@@ -117,3 +119,22 @@ class TestImagesInHqmedia(TestCase):
     def test_missing_image_is_reported(self):
         with self.assertRaisesMessage(ImageError, 'does not exist'):
             get_image(DOMAIN, uuid.uuid4().hex)
+
+    def test_load_images_replaces_image_ids_with_bytes(self):
+        data = _image()
+        markdown = Area(value='Hello')
+        areas = {
+            'header': Area(type='image', value=self._save(data=data)),
+            'address': Area(type='image', value=''),
+            'body': markdown,
+        }
+        loaded = load_images(DOMAIN, areas)
+        assert loaded['header'] == Area(type='image', value=data)
+        assert loaded['address'] == areas['address']
+        assert loaded['body'] is markdown
+        assert areas['header'].value != data  # the areas given are not changed
+
+    def test_load_images_names_the_area_of_an_unusable_image(self):
+        areas = {'header': Area(type='image', value=self._save())}
+        with self.assertRaisesMessage(ImageError, 'header: The image does not belong to this project'):
+            load_images(OTHER_DOMAIN, areas)
