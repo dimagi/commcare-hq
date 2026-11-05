@@ -10,7 +10,6 @@ from functools import wraps
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
-from urllib.request import urlopen
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -81,6 +80,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleIdMissingException,
     ModuleNotFoundException,
     RearrangeError,
+    RemoteAppsUnsupported,
     VersioningError,
     XFormException,
 )
@@ -1737,23 +1737,11 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    def create_profile(self, is_odk=False, langs=None):
-        # we don't do odk for now anyway
-        return remote_app.make_remote_profile(self, langs)
+    def create_profile(self, *args, **kwargs):
+        raise RemoteAppsUnsupported()
 
     def strip_location(self, location):
         return remote_app.strip_location(self.profile_url, location)
-
-    def fetch_file(self, location):
-        location = self.strip_location(location)
-        url = urljoin(self.profile_url, location)
-
-        try:
-            content = urlopen(url).read()
-        except Exception:
-            raise AppEditingError('Unable to access resource url: "%s"' % url)
-
-        return location, content
 
     def get_build_langs(self):
         if self.build_profiles:
@@ -1779,55 +1767,7 @@ class RemoteApp(ApplicationBase):
         return 'suite/resource/location[@authority="local"]'
 
     def create_all_files(self, build_profile_id=None):
-        langs_for_build = self.get_build_langs()
-        files = {
-            'profile.xml': self.create_profile(langs=langs_for_build),
-        }
-        tree = _parse_xml(files['profile.xml'])
-
-        def add_file_from_path(path, strict=False, transform=None):
-            added_files = []
-            # must find at least one
-            try:
-                tree.find(path).text
-            except (TypeError, AttributeError):
-                if strict:
-                    raise AppEditingError("problem with file path reference!")
-                else:
-                    return
-            for loc_node in tree.findall(path):
-                loc, file = self.fetch_file(loc_node.text)
-                if transform:
-                    file = transform(file)
-                files[loc] = file
-                added_files.append(file)
-            return added_files
-
-        add_file_from_path('features/users/logo')
-        try:
-            suites = add_file_from_path(
-                self.SUITE_XPATH,
-                strict=True,
-                transform=(lambda suite:
-                           remote_app.make_remote_suite(self, suite))
-            )
-        except AppEditingError:
-            raise AppEditingError(_('Problem loading suite file from profile file. Is your profile file correct?'))
-
-        for suite in suites:
-            suite_xml = _parse_xml(suite)
-
-            for tag, location in self.get_locations(suite_xml):
-                location, data = self.fetch_file(location)
-                if tag == 'xform' and langs_for_build:
-                    try:
-                        xform = XForm(data, domain=self.domain)
-                    except XFormException as e:
-                        raise XFormException('In file %s: %s' % (location, e))
-                    xform.exclude_languages(whitelist=langs_for_build)
-                    data = xform.render()
-                files.update({location: data})
-        return files
+        raise RemoteAppsUnsupported()
 
     def make_questions_map(self):
         langs_for_build = self.get_build_langs()
