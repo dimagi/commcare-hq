@@ -1,6 +1,7 @@
 import pytest
 from reportlab.platypus import ListFlowable, Paragraph, Table
 
+from corehq.apps.document_templates.models import Area
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     MAX_AREA_LENGTH,
@@ -8,14 +9,22 @@ from corehq.apps.document_templates.rendering import (
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
-    _render_areas,
     get_area_names,
+    generate_document,
     get_variable_names,
     render_pdf,
-    render_preview,
 )
 
 VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
+
+
+def _areas(values):
+    return {name: Area(value=value) for name, value in values.items()}
+
+
+def _generate(values, context):
+    document = generate_document(_areas(values), context)
+    return {name: area.value for name, area in document.items()}
 
 
 def test_get_area_names():
@@ -52,21 +61,21 @@ def test_markdown_to_html_escapes_html(value, expected):
 
 def test_variable_names_lists_variables_used_in_areas():
     area_values = {**VALUES, 'address': '{{ name }}\n{{ street }}', 'body': 'Dear {{ name }}'}
-    assert get_variable_names(area_values) == ['name', 'street']
+    assert get_variable_names(_areas(area_values)) == ['name', 'street']
 
 
 def test_variable_names_is_empty_without_variables():
-    assert get_variable_names(VALUES) == []
+    assert get_variable_names(_areas(VALUES)) == []
 
 
 def test_variable_names_reports_a_syntax_error():
     with pytest.raises(DocumentRenderError, match='syntax error in body, line 1'):
-        get_variable_names({**VALUES, 'body': '{% if %}'})
+        get_variable_names(_areas({**VALUES, 'body': '{% if %}'}))
 
 
-def test_render_areas_fills_in_the_context():
+def test_generate_document_fills_in_the_context():
     area_values = {**VALUES, 'address': '{{ name }}', 'body': 'Dear {{ name }}'}
-    rendered = _render_areas(area_values, {'name': 'Ada'})
+    rendered = _generate(area_values, {'name': 'Ada'})
     assert rendered == {**VALUES, 'address': 'Ada', 'body': 'Dear Ada'}
 
 
@@ -76,44 +85,44 @@ def test_render_areas_fills_in_the_context():
     ('[a](http://b.test)', r'\[a\]\(http://b\.test\)'),
     ('# not a heading', r'\# not a heading'),
 ])
-def test_render_areas_makes_context_values_literal(value, expected):
-    rendered = _render_areas({**VALUES, 'body': '{{ name }}'}, {'name': value})
+def test_generate_document_makes_context_values_literal(value, expected):
+    rendered = _generate({**VALUES, 'body': '{{ name }}'}, {'name': value})
     assert rendered['body'] == expected
 
 
-def test_render_areas_keeps_authors_markdown():
-    rendered = _render_areas({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
+def test_generate_document_keeps_authors_markdown():
+    rendered = _generate({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
     assert rendered['body'] == '**Dear** Ada'
 
 
-def test_render_areas_requires_every_variable():
+def test_generate_document_requires_every_variable():
     with pytest.raises(DocumentRenderError, match="body: 'name' is undefined"):
-        _render_areas({**VALUES, 'body': '{{ name }}'}, {})
+        _generate({**VALUES, 'body': '{{ name }}'}, {})
 
 
-def test_render_areas_is_sandboxed():
+def test_generate_document_is_sandboxed():
     with pytest.raises(DocumentRenderError, match='Range too big'):
-        _render_areas({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
+        _generate({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
 
 
-def test_render_areas_rejects_a_long_area():
+def test_generate_document_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
-        _render_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
+        _generate({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
 
 
-def test_render_areas_rejects_a_long_result():
+def test_generate_document_rejects_a_long_result():
     with pytest.raises(DocumentRenderError, match='too long once rendered'):
-        _render_areas({**VALUES, 'body': f"{{{{ 'x' * {MAX_RENDERED_LENGTH + 1} }}}}"}, {})
+        _generate({**VALUES, 'body': f"{{{{ 'x' * {MAX_RENDERED_LENGTH + 1} }}}}"}, {})
 
 
 def test_variable_names_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
-        get_variable_names({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)})
+        get_variable_names(_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}))
 
 
-def test_render_areas_reports_a_syntax_error():
+def test_generate_document_reports_a_syntax_error():
     with pytest.raises(DocumentRenderError, match='syntax error in footer, line 1'):
-        _render_areas({**VALUES, 'footer': '{% if %}'}, {})
+        _generate({**VALUES, 'footer': '{% if %}'}, {})
 
 
 def test_markdown_emphasis_mangles_dunder_names_in_values():
@@ -190,7 +199,7 @@ def test_render_pdf_lays_out_a_table():
 
 
 def _document(**areas):
-    return {area: {'type': 'markdown', 'value': areas.get(area, '')} for area in VALUES}
+    return {name: Area(value=areas.get(name, '')) for name in VALUES}
 
 
 def test_render_pdf_returns_a_pdf():
@@ -198,7 +207,7 @@ def test_render_pdf_returns_a_pdf():
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
-    document = {**_document(), 'body': {'type': 'image', 'value': 'x.png'}}
+    document = {**_document(), 'body': Area(type='image', value='x.png')}
     with pytest.raises(ValueError, match="Unknown area type: 'image'"):
         render_pdf([document])
 
@@ -227,6 +236,12 @@ def test_render_pdf_flows_the_body_over_pages():
     assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
 
 
-def test_render_preview_returns_a_pdf():
-    pdf = render_preview({**VALUES, 'body': 'Dear {{ name }}'}, {'name': 'Ada'})
-    assert pdf.startswith(b'%PDF')
+def test_generate_document_keeps_other_area_types():
+    image = Area(type='image', value='{{ name }}.png')
+    document = generate_document({**_areas(VALUES), 'body': image}, {})
+    assert document['body'] is image
+
+
+def test_variable_names_ignores_other_area_types():
+    areas = {**_areas(VALUES), 'body': Area(type='image', value='{{ name }}')}
+    assert get_variable_names(areas) == []
