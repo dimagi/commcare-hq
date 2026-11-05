@@ -741,9 +741,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
-        # RemoteApp only
-        'profile_url',
-        'manage_urls',
         'mobile_ucr_restore_version',
         'custom_assertions',
     ]
@@ -770,7 +767,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('practice_mobile_worker_id', None, _always_allowed),
         ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
         ('cloudcare_enabled', None, _always_allowed),
-        ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
         ('recipients', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
@@ -831,17 +827,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit('custom_assertions'):
         app.custom_assertions = validate_custom_assertions(hq_settings[attr], app.custom_assertions, lang)
-
-    def require_remote_app():
-        if not is_remote_app(app):
-            raise Exception("App type %s does not support profile url" % app.get_doc_type())
-
-    # For RemoteApps
-    if should_edit("profile_url"):
-        require_remote_app()
-        app['profile_url'] = hq_settings['profile_url']
-    if should_edit("manage_urls"):
-        require_remote_app()
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved
