@@ -36,7 +36,8 @@ Supported SQL:
    condition. A table can be joined to itself if each side is given a
    different alias.
  * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
-   literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
+   literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN. A boolean
+   column may be used as a condition on its own, as in WHERE NOT closed.
  * Pattern matching with LIKE, and ILIKE to ignore case, where % matches any
    text and _ any single character. Escape them with a backslash, as in '100\\%'.
  * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
