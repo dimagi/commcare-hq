@@ -55,7 +55,6 @@ from corehq.apps.app_manager.models import (
     DeleteApplicationRecord,
     ExchangeApplication,
     LinkedApplication,
-    Module,
 )
 from corehq.apps.app_manager.models import (
     import_app_from_doc,
@@ -63,7 +62,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
-    app_doc_types,
     get_and_assert_practice_user_in_domain,
     get_settings_values,
     is_linked_app,
@@ -627,32 +625,6 @@ def app_settings(request, domain, app_id):
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def new_app(request, domain):
-    "Adds an app to the database"
-    lang = 'en'
-    type = request.POST["type"]
-    cls = app_doc_types()[type]
-    form_args = []
-    if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Menu", lang)
-        app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
-        form_args = [module.id, form.id]
-    else:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-    if request.project.secure_submissions:
-        app.secure_submissions = True
-    app.save()
-    clear_app_cache(request, domain)
-    main_args = [request, domain, app.id]
-    main_args.extend(form_args)
-
-    return back_to_main(*main_args)
 
 
 @no_conflict_require_POST
