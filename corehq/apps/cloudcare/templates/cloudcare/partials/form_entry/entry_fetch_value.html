@@ -2,8 +2,14 @@
   <button
     type="button"
     class="btn btn-outline-primary"
-    data-bind="click: onClick, attr: {id: entryId}"
+    data-bind="click: onClick, attr: {id: entryId}, disable: isLoading"
   >
+    <span
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+      data-bind="visible: isLoading"
+    ></span>
     <span data-bind="html: buttonLabel()"></span>
   </button>
 </script>
