@@ -28,39 +28,14 @@ Schema:
  * Datetime columns carry a timezone, and will be queried in the project timezone
 
 Supported SQL:
- * SELECT of *, or a list of columns, aggregates and any value allowed in a
-   WHERE condition, with optional AS aliases.
+ * SELECT of *, or a list of values and aggregates, with optional AS aliases.
  * DISTINCT, and DISTINCT ON (columns).
  * A single table in the FROM clause, with an optional alias.
  * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
    condition. A table can be joined to itself if each side is given a
    different alias.
- * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
-   literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN. A boolean
-   column may be used as a condition on its own, as in WHERE NOT closed.
- * Pattern matching with LIKE, and ILIKE to ignore case, where % matches any
-   text and _ any single character. Escape them with a backslash, as in '100\\%'.
- * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
-   columns: @> holds all of these, <@ holds only these, && holds any of these.
- * string_to_array(value, '<delimiter>'), which splits text into an array to
-   compare against those columns. The delimiter must be a literal, so a
-   parameter holding 'fever cough' is written string_to_array(:symptoms, ' ').
- * within_distance(gps_prop__ column, '<latitude> <longitude>', distance, unit),
-   which matches cases within that distance of the point. The unit is optional
-   and defaults to 'meters'. It may be 'meters', 'kilometers', 'miles',
-   'yards', 'feet' or 'nauticalmiles', and must be a literal.
- * Name matching, comparing two values case-insensitively:
-   sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
-   fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
-   similar_name(a, b) matches if either does.
- * Dates and times, which resolve in the project's timezone. now() gives the
-   current time and today() the current date. A date or time written as a
-   literal is read in that same timezone, so '2026-01-01' means midnight there.
- * make_interval(days => 30), added to or subtracted from a date or time, as in
-   opened_on > now() - make_interval(months => 3). Its units are years, months,
-   weeks, days, hours, mins and secs, and a count may be a parameter or integer literal
- * GROUP BY columns, and HAVING to filter the groups with the same conditions
-   as WHERE.
+ * WHERE with a condition.
+ * GROUP BY columns, and HAVING to filter the groups with a condition.
  * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
    and string_agg(value, '<delimiter>'). Each may aggregate only DISTINCT
    values, as in count(DISTINCT value), and take a FILTER (WHERE condition)
@@ -68,7 +43,37 @@ Supported SQL:
  * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
    To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
- * Named :parameters wherever a literal is allowed
+ * Values: columns, literals, and named :parameters wherever a literal is
+   allowed, plus:
+   - now() for the current time and today() for the current date. Dates and
+     times resolve in the project's timezone, and a date or time literal is
+     read in that same timezone, so '2026-01-01' means midnight there.
+   - make_interval(days => 30), added to or subtracted from a date or time,
+     as in opened_on > now() - make_interval(months => 3). Its units are
+     years, months, weeks, days, hours, mins and secs, and a count may be a
+     parameter or integer literal.
+   - string_to_array(value, '<delimiter>'), which splits text into an array
+     to compare against select_prop__ columns. The delimiter must be a
+     literal, so a parameter holding 'fever cough' is written
+     string_to_array(:symptoms, ' ').
+ * Conditions, combined with AND, OR, NOT and parentheses:
+   - Comparisons between values: =, <>, <, <=, >, >=
+   - IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE
+   - IN (a, b, ...) or IN :parameter
+   - LIKE, and ILIKE to ignore case, where % matches any text and _ any
+     single character. Escape them with a backslash, as in '100\\%'.
+   - A boolean column on its own, as in WHERE NOT closed
+   - Array containment against an ARRAY['a', 'b'] literal, for select_prop__
+     columns: @> holds all of these, <@ holds only these, && holds any of
+     these.
+   - within_distance(gps_prop__ column, '<latitude> <longitude>', distance,
+     unit), which matches cases within that distance of the point. The unit
+     is optional and defaults to 'meters'. It may be 'meters', 'kilometers',
+     'miles', 'yards', 'feet' or 'nauticalmiles', and must be a literal.
+   - Name matching, comparing two values case-insensitively:
+     sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
+     fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
+     similar_name(a, b) matches if either does.
 
 Not supported:
  * Other function calls and casts (::type).
