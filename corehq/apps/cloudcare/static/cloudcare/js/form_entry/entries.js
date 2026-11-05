@@ -1262,6 +1262,7 @@ function RenderDocumentEntry(question, options) {
     const url = initialPageData.reverse('render_document');
 
     self.isLoading = ko.observable(false);
+    self.generationFailed = ko.observable(false);
 
     self.buttonLabel = ko.pureComputed(function () {
         return (
@@ -1272,6 +1273,7 @@ function RenderDocumentEntry(question, options) {
 
     self.onClick = function () {
         self.isLoading(true);
+        self.generationFailed(false);
         fetch(url, {
             method: 'POST',
             body: self.answer(),
@@ -1281,6 +1283,7 @@ function RenderDocumentEntry(question, options) {
         })
             .then(function (response) {
                 if (!response.ok) {
+                    self.generationFailed(true);
                     throw new Error("Request failed: " + response.status);
                 }
                 return response.blob();
