@@ -1722,6 +1722,10 @@ class RemoteApp(ApplicationBase):
     write all the files for an app by hand, and then give the url to app_manager
     and let it package everything together for you.
 
+    Deprecated: RemoteApps can no longer be created, built or installed, and
+    their files are never fetched. No RemoteApp has been built since 2016.
+    The class remains so that stored RemoteApp records still load; remove it
+    along with those records when app documents move from Couch to SQL.
     """
     profile_url = StringProperty(default="http://")
     name = StringProperty()
