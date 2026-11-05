@@ -1,16 +1,22 @@
+import uuid
+from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
+from PIL import Image
 
 from corehq.apps.document_templates.case_documents import (
     MAX_CASES,
     CaseDocumentError,
     render_case_documents,
 )
+from corehq.apps.document_templates.images import save_image
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import generate_document
+from corehq.apps.hqmedia.models import CommCareImage
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_case,
@@ -68,6 +74,27 @@ class TestBuildCasePdf(TestCase):
             pdf = self._build(bob, alice)
         assert [call.args[1]['first_name'] for call in generate.call_args_list] == ['Bob', 'Alice']
         assert pdf.startswith(b'%PDF')
+
+    def _image_template(self, domain=DOMAIN):
+        buffer = BytesIO()
+        Image.new('RGB', (10, 20), color=tuple(uuid.uuid4().bytes[:3])).save(buffer, format='PNG')
+        image_id = save_image(domain, SimpleUploadedFile('logo.png', buffer.getvalue()), 'user')
+        self.addCleanup(CommCareImage.get(image_id).delete)
+        return Template.objects.create(
+            domain=DOMAIN, name='Logo', slug='logo',
+            areas={'header': Area(type='image', value=image_id), 'body': Area(value='Hello')},
+        )
+
+    def test_image_areas_are_drawn(self):
+        self._image_template()
+        case = self._case(document_template_slug='logo')
+        assert b'/Subtype /Image' in self._build(case)
+
+    def test_image_of_another_domain_fails_with_the_case_id(self):
+        self._image_template(domain=OTHER_DOMAIN)
+        case = self._case(document_template_slug='logo')
+        with pytest.raises(CaseDocumentError, match=f'{case.case_id}.*header.*does not belong'):
+            self._build(case)
 
     def test_repeated_case_ids_are_rendered_once(self):
         alice = self._case(document_template_slug='welcome', first_name='Alice')

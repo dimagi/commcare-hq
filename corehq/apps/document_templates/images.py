@@ -3,6 +3,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
+from corehq.apps.document_templates.models import IMAGE
 from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.apps.hqmedia.models import CommCareImage
 
@@ -50,6 +51,21 @@ def get_image_data(domain, image_id):
     if not data:
         raise ImageError(_('The image does not exist.'))
     return data
+
+
+def load_images(domain, areas):
+    """:returns: ``areas`` (``{name: Area}``) with the id of each image area replaced by the bytes of the image
+    :raises ImageError: if an image cannot be used; the message names the area
+    """
+    loaded = {}
+    for name, area in areas.items():
+        if area.type == IMAGE and area.value:
+            try:
+                area = attrs.evolve(area, value=get_image_data(domain, area.value))
+            except ImageError as error:
+                raise ImageError(f'{name}: {error}')
+        loaded[name] = area
+    return loaded
 
 
 def get_thumbnail_url(image_id):

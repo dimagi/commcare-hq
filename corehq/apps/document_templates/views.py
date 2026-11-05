@@ -28,8 +28,8 @@ from corehq.apps.document_templates.case_documents import (
 from corehq.apps.document_templates.images import (
     ImageError,
     get_image,
-    get_image_data,
     get_thumbnail_url,
+    load_images,
     save_image,
 )
 from corehq.apps.document_templates.models import (
@@ -41,9 +41,9 @@ from corehq.apps.document_templates.models import (
 )
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
+    generate_document,
     get_area_definitions,
     get_area_names,
-    generate_document,
     get_variable_names,
     render_pdf,
 )
@@ -305,15 +305,13 @@ def _posted_areas(request, domain):
     areas = {}
     for name in get_area_names():
         if _posted_area_type(request, name) == IMAGE:
-            image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', '')
-            try:
-                value = get_image_data(domain, image_id) if image_id else b''
-            except ImageError as error:
-                raise DocumentRenderError(f'{name}: {error}')
-            areas[name] = Area(type=IMAGE, value=value)
+            areas[name] = Area(type=IMAGE, value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', ''))
         else:
             areas[name] = Area(value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}', ''))
-    return areas
+    try:
+        return load_images(domain, areas)
+    except ImageError as error:
+        raise DocumentRenderError(str(error))
 
 
 def _posted_context(request, names):
