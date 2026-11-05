@@ -110,7 +110,7 @@ class BasePublicWebformForm(forms.Form):
     )
     allow_email = forms.BooleanField(
         label=gettext_lazy("Email"),
-        help_text=gettext_lazy("A branded email with a single-use link."),
+        help_text=gettext_lazy("A branded email with a one-time-use link."),
         initial=True,
         required=False,
     )
@@ -121,10 +121,10 @@ class BasePublicWebformForm(forms.Form):
     )
     open_to_requests = forms.BooleanField(
         required=False,
-        label=gettext_lazy("Open to Requests"),
+        label=gettext_lazy("Open to Respondents"),
         widget=BootstrapSwitchInput(
             inline_label=gettext_lazy(
-                "Immediately open this public webform to one-time link requests."
+                "Open this public webform to respondents."
             ),
         ),
     )
@@ -264,7 +264,7 @@ class BasePublicWebformForm(forms.Form):
         expires_at = user_time.server_time().done()
         is_changed = user_time.ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT) != self.initial_expires_at()
         if is_changed and expires_at <= datetime.now(UTC).replace(tzinfo=None):
-            raise forms.ValidationError(_("Webform must expire in the future."))
+            raise forms.ValidationError(_("Webform must close in the future."))
         return expires_at
 
     def clean(self):
