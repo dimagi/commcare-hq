@@ -1,3 +1,5 @@
+{% load i18n %}
+
 <script type="text/html" id="fetch_value-entry-ko-template">
   <button
     type="button"
@@ -12,4 +14,7 @@
     ></span>
     <span data-bind="html: buttonLabel()"></span>
   </button>
+  <span class="text-danger small ms-1" data-bind="visible: generationFailed()"
+    >{% trans "Generation Failed" %}</span
+  >
 </script>
