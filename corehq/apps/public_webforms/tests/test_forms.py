@@ -121,9 +121,23 @@ def test_expires_at_must_be_in_the_future_when_modified(entered, expected):
     assert form.is_valid() is expected
 
 
-def test_a_delivery_option_is_required():
-    form = _form(_post_data(allow_email=False, allow_sms=False))
-    assert not form.is_valid()
+@pytest.mark.parametrize('choice, expected', [
+    ('False', False),
+    ('True', True),
+], ids=['one-time-link', 'anyone-with-the-link'])
+def test_direct_access_choice_cleans_to_a_boolean(choice, expected):
+    form = _form(_post_data(direct_access=choice))
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['direct_access'] is expected
+
+
+@pytest.mark.parametrize('direct_access, expected', [
+    ('False', False),
+    ('True', True),
+], ids=['one-time-link', 'anyone-with-the-link'])
+def test_a_delivery_option_is_required_only_for_one_time_links(direct_access, expected):
+    form = _form(_post_data(direct_access=direct_access, allow_email=False, allow_sms=False))
+    assert form.is_valid() is expected
 
 
 @pytest.mark.parametrize('can_send_sms', [True, False])
@@ -220,6 +234,7 @@ def test_create_stores_the_selection_and_generated_endpoint():
     assert webform.endpoint_id == 'endpoint-1'
     assert webform.session_type == PublicWebformType.SURVEY
     assert webform.expires_at == datetime(2026, 9, 1, 21, 0)
+    assert webform.direct_access is False
     assert webform.is_disabled
 
 
@@ -274,6 +289,7 @@ def test_edit_prefills():
     assert form.initial['label'] == 'Antenatal visit'
     # stored as UTC, offered back in the project's timezone
     assert form.fields['expires_at'].initial == '2026-09-01 17:00:00'
+    assert form.initial['direct_access'] is False
     assert form.initial['allow_email'] is True
     assert form.initial['open_to_requests'] is True
 
@@ -314,6 +330,7 @@ def test_edit_updates_the_webform():
         _edit_data(
             label='Antenatal visit, round two',
             expires_at='2026-12-01 17:00:00',
+            direct_access='True',
             allow_email=False,
             allow_sms=True,
             is_disabled=True,
@@ -327,6 +344,7 @@ def test_edit_updates_the_webform():
 
     assert updated.label == 'Antenatal visit, round two'
     assert updated.expires_at == datetime(2026, 12, 1, 22, 0)
+    assert updated.direct_access
     assert not updated.allow_email
     assert updated.allow_sms
     assert updated.is_disabled

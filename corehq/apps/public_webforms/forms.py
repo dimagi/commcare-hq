@@ -96,6 +96,18 @@ class BasePublicWebformForm(forms.Form):
             "One-time links already sent can be used until they expire."
         ),
     )
+    direct_access = forms.BooleanField(
+        label=gettext_lazy("How Respondents Open the Form"),
+        initial=False,
+        required=False,
+        widget=forms.RadioSelect(
+            attrs={'x-model.fill': 'directAccess'},
+            choices=[
+                (False, gettext_lazy("One-time link by email or text message")),
+                (True, gettext_lazy("Anyone with the link")),
+            ],
+        ),
+    )
     allow_email = forms.BooleanField(
         label=gettext_lazy("Email"),
         help_text=gettext_lazy("A branded email with a single-use link."),
@@ -190,27 +202,58 @@ class BasePublicWebformForm(forms.Form):
                 x_data=json.dumps(alpine_data_model),
             ),
             crispy.Div(
-                crispy.HTML(
-                    format_html(
-                        '<label id="delivery-options-label" class="field-label">'
-                        '{}<span class="asteriskField">*</span></label>',
-                        _("How Respondents Receive Their One-time Link"),
-                    ),
-                ),
                 crispy.Div(
-                    twbscrispy.InlineField('allow_email'),
                     crispy.HTML(
                         format_html(
-                            '<div class="form-text">{}</div>',
-                            self.fields['allow_email'].help_text,
+                            '<label id="direct-access-label" class="field-label">'
+                            '{}<span class="asteriskField">*</span></label>',
+                            self.fields['direct_access'].label,
                         ),
                     ),
-                    *allow_sms_field,
-                    css_class='field-control',
+                    crispy.Field(
+                        'direct_access',
+                        template='bootstrap3to5/layout/bootstrap5/radio_checkbox_select.html',
+                    ),
+                    css_class='row mb-3',
+                    role='radiogroup',
+                    aria_labelledby='direct-access-label',
                 ),
-                css_class='row mb-3',
-                role='group',
-                aria_labelledby='delivery-options-label',
+                crispy.Div(
+                    crispy.HTML(
+                        format_html(
+                            '<label id="delivery-options-label" class="field-label">'
+                            '{}<span class="asteriskField" x-show="directAccess !== \'True\'">*</span></label>',
+                            _("Verification Method"),
+                        ),
+                    ),
+                    crispy.Div(
+                        crispy.HTML(
+                            format_html(
+                                '<div class="form-text mb-3" x-show="directAccess === \'True\'" x-cloak>'
+                                '{}</div>',
+                                _(
+                                    "To protect your data and project, CommCare runs automated checks "
+                                    "on every respondent who starts the form. If a check flags a "
+                                    "respondent, CommCare sends them a one-time link to open before "
+                                    "the form starts. Choose how CommCare can send that link."
+                                ),
+                            ),
+                        ),
+                        twbscrispy.InlineField('allow_email'),
+                        crispy.HTML(
+                            format_html(
+                                '<div class="form-text">{}</div>',
+                                self.fields['allow_email'].help_text,
+                            ),
+                        ),
+                        *allow_sms_field,
+                        css_class='field-control',
+                    ),
+                    css_class='row mb-3',
+                    role='group',
+                    aria_labelledby='delivery-options-label',
+                ),
+                x_data=json.dumps({'directAccess': None}),
             ),
             twbscrispy.PrependedText('open_to_requests', ''),
         ]
@@ -226,8 +269,12 @@ class BasePublicWebformForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        if not cleaned_data.get('allow_email') and not cleaned_data.get('allow_sms'):
-            self.add_error(None, _("Choose at least one way for respondents to receive one-time links."))
+        if not (
+            cleaned_data.get('direct_access')
+            or cleaned_data.get('allow_email')
+            or cleaned_data.get('allow_sms')
+        ):
+            self.add_error(None, _("Choose at least one verification method."))
         return cleaned_data
 
 
@@ -304,6 +351,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 endpoint_id=endpoint_id,
                 session_type=self.cleaned_data['session_type'],
                 expires_at=self.cleaned_data['expires_at'],
+                direct_access=self.cleaned_data['direct_access'],
                 allow_email=self.cleaned_data['allow_email'],
                 allow_sms=self.cleaned_data['allow_sms'],
                 is_disabled=not self.cleaned_data['open_to_requests'],
@@ -343,6 +391,7 @@ class EditPublicWebformForm(BasePublicWebformForm):
             'app_name': f"{form_paths['app_name']} (v{form_paths['app_version']})",
             'menu_name': form_paths['menu_name'],
             'form_name': form_paths['form_name'],
+            'direct_access': webform.direct_access,
             'allow_email': webform.allow_email,
             'allow_sms': webform.allow_sms and not self.fields['allow_sms'].disabled,
         })
@@ -365,6 +414,7 @@ class EditPublicWebformForm(BasePublicWebformForm):
     def update_public_webform(self):
         self.webform.label = self.cleaned_data['label']
         self.webform.expires_at = self.cleaned_data['expires_at']
+        self.webform.direct_access = self.cleaned_data['direct_access']
         self.webform.allow_email = self.cleaned_data['allow_email']
         self.webform.allow_sms = self.cleaned_data['allow_sms']
         self.webform.set_disabled(not self.cleaned_data['open_to_requests'])
