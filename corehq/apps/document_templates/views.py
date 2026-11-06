@@ -1,5 +1,8 @@
+from io import BytesIO
+
 from django import forms
 from django.http import (
+    FileResponse,
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
@@ -206,7 +209,6 @@ def preview_document(request, domain):
         pdf = render_preview(area_values, context)
     except DocumentRenderError as error:
         return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+    response = FileResponse(BytesIO(pdf), filename='preview.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
