@@ -5,7 +5,7 @@ import re
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
-from sqlalchemy import or_
+from sqlalchemy import or_, case
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.domain.models import Domain
@@ -195,9 +195,11 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
     def get_values_for_query(self, query_context):
         query = self._adapter.session_helper.Session.query(self._sql_column)
         if query_context.query:
-            query = query.filter(self._sql_column.ilike("%{}%".format(query_context.query)))
+            query = self._apply_query_filter(query, query_context)
+        else:
+            query = query.distinct().order_by(self._sql_column)
 
-        query = query.distinct().order_by(self._sql_column).limit(query_context.limit).offset(query_context.offset)
+        query = query.limit(query_context.limit).offset(query_context.offset)
         try:
             values = [v[0] for v in query]
             self._adapter.track_load(len(values))
@@ -210,6 +212,19 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def default_value(self, user):
         return None
+
+    def _apply_query_filter(self, query, query_context):
+        query = query.filter(self._sql_column.ilike("%{}%".format(query_context.query)))
+        # We need to sort this by relevance, otherwise we might
+        # be pushing the most exact matches to the end of the list
+        # and cut it off by applying the limit
+        return query.distinct().order_by(
+            case([
+                (self._sql_column.ilike(query_context.query), 0),  # Exact matches first
+                (self._sql_column.ilike(f"%{query_context.query}%"), 1)],  # Substring matches
+                else_=2  # Everything else
+            ).asc()
+        )
 
     def _make_choice_from_value(self, value):
         if value is None or value == '':
