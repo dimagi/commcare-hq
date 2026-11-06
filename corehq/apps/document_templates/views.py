@@ -17,7 +17,7 @@ from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     get_area_names,
-    get_preview_context,
+    get_variable_names,
     render_preview,
 )
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -189,7 +189,7 @@ class PreviewVariablesView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         try:
-            names = get_preview_context(_posted_area_values(request))
+            names = get_variable_names(_posted_area_values(request))
         except DocumentRenderError as error:
             template_context = {'error': str(error)}
         else:
@@ -207,7 +207,7 @@ class PreviewDocumentView(BaseMessagingSectionView):
     def post(self, request, *args, **kwargs):
         area_values = _posted_area_values(request)
         try:
-            context = _posted_context(request, get_preview_context(area_values))
+            context = _posted_context(request, get_variable_names(area_values))
             pdf = render_preview(area_values, context)
         except DocumentRenderError as error:
             return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))

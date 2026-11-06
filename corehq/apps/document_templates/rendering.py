@@ -24,7 +24,6 @@ import bleach
 import markdown
 from bleach.css_sanitizer import CSSSanitizer
 from jinja2 import (
-    Environment,
     StrictUndefined,
     TemplateError,
     TemplateRuntimeError,
@@ -155,9 +154,9 @@ def get_area_names():
     return list(_US_LETTER_AREAS)
 
 
-def _parse_variable_names(area_value):
+def _parse_variable_names(text):
     """Names a Jinja template reads but does not define itself, in order of first use"""
-    ast = Environment().parse(area_value)
+    ast = _render_env.parse(text)
     undeclared = meta.find_undeclared_variables(ast)
     used = (node.name for node in ast.find_all(nodes.Name))
     return [name for name in dict.fromkeys(used) if name in undeclared]
@@ -182,8 +181,8 @@ def _allow_attribute(tag, name, value):
     return name in allowed
 
 
-def get_preview_context(area_values):
-    """The context a preview needs: each variable the areas use, with an empty string"""
+def get_variable_names(area_values):
+    """Each variable the areas use, in order of first use"""
     names = {}
     for area_name, text in area_values.items():
         _check_area_length(area_name, text)
@@ -191,7 +190,7 @@ def get_preview_context(area_values):
             names.update(dict.fromkeys(_parse_variable_names(text)))
         except TemplateSyntaxError as error:
             raise DocumentRenderError(_syntax_error_message(area_name, error))
-    return dict.fromkeys(names, '')
+    return list(names)
 
 
 def _render_areas(area_values, context):

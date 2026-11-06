@@ -10,7 +10,7 @@ from corehq.apps.document_templates.rendering import (
     _parse_variable_names,
     _render_areas,
     get_area_names,
-    get_preview_context,
+    get_variable_names,
     render_pdf,
     render_preview,
 )
@@ -51,18 +51,18 @@ def test_markdown_to_sanitized_html(value, expected):
     assert _markdown_to_sanitized_html(value) == expected
 
 
-def test_preview_context_lists_variables_used_in_areas():
+def test_variable_names_lists_variables_used_in_areas():
     area_values = {**VALUES, 'address': '{{ name }}\n{{ street }}', 'body': 'Dear {{ name }}'}
-    assert get_preview_context(area_values) == {'name': '', 'street': ''}
+    assert get_variable_names(area_values) == ['name', 'street']
 
 
-def test_preview_context_is_empty_without_variables():
-    assert get_preview_context(VALUES) == {}
+def test_variable_names_is_empty_without_variables():
+    assert get_variable_names(VALUES) == []
 
 
-def test_preview_context_reports_a_syntax_error():
+def test_variable_names_reports_a_syntax_error():
     with pytest.raises(DocumentRenderError, match='syntax error in body, line 1'):
-        get_preview_context({**VALUES, 'body': '{% if %}'})
+        get_variable_names({**VALUES, 'body': '{% if %}'})
 
 
 def test_render_areas_fills_in_the_context():
@@ -133,9 +133,9 @@ def test_render_areas_rejects_a_long_area():
         _render_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
 
 
-def test_preview_context_rejects_a_long_area():
+def test_variable_names_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
-        get_preview_context({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)})
+        get_variable_names({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)})
 
 
 def test_render_areas_reports_a_syntax_error():
