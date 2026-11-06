@@ -64,7 +64,9 @@ def get_user_type(user_id):
                 return WEB_USER_TYPE
             elif user.is_commcare_user():
                 return MOBILE_USER_TYPE
-        except (ResourceNotFound, WrappingAttributeError):
+        except (ResourceNotFound, KeyError, WrappingAttributeError):
+            # Groups share the users db, and case owner ids are often
+            # group ids, so the doc may exist without being a user
             pass
 
     get_user_type_deep_cache_for_unknown_users.set_cached_value(user_id).to(UNKNOWN_USER_TYPE)
