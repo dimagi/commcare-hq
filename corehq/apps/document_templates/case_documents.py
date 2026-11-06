@@ -9,6 +9,7 @@ from casexml.apps.phone.data_providers.case.livequery import (
 )
 from django.utils.translation import gettext as _
 
+from corehq.apps.document_templates.images import ImageError, load_images
 from corehq.apps.document_templates.models import Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
@@ -46,11 +47,9 @@ def render_case_documents(domain, case_ids, couch_user):
     documents = []
     for case in cases:
         try:
-            documents.append(generate_document(
-                templates[case.get_case_property(SLUG_PROPERTY)].areas,
-                case.get_properties_in_api_format(),
-            ))
-        except DocumentRenderError as error:
+            areas = load_images(domain, templates[case.get_case_property(SLUG_PROPERTY)].areas)
+            documents.append(generate_document(areas, case.get_properties_in_api_format()))
+        except (DocumentRenderError, ImageError) as error:
             raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case.case_id, error=error))
     return render_pdf(documents)
 
