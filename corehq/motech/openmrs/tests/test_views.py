@@ -1,5 +1,6 @@
 from copy import deepcopy
 import json
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -10,6 +11,7 @@ from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.views import parse_posted_importers
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
@@ -151,6 +153,13 @@ class TestOpenmrsImporterView(BaseViewTest):
         response = self.client.post(self.url, {'openmrs_importers': 'not json'})
         self.assertEqual(response.status_code, 400)
         self.assertIn('not valid JSON', response.json()['error'])
+
+    def test_post_does_not_swallow_unexpected_errors(self):
+        # Unexpected errors reach Django's error handling (and Sentry)
+        # instead of being returned to the browser as text
+        with patch.object(OpenmrsImporter, 'save', side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self.post_importers(self.importer_data)
 
     def test_post_saves_nothing_if_any_importer_invalid(self):
         response = self.post_importers(
