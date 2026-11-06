@@ -267,6 +267,8 @@ def _within_distance(coordinates, meters):
                                 CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE NOT name = 'x'",
      select([CLIENT]).where(not_(CLIENT.c.name == _bind_literal('literal', 'x')))),
+    ('SELECT * FROM client WHERE name', select([CLIENT]).where(CLIENT.c.name)),
+    ('SELECT * FROM client WHERE NOT name', select([CLIENT]).where(not_(CLIENT.c.name))),
     ("SELECT * FROM client WHERE (name = 'x')",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     # Parentheses override the usual AND-before-OR precedence
@@ -463,7 +465,6 @@ def _compiled(query):
     'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
     'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
-    'SELECT * FROM client WHERE name',            # not a comparison
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
     'SELECT * FROM client WHERE bogus(name)',        # unknown function call
 

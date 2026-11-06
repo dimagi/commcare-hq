@@ -1,10 +1,10 @@
 """Translate user-supplied SQL into SQLAlchemy Core expressions.
 
 Only an explicitly articulated subset of SQL is supported, all else errors. The
-goal of this is tool is safety, not correctness - it parses, interprets,
-and rewrites queries, but correctness is the responsibility of the author.
-Queries must always be tested against PostgreSQL - it is not generally
-UserSQL's job to anticipate possible errors at parse time.
+goal of this tool is safety, not correctness - it parses, interprets, and
+rewrites queries, but correctness is the responsibility of the author. Queries
+must always be tested against PostgreSQL - it is not generally UserSQL's job to
+anticipate possible errors at parse time.
 
 describe.py should be kept up-to-date with this file - it describes what SQL
 constructs are supported.
@@ -479,6 +479,8 @@ def _convert_predicate(node, columns):
                        _convert_value(right, columns))
     if isinstance(node, exp.Anonymous):
         return _convert_predicate_function(node, columns)
+    if isinstance(node, exp.Column):
+        return _convert_column(node, columns)
     raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
 
 
