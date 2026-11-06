@@ -109,7 +109,8 @@ var openmrsImporters = function (openmrsImporters, importNowUrl) {
         ).fail(function (jqXHR) {
             var message = gettext('Unable to save OpenMRS Importers');
             if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-                message += ': ' + jqXHR.responseJSON.error;
+                // alert_user renders HTML; the error can echo user input
+                message += ': ' + _.escape(jqXHR.responseJSON.error);
             }
             alertUser.alert_user(message, 'danger');
         });
