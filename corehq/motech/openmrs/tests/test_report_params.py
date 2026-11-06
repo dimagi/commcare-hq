@@ -13,13 +13,24 @@ from unittest.mock import patch
 import pytest
 from unmagic import fixture, use
 
-from corehq.motech.openmrs.models import parse_params, validate_report_params
+from corehq.motech.exceptions import ConfigurationError
+from corehq.motech.openmrs.models import (
+    REPORT_PARAM_PLACEHOLDERS,
+    parse_params,
+    validate_report_params,
+)
 
 TODAY = datetime(2026, 10, 23)
 
 
 class FakeLocation:
+    name = 'Cape Town'
     metadata = {'openmrs_uuid': 'loc-uuid'}
+
+
+class LocationWithoutUuid:
+    name = 'Cape Town'
+    metadata = {}
 
 
 @fixture
@@ -53,6 +64,24 @@ def test_parse_params_strings(value, expected):
 def test_parse_params_without_location():
     # Preserves the previous Jinja2 behaviour of rendering None as "None"
     assert parse_params({'p': '{{ location }}'}) == {'p': 'None'}
+
+
+@use(fixed_today)
+@pytest.mark.parametrize('placeholder', REPORT_PARAM_PLACEHOLDERS)
+def test_parse_params_substitutes_every_placeholder(placeholder):
+    parsed = parse_params({'p': f'{{{{ {placeholder} }}}}'}, FakeLocation())
+    assert '{{' not in parsed['p']
+
+
+def test_parse_params_location_without_uuid():
+    with pytest.raises(ConfigurationError, match='"Cape Town" has no "openmrs_uuid"'):
+        parse_params({'p': '{{ location }}'}, LocationWithoutUuid())
+
+
+@use(fixed_today)
+def test_parse_params_ignores_location_if_unused():
+    params = {'p': '{{ today }}'}
+    assert parse_params(params, LocationWithoutUuid()) == {'p': '2026-10-23'}
 
 
 def test_parse_params_leaves_non_strings_unchanged():

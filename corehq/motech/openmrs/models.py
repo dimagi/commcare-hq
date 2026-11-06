@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import partial
 
 from memoized import memoized
+from settings import UNIT_TESTING
 
 from dimagi.ext.couchdbkit import (
     DictProperty,
@@ -23,6 +24,7 @@ from corehq.motech.const import (
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
 )
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.motech.openmrs.const import (
     LOCATION_OPENMRS_UUID,
@@ -38,6 +40,9 @@ from corehq.util.timezones.utils import (
     coerce_timezone_value,
     get_timezone_for_domain,
 )
+
+if UNIT_TESTING:
+    import time_machine  # noqa: F401 used by doctest
 
 
 class ColumnMapping(DocumentSchema):
@@ -81,20 +86,39 @@ _template_markers = ('{{', '{%', '{#')
 
 def parse_params(params, location=None):
     """
-    Inserts date and OpenMRS location UUID into report params
+    Returns ``params`` with the ``{{ today }}`` and ``{{ location }}``
+    placeholders in string values replaced. ``{{ location }}`` is the
+    OpenMRS location UUID in ``location``'s metadata. Other values are
+    returned unchanged.
 
-    >>> parse_params({'endDate': '{{ today }}', 'n': 1})['n']
-    1
+    Raises ``ConfigurationError`` if a param uses ``{{ location }}``
+    and ``location`` has no OpenMRS location UUID.
+
+    >>> params = {'endDate': '{{ today }}', 'n': 1}
+    >>> with time_machine.travel('2026-10-23 12:00', tick=False):
+    ...     parse_params(params)
+    {'endDate': '2026-10-23', 'n': 1}
     """
-    context = {
-        'today': datetime.today().strftime('%Y-%m-%d'),
-        'location': location.metadata[LOCATION_OPENMRS_UUID] if location else None,
-    }
+    def get_today():
+        return datetime.today().strftime('%Y-%m-%d')
+
+    def get_location_uuid():
+        if location is None:
+            return None  # Rendered as "None", as Jinja2 rendered it
+        try:
+            return location.metadata[LOCATION_OPENMRS_UUID]
+        except KeyError:
+            raise ConfigurationError(
+                f'Location "{location.name}" has no "{LOCATION_OPENMRS_UUID}" '
+                'metadata for the {{ location }} report param.'
+            )
+
+    resolvers = {'today': get_today, 'location': get_location_uuid}
 
     def substitute(match):
         name = match.group(1)
-        if name in REPORT_PARAM_PLACEHOLDERS:
-            return str(context[name])
+        if name in resolvers:
+            return str(resolvers[name]())
         return match.group(0)
 
     parsed = {}
