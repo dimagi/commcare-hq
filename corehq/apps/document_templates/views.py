@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
@@ -20,6 +21,7 @@ from corehq.apps.document_templates.rendering import (
     get_variable_names,
     render_preview,
 )
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -176,42 +178,35 @@ def _posted_context(request, names):
     return {name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '') for name in names}
 
 
-@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class PreviewVariablesView(BaseMessagingSectionView):
+@login_and_domain_required
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def preview_document_variables(request, domain):
     """HTMX partial for the preview modal: an input for each variable the posted areas use
 
     The form is posted with the request, so values already typed into the modal are kept.
     """
-
-    urlname = 'preview_document_variables'
-    http_method_names = ['post']
-    template_name = 'document_templates/partials/preview_modal_body.html'
-
-    def post(self, request, *args, **kwargs):
-        try:
-            names = get_variable_names(_posted_area_values(request))
-        except DocumentRenderError as error:
-            template_context = {'error': str(error)}
-        else:
-            template_context = {'context': _posted_context(request, names), 'field_prefix': CONTEXT_FIELD_PREFIX}
-        return HttpResponse(render_to_string(self.template_name, template_context))
+    try:
+        names = get_variable_names(_posted_area_values(request))
+    except DocumentRenderError as error:
+        template_context = {'error': str(error)}
+    else:
+        template_context = {'context': _posted_context(request, names), 'field_prefix': CONTEXT_FIELD_PREFIX}
+    return HttpResponse(render_to_string('document_templates/partials/preview_modal_body.html', template_context))
 
 
-@method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class PreviewDocumentView(BaseMessagingSectionView):
+@login_and_domain_required
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def preview_document(request, domain):
     """The rendered document as a PDF, for opening in a new tab"""
-
-    urlname = 'preview_document'
-    http_method_names = ['post']
-
-    def post(self, request, *args, **kwargs):
-        area_values = _posted_area_values(request)
-        try:
-            context = _posted_context(request, get_variable_names(area_values))
-            pdf = render_preview(area_values, context)
-        except DocumentRenderError as error:
-            return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="preview.pdf"'
-        response['X-Content-Type-Options'] = 'nosniff'
-        return response
+    area_values = _posted_area_values(request)
+    try:
+        context = _posted_context(request, get_variable_names(area_values))
+        pdf = render_preview(area_values, context)
+    except DocumentRenderError as error:
+        return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="preview.pdf"'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
