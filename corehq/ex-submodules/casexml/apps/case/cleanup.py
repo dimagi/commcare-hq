@@ -1,12 +1,9 @@
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
-from django.conf import settings
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_EXTENSION
-from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from casexml.apps.case.xform import get_case_updates
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.auth import AuthContext
@@ -70,33 +67,6 @@ def rebuild_case_from_forms(domain, case_id, detail):
     """
 
     return FormProcessorInterface(domain).hard_rebuild_case(case_id, detail)
-
-
-def safe_hard_delete(case):
-    """
-    Hard delete a case - by deleting the case itself as well as all forms associated with it
-    permanently from the database.
-
-    Will fail hard if the case has any reverse indices or if any of the forms associated with
-    the case also touch other cases.
-
-    This is used primarily for cleaning up system cases/actions (e.g. the location delegate case).
-    """
-    if not settings.UNIT_TESTING:
-        from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
-        if not (case.is_deleted or case.type == USER_LOCATION_OWNER_MAP_TYPE):
-            raise CommCareCaseError("Attempt to hard delete a live case whose type isn't white listed")
-
-    if case.reverse_indices:
-        raise CommCareCaseError("You can't hard delete a case that has other dependencies ({})!".format(case.case_id))
-    interface = FormProcessorInterface(case.domain)
-    forms = interface.get_case_forms(case.case_id)
-    for form in forms:
-        case_updates = get_case_updates(form)
-        if any([c.id != case.case_id for c in case_updates]):
-            raise CommCareCaseError("You can't hard delete a case that has shared forms with other cases!")
-
-    interface.hard_delete_case_and_forms(case, forms)
 
 
 def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, device_id=None):
