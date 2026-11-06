@@ -130,9 +130,6 @@ class MessagingTemplateParam:
         """
         raise NotImplementedError
 
-    def __getattr__(self, item):
-        return self.get_template_value(item)
-
 
 class SimpleMessagingTemplateParam(MessagingTemplateParam):
 
@@ -210,10 +207,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         self.__last_modified_by_result = None
 
     def __get_owner_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__owner_result:
             return self.__owner_result
 
@@ -229,10 +222,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__owner_result
 
     def __get_parent_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__parent_result:
             return self.__parent_result
 
@@ -245,10 +234,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__parent_result
 
     def __get_host_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__host_result:
             return self.__host_result
 
@@ -261,10 +246,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__host_result
 
     def __get_last_modified_by_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__last_modified_by_result:
             return self.__last_modified_by_result
 
