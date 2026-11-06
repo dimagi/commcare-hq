@@ -47,6 +47,7 @@ from corehq.apps.app_manager.exceptions import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     RearrangeError,
+    RemoteAppsUnsupported,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -421,6 +422,9 @@ def app_source(request, domain, app_id):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
+    if is_remote_app(app):
+        messages.error(request, str(RemoteAppsUnsupported()))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
     form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
