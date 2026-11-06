@@ -121,6 +121,36 @@ def test_report_params_not_required():
     assert form.is_valid(), form.errors
 
 
+def test_column_map_keeps_optional_keys():
+    form, importer = get_form(column_map=(
+        '[{"column": "dob", "property": "dob",'
+        ' "data_type": "omrs_date", "commcare_data_type": "cc_date"}]'
+    ))
+    assert form.is_valid(), form.errors
+    form.save(commit=False)
+    mapping = importer.column_map[0]
+    assert mapping.data_type == 'omrs_date'
+    assert mapping.commcare_data_type == 'cc_date'
+
+
+@pytest.mark.parametrize('value', [
+    '["givenName"]',
+    '[null]',
+    '[{"column": "givenName", "property": "first_name", "evil": "x"}]',
+    '[{"column": "givenName"}]',
+    '[{"property": "first_name"}]',
+    '[{"column": "", "property": "first_name"}]',
+    '[{"column": 1, "property": "first_name"}]',
+    '[{"column": "givenName", "property": "first_name", "data_type": "bad"}]',
+    '[{"column": "givenName", "property": "first_name", "commcare_data_type": "bad"}]',
+])
+def test_rejects_bad_column_map(value):
+    form, importer = get_form(column_map=value)
+    assert not form.is_valid()
+    assert 'column_map' in form.errors
+    assert importer.column_map == []
+
+
 @pytest.mark.parametrize('field', ['server_url', 'report_uuid', 'case_type'])
 def test_required_fields(field):
     form, importer = get_form(**{field: ''})

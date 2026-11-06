@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from jsonobject.exceptions import BadValueError
 
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.locations.forms import LocationSelectWidget
@@ -130,6 +131,35 @@ class OpenmrsImporterForm(forms.Form):
             raise ValidationError(str(err), code='invalid')
         return report_params
 
+    def clean_column_map(self):
+        allowed_keys = set(ColumnMapping.properties())
+        column_map = []
+        for item in self.cleaned_data['column_map']:
+            if not isinstance(item, dict):
+                raise ValidationError(
+                    _('Each column mapping must be an object.'),
+                    code='invalid',
+                )
+            unknown_keys = set(item) - allowed_keys
+            if unknown_keys:
+                raise ValidationError(
+                    _('Unknown column mapping keys: %(keys)s'),
+                    code='invalid',
+                    params={'keys': ', '.join(sorted(unknown_keys))},
+                )
+            for key in ('column', 'property'):
+                if not item.get(key) or not isinstance(item[key], str):
+                    raise ValidationError(
+                        _('Each column mapping must have a "%(key)s".'),
+                        code='invalid',
+                        params={'key': key},
+                    )
+            try:
+                column_map.append(ColumnMapping(**item))
+            except BadValueError as err:
+                raise ValidationError(str(err), code='invalid')
+        return column_map
+
     def save(self, commit=True):
         for name, value in self.cleaned_data.items():
             if name in ('import_frequency', 'log_level') and value in (None, ''):
@@ -138,8 +168,6 @@ class OpenmrsImporterForm(forms.Form):
                 if value == PASSWORD_PLACEHOLDER:
                     continue  # Skip updating the password if it hasn't been changed.
                 value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
-            elif name == 'column_map':
-                value = [ColumnMapping(**d) for d in value]
             setattr(self.instance, name, value)
         if commit:
             self.instance.save()

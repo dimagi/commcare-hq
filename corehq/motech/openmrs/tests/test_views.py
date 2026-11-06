@@ -134,6 +134,15 @@ class TestOpenmrsImporterView(BaseViewTest):
         self.assertIn('report_params', response.json()['error'])
         self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
 
+    def test_post_rejects_bad_column_map(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'column_map': '["givenName"]',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('column_map', response.json()['error'])
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
     def test_post_saves_nothing_if_any_importer_invalid(self):
         response = self.post_importers(
             self.importer_data,
