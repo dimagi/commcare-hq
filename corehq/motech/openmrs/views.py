@@ -223,11 +223,13 @@ class OpenmrsImporterView(BaseProjectSettingsView):
                 {'message': None, 'error': format_form_errors(invalid_forms)},
                 status=400,
             )
-        for form in importer_forms:
-            form.save()
-        for importer in current_importers[len(posted_importers):]:
-            importer.delete()
-        get_openmrs_importers_by_domain.clear(request.domain)
+        try:
+            for form in importer_forms:
+                form.save()
+            for importer in current_importers[len(posted_importers):]:
+                importer.delete()
+        finally:
+            get_openmrs_importers_by_domain.clear(request.domain)
         return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
 
     @property

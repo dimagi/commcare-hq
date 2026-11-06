@@ -184,6 +184,23 @@ class TestOpenmrsImporterView(BaseViewTest):
         importers = get_openmrs_importers_by_domain(self.domain.name)
         self.assertEqual([i.case_type for i in importers], ['patient'])
 
+    def test_post_clears_cache_if_save_fails(self):
+        self.post_importers(self.importer_data)
+        get_openmrs_importers_by_domain(self.domain.name)  # Populate the cache
+        new_importer = {**self.importer_data, 'case_type': 'person'}
+        real_save = OpenmrsImporter.save
+
+        def save_first_only(importer, *args, **kwargs):
+            if importer._id:
+                return real_save(importer, *args, **kwargs)
+            raise RuntimeError('boom')
+
+        with patch.object(OpenmrsImporter, 'save', save_first_only):
+            with self.assertRaises(RuntimeError):
+                self.post_importers(new_importer, new_importer)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual([i.case_type for i in importers], ['person'])
+
     def test_post_saves_nothing_if_any_importer_invalid(self):
         response = self.post_importers(
             self.importer_data,
