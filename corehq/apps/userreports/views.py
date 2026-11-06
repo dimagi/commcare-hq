@@ -743,6 +743,8 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
+@require_permission(HqPermissions.edit_reports)
+@require_POST
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
     report = get_document_or_404(ReportConfiguration, domain, report_id,

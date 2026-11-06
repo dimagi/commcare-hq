@@ -119,11 +119,11 @@ class ConfigurableReportTestMixin(object):
         cls.addClassCleanup(domain_obj.delete)
 
     @classmethod
-    def _create_user(cls, username, can_edit_ucrs=True):
+    def _create_user(cls, username, can_edit_ucrs=True, can_edit_reports=False):
         role = UserRole.create(
             domain=cls.domain,
             name=f'{username}_role',
-            permissions=HqPermissions(edit_ucrs=can_edit_ucrs),
+            permissions=HqPermissions(edit_ucrs=can_edit_ucrs, edit_reports=can_edit_reports),
         )
         user = WebUser.create(cls.domain, username, cls.password, None, None, role_id=role.get_id)
         cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
@@ -778,6 +778,68 @@ class TestDataSourceViewsAccess(ConfigurableReportTestMixin, TestCase):
         assert response.status_code == 302
         doc = DataSourceConfiguration.get_db().get(config.get_id)
         assert doc['doc_type'] == 'DataSourceConfiguration'
+
+
+class TestUpdateReportDescriptionAccess(ConfigurableReportTestMixin, TestCase):
+    """
+    Only users with the ``edit_reports`` permission may change a
+    report's description.
+    """
+    domain = 'ucr-report-description-access'
+    original_description = 'Original description'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._create_domain()
+        cls.editor = cls._create_user('report-editor@example.com', can_edit_reports=True)
+        cls.non_editor = cls._create_user('report-non-editor@example.com')
+
+    def setUp(self):
+        super().setUp()
+        self.report = ReportConfiguration(
+            domain=self.domain,
+            config_id=uuid.uuid4().hex,
+            title='Report',
+            description=self.original_description,
+        )
+        self.report.save()
+        self.addCleanup(self.report.delete)
+        self.url = reverse('update_report_description', args=(self.domain, self.report.get_id))
+
+    def _get_description(self):
+        return ReportConfiguration.get(self.report.get_id).description
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 302
+        assert response.url.startswith(reverse('domain_login', kwargs={'domain': self.domain}))
+        assert self._get_description() == self.original_description
+
+    def test_user_without_edit_reports_is_forbidden(self):
+        self.client.login(username=self.non_editor.username, password=self.password)
+
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 403
+        assert self._get_description() == self.original_description
+
+    def test_get_is_not_allowed(self):
+        self.client.login(username=self.editor.username, password=self.password)
+
+        response = self.client.get(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 405
+        assert self._get_description() == self.original_description
+
+    def test_editor_can_update_description(self):
+        self.client.login(username=self.editor.username, password=self.password)
+
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 200
+        assert self._get_description() == 'Changed'
 
 
 class TestSubscribeToDataSource(TestCase):
