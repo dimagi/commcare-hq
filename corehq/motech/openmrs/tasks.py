@@ -44,6 +44,7 @@ from corehq.motech.openmrs.models import (
     OpenmrsImporter,
     deserialize,
     parse_params,
+    validate_report_params,
 )
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
@@ -57,10 +58,19 @@ def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
 
+    raises ConfigurationError if report params are invalid
     raises RequestException on request error
     raises ValueError if response is not JSON
     raises IndexError, KeyError, TypeError on unexpected JSON format
     """
+    try:
+        # Importers saved before report params were validated could
+        # still hold template syntax that would be sent as literal text
+        validate_report_params(importer.report_params)
+    except ValueError as err:
+        raise ConfigurationError(
+            f'Unable to import patients using OpenMRS Importer "{importer}": {err}'
+        )
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
 
