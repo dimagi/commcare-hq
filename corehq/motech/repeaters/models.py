@@ -78,7 +78,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models, router
-from django.db.models import Exists, Min, OuterRef, Q
+from django.db.models import Count, Exists, Min, OuterRef, Q, Subquery, Sum
 from django.db.models.base import Deferred
 from django.dispatch import receiver
 from django.utils import timezone
@@ -273,28 +273,6 @@ class RepeaterManager(models.Manager):
                 Q(next_attempt_at__isnull=True)
                 | Q(next_attempt_at__lte=timezone.now())
             )
-        )
-
-    def get_all_ready_next_attempt_null(self):
-        # See `get_all_ready_next_attempt_now()`. Splitting the queries
-        # speeds up total query time by using different indexes.
-        # NOTE: Returns one row per RepeatRecord, not per Repeater.
-        return (
-            self.get_queryset()
-            .filter(is_paused=False)
-            .filter(next_attempt_at__isnull=True)
-            .filter(repeat_records__state__in=RECORD_QUEUED_STATES)
-        )
-
-    def get_all_ready_next_attempt_now(self):
-        # See `get_all_ready_next_attempt_null()`. Splitting the queries
-        # speeds up total query time by using different indexes.
-        # NOTE: Returns one row per RepeatRecord, not per Repeater.
-        return (
-            self.get_queryset()
-            .filter(is_paused=False)
-            .filter(next_attempt_at__lte=timezone.now())
-            .filter(repeat_records__state__in=RECORD_QUEUED_STATES)
         )
 
     def get_queryset(self):
@@ -1221,14 +1199,21 @@ class RepeatRecordManager(models.Manager):
             repeater__is_paused=False,
         ).select_related('repeater').count()
 
-    @staticmethod
-    def count_all_ready():
-        # Uses *Repeater* queries that return one row per RepeatRecord.
-        # See `RepeaterManager.get_all_ready_ids_by_domain()`.
-        return (
-            Repeater.objects.get_all_ready_next_attempt_null().count()
-            + Repeater.objects.get_all_ready_next_attempt_now().count()
+    def count_all_ready(self):
+        # Use a subquery, not a join, to force an index lookup per repeater
+        queued_count = (
+            self.get_all_queued()
+            .filter(repeater_id=OuterRef('pk'))
+            .order_by()
+            .values('repeater_id')
+            .annotate(count=Count('*'))
+            .values('count')
         )
+        total = (
+            Repeater.objects.get_all_available()
+            .aggregate(total=Sum(Subquery(queued_count)))['total']
+        )
+        return total or 0
 
     def iterate(self, domain, repeater_id=None, state=None, chunk_size=1000):
         db = router.db_for_read(self.model)

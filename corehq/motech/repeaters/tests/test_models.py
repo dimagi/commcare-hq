@@ -852,6 +852,44 @@ class TestRepeatRecordManager(RepeaterTestCase):
             count = RepeatRecord.objects.count_all_ready()
             assert count == 3
 
+    def test_count_excludes_unqueued_states(self):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            make_repeat_record(self.repeater, State.Fail),
+            make_repeat_record(self.repeater, State.Success),
+            make_repeat_record(self.repeater, State.Cancelled),
+        ):
+            assert RepeatRecord.objects.count_all_ready() == 2
+
+    def test_count_excludes_paused_repeater(self):
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            pause(self.repeater),
+        ):
+            assert RepeatRecord.objects.count_all_ready() == 0
+
+    def test_count_excludes_deleted_repeater(self):
+        with make_repeat_record(self.repeater, State.Pending):
+            self.repeater.is_deleted = True
+            self.repeater.save()
+            assert RepeatRecord.objects.count_all_ready() == 0
+
+    def test_count_excludes_repeater_backing_off(self):
+        in_five_mins = timezone.now() + timedelta(minutes=5)
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, in_five_mins),
+        ):
+            assert RepeatRecord.objects.count_all_ready() == 0
+
+    def test_count_includes_repeater_with_elapsed_backoff(self):
+        five_mins_ago = timezone.now() - timedelta(minutes=5)
+        with (
+            make_repeat_record(self.repeater, State.Pending),
+            set_next_attempt_at(self.repeater, five_mins_ago),
+        ):
+            assert RepeatRecord.objects.count_all_ready() == 1
+
     def new_record(self, next_check=before_now, state=State.Pending, domain=DOMAIN, payload_id="c0ffee"):
         return self.new_record_for_repeater(
             self.repeater, next_check=next_check, state=state, domain=domain, payload_id=payload_id
