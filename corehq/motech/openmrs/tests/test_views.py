@@ -13,7 +13,11 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
-from corehq.motech.openmrs.views import parse_posted_importers
+from corehq.motech.openmrs.views import (
+    build_importer_forms,
+    format_form_errors,
+    parse_posted_importers,
+)
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -161,6 +165,25 @@ class TestOpenmrsImporterView(BaseViewTest):
             with self.assertRaises(RuntimeError):
                 self.post_importers(self.importer_data)
 
+    def test_post_updates_existing_importer(self):
+        self.post_importers(self.importer_data)
+        [original] = get_openmrs_importers_by_domain(self.domain.name)
+        response = self.post_importers({**self.importer_data, 'case_type': 'person'})
+        self.assertEqual(response.status_code, 200)
+        [updated] = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(updated._id, original._id)
+        self.assertEqual(updated.case_type, 'person')
+
+    def test_post_deletes_removed_importers(self):
+        self.post_importers(
+            self.importer_data,
+            {**self.importer_data, 'case_type': 'person'},
+        )
+        response = self.post_importers(self.importer_data)
+        self.assertEqual(response.status_code, 200)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual([i.case_type for i in importers], ['patient'])
+
     def test_post_saves_nothing_if_any_importer_invalid(self):
         response = self.post_importers(
             self.importer_data,
@@ -189,3 +212,27 @@ def test_parse_posted_importers_rejects(post_data, message):
 ])
 def test_parse_posted_importers_accepts(payload, expected):
     assert parse_posted_importers({'openmrs_importers': payload}) == expected
+
+
+def test_build_importer_forms_pairs_by_position():
+    current = [OpenmrsImporter(domain='test'), OpenmrsImporter(domain='test')]
+    forms = build_importer_forms('test', [{}, {}, {}], current)
+    assert forms[0].instance is current[0]
+    assert forms[1].instance is current[1]
+    assert forms[2].instance not in current
+    assert forms[2].instance.domain == 'test'
+
+
+def test_build_importer_forms_binds_posted_data():
+    [form] = build_importer_forms('test', [{'case_type': 'patient'}], [])
+    assert form.data == {'case_type': 'patient'}
+
+
+def test_format_form_errors():
+    forms = build_importer_forms('test', [{}, {'server_url': 'x'}], [])
+    for form in forms:
+        assert not form.is_valid()
+    errors = format_form_errors(forms)
+    assert errors.startswith('server_url: This field is required.; ')
+    assert errors.count('server_url') == 1
+    assert errors.count('report_uuid: This field is required.') == 2

@@ -177,6 +177,30 @@ def parse_posted_importers(post_data):
     return importers
 
 
+def build_importer_forms(domain, posted_importers, current_importers):
+    """
+    Returns an ``OpenmrsImporterForm`` for each posted importer. Posted
+    importers are paired with current importers by position; any beyond
+    the current importers are new.
+    """
+    importer_forms = []
+    for i, data in enumerate(posted_importers):
+        if i < len(current_importers):
+            importer = current_importers[i]
+        else:
+            importer = OpenmrsImporter(domain=domain)
+        importer_forms.append(OpenmrsImporterForm(data, instance=importer))
+    return importer_forms
+
+
+def format_form_errors(forms):
+    return '; '.join(
+        f'{field}: {" ".join(messages)}'
+        for form in forms
+        for field, messages in form.errors.items()
+    )
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
@@ -187,30 +211,21 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         try:
-            new_openmrs_importers = parse_posted_importers(request.POST)
+            posted_importers = parse_posted_importers(request.POST)
         except ValidationError as err:
             return JsonResponse({'message': None, 'error': ' '.join(err.messages)}, status=400)
-        current_openmrs_importers = get_openmrs_importers_by_domain(request.domain)
-        forms = []
-        for i, data in enumerate(new_openmrs_importers):
-            if i < len(current_openmrs_importers):
-                importer = current_openmrs_importers[i]
-            else:
-                importer = OpenmrsImporter(domain=request.domain)
-            forms.append(OpenmrsImporterForm(data, instance=importer))
+        current_importers = get_openmrs_importers_by_domain(request.domain)
+        importer_forms = build_importer_forms(request.domain, posted_importers, current_importers)
         # Validate all importers before saving any of them
-        invalid = [form for form in forms if not form.is_valid()]
-        if invalid:
-            errors = '; '.join(
-                f'{field}: {" ".join(messages)}'
-                for form in invalid
-                for field, messages in form.errors.items()
+        invalid_forms = [form for form in importer_forms if not form.is_valid()]
+        if invalid_forms:
+            return JsonResponse(
+                {'message': None, 'error': format_form_errors(invalid_forms)},
+                status=400,
             )
-            return JsonResponse({'message': None, 'error': errors}, status=400)
-        for form in forms:
+        for form in importer_forms:
             form.save()
-        # Delete removed OpenMRS Importers
-        for importer in current_openmrs_importers[len(new_openmrs_importers):]:
+        for importer in current_importers[len(posted_importers):]:
             importer.delete()
         get_openmrs_importers_by_domain.clear(request.domain)
         return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
