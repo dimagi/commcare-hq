@@ -227,6 +227,7 @@ class privilege_enabled:
         'corehq.apps.app_manager.tasks.domain_has_privilege',
         'corehq.apps.app_manager.util.domain_has_privilege',
         'corehq.apps.app_manager.views.formdesigner.domain_has_privilege',
+        'corehq.apps.app_manager.views.forms.domain_has_privilege',
         'corehq.apps.callcenter.sync_usercase.domain_has_privilege',
         'corehq.apps.callcenter.tasks.domain_has_privilege',
         'corehq.apps.case_importer.do_import.domain_has_privilege',
