@@ -25,6 +25,7 @@ from corehq.motech.const import (
 )
 from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.motech.openmrs.const import (
+    LOCATION_OPENMRS_UUID,
     OPENMRS_DATA_TYPE_MILLISECONDS,
     OPENMRS_DATA_TYPES,
 )
@@ -70,9 +71,6 @@ def deserialize(mapping, external_value, timezone=None):
     return serializer(external_value) if serializer else external_value
 
 
-# The location metadata key that maps to its corresponding OpenMRS location UUID
-LOCATION_OPENMRS = 'openmrs_uuid'
-
 # The placeholders that may be used in ``OpenmrsImporter.report_params``
 # values. Report params are user-supplied and must never be passed to a
 # template engine, so only these are substituted.
@@ -90,7 +88,7 @@ def parse_params(params, location=None):
     """
     context = {
         'today': datetime.today().strftime('%Y-%m-%d'),
-        'location': location.metadata[LOCATION_OPENMRS] if location else None,
+        'location': location.metadata[LOCATION_OPENMRS_UUID] if location else None,
     }
 
     def substitute(match):
