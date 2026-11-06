@@ -45,13 +45,15 @@ def test_preview_view_renders_a_pdf():
     response = _post(preview_document, {**VALUES, 'context_name': 'Ada'})
     assert response.status_code == 200
     assert response['Content-Type'] == 'application/pdf'
-    assert response.content.startswith(b'%PDF')
+    assert response['Content-Disposition'] == 'inline; filename="preview.pdf"'
+    assert response['X-Content-Type-Options'] == 'nosniff'
+    assert response.getvalue().startswith(b'%PDF')
 
 
 def test_preview_view_leaves_unfilled_variables_empty():
     response = _post(preview_document, VALUES)
     assert response.status_code == 200
-    assert response.content.startswith(b'%PDF')
+    assert response.getvalue().startswith(b'%PDF')
 
 
 def test_preview_view_ignores_context_for_unused_variables():
