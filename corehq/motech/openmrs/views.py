@@ -10,8 +10,6 @@ from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
-from dimagi.utils.web import json_response
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
@@ -188,16 +186,16 @@ class OpenmrsImporterView(BaseProjectSettingsView):
                     for form in invalid
                     for field, messages in form.errors.items()
                 )
-                return json_response({'message': None, 'error': errors}, status_code=400)
+                return JsonResponse({'message': None, 'error': errors}, status=400)
             for form in forms:
                 form.save()
             # Delete removed OpenMRS Importers
             for importer in current_openmrs_importers[len(new_openmrs_importers):]:
                 importer.delete()
             get_openmrs_importers_by_domain.clear(request.domain)
-            return json_response({'message': _('OpenMRS Importers saved'), 'error': None})
+            return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
         except Exception as err:
-            return json_response({'message': None, 'error': str(err)}, status_code=500)
+            return JsonResponse({'message': None, 'error': str(err)}, status=500)
 
     @property
     def page_context(self):
