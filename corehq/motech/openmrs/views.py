@@ -1,5 +1,6 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -159,6 +160,23 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
+def parse_posted_importers(post_data):
+    """
+    Returns the list of importer dicts posted as JSON in
+    ``openmrs_importers``. Raises ``ValidationError`` if the payload is
+    missing or is not a list of objects.
+    """
+    try:
+        importers = json.loads(post_data['openmrs_importers'])
+    except KeyError:
+        raise ValidationError(_('No OpenMRS Importers were submitted.'))
+    except ValueError:
+        raise ValidationError(_('OpenMRS Importers are not valid JSON.'))
+    if not isinstance(importers, list) or not all(isinstance(i, dict) for i in importers):
+        raise ValidationError(_('OpenMRS Importers must be a list of objects.'))
+    return importers
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
@@ -169,7 +187,10 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 
     def post(self, request, *args, **kwargs):
         try:
-            new_openmrs_importers = json.loads(request.POST['openmrs_importers'])
+            new_openmrs_importers = parse_posted_importers(request.POST)
+        except ValidationError as err:
+            return JsonResponse({'message': None, 'error': ' '.join(err.messages)}, status=400)
+        try:
             current_openmrs_importers = get_openmrs_importers_by_domain(request.domain)
             forms = []
             for i, data in enumerate(new_openmrs_importers):

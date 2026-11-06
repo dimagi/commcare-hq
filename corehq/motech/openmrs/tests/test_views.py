@@ -1,13 +1,17 @@
 from copy import deepcopy
 import json
 
+from django.core.exceptions import ValidationError
 from django.urls import reverse
+
+import pytest
 
 from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.views import parse_posted_importers
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -143,6 +147,11 @@ class TestOpenmrsImporterView(BaseViewTest):
         self.assertIn('column_map', response.json()['error'])
         self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
 
+    def test_post_rejects_malformed_payload(self):
+        response = self.client.post(self.url, {'openmrs_importers': 'not json'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('not valid JSON', response.json()['error'])
+
     def test_post_saves_nothing_if_any_importer_invalid(self):
         response = self.post_importers(
             self.importer_data,
@@ -150,3 +159,24 @@ class TestOpenmrsImporterView(BaseViewTest):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
+
+@pytest.mark.parametrize('post_data, message', [
+    ({}, 'No OpenMRS Importers'),
+    ({'openmrs_importers': 'not json'}, 'not valid JSON'),
+    ({'openmrs_importers': '{"server_url": "x"}'}, 'list of objects'),
+    ({'openmrs_importers': '"x"'}, 'list of objects'),
+    ({'openmrs_importers': '["x"]'}, 'list of objects'),
+    ({'openmrs_importers': '[{}, null]'}, 'list of objects'),
+])
+def test_parse_posted_importers_rejects(post_data, message):
+    with pytest.raises(ValidationError, match=message):
+        parse_posted_importers(post_data)
+
+
+@pytest.mark.parametrize('payload, expected', [
+    ('[]', []),
+    ('[{"server_url": "x"}]', [{'server_url': 'x'}]),
+])
+def test_parse_posted_importers_accepts(payload, expected):
+    assert parse_posted_importers({'openmrs_importers': payload}) == expected
