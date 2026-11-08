@@ -5,14 +5,11 @@ from .applications import (  # noqa: F401
     AppReleaseByLocation,
     BuildProfile,
     CredentialApplication,
-    ExchangeApplication,
-    ExchangeApplicationAdmin,
     GlobalAppConfig,
     LazyBlobDoc,
     LinkedApplication,
     RemoteApp,
     SavedAppBuild,
-    TemplateAppSector,
     absolute_url_property,
     import_app_from_doc,
     import_app_from_id,
@@ -130,4 +127,9 @@ from .report_app_config import (  # noqa: F401
     get_all_mobile_filter_configs,
     get_auto_filter_configurations,
     get_report_filter_class_for_doc_type,
+)
+from .template_apps import (  # noqa: F401
+    ExchangeApplication,
+    ExchangeApplicationAdmin,
+    TemplateAppSector,
 )
