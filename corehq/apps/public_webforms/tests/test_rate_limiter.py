@@ -1,8 +1,10 @@
+from datetime import datetime
 from unittest import mock
 from uuid import uuid4
 
 import pytest
 from django.test import RequestFactory
+from time_machine import travel
 
 from unmagic import fixture, use
 
@@ -17,6 +19,8 @@ from corehq.apps.public_webforms.rate_limiter import (
     access_requests_per_domain,
     access_requests_per_ip,
     rate_limit_access_request,
+    rate_limit_session_request,
+    requests_per_session,
     soft_access_requests_global,
     soft_access_requests_per_domain,
     soft_access_requests_per_ip,
@@ -52,6 +56,15 @@ def _requests_allowed_per_hour():
         for __, limits in access_requests_per_contact.get_rate_limits('')
         for counter, limit in limits
         if counter.key == 'hour'
+    )
+
+
+def _session_requests_allowed_per_second():
+    return next(
+        limit
+        for __, limits in requests_per_session.get_rate_limits('')
+        for counter, limit in limits
+        if counter.key == 'second'
     )
 
 
@@ -180,3 +193,25 @@ def test_soft_status_names_the_soft_limit_reached(limiter, status, scope):
             'project', '198.51.100.7') == status
 
     assert exceeded.call_args.args == scope
+
+
+@use('db')
+def test_session_rate_limiter_blocks_requests_over_its_limit():
+    session_id = uuid4().hex
+
+    with travel(datetime.now(), tick=False):
+        for __ in range(_session_requests_allowed_per_second()):
+            assert rate_limit_session_request(session_id) is False
+
+        assert rate_limit_session_request(session_id) is True
+
+
+@use('db')
+def test_refused_session_request_does_not_count_toward_its_limit():
+    with (
+        _exhausted(requests_per_session),
+        mock.patch.object(requests_per_session, 'report_usage') as report_usage,
+    ):
+        assert rate_limit_session_request(uuid4().hex) is True
+
+    assert not report_usage.called

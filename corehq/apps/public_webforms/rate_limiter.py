@@ -15,6 +15,7 @@ STATUS_GLOBAL_RATE_LIMITED = 'global_rate_limited'
 STATUS_DOMAIN_RATE_LIMITED = 'domain_rate_limited'
 STATUS_IP_RATE_LIMITED = 'ip_rate_limited'
 STATUS_CONTACT_RATE_LIMITED = 'contact_rate_limited'
+STATUS_SESSION_RATE_LIMITED = 'session_rate_limited'
 STATUS_ACCEPTED = 'accepted'
 
 SHOULD_RATE_LIMIT_ACCESS_REQUESTS = not settings.UNIT_TESTING
@@ -103,6 +104,22 @@ def _check_for_exceeded_soft_rate_limits(domain, ip_address):
     return STATUS_ACCEPTED
 
 
+@silence_and_report_error(
+    "Exception raised in the public webform session request rate limiter",
+    'commcare.public_webforms.session_request_rate_limiter_errors')
+def rate_limit_session_request(session_id):
+    scope = 'session:{}'.format(session_id)
+    window = requests_per_session.get_window_of_first_exceeded_limit(scope)
+    if window is None:
+        requests_per_session.report_usage(scope)
+
+    metrics_counter('commcare.public_webforms.session_requests', 1, tags={
+        'status': STATUS_SESSION_RATE_LIMITED if window else STATUS_ACCEPTED,
+        'window': window or 'none',
+    })
+    return window is not None
+
+
 access_requests_per_contact = RateLimiter(
     feature_key='public_webform_access_requests_per_contact',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
@@ -174,5 +191,13 @@ soft_access_requests_global = RateLimiter(
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
         'public_webform_soft_access_requests_global',
         default=RateDefinition(per_hour=5000),
+    ).get_rate_limits(scope),
+)
+
+requests_per_session = RateLimiter(
+    feature_key='public_webform_requests_per_session',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'public_webform_requests_per_session',
+        default=RateDefinition(per_minute=90, per_second=10),
     ).get_rate_limits(scope),
 )
