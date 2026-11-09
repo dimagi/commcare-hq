@@ -78,7 +78,7 @@ INLINE_TAGS = {
 VOID_TAGS = {'br', 'hr', 'img', 'meta'}
 
 # ``[[blank]]`` or ``[[blank:30]]``: an underlined space for filling in by hand, in characters
-BLANK = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
+BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
 DEFAULT_BLANK_LENGTH = 20
 MAX_BLANK_LENGTH = 100
 
@@ -418,7 +418,7 @@ def _blank(match):
 def _inline(child):
     """Paragraph markup for an inline element or text; user text is escaped, the tags are ours"""
     if isinstance(child, str):
-        return BLANK.sub(_blank, escape(child))
+        return BLANK_RE.sub(_blank, escape(child))
     if child.tag == 'br':
         return '<br/>'
     inner = _inline_children(child)
