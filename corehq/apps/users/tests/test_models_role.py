@@ -333,6 +333,7 @@ class HqPermissionsTest(SimpleTestCase):
             'edit_groups': 'view_groups',
             'edit_locations': 'view_locations',
             'edit_data_dict': 'view_data_dict',
+            'edit_document_templates': 'view_document_templates',
             'edit_apps': 'view_apps',
         }
         for edit_permission_name in edit_view_permission_dict:
