@@ -1,16 +1,25 @@
 from unittest import mock
 from uuid import uuid4
 
+import pytest
 from django.test import RequestFactory
 
 from unmagic import fixture, use
 
 from corehq.apps.public_webforms.rate_limiter import (
+    STATUS_ACCEPTED,
+    STATUS_DOMAIN_RATE_LIMITED,
+    STATUS_GLOBAL_RATE_LIMITED,
+    STATUS_IP_RATE_LIMITED,
+    _check_for_exceeded_soft_rate_limits,
     access_requests_global,
     access_requests_per_contact,
     access_requests_per_domain,
     access_requests_per_ip,
     rate_limit_access_request,
+    soft_access_requests_global,
+    soft_access_requests_per_domain,
+    soft_access_requests_per_ip,
 )
 from corehq.util.global_request.api import set_request
 
@@ -112,6 +121,9 @@ def test_accepted_request_counts_toward_all_limits():
         mock.patch.object(access_requests_per_domain, 'report_usage') as per_domain,
         mock.patch.object(access_requests_per_ip, 'report_usage') as per_ip,
         mock.patch.object(access_requests_per_contact, 'report_usage') as per_contact,
+        mock.patch.object(soft_access_requests_global, 'report_usage') as soft_globally,
+        mock.patch.object(soft_access_requests_per_domain, 'report_usage') as soft_per_domain,
+        mock.patch.object(soft_access_requests_per_ip, 'report_usage') as soft_per_ip,
     ):
         rate_limit_access_request(domain, contact)
 
@@ -119,6 +131,9 @@ def test_accepted_request_counts_toward_all_limits():
     assert per_domain.call_args.args == (f'domain:{domain}',)
     assert per_ip.call_args.args == ('ip:203.0.113.7',)
     assert per_contact.call_args.args == (f'contact:{contact}',)
+    assert soft_globally.called
+    assert soft_per_domain.call_args.args == (f'domain:{domain}',)
+    assert soft_per_ip.call_args.args == ('ip:203.0.113.7',)
 
 
 @use('db', limiter_on)
@@ -130,3 +145,38 @@ def test_refused_request_does_not_count_toward_limits():
             rate_limit_access_request(_a_domain(), _a_contact())
 
     assert not per_contact.called
+
+
+@use('db', limiter_on)
+def test_refused_request_counts_toward_soft_limits():
+    with (
+        _exhausted(access_requests_global),
+        mock.patch.object(soft_access_requests_global, 'report_usage') as soft_globally,
+        mock.patch.object(soft_access_requests_per_domain, 'report_usage') as soft_per_domain,
+        mock.patch.object(soft_access_requests_per_ip, 'report_usage') as soft_per_ip,
+    ):
+        assert rate_limit_access_request(_a_domain(), _a_contact()) is True
+
+    assert soft_globally.called
+    assert soft_per_domain.called
+    assert soft_per_ip.called
+
+
+@use('db')
+def test_soft_status_is_accepted_under_soft_limits():
+    assert _check_for_exceeded_soft_rate_limits(
+        _a_domain(), '198.51.100.7') == STATUS_ACCEPTED
+
+
+@use('db')
+@pytest.mark.parametrize('limiter, status, scope', [
+    (soft_access_requests_global, STATUS_GLOBAL_RATE_LIMITED, ()),
+    (soft_access_requests_per_domain, STATUS_DOMAIN_RATE_LIMITED, ('domain:project',)),
+    (soft_access_requests_per_ip, STATUS_IP_RATE_LIMITED, ('ip:198.51.100.7',)),
+])
+def test_soft_status_names_the_soft_limit_reached(limiter, status, scope):
+    with _exhausted(limiter) as exceeded:
+        assert _check_for_exceeded_soft_rate_limits(
+            'project', '198.51.100.7') == status
+
+    assert exceeded.call_args.args == scope
