@@ -172,7 +172,7 @@
          name="discoverySource"
          data-bind="value: discoverySource"
        >
-@@ -121,21 +101,22 @@
+@@ -121,26 +101,29 @@
          <option value="Other">{% trans "Other" %}</option>
        </select>
      </div>
@@ -200,9 +200,22 @@
 +        data-bind="textInput: otherSource"
 +      />
      </div>
-     {% blocktrans %}
--      By clicking this button, you agree to Dimagi's
-+      By clicking Submit Request, you agree to Dimagi's
-       <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">Terms of Service</a> and
-       <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">Privacy Policy</a>.
-     {% endblocktrans %}
+-    <div class="checkbox">
+-      <label>
+-        <input
+-          type="checkbox"
+-          name="marketingOptIn"
+-          data-bind="checked: marketingOptIn"
+-        />
++    <div class="form-check mb-3">
++      <input
++        class="form-check-input"
++        type="checkbox"
++        id="cta-marketing-opt-in"
++        name="marketingOptIn"
++        data-bind="checked: marketingOptIn"
++      />
++      <label class="form-check-label" for="cta-marketing-opt-in">
+         {% blocktrans trimmed %}
+           Yes, I would like to receive relevant email updates from Dimagi,
+           including newsletters, product updates, webinars, podcasts and
