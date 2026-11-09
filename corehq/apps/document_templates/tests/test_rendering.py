@@ -43,9 +43,8 @@ def test_parse_variable_names(text, expected):
     ('Dear {{ first_name }}', '<p>Dear {{ first_name }}</p>'),
     ('{{ x | default("a") }}', '<p>{{ x | default("a") }}</p>'),
     ('<script>alert(1)</script>', 'alert(1)'),
-    ('<img src="https://a.test/h.png" onerror="x()">', '<p><img src="https://a.test/h.png"></p>'),
-    ('<img src="javascript:x">', '<p><img></p>'),
-    ('![h](data:image/png;base64,AAAA)', '<p><img src="data:image/png;base64,AAAA"></p>'),
+    ('<img src="https://a.test/h.png">', '<p></p>'),
+    ('![h](https://a.test/h.png)', '<p></p>'),
 ])
 def test_markdown_to_sanitized_html(value, expected):
     assert _markdown_to_sanitized_html(value) == expected

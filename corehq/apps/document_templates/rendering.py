@@ -56,8 +56,7 @@ from corehq.messaging.scheduling.const import (
 _US_LETTER_AREAS = ('header', 'address', 'body', 'footer')
 
 _css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
-_TAGS = set(ALLOWED_HTML_TAGS) | {'style'}
-_PROTOCOLS = set(bleach.sanitizer.ALLOWED_PROTOCOLS) | {'data'}
+_TAGS = (set(ALLOWED_HTML_TAGS) | {'style'}) - {'img'}  # images are not rendered in the PDF
 
 _sheet = getSampleStyleSheet()
 BODY = _sheet['BodyText']
@@ -169,14 +168,11 @@ def _markdown_to_sanitized_html(value):
         tags=_TAGS,
         attributes=_allow_attribute,
         css_sanitizer=_css_sanitizer,
-        protocols=_PROTOCOLS,
         strip=True,
     )
 
 
 def _allow_attribute(tag, name, value):
-    if tag == 'img' and name == 'src':
-        return value.startswith(('data:image/', 'http://', 'https://'))
     allowed = list(ALLOWED_HTML_ATTRIBUTES.get(tag, [])) + list(ALLOWED_HTML_ATTRIBUTES.get('*', []))
     return name in allowed
 
