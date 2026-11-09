@@ -3,8 +3,8 @@
 {% if changes %}
   <p class="lead">
     {# prettier-ignore-start #}
-    {% blocktrans count count=num_changes %}
-      One edit will be cleared.
+    {% blocktrans trimmed count count=num_changes %}
+      {{ count }} edit will be cleared.
     {% plural %}
       A total of {{ count }} edits will be cleared.
     {% endblocktrans %}

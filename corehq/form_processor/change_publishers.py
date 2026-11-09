@@ -1,5 +1,6 @@
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.document_types import LEDGER_DOC_TYPE
 from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
 
@@ -83,7 +84,7 @@ def change_meta_from_ledger_v2(ledger_ref, domain, deleted=False):
         document_id=ledger_ref.as_id(),
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.LEDGER_V2,
-        document_type=topics.LEDGER,
+        document_type=LEDGER_DOC_TYPE,
         domain=domain,
         is_deletion=deleted,
     )

@@ -157,12 +157,18 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 if settingshelper.is_testing():
     S3_BLOB_DB_SETTINGS = {
-        "url": "http://localhost:9980",
-        "access_key": "admin-key",
-        "secret_key": "admin-secret",
+        "url": "http://localhost:3900",
+        # keys created by the garage service; see docker/hq-compose.yml
+        "access_key": "GK31c2f218a2e44f485b94239e",
+        "secret_key": "b892c0665f0ada8a4755dae98baa3b133590e11dae3bcc1f9d2d1d12b6c1cb2b",
         "config": {
             "connect_timeout": 3,
             "read_timeout": 5,
+            # botocore rejects the checksum Garage returns for multipart
+            # uploads, so blobs over 8 MB can't be read back without these.
+            # https://git.deuxfleurs.fr/Deuxfleurs/garage/issues/1228
+            "request_checksum_calculation": "when_required",
+            "response_checksum_validation": "when_required",
         },
     }
 

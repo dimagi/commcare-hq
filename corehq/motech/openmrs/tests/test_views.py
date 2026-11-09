@@ -3,12 +3,16 @@ import json
 
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
+@flag_enabled('OPENMRS_INTEGRATION')
+@privilege_enabled(privileges.DATA_FORWARDING)
 class TestOpenmrsRepeaterViews(BaseViewTest):
     @classmethod
     def _create_data(cls):

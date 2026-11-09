@@ -228,5 +228,6 @@ class SqlFormReindexerFactory(ReindexerFactory):
             doc_provider,
             form_adapter,
             doc_filter=xform_pillow_filter,
+            partial=any([limit_to_db, domain]),
             **self.options
         )

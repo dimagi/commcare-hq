@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
@@ -9,7 +10,9 @@ from casexml.apps.phone.models import OTARestoreUser
 from dimagi.utils.web import get_url_base
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.public_webforms.utils import is_app_live
 from corehq.apps.users.util import PUBLIC_USER_ID
+from corehq.util.models import GetOrNoneManager
 
 
 class PublicWebformType(models.TextChoices):
@@ -27,6 +30,10 @@ class PublicWebformStatus(models.IntegerChoices):
     OPEN = (0, _("Open"))
     CLOSED = (1, _("Closed"))
     EXPIRED = (2, _("Expired"))
+
+
+class PublicWebformAppDeleted(Exception):
+    pass
 
 
 class PublicWebformQuerySet(models.QuerySet):
@@ -67,6 +74,7 @@ class PublicWebform(models.Model):
     form_unique_id = models.CharField()
     endpoint_id = models.CharField()
     session_type = models.CharField(choices=PublicWebformType)
+    direct_access = models.BooleanField(default=False)
     allow_sms = models.BooleanField()
     allow_email = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,10 +99,16 @@ class PublicWebform(models.Model):
     def is_open(self):
         return not self.is_disabled and not self.is_expired
 
+    def set_disabled(self, is_disabled):
+        if not is_disabled and not is_app_live(self.domain, self.app_id):
+            raise PublicWebformAppDeleted
+        self.is_disabled = is_disabled
+
 
 class PublicFormSession(models.Model):
 
-    DEFAULT_LIFESPAN = timedelta(hours=1)
+    DEFAULT_LIFESPAN = timedelta(hours=24)
+    REUSE_MARGIN = timedelta(hours=1)
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     session_key = models.UUIDField(default=uuid4, unique=True, db_index=True)
@@ -106,6 +120,8 @@ class PublicFormSession(models.Model):
     opened_at = models.DateTimeField(null=True)
     submitted_at = models.DateTimeField(null=True)
     xform_id = models.CharField(null=True)
+
+    objects = GetOrNoneManager()
 
     class Meta:
         indexes = [models.Index(fields=['public_webform', 'id'])]
@@ -119,11 +135,24 @@ class PublicFormSession(models.Model):
             key = UUID(str(session_key))
         except (ValueError, TypeError):
             return None
-        return cls.objects.filter(
+        return cls.objects.get_or_none(
             session_key=key,
             submitted_at__isnull=True,
             expires_at__gt=timezone.now(),
-        ).first()
+        )
+
+    @classmethod
+    def get_active_session_by_id(cls, public_webform, session_id):
+        try:
+            session_uuid = UUID(str(session_id))
+        except (ValueError, TypeError):
+            return None
+        return cls.objects.get_or_none(
+            public_webform=public_webform,
+            id=session_uuid,
+            submitted_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
 
     @classmethod
     def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
@@ -132,15 +161,20 @@ class PublicFormSession(models.Model):
         return cls.objects.filter(
             public_webform=public_webform,
             submitted_at__isnull=True,
-            expires_at__gt=timezone.now(),
+            expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
             **contact,
         ).order_by('-created_at').first()
 
     @property
     def one_time_link(self):
         """The absolute link sent to the respondent who asked for it."""
-        # TODO: implement real public link handling, at this url or otherwise
         return f'{self.public_webform.public_url}{self.id.hex}/'
+
+    @property
+    def analytics_id(self):
+        """Identifies the session to Google Analytics without revealing
+        ``id``, which opens the form through the one-time link."""
+        return hashlib.sha256(self.id.bytes).hexdigest()
 
     @property
     def session_username(self):
@@ -205,11 +239,12 @@ class PublicFormUser:
         return False
 
     def has_permission(self, domain, permission, data=None):
-        if domain != self._session.public_webform.domain:
-            return False
-        if permission == 'access_web_app':
-            return data == self._session.public_webform.app_id
-        return permission == 'access_mobile_endpoints'
+        webform = self._session.public_webform
+        return (
+            domain == webform.domain
+            and permission == 'access_web_app'
+            and data == webform.app_id
+        )
 
     def can_access_any_web_apps(self, domain=None):
         return domain == self._session.public_webform.domain

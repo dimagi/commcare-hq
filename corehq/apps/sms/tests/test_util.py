@@ -1,11 +1,23 @@
 #!/usr/bin/env python
+from decimal import Decimal
+from unittest.mock import patch
+
 from django.test import TestCase
 
+import pytest
+from unmagic import fixture, use
 
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    CreditAdjustmentReason,
+    CreditLine,
+    StripePaymentMethod,
+)
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.util import (
     ContactNotFoundException,
+    can_self_enable_messaging,
     clean_phone_number,
     get_contact,
     is_contact_active,
@@ -90,3 +102,58 @@ def test_superuser():
 def test_normal_user():
     user = CouchUser(username="michael")
     assert not is_superuser_or_contractor(user)
+
+
+@use('db')
+@fixture
+def billing_account():
+    account, __ = BillingAccount.get_or_create_account_by_domain(
+        'test-domain', created_by='admin@example.com'
+    )
+    yield account
+
+
+@use(billing_account)
+class TestCanSelfEnableMessaging:
+    couch_user = CouchUser(username='clifford')
+
+    def test_autopay(self):
+        account = billing_account()
+        account.auto_pay_user = 'admin@example.com'
+        account.save()
+        assert can_self_enable_messaging('test-domain', self.couch_user)
+
+    @pytest.mark.parametrize('amounts, expected', [
+        ([Decimal('99.99')], False),
+        ([Decimal('100')], True),
+        ([Decimal('60'), Decimal('40')], True),
+    ])
+    def test_payments(self, amounts, expected):
+        for amount in amounts:
+            CreditLine.add_credit(amount, account=billing_account())
+
+        assert can_self_enable_messaging('test-domain', self.couch_user) is expected
+
+    def test_spent_payments_count(self):
+        account = billing_account()
+        CreditLine.add_credit(Decimal('100'), account=account)
+        CreditLine.add_credit(Decimal('-100'), account=account)
+        assert can_self_enable_messaging('test-domain', self.couch_user)
+
+    def test_transfers_dont_count(self):
+        account = billing_account()
+        CreditLine.add_credit(
+            Decimal('100'),
+            account=account,
+            reason=CreditAdjustmentReason.TRANSFER,
+        )
+        assert not can_self_enable_messaging('test-domain', self.couch_user)
+
+    @pytest.mark.parametrize('cards, expected', [
+        (['card'], True),
+        ([], False),
+    ])
+    def test_saved_card(self, cards, expected):
+        StripePaymentMethod.objects.create(web_user=self.couch_user.username)
+        with patch.object(StripePaymentMethod, 'all_cards', cards):
+            assert can_self_enable_messaging('test-domain', self.couch_user) is expected

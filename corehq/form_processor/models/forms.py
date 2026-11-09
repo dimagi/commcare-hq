@@ -38,6 +38,7 @@ from corehq.util.xml_utils import safe_fromstring
 
 from ..exceptions import (
     AttachmentNotFound,
+    CannotModifyDeletedForm,
     MissingFormXml,
     XFormNotFound,
     XFormSaveError,
@@ -775,12 +776,21 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if not self.is_archived:
             type(self).objects.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
+
+    def _assert_not_deleted(self):
+        """Without this, unarchiving a soft deleted form would
+        rebuild its cases from a form no longer visible.
+        """
+        if self.is_deleted:
+            raise CannotModifyDeletedForm(self.form_id)
 
     def __str__(self):
         return (

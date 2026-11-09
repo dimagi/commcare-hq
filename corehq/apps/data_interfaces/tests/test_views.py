@@ -1,5 +1,8 @@
+import inspect
 from unittest.mock import patch
 
+import pytest
+from django.http import Http404
 from django.template.loader import render_to_string
 from django.test import RequestFactory, TestCase, override_settings
 
@@ -19,8 +22,8 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleCreateView,
     XFormManagementView,
     _job_percent,
-    _legacy_xform_management_job_poll,
     _xform_management_job_context,
+    xform_management_job_poll,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -155,7 +158,7 @@ class XFormManagementPostTests(TestCase):
 
 class XFormManagementJobPollTests(TestCase):
 
-    TEMPLATE = 'data_interfaces/partials/xform_management_status_new.html'
+    TEMPLATE = 'data_interfaces/partials/xform_management_status.html'
 
     @classmethod
     def setUpClass(cls):
@@ -221,17 +224,11 @@ class XFormManagementJobPollTests(TestCase):
         assert f'ready_{job.id.hex}' in html
         assert '2 forms processed successfully' in html
 
-    def test_legacy_poll_serves_soil_context(self):
+    def test_poll_for_legacy_soil_download_id_is_404(self):
         request = RequestFactory().get('/x', {'mode': 'archive'})
-        soil_context = {'download_id': 'dl-abc123', 'is_ready': False}
-        with patch(
-            'corehq.apps.data_interfaces.views.get_download_context',
-            return_value=soil_context,
-        ) as mock_ctx:
-            response = _legacy_xform_management_job_poll(
-                request, self.domain, 'dl-abc123', FormManagementMode('archive'))
-        mock_ctx.assert_called_once_with('dl-abc123')
-        assert response.status_code == 200
+        poll = inspect.unwrap(xform_management_job_poll)
+        with pytest.raises(Http404):
+            poll(request, self.domain, 'dl-abc123')
 
 
 class DeduplicationRuleCreateViewTests(TestCase):

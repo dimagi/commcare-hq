@@ -12,6 +12,7 @@ from .applications import (  # noqa: F401
     LinkedApplication,
     RemoteApp,
     SavedAppBuild,
+    TemplateAppSector,
     absolute_url_property,
     import_app_from_doc,
     import_app_from_id,

@@ -84,7 +84,7 @@ from .models import (
 from .util import cc_user_domain, format_username, log_user_change
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
-STRONG_PASSWORD_LEN = 12
+STRONG_PASSWORD_LEN = settings.MINIMUM_PASSWORD_LENGTH
 
 
 def get_mobile_worker_max_username_length(domain):

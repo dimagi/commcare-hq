@@ -50,27 +50,12 @@ Authorization = "ApiKey ${CCHQ_API_KEY}"
 domain = "${CCHQ_DOMAIN}"
 
 # Never test the write operations. Generated requests are real requests, and
-# they go to the project space named above. This deselects the write operations
-# but does not stop the coverage probe below, so both settings are needed.
+# they go to the project space named above.
 #
 # ONCE WRITES ARE SAFE: drop this block.
 [[operations]]
 include-method-regex = "POST|PUT|PATCH|DELETE"
 enabled = false
-
-# Do not probe each path with the methods it does not document. That probe means
-# sending, say, a DELETE at a path that only declares a GET, to see whether the
-# API answers instead of refusing.
-#
-# The probe only runs when negative data is being generated, so -m positive
-# already turns it off. This empty list keeps it off if you drop that flag. The
-# [[operations]] block will not: the probe honours only exclude rules, and
-# Schemathesis records that block as an include rule.
-#
-# ONCE WRITES ARE SAFE: restore the probe, provided every path by then documents
-# every method it accepts.
-[phases.coverage]
-unexpected-methods = []
 
 # Skip the phase that chains requests into scenarios. With writes disabled above
 # there is nothing to chain: no request creates a resource for a later one to

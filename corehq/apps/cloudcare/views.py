@@ -23,7 +23,6 @@ from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 import requests
-from langcodes import get_name
 from sentry_sdk import Scope
 from text_unidecode import unidecode
 from xml2json.lib import xml2json
@@ -45,10 +44,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_doc,
 )
-from corehq.apps.cloudcare.const import (
-    PREVIEW_APP_ENVIRONMENT,
-    WEB_APPS_ENVIRONMENT,
-)
+from corehq.apps.cloudcare.const import PREVIEW_APP_ENVIRONMENT
 from corehq.apps.cloudcare.dbaccessors import (
     get_application_access_for_domain,
     get_cloudcare_apps,
@@ -58,9 +54,11 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.models import SQLAppGroup
 from corehq.apps.cloudcare.utils import (
     can_user_access_web_app,
+    format_app_doc,
     get_latest_build_id_for_web_apps,
     get_mobile_ucr_count,
     get_web_apps_available_to_user,
+    get_web_apps_context,
     should_restrict_web_apps_usage,
 )
 from corehq.apps.domain.decorators import (
@@ -109,11 +107,11 @@ class FormplayerMain(View):
             if can_user_access_web_app(domain, user, app_id):
                 build = get_app_doc(domain, build_id)
                 if build.get('cloudcare_enabled'):
-                    return [_format_app_doc(build)]
+                    return [format_app_doc(build)]
             return []
 
         apps = get_web_apps_available_to_user(domain, user)
-        apps = [_format_app_doc(app) for app in apps]
+        apps = [format_app_doc(app) for app in apps]
         return sorted(apps, key=lambda app: app['name'].lower())
 
     @staticmethod
@@ -203,30 +201,22 @@ class FormplayerMain(View):
             except Exception:
                 return 'en'
 
-        # default language to user's preference, followed by
-        # first app's default, followed by english
-        language = request.couch_user.language or _default_lang()
-
         domain_obj = Domain.get_by_name(domain)
 
-        lang_codes = set().union(*(app.get("langs", []) for app in apps))
-        lang_code_name_mapping = {code: get_name(code) for code in lang_codes}
-
-        context = {
-            "domain": domain,
+        context = get_web_apps_context(
+            domain,
+            request.couch_user.username,
+            # default language to user's preference, followed by
+            # first app's default, followed by english
+            request.couch_user.language or _default_lang(),
+            apps,
+        )
+        context.update({
             "default_geocoder_location": domain_obj.default_geocoder_location,
-            "language": language,
-            "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
-            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
-            "username": request.couch_user.username,
-            "formplayer_url": get_formplayer_url(for_js=True),
             "home_url": reverse(self.urlname, args=[domain]),
-            "environment": WEB_APPS_ENVIRONMENT,
             "has_geocoder_privs": has_geocoder_privs(domain),
-            "valid_multimedia_extensions_map": VALID_ATTACHMENT_FILE_EXTENSION_MAP,
-            "lang_code_name_mapping": lang_code_name_mapping,
-        }
+        })
 
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -246,7 +236,7 @@ class PreviewAppView(TemplateView):
             return render(request, 'cloudcare/block_preview_app.html', context)
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
-            'app': _format_app_doc(app.to_json()),
+            'app': format_app_doc(app.to_json()),
             'formplayer_url': get_formplayer_url(for_js=True),
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
@@ -326,13 +316,6 @@ class LoginAsUsers(View):
             'location': sql_location.to_json() if sql_location else None,
         }
         return formatted_user
-
-
-def _format_app_doc(doc):
-    keys = ['_id', 'copy_of', 'langs', 'multimedia_map', 'name', 'profile', 'upstream_app_id']
-    context = {key: doc.get(key) for key in keys}
-    context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
-    return context
 
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)

@@ -35,6 +35,7 @@ UserES = users.UserES
 CaseSearchES = case_search.CaseSearchES
 CaseSearchBhaES = case_search_sub.CaseSearchBhaES
 CaseSearchCCPerfES = case_search_sub.CaseSearchCCPerfES
+CaseSearchPhillyUbrES = case_search_sub.CaseSearchPhillyUbrES
 
 app_adapter = apps.app_adapter
 case_adapter = cases.case_adapter
@@ -46,6 +47,7 @@ sms_adapter = sms.sms_adapter
 user_adapter = users.user_adapter
 case_search_bha_adapter = case_search_sub.case_search_bha_adapter
 case_search_cc_perf_adapter = case_search_sub.case_search_cc_perf_adapter
+case_search_philly_ubr_adapter = case_search_sub.case_search_philly_ubr_adapter
 
 
 @memoized
@@ -66,4 +68,5 @@ def canonical_name_adapter_map():
     if settings.ENABLE_BHA_CASE_SEARCH_ADAPTER:
         adapter_map[case_search_bha_adapter.canonical_name] = case_search_bha_adapter
         adapter_map[case_search_cc_perf_adapter.canonical_name] = case_search_cc_perf_adapter
+        adapter_map[case_search_philly_ubr_adapter.canonical_name] = case_search_philly_ubr_adapter
     return adapter_map

@@ -4,14 +4,17 @@ import pytest
 import sqlalchemy
 from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
+from psycopg2 import errorcodes
 from sqlalchemy import Table
 from unmagic import fixture, use
 
+from corehq.apps.project_db.models import PendingOperation
 from corehq.apps.project_db.table_ddl import (
     CaseTable,
     DomainSchema,
     Earth,
     create_or_update_project_db,
+    drop_project_db,
     get_domain_query_engine,
     get_project_db_engine,
     preview_drop,
@@ -77,8 +80,10 @@ def test_schema_lifecycle():
     engine = get_project_db_engine()
     schema = DomainSchema('test_schema_lifecycle')
     with engine.begin() as conn:
+        assert not schema.exists(conn)
         schema.create(conn)
         assert schema.name in sqlalchemy.inspect(conn).get_schema_names()
+        assert schema.exists(conn)
         assert _role_exists(conn, schema)
 
         schema.create(conn)  # a second sync leaves both in place
@@ -86,6 +91,7 @@ def test_schema_lifecycle():
 
         schema.drop(conn)
         assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not schema.exists(conn)
         assert not _role_exists(conn, schema)
 
         schema.drop(conn)  # dropping an absent schema and role is a no-op
@@ -166,6 +172,21 @@ def test_a_later_sync_grants_read_on_a_new_table():
     schema = DomainSchema(domain)
     with get_project_db_engine().begin() as conn:
         assert _has_table_privilege(conn, schema, 'household', 'SELECT')
+
+
+@use('db', project_db_table('projectdbtest-lock', 'patient', {'nickname': 'plain'}))
+@patch('corehq.apps.project_db.table_ddl.SCHEMA_SYNC_LOCK_TIMEOUT', '50ms')
+@patch('corehq.apps.project_db.table_ddl._get_case_types', lambda d: ['patient'])
+@patch.object(CaseTable, '_get_dd_properties', lambda s: [('dob', 'date')])
+def test_sync_times_out_behind_a_long_running_query():
+    domain = 'projectdbtest-lock'
+    table = CaseTable(domain, 'patient').reflect()
+    with get_project_db_engine().begin() as reader:
+        reader.execute(sqlalchemy.select([table.c.case_id]))  # holds ACCESS SHARE
+        with pytest.raises(sqlalchemy.exc.OperationalError) as exc_info:
+            create_or_update_project_db(domain)
+
+    assert exc_info.value.orig.pgcode == errorcodes.LOCK_NOT_AVAILABLE
 
 
 def _has_schema_privilege(conn, role, target, privilege):
@@ -348,6 +369,29 @@ def test_preview_drop_lists_tables_without_dropping():
         assert DomainSchema(domain).name in sqlalchemy.inspect(conn).get_schema_names()
 
 
+@use('db', project_db_table('test-drop-project-db', 'patient', {'first_name': 'plain'}))
+def test_drop_project_db():
+    schema = DomainSchema('test-drop-project-db')
+    drop_project_db('test-drop-project-db')
+    with get_project_db_engine().begin() as conn:
+        assert schema.name not in sqlalchemy.inspect(conn).get_schema_names()
+        assert not _role_exists(conn, schema)
+
+
+@use('db')
+def test_drop_project_db_without_schema():
+    with patch.object(DomainSchema, 'drop') as drop:
+        drop_project_db('test-drop-project-db-without-schema')
+    drop.assert_not_called()
+
+
+# DEBUG/UNIT_TESTING off so the dev/test fallback doesn't supply project_db
+@override_settings(REPORTING_DATABASES={'default': 'default'}, DEBUG=False, UNIT_TESTING=False)
+def test_drop_project_db_not_configured():
+    with patch('corehq.apps.project_db.table_ddl.connection_manager', ConnectionManager()):
+        drop_project_db('test-drop-project-db-not-configured')
+
+
 @use('db')
 @patch('corehq.apps.project_db.table_ddl._get_case_types')
 @patch.object(CaseTable, '_get_dd_properties')
@@ -363,11 +407,21 @@ def test_create_project_db(get_dd_properties, get_case_types):
         create_or_update_project_db(domain)
     _assert_db_created_as_expected(schema.name)
     assert metrics.list('commcare.project_db.schema_sync.duration', domain=domain), metrics
+    assert _pending_backfills(domain) == []  # A new table has no rows to backfill
 
-    # Drop nickname, make dob a date, add a new prop
-    get_dd_properties.return_value = [('favorite_color', 'plain'), ('dob', 'date')]
+    # Drop nickname, make dob a date, add new plain and typed props
+    get_dd_properties.return_value = [
+        ('favorite_color', 'plain'), ('dob', 'date'), ('weight', 'number')]
     create_or_update_project_db(domain)
     _assert_db_updated_as_expected(schema.name)
+    # weight's raw column is new too, so it has nothing to backfill from
+    assert _pending_backfills(domain) == [{'case_type': 'patient', 'columns': ['date_prop__dob']}]
+
+
+def _pending_backfills(domain):
+    return list(PendingOperation.objects.filter(
+        domain=domain, operation=PendingOperation.Operation.BACKFILL,
+    ).values_list('args', flat=True))
 
 
 def _assert_db_created_as_expected(schema):

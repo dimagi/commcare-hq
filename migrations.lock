@@ -145,6 +145,7 @@ accounting
  0123_subscription_skip_auto_downgrade_until
  0124_scheduled_prepayment_invoice
  0125_ai_app_translation_priv
+ 0126_domainwebuserhistory
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -195,6 +196,7 @@ app_manager
  0031_delete_latestenabledbuildprofiles
  0032_publicwebform_publicformsession
  0033_delete_publicformsession_delete_publicwebform
+ 0034_template_app_catalog
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -235,6 +237,7 @@ blobs
 builds
  0001_initial
  0002_populate_commcaremobilebuild
+ 0003_remove_commcaremobilebuild_couch_id
 campaign
  0001_initial
  0002_dashboardmap_dashboardreport
@@ -279,6 +282,9 @@ case_search
  0019_rename_target_name_casesearchendpoint_case_type
  0020_remove_casesearchendpoint_case_type_and_more
  0021_casesearchendpointversion_dangerous_sql
+ 0022_casesearchendpoint_deactivated
+ 0023_delete_inactive_endpoints
+ 0024_casesearchendpoint_upstream_id
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -360,6 +366,8 @@ data_analytics
  0012_update_domainmetrics_fields
  0013_domainmetrics_bulk_case_editing_sessions_and_more
  0014_domainmetrics_users_with_web_apps_submission_in_last_30_days_and_more
+ 0015_domainmetrics_public_webform_submissions_and_more
+ 0016_domainmetrics_questions_locked
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -427,6 +435,8 @@ data_interfaces
  0038_alter_caseduplicate_potential_duplicates
  0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
  0040_bulkasyncjob
+ 0041_clear_bulkasyncjob
+ 0042_partition_bulkasyncjob
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -456,6 +466,9 @@ django_digest
  0001_initial
 django_prbac
  0001_initial
+document_templates
+ 0001_initial
+ 0002_template_deleted
 domain
  0001_initial
  0002_auto_20171020_1428
@@ -480,6 +493,8 @@ domain
  0021_delete_smsaccountconfirmationsettings
  0022_domainauditrecordentry_cp_n_enterprise_console_exports_and_more
  0023_domainauditrecordentry_cp_n_questions_locked
+ 0024_chatbotdomainsettings
+ 0025_stop_declaring_cp_n_questions_locked
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -513,6 +528,7 @@ es
  0015_add_user_domain_memberships
  0016_add_new_index_for_cc_perf
  0017_add_is_account_confirmed
+ 0018_add_new_index_for_philly_ubr
 experiments
  0001_initial
 export
@@ -766,6 +782,7 @@ linked_domain
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
  0025_alter_domainlinkhistory_model_choices
+ 0026_domainlinkhistory_case_search_endpoint
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -922,8 +939,12 @@ preindex
  0005_initial
  0006_initial
  0007_initial
+ 0008_initial
 products
  0001_initial
+project_db
+ 0001_setup_projectdb
+ 0002_pendingoperation
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
@@ -933,6 +954,7 @@ project_limits
 public_webforms
  0001_initial
  0002_publicformsession_contact_info
+ 0003_publicwebform_direct_access
 registration
  0001_initial
  0002_alter_request_ip

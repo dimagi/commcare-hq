@@ -45,6 +45,7 @@ IGNORE_APPS = {
 IGNORE_MODELS = {
     'api.ApiUser',
     'app_manager.ExchangeApplication',
+    'app_manager.TemplateAppSector',
     'auth.Group',
     'auth.Permission',
     'builds.CommCareMobileBuild',

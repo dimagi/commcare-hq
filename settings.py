@@ -191,7 +191,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 MINIMUM_ZXCVBN_SCORE = 2
-MINIMUM_PASSWORD_LENGTH = 8
+MINIMUM_PASSWORD_LENGTH = 14
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 FORMS_URLFIELD_ASSUME_HTTPS = True
@@ -246,7 +246,19 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS = [
+    'captcha.recaptcha_test_key_error',
+    # django-oauth-toolkit RFC 9700 (OAuth 2.0 Security BCP) compliance
+    # warnings. Defaults change in 4.0, and W007/W008 become errors.
+    'oauth2_provider.W001',
+    'oauth2_provider.W002',
+    'oauth2_provider.W003',
+    'oauth2_provider.W004',
+    'oauth2_provider.W005',
+    'oauth2_provider.W006',
+    'oauth2_provider.W007',
+    'oauth2_provider.W008',
+]
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
@@ -279,6 +291,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_cleaning',
     'corehq.apps.data_pipeline_audit',
+    'corehq.apps.document_templates',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
@@ -577,6 +590,14 @@ TRANSFER_FILE_DIR_NAME = None
 GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
+
+# Redis redelivers any message not acked within visibility_timeout (default 1h),
+# so acks_late tasks running longer, and countdown/ETA tasks due later, would
+# run more than once. Keep this above both; the longest countdown today is the
+# report builder's 24h TEMP_DATA_SOURCE_LIFESPAN.
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 26 * 60 * 60,
+}
 
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
@@ -1214,12 +1235,14 @@ DATA_RETENTION_WINDOW = 90  # days
 AI_CHATBOT_ID = None
 AI_CHATBOT_TOKEN = None
 OCS_API_KEY = None
+OCS_OAUTH_CLIENT_ID = None
+OCS_OAUTH_CLIENT_SECRET = None
 
 # Platform-wide defaults for AI app translations, used where no
 # AITranslationConfig row overrides them. Override in localsettings.py.
 AI_TRANSLATION_DEFAULTS = {
     'provider': 'openai',
-    'model': 'gpt-4.1',
+    # 'model' defaults to the provider's default model
     'monthly_word_limit': 1_000_000,
 }
 
@@ -2085,10 +2108,10 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 
-    'epic-integration-test': 'custom.mgh_epic',
-    'sudcare-dev': 'custom.mgh_epic',
     # Temporarily disabled SUDCare integration (paused 2025-06-13)
-    #'sudcare': 'custom.mgh_epic',
+    # 'epic-integration-test': 'custom.mgh_epic',
+    # 'sudcare-dev': 'custom.mgh_epic',
+    # 'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

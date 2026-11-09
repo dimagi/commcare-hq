@@ -14,30 +14,35 @@ class ModelClassField(CharField):
         kwargs.setdefault('max_length', 128)
         super().__init__(*args, **kwargs)
 
-    @property
-    def _slug_by_model(self):
+    @classmethod
+    def slug_for(cls, model_class):
+        """The db value for ``model_class``, e.g. 'xform'"""
+        return cls._slug_by_model()[model_class]
+
+    @classmethod
+    def _slug_by_model(cls):
         from corehq.form_processor.models import CommCareCase, XFormInstance
 
         return {CommCareCase: 'case', XFormInstance: 'xform'}
 
-    @property
-    def _model_by_slug(self):
-        return {v: k for k, v in self._slug_by_model.items()}
+    @classmethod
+    def _model_by_slug(cls):
+        return {v: k for k, v in cls._slug_by_model().items()}
 
     def from_db_value(self, value, expression, connection):
         if value is None:
             return value
-        return self._model_by_slug[value]
+        return self._model_by_slug()[value]
 
     def to_python(self, value):
-        if value is None or value in self._slug_by_model:
+        if value is None or value in self._slug_by_model():
             return value
-        return self._model_by_slug[value]
+        return self._model_by_slug()[value]
 
     def get_prep_value(self, value):
         if value is None or isinstance(value, str):
             return value
-        return self._slug_by_model[value]
+        return self.slug_for(value)
 
     def pre_save(self, model_instance, add):
         # Override pre_save to ensure the slug value is returned, which is

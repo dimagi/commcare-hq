@@ -1,5 +1,5 @@
 import DOMPurify from "dompurify";
-import markdowner from "markdown-it/dist/markdown-it";
+import markdowner from "markdown-it";
 import toggles from "hqwebapp/js/toggles";
 
 

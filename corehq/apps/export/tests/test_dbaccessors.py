@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import pytest
 from couchdbkit import ResourceNotFound
+from django.http import Http404
 from django.test import TestCase
 
 from corehq.apps.export.dbaccessors import (
@@ -15,11 +16,12 @@ from corehq.apps.export.dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_deid_export_count,
     get_export_count_by_domain,
+    get_export_instance_in_domain,
+    get_export_instance_or_404,
     get_form_exports_by_domain,
     get_form_inferred_schema,
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_properly_wrapped_export_instance,
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -204,12 +206,26 @@ class TestExportInstanceDBAccessors(TestCase):
             {self.form_instance_daily_saved._id}
         )
 
-    def test_get_properly_wrapped_export_instance(self):
-        instance = get_properly_wrapped_export_instance(self.form_instance_daily_saved._id)
-        self.assertEqual(type(instance), type(self.form_instance_daily_saved))
+    def test_get_export_instance_in_domain(self):
+        instance = get_export_instance_in_domain(self.domain, self.form_instance._id)
+        assert instance._id == self.form_instance._id
+        assert type(instance) is FormExportInstance
 
-        instance = get_properly_wrapped_export_instance(self.case_instance._id)
-        self.assertEqual(type(instance), type(self.case_instance))
+    def test_get_export_instance_in_domain_other_domain(self):
+        with pytest.raises(ResourceNotFound):
+            get_export_instance_in_domain(self.domain, self.form_instance_wrong._id)
+
+    def test_get_export_instance_in_domain_missing(self):
+        with pytest.raises(ResourceNotFound):
+            get_export_instance_in_domain(self.domain, 'does-not-exist')
+
+    def test_get_export_instance_or_404_other_domain(self):
+        with pytest.raises(Http404):
+            get_export_instance_or_404(self.domain, self.form_instance_wrong._id)
+
+    def test_get_export_instance_or_404_missing(self):
+        with pytest.raises(Http404):
+            get_export_instance_or_404(self.domain, 'does-not-exist')
 
     def test_get_brief_exports(self):
         stubs = get_brief_exports(self.domain, form_or_case='form')

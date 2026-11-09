@@ -31,11 +31,11 @@ from corehq.apps.case_search.endpoint_capability import (
     FIELD_TYPE_DATETIME,
     FIELD_TYPE_GEOPOINT,
     FIELD_TYPE_NUMBER,
-    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     ParameterInput,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
 )
@@ -76,13 +76,17 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
-from corehq.apps.project_db.user_sql import UserSQL
+from corehq.apps.project_db.user_sql import (
+    UserSQL,
+    UserSQLProgrammingError,
+    UserSQLTimeout,
+)
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.util.metrics import metrics_histogram_timer
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import serialize
 
@@ -186,15 +190,39 @@ def _get_project_db_endpoint(domain, config):
 
 def get_project_db_fixture(domain, endpoint, config):
     """Run a ``project_db`` endpoint's query and return the results as XML"""
-    user_sql = UserSQL(domain, endpoint.current_version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
-    all_params = {c.key: c.value for c in config.criteria}
+    version = endpoint.current_version
+    parameters, errors = parse_parameter_spec(version.parameters)
+    if errors:
+        # The spec is validated when the endpoint is saved, so this is a bug
+        # or a hand-edited record rather than anything the searcher did.
+        notify_exception(None, "Stored endpoint parameters failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(
+            _("Endpoint '{}' parameters are invalid").format(config.endpoint_id))
+    user_sql = UserSQL(domain, version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
+    query_params = bind_values(parameters, config.criteria)
+    result = _run_endpoint_query(domain, endpoint, user_sql, query_params)
+    return _rows_to_fixture(result.rows)
+
+
+def _run_endpoint_query(domain, endpoint, user_sql, query_params):
+    tags = {'domain': domain, 'endpoint_id': str(endpoint.id)}
     with metrics_histogram_timer(
         'commcare.project_db.endpoint_query.duration',
         timing_buckets=(.1, .5, 1, 2, 5, 10),
-        tags={'domain': domain, 'endpoint_id': str(endpoint.id)},
+        tags=tags,
     ):
-        result = user_sql.run(all_params)
-    return _rows_to_fixture(result.rows)
+        try:
+            return user_sql.run(query_params)
+        except UserSQLTimeout as e:
+            metrics_counter('commcare.project_db.endpoint_query.timeout', tags=tags)
+            raise CaseSearchUserError(_("Endpoint '{}' query timed out").format(endpoint.id)) from e
+        except UserSQLProgrammingError as e:
+            notify_exception(None, "ProjectDB endpoint query failed", details={
+                'endpoint': endpoint.id, 'error': e.msg,
+            })
+            raise CaseSearchUserError(_("Endpoint '{}' query failed").format(endpoint.id)) from e
 
 
 def _rows_to_fixture(rows):
@@ -562,13 +590,6 @@ class CaseSearchEndpointQueryBuilder:
                 return filters.NOT(case_property_query(field, value))
             elif operator in ('lt', 'gt', 'lte', 'gte'):
                 return case_property_numeric_range(field, **{operator: value})
-        elif node.field_type == FIELD_TYPE_SELECT:
-            if operator == 'selected_any':
-                return case_property_query(field, value, multivalue_mode='or')
-            elif operator == 'selected_all':
-                return case_property_query(field, value, multivalue_mode='and')
-            elif operator == 'is_empty':
-                return case_property_missing(field)
         else:
             if operator == 'equals':
                 return case_property_query(field, value)

@@ -1,9 +1,5 @@
 {% load i18n %}
-<div
-  x-data="formChoices({
-      apps: {{ form_choices }} || [],
-  })"
->
+<div x-data="formChoices({{ form_choices }})">
   <div class="row mb-3">
     <label class="field-label" for="id_application"
       >{% trans "Application" %}<span class="asteriskField">*</span></label
@@ -11,16 +7,17 @@
     <div class="field-control">
       <select
         id="id_application"
-        name="app_id"
         class="form-select"
+        name="app_id"
         required
-        x-model="appId"
-        @change="menuId = ''; formId = ''"
+        x-select2
+        @select2change="appId = $event.detail; menuId = ''; formId = ''"
       >
         <option value="">{% trans "Select Application" %}</option>
         <template x-for="app in apps" :key="app.id">
           <option
             :value="app.id"
+            :selected="app.id === appId"
             x-text="`${app.name} (v${app.version})`"
           ></option>
         </template>
@@ -35,15 +32,20 @@
       <select
         id="id_public_webform_menu"
         class="form-select"
+        name="menu_id"
         required
         disabled
-        x-model="menuId"
+        x-select2
         :disabled="!appId"
-        @change="formId = ''"
+        @select2change="menuId = $event.detail; formId = ''"
       >
         <option value="">{% trans "Select Menu" %}</option>
         <template x-for="menu in menus" :key="menu.id">
-          <option :value="menu.id" x-text="menu.name"></option>
+          <option
+            :value="menu.id"
+            :selected="menu.id === menuId"
+            x-text="menu.name"
+          ></option>
         </template>
       </select>
     </div>
@@ -55,16 +57,21 @@
     <div class="field-control">
       <select
         id="id_form"
-        name="form_unique_id"
         class="form-select"
+        name="form_unique_id"
         required
         disabled
-        x-model="formId"
+        x-select2
         :disabled="!menuId"
+        @select2change="formId = $event.detail"
       >
         <option value="">{% trans "Select Form" %}</option>
         <template x-for="form in forms" :key="form.id">
-          <option :value="form.id" x-text="form.name"></option>
+          <option
+            :value="form.id"
+            :selected="form.id === formId"
+            x-text="form.name"
+          ></option>
         </template>
       </select>
       <div class="form-text">

@@ -5,6 +5,7 @@ from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
+from corehq.apps.public_webforms.utils import get_live_app_ids
 
 
 def get_public_webform_form_paths(domain, webforms):
@@ -16,7 +17,8 @@ def get_public_webform_form_paths(domain, webforms):
     """
     webforms = list(webforms)
     builds = _get_apps(domain, {webform.app_build_id for webform in webforms})
-    apps = _get_apps(domain, {webform.app_id for webform in webforms})
+    app_ids = {webform.app_id for webform in webforms}
+    apps = _get_apps(domain, app_ids & get_live_app_ids(domain))
     return {
         webform.id: _form_path(webform, apps, builds, domain)
         for webform in webforms
@@ -29,6 +31,7 @@ def _form_path(webform, apps, builds, domain):
         'app_name': _app_name(webform, apps, builds),
         'app_url': _app_url(webform, apps, domain),
         'app_version': _app_version(webform, builds),
+        'is_app_deleted': webform.app_id not in apps,
         'menu_name': menu_name,
         'form_name': form_name,
     }

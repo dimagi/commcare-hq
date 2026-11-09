@@ -26,8 +26,8 @@ def test_language_name(code, name):
 def test_get_llm_translator_returns_openai():
     translator = get_llm_translator('hin', translation_format=None, api_key='sk-test')
     assert isinstance(translator, OpenaiTranslator)
-    assert translator.model == 'gpt-4.1'
-    assert translator.backup_model == 'gpt-4o'
+    assert translator.model == 'gpt-6-luna'
+    assert translator.backup_model == 'gpt-5.6-luna'
 
 
 @override_settings(AI_TRANSLATION_API_KEYS={'openai': 'sk-from-settings'})
@@ -66,6 +66,11 @@ def test_translate_string_calls_translator():
         assert translate_string("Hello", "hin") == "नमस्ते"
     factory.assert_called_once()
     fake_translator.translate.assert_called_once_with("Hello")
+
+
+def test_base_prompt_asks_for_unescaped_characters():
+    translator = get_llm_translator('por', translation_format=None, api_key='sk-test')
+    assert "never as \\u escape sequences" in translator.base_prompt()
 
 
 def test_openai_payload_uses_json_schema_mode():

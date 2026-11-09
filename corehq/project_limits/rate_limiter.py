@@ -138,7 +138,7 @@ def get_n_users_in_domain(domain):
     from corehq.apps.accounting.models import Subscription
     total = CommCareUser.total_by_domain(domain, is_active=True)
     subscription = Subscription.get_active_subscription_by_domain(domain)
-    if subscription and subscription.account.bill_web_user:
+    if subscription and subscription.plan_version.has_web_user_feature:
         total += WebUser.total_by_domain(domain, is_active=True)
     return total
 

@@ -1,9 +1,13 @@
 import json
 
 from unittest.mock import patch
+
+import pytest
+from tastypie.bundle import Bundle
 from testil import Regex
 
 from corehq.apps.api.resources import v0_4
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from .utils import APIResourceTest
@@ -116,3 +120,13 @@ class TestAppResource(APIResourceTest):
                 }
             ],
         }
+
+
+@pytest.mark.parametrize('copy_of, expected', [
+    (None, None),
+    ('abc123', 'abc123'),
+    ('abc123__public_webform', 'abc123'),
+], ids=['app', 'build', 'public-webform-build'])
+def test_built_from_app_id(copy_of, expected):
+    bundle = Bundle(obj=Application(_id='def456', copy_of=copy_of))
+    assert v0_4.ApplicationResource.dehydrate_built_from_app_id(bundle) == expected

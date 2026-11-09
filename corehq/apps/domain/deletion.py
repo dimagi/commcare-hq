@@ -15,6 +15,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.es import CaseES, CaseSearchES, FormES
+from corehq.apps.project_db.table_ddl import drop_project_db
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -518,8 +519,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
                   extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    ModelDeletion('project_db', 'PendingOperation', 'domain'),
+    CustomDeletion('project_db', drop_project_db, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
+    ModelDeletion('domain', 'ChatbotDomainSettings', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
@@ -529,6 +533,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'DashboardReport',
         'DashboardGauge'
     ]),
+    ModelDeletion('document_templates', 'Template', 'domain'),
 ]
 
 

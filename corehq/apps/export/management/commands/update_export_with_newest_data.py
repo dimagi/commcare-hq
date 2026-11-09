@@ -12,8 +12,10 @@ from django.core.management.base import BaseCommand, CommandError
 
 from dimagi.utils.parsing import string_to_utc_datetime
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.export.const import FORM_EXPORT
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_in_domain
 from corehq.apps.export.export import get_export_size
 from corehq.apps.export.filters import NOT, TermFilter
 from corehq.apps.export.forms import FormExportFilterBuilder
@@ -32,6 +34,7 @@ class Command(BaseCommand):
     help = "Rebuild a saved export using multiple processes"
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument('export_id')
         parser.add_argument('-d', '--download_path', help="Path to download export to.")
         parser.add_argument(
@@ -42,8 +45,11 @@ class Command(BaseCommand):
             help='Number of parallel processes to run.'
         )
 
-    def handle(self, export_id, **options):
-        export_instance = get_properly_wrapped_export_instance(export_id)
+    def handle(self, domain, export_id, **options):
+        try:
+            export_instance = get_export_instance_in_domain(domain, export_id)
+        except ResourceNotFound:
+            raise CommandError(f"Export {export_id} not found in domain {domain}")
 
         if export_instance.type != FORM_EXPORT:
             raise CommandError("Unsupported export type: %s" % export_instance.type)

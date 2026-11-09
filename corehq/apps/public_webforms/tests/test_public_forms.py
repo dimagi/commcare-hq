@@ -1,5 +1,6 @@
 import pytest
 from unmagic import use
+from unittest.mock import patch
 
 from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.public.forms import (
@@ -11,9 +12,13 @@ from corehq.apps.public_webforms.tests.utils import (
 )
 
 
-def _form(allow_email=True, allow_sms=True, data=None):
+def _form(allow_email=True, allow_sms=True, project_can_send_sms=True, data=None):
     webform = PublicWebform(allow_email=allow_email, allow_sms=allow_sms)
-    return PublicWebformLinkRequestForm(webform, data)
+    with patch(
+        'corehq.apps.public_webforms.public.forms.domain_can_send_sms',
+        return_value=project_can_send_sms,
+    ):
+        return PublicWebformLinkRequestForm(webform, data)
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected', [
@@ -28,6 +33,13 @@ def test_delivery_offers_only_the_channels_the_webform_allows(
 
     choices = form.fields['delivery'].choices
     assert [choice[0] for choice in choices] == expected
+
+
+def test_sms_is_not_offered_when_the_project_cannot_send_sms():
+    form = _form(allow_email=True, allow_sms=True, project_can_send_sms=False)
+
+    choices = form.fields['delivery'].choices
+    assert [choice[0] for choice in choices] == ['email']
 
 
 @pytest.mark.parametrize('allow_email, allow_sms, expected', [
@@ -128,8 +140,9 @@ def test_a_session_records_contact_info(
     data, email, phone_number
 ):
     webform = create_webform(allow_sms=True)
-    form = PublicWebformLinkRequestForm(webform, data)
-    assert form.is_valid(), form.errors
+    with patch('corehq.apps.public_webforms.public.forms.domain_can_send_sms', return_value=True):
+        form = PublicWebformLinkRequestForm(webform, data)
+        assert form.is_valid(), form.errors
 
     session = form.get_or_create_session()
 

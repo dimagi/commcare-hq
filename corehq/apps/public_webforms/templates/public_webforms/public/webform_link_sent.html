@@ -5,13 +5,24 @@
 
 {% block page_content %}
   <div class="lead">
-    {% blocktrans %}
-      We sent a link using the contact information you provided.
-    {% endblocktrans %}
+    {% if masked_phone_number %}
+      {% blocktrans %}
+        We texted a link to {{ masked_phone_number }}.
+      {% endblocktrans %}
+    {% elif masked_email %}
+      {% blocktrans %}
+        We emailed a link to {{ masked_email }}.
+      {% endblocktrans %}
+    {% else %}
+      {% blocktrans %}
+        We sent a link using the contact information you provided.
+      {% endblocktrans %}
+    {% endif %}
   </div>
   <p class="mt-4">
     {% blocktrans %}
-      The link expires in {{ link_lifespan }} and only works once.
+      The link expires {{ link_lifespan }} after it was created and only works
+      once.
     {% endblocktrans %}
   </p>
   {% if request_url %}

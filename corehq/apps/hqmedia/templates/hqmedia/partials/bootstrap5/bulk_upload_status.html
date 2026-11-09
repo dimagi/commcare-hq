@@ -12,8 +12,8 @@
 
   {% if matched_files %}
     <div class="alert alert-success">
-      {% blocktrans count matched_count=matched_count %}
-        One match found.
+      {% blocktrans trimmed count matched_count=matched_count %}
+        {{ matched_count }} match found.
       {% plural %}
         {{ matched_count }} matches found.
       {% endblocktrans %}

@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from corehq.apps.hqwebapp.fields import TurnstileField
 from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.public_webforms.rate_limiter import rate_limit_link_request
+from corehq.apps.sms.util import domain_can_send_sms
 
 
 class PublicWebformLinkRequestForm(forms.Form):
@@ -45,11 +46,15 @@ class PublicWebformLinkRequestForm(forms.Form):
         delivery_choices = []
         if webform.allow_email:
             delivery_choices.append(('email', _("Email")))
-        if webform.allow_sms:
+        if webform.allow_sms and domain_can_send_sms(webform.domain):
             delivery_choices.append(('sms', _("Text Message")))
 
         self.fields['delivery'].choices = delivery_choices
         self.fields['delivery'].initial = delivery_choices[0][0] if delivery_choices else None
+
+    @property
+    def can_deliver(self):
+        return bool(self.fields['delivery'].choices)
 
     @property
     def can_choose_delivery(self):
@@ -62,12 +67,14 @@ class PublicWebformLinkRequestForm(forms.Form):
         # switching between them can't leave a stale value behind
         if delivery == 'email':
             cleaned_data['phone_number'] = ''
-            if not cleaned_data.get('email'):
+            if not cleaned_data.get('email') and not self.has_error('email'):
                 self.add_error('email', _("Enter the email address to send your link to."))
         elif delivery == 'sms':
             cleaned_data['email'] = ''
-            cleaned_data['phone_number'] = self._clean_phone_number(
-                cleaned_data.get('phone_number'))
+            if not self.has_error('phone_number'):
+                cleaned_data['phone_number'] = self._clean_phone_number(
+                    cleaned_data.get('phone_number')
+                )
 
         contact = cleaned_data.get('email') or cleaned_data.get('phone_number')
         if contact and rate_limit_link_request(self.webform.domain, contact):

@@ -1,14 +1,17 @@
 from copy import deepcopy
 import json
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_disabled, flag_enabled, privilege_enabled
 from corehq.motech.dhis2.tests.data.repeater import dhis2_repeater_data, dhis2_entity_repeater_data
 
 from ..views import DataSetMapUpdateView
@@ -187,6 +190,8 @@ class TestDataSetMapUpdateView(BaseViewTest):
         return super().tearDownClass()
 
 
+@flag_enabled('DHIS2_INTEGRATION')
+@privilege_enabled(privileges.DATA_FORWARDING)
 class TestConfigDhis2RepeaterView(BaseViewTest):
 
     @classmethod
@@ -250,6 +255,8 @@ class TestConfigDhis2RepeaterView(BaseViewTest):
         self.assertEqual(unchanged_repeater.dhis2_config, self.dhis2_repeater.dhis2_config)
 
 
+@flag_enabled('DHIS2_INTEGRATION')
+@privilege_enabled(privileges.DATA_FORWARDING)
 class TestConfigDhis2EntityRepeaterView(BaseViewTest):
 
     @classmethod
@@ -292,3 +299,117 @@ class TestConfigDhis2EntityRepeaterView(BaseViewTest):
         # restore the state
         updated_repeater.dhis2_config = dhis2_repeater_data['dhis2_config']
         updated_repeater.save()
+
+
+@flag_enabled('DHIS2_INTEGRATION')
+class TestSendDatasetNowView(TestCase):
+    domain = 'send-dataset-now'
+    other_domain = 'send-dataset-now-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for domain in (cls.domain, cls.other_domain):
+            domain_obj = create_domain(domain)
+            cls.addClassCleanup(domain_obj.delete)
+        cls.no_perms_user = cls._create_user(
+            'no-perms@example.com',
+            HqPermissions(),
+        )
+        cls.motech_user = cls._create_user(
+            'motech-editor@example.com',
+            HqPermissions(edit_motech=True),
+        )
+        cls.dataset_map = cls._create_dataset_map(cls.domain)
+        cls.other_dataset_map = cls._create_dataset_map(cls.other_domain)
+
+    @classmethod
+    def _create_user(cls, username, permissions):
+        role = UserRole.create(cls.domain, username, permissions=permissions)
+        user = WebUser.create(
+            cls.domain, username, PASSWORD,
+            created_by=None, created_via=None, role_id=role.get_id,
+        )
+        cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
+        return user
+
+    @classmethod
+    def _create_dataset_map(cls, domain):
+        conn = ConnectionSettings.objects.create(
+            domain=domain,
+            name='motech_conn',
+            url='https://dhis2.example.com/',
+        )
+        return SQLDataSetMap.objects.create(
+            domain=domain,
+            connection_settings=conn,
+            day_to_send=1,
+            ucr_id='1234',
+        )
+
+    def _post(self, username, pk):
+        self.client.login(username=username, password=PASSWORD)
+        url = reverse('send_dataset_now', args=[self.domain, pk])
+        with patch('corehq.motech.dhis2.views.send_dataset') as send_dataset:
+            send_dataset.return_value = {'success': True, 'status_code': 200}
+            response = self.client.post(url)
+        return response, send_dataset
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_sends_dataset(self):
+        response, send_dataset = self._post(
+            'motech-editor@example.com',
+            self.dataset_map.pk,
+        )
+        assert response.status_code == 200
+        assert send_dataset.call_args.args[0] == self.dataset_map
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_user_without_permission_is_denied(self):
+        response, send_dataset = self._post(
+            'no-perms@example.com',
+            self.dataset_map.pk,
+        )
+        assert response.status_code == 403
+        send_dataset.assert_not_called()
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    @flag_disabled('DHIS2_INTEGRATION')
+    def test_feature_flag_required(self):
+        response, send_dataset = self._post(
+            'motech-editor@example.com',
+            self.dataset_map.pk,
+        )
+        assert response.status_code == 404
+        send_dataset.assert_not_called()
+
+    def test_data_forwarding_privilege_required(self):
+        # Not decorated with privilege_enabled, and the test domain's
+        # default plan does not include Data Forwarding
+        response, send_dataset = self._post(
+            'motech-editor@example.com',
+            self.dataset_map.pk,
+        )
+        self.assertTemplateUsed(
+            response,
+            'domain/bootstrap3/insufficient_privilege_notification.html',
+        )
+        send_dataset.assert_not_called()
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_dataset_map_of_other_domain_is_not_found(self):
+        response, send_dataset = self._post(
+            'motech-editor@example.com',
+            self.other_dataset_map.pk,
+        )
+        assert response.status_code == 404
+        send_dataset.assert_not_called()
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_missing_dataset_map_is_not_found(self):
+        response, send_dataset = self._post(
+            'motech-editor@example.com',
+            999999999,
+        )
+        assert response.status_code == 404
+        send_dataset.assert_not_called()

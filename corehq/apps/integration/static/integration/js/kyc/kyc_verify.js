@@ -27,7 +27,8 @@ $(document).on('htmx:afterRequest', function (event) {
             handler.selectedIds = [];
             updateVerifyButton([]);
         } else if (method === 'post') {
-            const endpoint = requestPath + window.location.search;
+            // requestPath carries the _hq-hx-action query param of the POST, which must not leak into the GET
+            const endpoint = new URL(requestPath, window.location.origin).pathname + window.location.search;
             // The timeout is to allow the verification request enough time to update the affected cases in ES before
             // doing a refresh
             setTimeout(() => {

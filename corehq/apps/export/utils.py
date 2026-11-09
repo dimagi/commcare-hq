@@ -1,11 +1,14 @@
 from django.http import Http404
 
-from couchdbkit import ResourceNotFound
-
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.export.const import (
-    DEID_DATE_TRANSFORM, DEID_ID_TRANSFORM,
+    CASE_EXPORT,
+    DEID_DATE_TRANSFORM,
+    DEID_ID_TRANSFORM,
+    FORM_EXPORT,
+    SMS_EXPORT,
 )
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
 from corehq.privileges import DAILY_SAVED_EXPORT, DEFAULT_EXPORT_SETTINGS, EXCEL_DASHBOARD
 from corehq.toggles import MESSAGE_LOG_METADATA
 
@@ -30,22 +33,15 @@ def domain_has_daily_saved_export_access(domain):
 
 def get_export(export_type, domain, export_id=None, username=None):
     from corehq.apps.export.models import (
-        FormExportInstance,
-        CaseExportInstance,
         SMSExportInstance,
         SMSExportDataSchema
     )
-    if export_type == 'form':
-        try:
-            return FormExportInstance.get(export_id)
-        except ResourceNotFound:
+    if export_type in (FORM_EXPORT, CASE_EXPORT):
+        export = get_export_instance_or_404(domain, export_id)
+        if export.type != export_type:
             raise Http404()
-    elif export_type == 'case':
-        try:
-            return CaseExportInstance.get(export_id)
-        except ResourceNotFound:
-            raise Http404()
-    elif export_type == 'sms':
+        return export
+    elif export_type == SMS_EXPORT:
         if not username:
             raise Exception("Username needed to ensure permissions")
         include_metadata = MESSAGE_LOG_METADATA.enabled(username)

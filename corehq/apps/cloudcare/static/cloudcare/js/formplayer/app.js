@@ -6,7 +6,7 @@ import ko from "knockout";
 import _ from "underscore";
 import Backbone from "backbone";
 import Marionette from "backbone.marionette";
-import markdowner from "markdown-it/dist/markdown-it";
+import markdowner from "markdown-it";
 import {Modal} from "bootstrap5";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import GGAnalytics from "analytix/js/google";
@@ -73,6 +73,9 @@ FormplayerFrontend.confirmUserWantsToNavigateAwayFromForm = function () {
 };
 
 FormplayerFrontend.showRestoreAs = function (user) {
+    if (user.displayOptions.publicFormMode) {
+        return;
+    }
     import("cloudcare/js/formplayer/users/views").then(function (UsersViews) {
         FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
             UsersViews.default.RestoreAsBanner({model: user, smallScreen: false}));
@@ -206,6 +209,11 @@ FormplayerFrontend.on('startForm', function (data) {
     gtx.logStartForm(data.title);
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
+            if (user.displayOptions.publicFormMode) {
+                FormplayerFrontend.trigger('clearForm');
+                window.location.href = initialPageData.get('submitted_url');
+                return;
+            }
             var $alert;
             if (resp.submitResponseMessage) {
                 var analyticsLinks = [
@@ -425,6 +433,11 @@ FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
 });
 
 FormplayerFrontend.on('navigation:back', function () {
+    if (UsersModels.getCurrentUser().displayOptions.publicFormMode) {
+        // a one-time link has nothing behind it: leaving the page would strand
+        // the respondent outside a link they cannot reopen
+        return;
+    }
     var url = Backbone.history.getFragment();
     if (url.includes('single_app')) {
         return;
@@ -434,7 +447,7 @@ FormplayerFrontend.on('navigation:back', function () {
         if (_.has(options, "endpointId")) {
             return;
         }
-    } catch (e) {
+    } catch {
         // do nothing
     }
     window.history.back();

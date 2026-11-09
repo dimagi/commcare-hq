@@ -1,7 +1,8 @@
 import json
+from datetime import datetime
 
 from django import forms
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -14,13 +15,18 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from corehq import toggles
 from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATERANGE,
+    FIELD_TYPE_SELECT,
     get_capability,
 )
 from corehq.apps.case_search.endpoint_query_spec import (
     MAX_QUERY_DEPTH,
+    bind_values,
     parse_parameter_spec,
     parse_query_spec,
+    validate_parameters_match_placeholders,
 )
+from corehq.apps.case_search.exceptions import CaseFilterError, CaseSearchUserError
 from corehq.apps.case_search.models import (
     CaseSearchEndpoint,
     CaseSearchEndpointVersion,
@@ -49,11 +55,29 @@ _ADMIN_ENDPOINT_DECORATORS = [
 PROJECT_DB_UNAVAILABLE = 'The project database is unavailable. Please try again.'
 
 
-def _bind_parameters(parameters, values):
-    """Take from ``values`` what the query's ``parameters`` need.
-    A missing or blank value binds as NULL
+def _tester_criteria(parameters, values):
+    """The query tester's inputs as the criteria an endpoint request carries.
+
+    A date range's bounds arrive as ``<name>_from``/``<name>_to``, and a
+    select parameter as comma-separated text. The tester has an input for
+    every parameter, so one left blank was not filled in rather than
+    purposefully searched for, and is left out.
     """
-    return {name: values.get(name) or None for name in parameters}
+    def raw(key):
+        return str(values.get(key) or '').strip()
+
+    request = {}
+    for param in parameters:
+        if param.type == FIELD_TYPE_DATERANGE:
+            start, end = raw(f'{param.name}_from'), raw(f'{param.name}_to')
+            value = f'__range__{start}__{end}' if start or end else ''
+        elif param.type == FIELD_TYPE_SELECT:
+            value = [v.strip() for v in raw(param.name).split(',') if v.strip()]
+        else:
+            value = raw(param.name)
+        if value:
+            request[param.name] = value
+    return criteria_dict_to_criteria_list(request)
 
 
 def empty_query():
@@ -95,7 +119,7 @@ def _add_endpoint_version(endpoint, *, action, created_by, case_type=None, query
 class TargetTypeMixin:
     @cached_property
     def allowed_target_types(self):
-        target_types = [CaseSearchEndpoint.TargetType.ELASTICSEARCH]
+        target_types = []
         if toggles.PROJECT_DB.enabled(self.domain):
             target_types.append(CaseSearchEndpoint.TargetType.PROJECT_DB)
         return target_types
@@ -153,7 +177,7 @@ class CaseSearchEndpointForm(forms.Form):
         elif self.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
             cleaned['case_type'] = None
             cleaned['query'] = None
-            self._clean_sql(cleaned)
+            self._clean_sql(cleaned, parameters)
 
         return cleaned
 
@@ -177,12 +201,14 @@ class CaseSearchEndpointForm(forms.Form):
             for error in errors:
                 self.add_error('query', error)
 
-    def _clean_sql(self, cleaned):
+    def _clean_sql(self, cleaned, parameters):
         sql = (cleaned.get('sql') or '').strip()
+        user_sql = UserSQL(self.domain, sql, max_rows=None)
         try:
-            UserSQL(self.domain, sql, max_rows=None).validate()
+            user_sql.validate()
         except UnsupportedSQL as error:
             self.add_error('sql', str(error.msg))
+            return
         except (ImproperlyConfigured, SQLAlchemyError) as error:
             # Not the author's fault, so report it against the form rather
             # than the field, and let them keep what they wrote.
@@ -190,6 +216,11 @@ class CaseSearchEndpointForm(forms.Form):
                 None, f'project_db unavailable for {self.domain}: {error}'
             )
             self.add_error(None, PROJECT_DB_UNAVAILABLE)
+            return
+        # A spec with errors of its own has already been reported
+        if parameters is not None:
+            for error in validate_parameters_match_placeholders(parameters, user_sql.parameters):
+                self.add_error('sql', error)
 
 
 @method_decorator(_ADMIN_ENDPOINT_DECORATORS, name='dispatch')
@@ -325,6 +356,8 @@ class CaseSearchEndpointEditView(CaseSearchEndpointEditBaseView):
         self._endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if self._endpoint is None:
             return not_found(request)
+        if self._endpoint.upstream_id:
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     @property
@@ -396,14 +429,10 @@ class CaseSearchEndpointDeactivateView(BaseDomainView):
         endpoint = _get_endpoint(self.domain, kwargs['endpoint_id'])
         if endpoint is None:
             return not_found(request)
-        with transaction.atomic():
-            endpoint.is_active = False
-            _add_endpoint_version(
-                endpoint,
-                action=CaseSearchEndpointVersion.Action.DEACTIVATE,
-                created_by=request.couch_user.username,
-                extra_update_fields=['is_active'],
-            )
+        endpoint.is_active = False
+        endpoint.deactivated_on = datetime.utcnow()
+        endpoint.deactivated_by = request.couch_user.username
+        endpoint.save(update_fields=['is_active', 'deactivated_on', 'deactivated_by'])
         return redirect(
             reverse(CaseSearchEndpointsView.urlname, args=[self.domain])
         )
@@ -452,12 +481,16 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
                 request, validation={self.PARAMETER_ERRORS: errors})
         validation = {self.PARAMETER_ERRORS: [], self.QUERY_ERRORS: [],
                       self.SQL_ERRORS: []}
+        try:
+            criteria = _tester_criteria(parameters, test_param_values)
+        except CaseFilterError as error:
+            return self._render_results(request, errors=[str(error)], validation=validation)
 
         if request.POST.get('target_type') == CaseSearchEndpoint.TargetType.PROJECT_DB:
-            return self._run_sql(request, test_param_values, validation)
-        return self._run_es_query(request, parameters, test_param_values, validation)
+            return self._run_sql(request, parameters, criteria, validation)
+        return self._run_es_query(request, parameters, criteria, validation)
 
-    def _run_es_query(self, request, parameters, test_param_values, validation):
+    def _run_es_query(self, request, parameters, criteria, validation):
         """Run the query builder's spec and render the cases it matched."""
         case_type = request.POST.get('case_type', '')
         try:
@@ -472,7 +505,6 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
             return self._render_results(request, validation=validation)
         fields = capability['case_types'][case_type]
         try:
-            criteria = criteria_dict_to_criteria_list(test_param_values)
             results = get_primary_case_search_endpoint_results(
                 QueryHelper(self.domain), [case_type], criteria, query_root,
                 self._row_limit)
@@ -483,11 +515,15 @@ class CaseSearchEndpointTestView(TargetTypeMixin, BaseDomainView):
         columns, rows = self._es_results_to_columns_and_rows(fields, results)
         return self._render_results(request, columns, rows, validation=validation)
 
-    def _run_sql(self, request, test_param_values, validation):
+    def _run_sql(self, request, parameters, criteria, validation):
         sql = request.POST.get('sql', '').strip()
         user_sql = UserSQL(self.domain, sql, max_rows=self._row_limit)
         try:
-            result = user_sql.run(_bind_parameters(user_sql.parameters, test_param_values))
+            query_params = bind_values(parameters, criteria)
+        except CaseSearchUserError as error:
+            return self._render_results(request, errors=[str(error)], validation=validation)
+        try:
+            result = user_sql.run(query_params)
         except UserSQLValidationError as error:
             validation[self.SQL_ERRORS] = [error.msg]
             return self._render_results(request, validation=validation)

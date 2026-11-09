@@ -141,6 +141,11 @@ jobs:
           echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
+        if git merge-base --is-ancestor origin/vellum-staging HEAD; then
+          echo "vellum-staging is already merged into master, no rebuild needed"
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
         if git merge --no-commit --no-ff origin/vellum-staging; then
           echo "vellum-staging merges cleanly, no rebuild needed"
           git merge --abort

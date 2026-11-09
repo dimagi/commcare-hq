@@ -489,7 +489,7 @@ class RestoreState:
             auth_type=self.auth_type
         )
         if self.params.app:
-            new_synclog.app_id = self.params.app.copy_of or self.params.app_id
+            new_synclog.app_id = self.params.app.origin_id
         new_synclog.log_format = LOG_FORMAT_LIVEQUERY
         return new_synclog
 

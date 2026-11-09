@@ -15,6 +15,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 
+import architect
 import jsonfield
 import pytz
 from dateutil.parser import parse
@@ -1944,6 +1945,13 @@ class DomainCaseRuleRun(models.Model):
             return run
 
 
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='year',
+    column='created_at',
+)
 class BulkAsyncJob(models.Model):
     """Tracks a bulk async action (archive/unarchive/delete)"""
 

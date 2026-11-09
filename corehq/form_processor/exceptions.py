@@ -60,6 +60,15 @@ class KafkaPublishingError(Exception):
     pass
 
 
+class CannotModifyDeletedForm(Exception):
+    """Raised when an action is applied to a soft-deleted form
+
+    A deleted form does not exist as far as the product is concerned, so
+    callers are expected to filter deleted forms out before acting on
+    them. Reaching this is a bug in the caller, not a user error.
+    """
+
+
 class XFormLockError(Exception):
     """Exception raised when a form lock cannot be acquired
 

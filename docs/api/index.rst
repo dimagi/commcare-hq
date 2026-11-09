@@ -47,6 +47,7 @@ please review CommCare's API Authentication Documentation:
     cases-v2
     bulk-upload-cases
     list-forms
+    bulk-form-action
     list-groups
     list-mobile-workers
     list-webusers
