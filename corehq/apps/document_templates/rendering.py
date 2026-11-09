@@ -16,13 +16,13 @@ can be added next to it.
 """
 import html
 import re
-from html.parser import HTMLParser
 from io import BytesIO
 from xml.sax.saxutils import escape, quoteattr
 
 import bleach
 import markdown
 from bleach.css_sanitizer import CSSSanitizer
+from bs4 import BeautifulSoup
 from jinja2 import (
     StrictUndefined,
     TemplateError,
@@ -74,7 +74,6 @@ INLINE_TAGS = {
     'sub': 'sub',
     'sup': 'super',
 }
-VOID_TAGS = {'br', 'hr', 'img', 'meta'}
 
 # ``[[blank]]`` or ``[[blank:30]]``: an underlined space for filling in by hand, in characters
 BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
@@ -306,48 +305,8 @@ def _area_flowables(area):
 
 def _markdown_to_flowables(text):
     """:returns: reportlab flowables for markdown ``text``"""
-    builder = _TreeBuilder()
-    builder.feed(_markdown_to_sanitized_html(text))
-    return _children_to_flowables(builder.root.children, BODY)
-
-
-class _Element:
-    """An HTML element: its tag, attributes, and children (elements and text strings)"""
-
-    def __init__(self, tag, attrs):
-        self.tag = tag
-        self.attrs = dict(attrs)
-        self.children = []  # elements and strings
-
-
-class _TreeBuilder(HTMLParser):
-    """Parses HTML into a tree of :class:`_Element`; feed it, then read ``root``
-
-    Unmatched end tags are ignored, and tags left open are closed implicitly.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.root = _Element('root', [])
-        self._stack = [self.root]
-
-    def handle_starttag(self, tag, attrs):
-        element = _Element(tag, attrs)
-        self._stack[-1].children.append(element)
-        if tag not in VOID_TAGS:
-            self._stack.append(element)
-
-    def handle_startendtag(self, tag, attrs):
-        self._stack[-1].children.append(_Element(tag, attrs))
-
-    def handle_endtag(self, tag):
-        for i in range(len(self._stack) - 1, 0, -1):
-            if self._stack[i].tag == tag:
-                del self._stack[i:]
-                return
-
-    def handle_data(self, data):
-        self._stack[-1].children.append(data)
+    soup = BeautifulSoup(_markdown_to_sanitized_html(text), 'html.parser')
+    return _children_to_flowables(soup.children, BODY)
 
 
 def _children_to_flowables(children, style):
@@ -362,25 +321,25 @@ def _children_to_flowables(children, style):
         inline.clear()
 
     for child in children:
-        if isinstance(child, str) or child.tag in INLINE_TAGS or child.tag in ('a', 'code', 'br', 'span'):
+        if isinstance(child, str) or child.name in INLINE_TAGS or child.name in ('a', 'code', 'br', 'span'):
             inline.append(_inline(child))
-        elif child.tag == 'p':
+        elif child.name == 'p':
             flush()
             flowables.append(Paragraph(_inline_children(child), style))
-        elif child.tag in HEADINGS:
+        elif child.name in HEADINGS:
             flush()
-            flowables.append(Paragraph(_inline_children(child), HEADINGS[child.tag]))
-        elif child.tag in ('ul', 'ol'):
+            flowables.append(Paragraph(_inline_children(child), HEADINGS[child.name]))
+        elif child.name in ('ul', 'ol'):
             flush()
             items = [
                 ListItem(_children_to_flowables(item.children, style))
-                for item in child.children if not isinstance(item, str) and item.tag == 'li'
+                for item in child.children if not isinstance(item, str) and item.name == 'li'
             ]
             if items:
-                flowables.append(_list(child.tag, items))
-        elif child.tag == 'style':
+                flowables.append(_list(child.name, items))
+        elif child.name == 'style':
             continue
-        elif child.tag == 'blockquote':
+        elif child.name == 'blockquote':
             flush()
             flowables.extend(_children_to_flowables(child.children, QUOTE))
         else:  # div, figure, ...: keep what is inside
@@ -415,14 +374,14 @@ def _inline(child):
     """Paragraph markup for an inline element or text; user text is escaped, the tags are ours"""
     if isinstance(child, str):
         return BLANK_RE.sub(_blank, escape(child))
-    if child.tag == 'br':
+    if child.name == 'br':
         return '<br/>'
     inner = _inline_children(child)
-    if child.tag in INLINE_TAGS:
-        tag = INLINE_TAGS[child.tag]
+    if child.name in INLINE_TAGS:
+        tag = INLINE_TAGS[child.name]
         return f'<{tag}>{inner}</{tag}>'
-    if child.tag == 'a' and child.attrs.get('href'):
+    if child.name == 'a' and child.attrs.get('href'):
         return f'<a href={quoteattr(child.attrs["href"])} color="#0b57d0">{inner}</a>'
-    if child.tag == 'code':
+    if child.name == 'code':
         return f'<font name="Courier">{inner}</font>'
     return inner  # span and anything unknown
