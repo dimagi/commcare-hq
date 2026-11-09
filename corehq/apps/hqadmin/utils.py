@@ -5,6 +5,7 @@ from itertools import groupby
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
+from django.db.models import Q
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
@@ -12,11 +13,28 @@ import requests
 
 from pillowtop.utils import force_seq_int
 
+from corehq.apps.accounting.utils import get_accounting_admin_users
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.blobs import CODES, get_blob_db
+from corehq.toggles import IS_CONTRACTOR
 from corehq.util.view_utils import reverse
 
 EPSILON = 10000000
+
+
+def privileged_users_query(include_contractor=False, include_accounting_admin=False):
+    """Q matching users who hold Dimagi-internal privileges: superusers
+    and staff, plus optionally contractors and accounting admins.
+
+    Used to build both the superuser-management listing and the
+    offboarding audit pool, which must stay in sync.
+    """
+    query = Q(is_superuser=True) | Q(is_staff=True)
+    if include_contractor:
+        query |= Q(username__in=IS_CONTRACTOR.get_enabled_users())
+    if include_accounting_admin:
+        query |= Q(id__in=[user.id for user in get_accounting_admin_users()])
+    return query
 
 
 def check_for_rewind(checkpoint):
