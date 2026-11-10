@@ -8,8 +8,8 @@ Rendering takes two steps:
    Area text is author-written, so it runs in a sandbox. Context
    values are escaped, so they cannot add markup of their own.
 2. :func:`render_pdf` lays the markdown out on the page with reportlab.
-   The markdown is converted to sanitized HTML and then to reportlab
-   flowables.
+   The markdown is converted to HTML and then to reportlab flowables.
+   HTML in the markdown is not supported: it is escaped and shown as text.
 
 The layout lives in a single function (:func:`_us_letter`) so that another
 can be added next to it.
@@ -19,9 +19,7 @@ import re
 from io import BytesIO
 from xml.sax.saxutils import escape, quoteattr
 
-import bleach
 import markdown
-from bleach.css_sanitizer import CSSSanitizer
 from bs4 import BeautifulSoup
 from jinja2 import (
     StrictUndefined,
@@ -44,35 +42,24 @@ from reportlab.platypus import (
     PageBreak,
     PageTemplate,
     Paragraph,
-)
-
-from corehq.messaging.scheduling.const import (
-    ALLOWED_CSS_PROPERTIES,
-    ALLOWED_HTML_ATTRIBUTES,
-    ALLOWED_HTML_TAGS,
+    Table,
 )
 
 _US_LETTER_AREAS = ('header', 'address', 'body', 'footer')
-
-_css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
-_TAGS = (set(ALLOWED_HTML_TAGS) | {'style'}) - {'img'}  # images are not rendered in the PDF
 
 _sheet = getSampleStyleSheet()
 BODY = _sheet['BodyText']
 QUOTE = ParagraphStyle(
     'quote', parent=BODY, fontName='Helvetica-Oblique', leftIndent=18, textColor=colors.HexColor('#555555'),
 )
+TABLE_HEADER = ParagraphStyle('table_header', parent=BODY, fontName='Helvetica-Bold')
 HEADINGS = {f'h{n}': _sheet[f'Heading{min(n, 3)}'] for n in range(1, 7)}
 
 # HTML tag -> reportlab paragraph markup tag
-INLINE_TAGS = {
-    'strong': 'b', 'b': 'b',
-    'em': 'i', 'i': 'i',
-    'u': 'u',
-    's': 'strike',
-    'sub': 'sub',
-    'sup': 'super',
-}
+INLINE_TAGS = {'strong': 'b', 'em': 'i'}
+
+# Links in the PDF can only open these
+LINK_SCHEME_RE = re.compile(r'(https?|mailto):', re.IGNORECASE)
 
 # ``[[blank]]`` or ``[[blank:30]]``: an underlined space for filling in by hand, in characters
 BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
@@ -112,20 +99,12 @@ def _parse_variable_names(text):
     return [name for name in dict.fromkeys(used) if name in undeclared]
 
 
-def _markdown_to_sanitized_html(value):
-    html = markdown.markdown(value, extensions=['nl2br'])
-    return bleach.clean(
-        html,
-        tags=_TAGS,
-        attributes=_allow_attribute,
-        css_sanitizer=_css_sanitizer,
-        strip=True,
-    )
-
-
-def _allow_attribute(tag, name, value):
-    allowed = list(ALLOWED_HTML_ATTRIBUTES.get(tag, [])) + list(ALLOWED_HTML_ATTRIBUTES.get('*', []))
-    return name in allowed
+def _markdown_to_html(value):
+    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through"""
+    md = markdown.Markdown(extensions=['nl2br', 'tables'])
+    md.preprocessors.deregister('html_block')
+    md.inlinePatterns.deregister('html')
+    return md.convert(value)
 
 
 def get_variable_names(area_values):
@@ -257,7 +236,7 @@ def _area_flowables(area):
 
 def _markdown_to_flowables(text):
     """:returns: reportlab flowables for markdown ``text``"""
-    soup = BeautifulSoup(_markdown_to_sanitized_html(text), 'html.parser')
+    soup = BeautifulSoup(_markdown_to_html(text), 'html.parser')
     return _children_to_flowables(soup.children, BODY)
 
 
@@ -273,7 +252,7 @@ def _children_to_flowables(children, style):
         inline.clear()
 
     for child in children:
-        if isinstance(child, str) or child.name in INLINE_TAGS or child.name in ('a', 'code', 'br', 'span'):
+        if isinstance(child, str) or child.name in INLINE_TAGS or child.name in ('a', 'code', 'br'):
             inline.append(_inline(child))
         elif child.name == 'p':
             flush()
@@ -289,12 +268,13 @@ def _children_to_flowables(children, style):
             ]
             if items:
                 flowables.append(_list(child.name, items))
-        elif child.name == 'style':
-            continue
+        elif child.name == 'table':
+            flush()
+            flowables.append(_table(child, style))
         elif child.name == 'blockquote':
             flush()
             flowables.extend(_children_to_flowables(child.children, QUOTE))
-        else:  # div, figure, ...: keep what is inside
+        else:  # pre, hr: keep what is inside
             flush()
             flowables.extend(_children_to_flowables(child.children, style))
     flush()
@@ -306,6 +286,25 @@ def _list(tag, items):
     if tag == 'ul':
         return ListFlowable(items, bulletType='bullet', start='•', **bullets)
     return ListFlowable(items, bulletType='1', bulletFormat='%s.', **bullets)
+
+
+def _table(element, style):
+    """A table with equal columns over the full width; the header row repeats on each page"""
+    rows = [
+        [Paragraph(_inline_children(cell), TABLE_HEADER if cell.name == 'th' else style)
+         for cell in row.find_all(['th', 'td'])]
+        for row in element.find_all('tr')
+    ]
+    columns = len(rows[0])
+    return Table(
+        rows,
+        colWidths=[f'{100 / columns}%'] * columns,
+        repeatRows=1,
+        style=[
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ],
+    )
 
 
 def _inline_children(element):
@@ -327,8 +326,8 @@ def _inline(child):
     if child.name in INLINE_TAGS:
         tag = INLINE_TAGS[child.name]
         return f'<{tag}>{inner}</{tag}>'
-    if child.name == 'a' and child.attrs.get('href'):
+    if child.name == 'a' and LINK_SCHEME_RE.match(child.attrs.get('href', '')):
         return f'<a href={quoteattr(child.attrs["href"])} color="#0b57d0">{inner}</a>'
     if child.name == 'code':
         return f'<font name="Courier">{inner}</font>'
-    return inner  # span and anything unknown
+    return inner  # img, links to other schemes

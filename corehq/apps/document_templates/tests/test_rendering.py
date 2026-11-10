@@ -1,12 +1,12 @@
 import pytest
-from reportlab.platypus import ListFlowable, Paragraph
+from reportlab.platypus import ListFlowable, Paragraph, Table
 
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
     _markdown_to_flowables,
-    _markdown_to_sanitized_html,
+    _markdown_to_html,
     _parse_variable_names,
     _render_areas,
     get_area_names,
@@ -39,15 +39,15 @@ def test_parse_variable_names(text, expected):
 @pytest.mark.parametrize('value, expected', [
     ('', ''),
     ('**bold**', '<p><strong>bold</strong></p>'),
-    ('line one\nline two', '<p>line one<br>\nline two</p>'),
+    ('line one\nline two', '<p>line one<br />\nline two</p>'),
     ('Dear {{ first_name }}', '<p>Dear {{ first_name }}</p>'),
     ('{{ x | default("a") }}', '<p>{{ x | default("a") }}</p>'),
-    ('<script>alert(1)</script>', 'alert(1)'),
-    ('<img src="https://a.test/h.png">', '<p></p>'),
-    ('![h](https://a.test/h.png)', '<p></p>'),
+    ('<script>alert(1)</script>', '<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>'),
+    ('<!-- comment -->', '<p>&lt;!-- comment --&gt;</p>'),
+    ('a <ul><li>x</li></ul>', '<p>a &lt;ul&gt;&lt;li&gt;x&lt;/li&gt;&lt;/ul&gt;</p>'),
 ])
-def test_markdown_to_sanitized_html(value, expected):
-    assert _markdown_to_sanitized_html(value) == expected
+def test_markdown_to_html_escapes_html(value, expected):
+    assert _markdown_to_html(value) == expected
 
 
 def test_variable_names_lists_variables_used_in_areas():
@@ -118,7 +118,7 @@ def test_render_areas_reports_a_syntax_error():
 
 def test_markdown_emphasis_mangles_dunder_names_in_values():
     # Python-Markdown turns __word__ into <strong>, so such names cannot be used in a value
-    html = _markdown_to_sanitized_html("{{ ''.__class__.__mro__ }}")
+    html = _markdown_to_html("{{ ''.__class__.__mro__ }}")
     assert html == "<p>{{ ''.<strong>class</strong>.<strong>mro</strong> }}</p>"
 
 
@@ -133,10 +133,13 @@ def _markups(flowables):
     ('a < b & c', ['a &lt; b &amp; c']),
     ('`code`', ['<font name="Courier">code</font>']),
     ('[link](https://a.test)', ['<a href="https://a.test" color="#0b57d0">link</a>']),
+    ('[mail](mailto:a@b.test)', ['<a href="mailto:a@b.test" color="#0b57d0">mail</a>']),
+    ('[link](javascript:alert(1))', ['link']),
+    ('[link](relative/path)', ['link']),
     ('one\n\ntwo', ['one', 'two']),
     ('# Title', ['Title']),
     ('> quoted', ['quoted']),
-    ('<style>p { color: red }</style>text', ['text']),
+    ('<b>x</b>', ['&lt;b&gt;x&lt;/b&gt;']),
     ('a [[blank:3]] b', ['a <u>&nbsp;&nbsp;&nbsp;</u> b']),
     ('[[blank]]', [f'<u>{"&nbsp;" * 20}</u>']),
     ('[[blank:999]]', [f'<u>{"&nbsp;" * 100}</u>']),
@@ -169,6 +172,21 @@ def test_markdown_to_flowables_lists(markdown_text, bullet_type, items):
     assert flowable._flowables[0].__class__.__name__ == 'ListItem'
     assert flowable._bulletType == bullet_type
     assert [item._flowables[0].text for item in flowable._flowables] == items
+
+
+TABLE = '| a | **b** |\n|---|---|\n| 1 | 2 |\n| 3 |'
+
+
+def test_markdown_to_flowables_table():
+    [table] = _markdown_to_flowables(TABLE)
+    assert isinstance(table, Table)
+    assert [[cell.text for cell in row] for row in table._cellvalues] == [['a', '<b>b</b>'], ['1', '2'], ['3', '']]
+    assert [cell.style.name for cell in table._cellvalues[0]] == ['table_header'] * 2
+    assert table._cellvalues[1][0].style.name == 'BodyText'
+
+
+def test_render_pdf_lays_out_a_table():
+    assert render_pdf([_document(body=TABLE)]).startswith(b'%PDF')
 
 
 def _document(**areas):
