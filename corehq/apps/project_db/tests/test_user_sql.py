@@ -646,13 +646,25 @@ def test_clean_parameters_rejects_unexpected_params():
         _user_sql('SELECT * FROM client')._clean_parameters({'stale': 'x'})
 
 
-
-
 def test_handle_quoted_tables():
     hyphenated_table = table('hyphenated-table', column('case_id'))
     tables = {'hyphenated-table': hyphenated_table}
     result = translate('SELECT * FROM "hyphenated-table"', tables)
     assert str(result) == str(select([hyphenated_table]))
+
+
+def test_join_keeps_columns_whose_labels_collide():
+    # SQLAlchemy labels both of these columns `visit_date_prop__due`
+    visit = table('visit', column('date_prop__due'))
+    visit_date = table('visit_date', column('prop__due'))
+    tables = {'visit': visit, 'visit_date': visit_date}
+    join_sql = 'FROM visit JOIN visit_date ON visit.date_prop__due = visit_date.prop__due'
+    joined = visit.join(visit_date, visit.c.date_prop__due == visit_date.c.prop__due)
+
+    assert _compiled(translate(f'SELECT * {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due, visit_date.c.prop__due]).select_from(joined))
+    assert _compiled(translate(f'SELECT visit.date_prop__due {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due]).select_from(joined))
 
 
 @fixture

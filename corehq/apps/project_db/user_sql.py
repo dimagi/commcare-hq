@@ -286,29 +286,47 @@ def _unpack(node, *args):
     return [node.args.get(arg, None) for arg in args]
 
 
+class Scope:
+    """The things one SELECT can reference"""
+
+    def __init__(self, tables):
+        self.tables = tables
+        self.table_refs = {}
+
+    def add_table_ref(self, name, selectable):
+        if name in self.table_refs:
+            raise UnsupportedSQL(f"table name used more than once: {name}")
+        self.table_refs[name] = selectable
+
+    @property
+    def all_columns(self):
+        return [col for table_ref in self.table_refs.values() for col in table_ref.c]
+
+
 def _convert_select(node, tables):
     expressions, from_, joins, where, group, having, distinct, order = _unpack(
         node, 'expressions', 'from_', 'joins', 'where', 'group', 'having', 'distinct', 'order')
     if from_ is None:
         raise UnsupportedSQL("a FROM clause is required")
-    selectable = _convert_table_ref(from_.this, tables)
+    scope = Scope(tables)
+    selectable = _convert_table_ref(from_.this, scope)
     for join in joins or []:
-        selectable = _convert_join(join, selectable, tables)
-    projection = _convert_projection(expressions, selectable.c)
+        selectable = _convert_join(join, selectable, scope)
+    projection = _convert_projection(expressions, scope)
     query = select(projection).select_from(selectable)
     if distinct is not None:
-        query = query.distinct(*_convert_distinct_on(distinct, selectable.c))
+        query = query.distinct(*_convert_distinct_on(distinct, scope))
     if where is not None:
         predicate, = _unpack(where, 'this')
-        query = query.where(_convert_predicate(predicate, selectable.c))
+        query = query.where(_convert_predicate(predicate, scope))
     if group is not None:
-        query = query.group_by(*_convert_group(group, selectable.c))
+        query = query.group_by(*_convert_group(group, scope))
     if having is not None:
         predicate, = _unpack(having, 'this')
-        query = query.having(_convert_predicate(predicate, selectable.c))
+        query = query.having(_convert_predicate(predicate, scope))
     if order is not None:
         aliases = {p.name for p in projection if isinstance(p, Label)}
-        query = query.order_by(*_convert_order(order, selectable.c, aliases))
+        query = query.order_by(*_convert_order(order, scope, aliases))
     return query
 
 
@@ -339,13 +357,11 @@ def _convert_order(node, scope, aliases):
         yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
 
-def _convert_join(node, selectable, tables):
+def _convert_join(node, selectable, scope):
     """Join another table onto ``selectable``"""
     table_ref, on, side, kind = _unpack(node, 'this', 'on', 'side', 'kind')
-    table = _convert_table_ref(table_ref, tables)
-    if table.name in {col.table.name for col in selectable.c}:
-        raise UnsupportedSQL(f"table name used more than once: {table.name}")
-    predicate = _convert_predicate(on, list(selectable.c) + list(table.c))
+    table = _convert_table_ref(table_ref, scope)
+    predicate = _convert_predicate(on, scope)
 
     if not side and kind in (None, 'INNER'):
         return selectable.join(table, predicate)
@@ -360,8 +376,7 @@ def _convert_projection(expressions, scope):
     if not expressions:
         raise UnsupportedSQL("a projection is required")
     if all(e == exp.Star() for e in expressions):
-        # SELECT * selects every column of every table in the query
-        return list(scope)
+        return scope.all_columns
     return [_convert_projected_column(e, scope) for e in expressions]
 
 
@@ -419,9 +434,10 @@ def _convert_column(node, scope, aliases=None):
     identifier, qualifier = _unpack(node, 'this', 'table')
     if qualifier is None and aliases and identifier.name in aliases:
         return column(identifier.name)
-    candidates = [col for col in scope
-                  if (qualifier is None or col.table.name == qualifier.name)
-                  and col.name == identifier.name]
+    candidates = [table_ref.c[identifier.name]
+                  for name, table_ref in scope.table_refs.items()
+                  if (qualifier is None or name == qualifier.name)
+                  and identifier.name in table_ref.c]
     if not candidates:
         raise UnsupportedSQL(f"unknown column: {str(node)}")
     if len(candidates) > 1:
@@ -726,16 +742,19 @@ VALUE_FUNCTIONS = {
 }
 
 
-def _convert_table_ref(node, tables):
-    """Return the table a SQL table reference refers to"""
+def _convert_table_ref(node, scope):
+    """Bring the table a SQL table reference refers to into scope"""
     if not (isinstance(node, exp.Table) and isinstance(node.this, exp.Identifier)):
         raise UnsupportedSQL(f"expected table, got {str(node)}")
     identifier, alias = _unpack(node, 'this', 'alias')
+    name = identifier.name
     try:
-        selectable = tables[identifier.name]
+        selectable = scope.tables[name]
     except KeyError:
-        raise UnsupportedSQL(f"unknown table: {identifier.name}")
+        raise UnsupportedSQL(f"unknown table: {name}")
     if alias is not None:
         alias_identifier, = _unpack(alias, 'this')
-        return selectable.alias(alias_identifier.name)
+        name = alias_identifier.name
+        selectable = selectable.alias(name)
+    scope.add_table_ref(name, selectable)
     return selectable
