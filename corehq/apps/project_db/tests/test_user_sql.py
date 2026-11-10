@@ -240,6 +240,11 @@ def _within_distance(coordinates, meters):
     ('SELECT name, count(*) AS n FROM client GROUP BY name ORDER BY n DESC',
      select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)
      .order_by(nullsfirst(column('n').desc()))),
+    # An alias can also be grouped by, or made distinct on
+    ('SELECT name AS n, count(*) AS total FROM client GROUP BY n',
+     select([CLIENT.c.name.label('n'), func.count().label('total')]).group_by(column('n'))),
+    ('SELECT DISTINCT ON (n) name AS n FROM client',
+     select([CLIENT.c.name.label('n')]).distinct(column('n'))),
     # Ambiguous aliases are passed through for PostgreSQL to reject
     ('SELECT name AS x, case_id AS x FROM client ORDER BY x',
      select([CLIENT.c.name.label('x'), CLIENT.c.case_id.label('x')])

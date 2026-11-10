@@ -42,7 +42,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError, OperationalError, ProgrammingError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.base import Executable
-from sqlalchemy.sql.expression import ClauseElement, Label
+from sqlalchemy.sql.expression import ClauseElement
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
@@ -292,6 +292,7 @@ class Scope:
     def __init__(self, tables):
         self.tables = tables
         self.table_refs = {}
+        self.aliases = set()
 
     def add_table_ref(self, name, selectable):
         if name in self.table_refs:
@@ -325,8 +326,7 @@ def _convert_select(node, tables):
         predicate, = _unpack(having, 'this')
         query = query.having(_convert_predicate(predicate, scope))
     if order is not None:
-        aliases = {p.name for p in projection if isinstance(p, Label)}
-        query = query.order_by(*_convert_order(order, scope, aliases))
+        query = query.order_by(*_convert_order(order, scope))
     return query
 
 
@@ -347,12 +347,12 @@ def _convert_group(node, scope):
     return [_convert_column(e, scope) for e in group_expressions]
 
 
-def _convert_order(node, scope, aliases):
+def _convert_order(node, scope):
     """Convert an ORDER BY clause to yield sort keys"""
     order_expressions, = _unpack(node, 'expressions')
     for e in order_expressions:
         expression, desc, nulls_first = _unpack(e, 'this', 'desc', 'nulls_first')
-        value = _convert_column(expression, scope, aliases)
+        value = _convert_column(expression, scope)
         sort_key = value.desc() if desc else value.asc()
         yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
@@ -383,6 +383,7 @@ def _convert_projection(expressions, scope):
 def _convert_projected_column(node, scope):
     if isinstance(node, exp.Alias):
         expression, alias = _unpack(node, 'this', 'alias')
+        scope.aliases.add(alias.name)
         return _convert_value(expression, scope).label(alias.name)
     return _convert_value(node, scope)
 
@@ -427,12 +428,12 @@ def _convert_aggregated_value(node, scope):
     return _convert_value(node, scope)
 
 
-def _convert_column(node, scope, aliases=None):
+def _convert_column(node, scope):
     """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
-    if qualifier is None and aliases and identifier.name in aliases:
+    if qualifier is None and identifier.name in scope.aliases:
         return column(identifier.name)
     candidates = [table_ref.c[identifier.name]
                   for name, table_ref in scope.table_refs.items()

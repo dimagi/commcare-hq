@@ -29,13 +29,13 @@ Schema:
 
 Supported SQL:
  * SELECT of *, or a list of values and aggregates, with optional AS aliases.
- * DISTINCT, and DISTINCT ON (columns).
+ * DISTINCT, and DISTINCT ON (columns or SELECT aliases).
  * A single table or CTE in the FROM clause, with an optional alias.
  * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
    condition. A table can be joined to itself if each side is given a
    different alias.
  * WHERE with a condition.
- * GROUP BY columns, and HAVING to filter the groups with a condition.
+ * GROUP BY columns or aliases, and HAVING to filter the groups with a condition.
  * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
    and string_agg(value, '<delimiter>'). Each may aggregate only DISTINCT
    values, as in count(DISTINCT value), and take a FILTER (WHERE condition)
