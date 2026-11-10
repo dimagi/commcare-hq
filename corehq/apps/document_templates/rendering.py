@@ -267,7 +267,7 @@ def _children_to_flowables(children, style):
     inline = []
 
     def flush():
-        markup = _join(inline).strip()
+        markup = ''.join(inline).strip()
         if markup:
             flowables.append(Paragraph(markup, style))
         inline.clear()
@@ -308,13 +308,8 @@ def _list(tag, items):
     return ListFlowable(items, bulletType='1', bulletFormat='%s.', **bullets)
 
 
-def _join(parts):
-    """Join paragraph markup; the newline markdown leaves after a ``<br>`` must not indent the next line"""
-    return re.sub(r'<br/>\s+', '<br/>', ''.join(parts))
-
-
 def _inline_children(element):
-    return _join(_inline(child) for child in element.children)
+    return ''.join(_inline(child) for child in element.children)
 
 
 def _blank(match):

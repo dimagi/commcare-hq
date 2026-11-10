@@ -129,7 +129,7 @@ def _markups(flowables):
 @pytest.mark.parametrize('markdown_text, expected', [
     ('plain', ['plain']),
     ('**b** *i*', ['<b>b</b> <i>i</i>']),
-    ('line one\nline two', ['line one<br/>line two']),
+    ('line one\nline two', ['line one<br/> line two']),
     ('a < b & c', ['a &lt; b &amp; c']),
     ('`code`', ['<font name="Courier">code</font>']),
     ('[link](https://a.test)', ['<a href="https://a.test" color="#0b57d0">link</a>']),
