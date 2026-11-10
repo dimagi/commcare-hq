@@ -2,11 +2,12 @@ from datetime import datetime
 from unittest.mock import patch
 
 from django.db import connection
-from django.test import TransactionTestCase
+from unmagic import use
 
 from corehq.apps.data_interfaces.models import CaseRuleActionResult
 from corehq.apps.data_interfaces.utils import run_rules_for_case
 from corehq.form_processor.models import CommCareCase
+from corehq.util.test_utils import new_db_connection
 
 NOW = datetime(2026, 1, 1)
 
@@ -52,24 +53,24 @@ class QueryRule:
         return CaseRuleActionResult()
 
 
-class TestConnectionRecovery(TransactionTestCase):
-    # Uses `TransactionTestCase` rather than `@use('transactional_db')`
-    # because the connection must not be in an atomic block
+@use('db')
+def test_rules_recover_from_dropped_connections():
+    case = CommCareCase(domain='test-domain', case_id='abc123')
+    after_server_drop = QueryRule()
+    after_client_close = QueryRule()
+    rules = [
+        ServerDropsConnectionRule(),
+        after_server_drop,
+        ClientClosedConnectionRule(),
+        after_client_close,
+    ]
 
-    def test_rules_recover_from_dropped_connections(self):
-        case = CommCareCase(domain='test-domain', case_id='abc123')
-        after_server_drop = QueryRule()
-        after_client_close = QueryRule()
-        rules = [
-            ServerDropsConnectionRule(),
-            after_server_drop,
-            ClientClosedConnectionRule(),
-            after_client_close,
-        ]
+    with (
+        new_db_connection(),
+        patch('corehq.apps.data_interfaces.utils.notify_exception'),
+    ):
+        result = run_rules_for_case(case, rules, NOW)
 
-        with patch('corehq.apps.data_interfaces.utils.notify_exception'):
-            result = run_rules_for_case(case, rules, NOW)
-
-        assert after_server_drop.result == (1,)
-        assert after_client_close.result == (1,)
-        assert result.num_errors == 2
+    assert after_server_drop.result == (1,)
+    assert after_client_close.result == (1,)
+    assert result.num_errors == 2
