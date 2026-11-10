@@ -8,6 +8,9 @@ from corehq.apps.project_db.table_ddl import (
     get_project_db_engine,
 )
 
+# This text is for people who know SQL well - it describes the specifics of
+# this constrained environment, and should not have general guidance on writing
+# correct or performant SQL
 DESCRIPTION_TEMPLATE = """\
 This is the ProjectDB for {{ domain }}: relational, schema'd tables of the
 project's case data, generated automatically from the data dictionary.
@@ -32,21 +35,17 @@ Supported SQL:
  * DISTINCT, and DISTINCT ON (columns or SELECT aliases).
  * A single table or CTE in the FROM clause, with an optional alias.
  * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
-   condition. A table can be joined to itself if each side is given a
-   different alias.
+   condition.
  * WHERE with a condition.
- * GROUP BY columns or aliases, and HAVING to filter the groups with a condition.
+ * GROUP BY columns or aliases, and HAVING.
  * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
-   and string_agg(value, '<delimiter>'). Each may aggregate only DISTINCT
-   values, as in count(DISTINCT value), and take a FILTER (WHERE condition)
-   to aggregate only the matching rows.
+   and string_agg(value, '<delimiter>'). Each may take DISTINCT and
+   FILTER (WHERE condition).
  * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
    To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
- * WITH, defining CTEs that the query can reference like tables. A CTE may
-   reference those defined before it. WITH may only appear at the top level.
-   A CTE the query never references is dropped, along with any parameters
-   in it.
+ * WITH CTEs, only at the top level of the query. A CTE the query never
+   references is dropped, along with any parameters in it.
  * Values: columns, literals, and named :parameters wherever a literal is
    allowed, plus:
    - now() for the current time and today() for the current date. Dates and
@@ -64,10 +63,8 @@ Supported SQL:
    - Comparisons between values: =, <>, <, <=, >, >=
    - IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE
    - IN (a, b, ...) or IN :parameter
-   - IN (SELECT ...), matching values a subquery returns. The subquery may
-     not reference the outer query.
-   - LIKE, and ILIKE to ignore case, where % matches any text and _ any
-     single character. Escape them with a backslash, as in '100\\%'.
+   - IN (SELECT ...), where the subquery may not reference the outer query.
+   - LIKE and ILIKE, with % and _ pattern support.
    - A boolean column on its own, as in WHERE NOT closed
    - Array containment against an ARRAY['a', 'b'] literal, for select_prop__
      columns: @> holds all of these, <@ holds only these, && holds any of
