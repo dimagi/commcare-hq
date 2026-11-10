@@ -97,7 +97,7 @@ class BasePublicWebformForm(forms.Form):
         ),
     )
     direct_access = forms.BooleanField(
-        label=gettext_lazy("How Respondents Open the Form"),
+        label=gettext_lazy("How Respondents Access the Form"),
         initial=False,
         required=False,
         widget=forms.RadioSelect(
