@@ -295,6 +295,10 @@ def _within_distance(coordinates, meters):
      select([CLIENT]).where(CLIENT.c.name.in_([CLIENT.c.case_id]))),
     ("SELECT * FROM client WHERE name NOT IN ('x')",
      select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind_literal('literal', 'x')])))),
+    # IN a subquery, which may read from the same table as the outer query
+    ('SELECT * FROM visit WHERE parent_id IN (SELECT visit_id FROM visit WHERE name = :n)',
+     select([VISIT]).where(VISIT.c.parent_id.in_(
+         select([VISIT.c.visit_id]).where(VISIT.c.name == bindparam('n'))))),
     ('SELECT * FROM client WHERE name = TRUE',
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('bool', True))),
     ('SELECT * FROM client WHERE name IS NULL',
@@ -485,7 +489,8 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
     'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
-    'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
+    # A subquery can't reference the outer query
+    'SELECT * FROM client WHERE case_id IN (SELECT parent_id FROM visit WHERE name = client.name)',
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
     'SELECT * FROM client WHERE bogus(name)',        # unknown function call
 

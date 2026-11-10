@@ -486,15 +486,7 @@ def _convert_predicate(node, scope):
         value = _convert_value(expression, scope)
         return value.isnot(target) if negate else value.is_(target)
     if isinstance(node, exp.In):
-        value, values, field = _unpack(node, 'this', 'expressions', 'field')
-        operand = _convert_value(value, scope)
-        if field is not None:
-            if not isinstance(field, exp.Placeholder):
-                raise UnsupportedSQL(f"unsupported IN expression: {str(field)}")
-            return operand.in_(_convert_placeholder(field, expanding=True))
-        if not values:
-            raise UnsupportedSQL("IN requires at least one value")
-        return operand.in_([_convert_value(v, scope) for v in values])
+        return _convert_in(node, scope)
     if isinstance(node, (exp.Like, exp.ILike)):
         left, right, negate = _unpack(node, 'this', 'expression', 'negate')
         value = _convert_value(left, scope)
@@ -518,6 +510,21 @@ def _convert_predicate(node, scope):
     if isinstance(node, exp.Column):
         return _convert_column(node, scope)
     raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
+
+
+def _convert_in(node, scope):
+    value, values, field, query = _unpack(node, 'this', 'expressions', 'field', 'query')
+    operand = _convert_value(value, scope)
+    if query is not None:
+        subquery, = _unpack(query, 'this')
+        return operand.in_(_convert_query(subquery, scope.tables))
+    if field is not None:
+        if not isinstance(field, exp.Placeholder):
+            raise UnsupportedSQL(f"unsupported IN expression: {str(field)}")
+        return operand.in_(_convert_placeholder(field, expanding=True))
+    if not values:
+        raise UnsupportedSQL("IN requires at least one value")
+    return operand.in_([_convert_value(v, scope) for v in values])
 
 
 def _convert_predicate_function(node, scope):

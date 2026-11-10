@@ -64,6 +64,8 @@ Supported SQL:
    - Comparisons between values: =, <>, <, <=, >, >=
    - IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE
    - IN (a, b, ...) or IN :parameter
+   - IN (SELECT ...), matching values a subquery returns. The subquery may
+     not reference the outer query.
    - LIKE, and ILIKE to ignore case, where % matches any text and _ any
      single character. Escape them with a backslash, as in '100\\%'.
    - A boolean column on its own, as in WHERE NOT closed
@@ -86,7 +88,7 @@ Not supported:
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
  * LIMIT, BETWEEN, SIMILAR TO, and LIKE with ESCAPE or ANY.
  * Negative numbers.
- * Subqueries. Write them as CTEs instead.
+ * Subqueries other than IN (SELECT ...).
  * WITH RECURSIVE, [NOT] MATERIALIZED, and column aliases on a CTE.
  * INTERSECT and EXCEPT.
  * ORDER BY on a UNION.
