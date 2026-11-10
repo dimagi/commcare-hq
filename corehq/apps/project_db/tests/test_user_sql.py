@@ -65,6 +65,9 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
 
+CLIENT_CTE = select([CLIENT]).cte('c')
+CTE_A, CTE_B = CLIENT_CTE.alias('a'), CLIENT_CTE.alias('b')
+
 
 def _string_to_array(value, delimiter):
     return func.string_to_array(value, delimiter, type_=ARRAY(Text))
@@ -386,6 +389,19 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name > func.now() - func.make_interval(
              literal_column('years').op('=>')(bindparam('y')),
              literal_column('mins').op('=>')(bindparam('m'))))),
+
+    # CTEs
+    ('WITH c AS (SELECT * FROM client) SELECT * FROM c',
+     select([CLIENT_CTE])),
+    # A CTE can build on an earlier one
+    ('WITH c AS (SELECT * FROM client), d AS (SELECT name FROM c) SELECT * FROM d',
+     select([select([CLIENT_CTE.c.name]).cte('d')])),
+    # The main query can be a UNION
+    ('WITH c AS (SELECT * FROM client) SELECT name FROM c UNION SELECT name FROM visit',
+     union(select([CLIENT_CTE.c.name]), select([VISIT.c.name]))),
+    # It can be joined like a table, including to itself under aliases
+    ('WITH c AS (SELECT * FROM client) SELECT a.name FROM c a JOIN c b ON a.case_id = b.case_id',
+     select([CTE_A.c.name]).select_from(CTE_A.join(CTE_B, CTE_A.c.case_id == CTE_B.c.case_id))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -523,6 +539,15 @@ def _compiled(query):
     'SELECT * FROM client WHERE name > now() - make_interval(days => 1.5)',
     'SELECT * FROM client WHERE name > now() - make_interval(days => case_id)',
     'SELECT * FROM client WHERE name > case_id - name',  # arithmetic is unsupported
+
+    # CTEs
+    'WITH client AS (SELECT * FROM visit) SELECT * FROM client',  # shadows a table
+    'WITH RECURSIVE c AS (SELECT * FROM client) SELECT * FROM c',
+    'WITH c AS MATERIALIZED (SELECT * FROM client) SELECT * FROM c',
+    'WITH c(a, b) AS (SELECT * FROM client) SELECT * FROM c',  # column aliases
+    'WITH d AS (SELECT * FROM c), c AS (SELECT * FROM client) SELECT * FROM d',  # forward ref
+    # Only the outermost query may have a WITH
+    'WITH c AS (WITH d AS (SELECT * FROM client) SELECT * FROM d) SELECT * FROM c',
 
 ])
 def test_rejects_unsupported(sql):

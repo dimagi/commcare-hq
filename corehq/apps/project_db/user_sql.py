@@ -226,9 +226,25 @@ def translate(sql, tables):
     statements = [s for s in statements if s]
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
-    _check_tree_depth(statements[0])
+    statement, = statements
+    _check_tree_depth(statement)
 
-    return _convert_query(statements[0], tables)
+    tables = _add_ctes(statement.args.pop('with_', None), dict(tables))
+    return _convert_query(statement, tables)
+
+
+def _add_ctes(node, tables):
+    """Return ``tables`` plus the CTEs defined in a WITH clause"""
+    if node is None:
+        return tables
+    ctes, = _unpack(node, 'expressions')
+    for cte in ctes:
+        query, alias = _unpack(cte, 'this', 'alias')
+        identifier, = _unpack(alias, 'this')
+        if identifier.name in tables:
+            raise UnsupportedSQL(f"CTE name already in use: {identifier.name}")
+        tables[identifier.name] = _convert_query(query, tables).cte(identifier.name)
+    return tables
 
 
 def _check_tree_depth(node):

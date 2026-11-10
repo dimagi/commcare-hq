@@ -30,7 +30,7 @@ Schema:
 Supported SQL:
  * SELECT of *, or a list of values and aggregates, with optional AS aliases.
  * DISTINCT, and DISTINCT ON (columns).
- * A single table in the FROM clause, with an optional alias.
+ * A single table or CTE in the FROM clause, with an optional alias.
  * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
    condition. A table can be joined to itself if each side is given a
    different alias.
@@ -43,6 +43,10 @@ Supported SQL:
  * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
    To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
+ * WITH, defining CTEs that the query can reference like tables. A CTE may
+   reference those defined before it. WITH may only appear at the top level.
+   A CTE the query never references is dropped, along with any parameters
+   in it.
  * Values: columns, literals, and named :parameters wherever a literal is
    allowed, plus:
    - now() for the current time and today() for the current date. Dates and
@@ -82,7 +86,8 @@ Not supported:
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
  * LIMIT, BETWEEN, SIMILAR TO, and LIKE with ESCAPE or ANY.
  * Negative numbers.
- * Subqueries and CTEs.
+ * Subqueries. Write them as CTEs instead.
+ * WITH RECURSIVE, [NOT] MATERIALIZED, and column aliases on a CTE.
  * INTERSECT and EXCEPT.
  * ORDER BY on a UNION.
  * RIGHT, FULL and CROSS JOIN. Write a RIGHT JOIN as a LEFT JOIN with the
