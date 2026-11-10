@@ -291,17 +291,30 @@ class Scope:
 
     def __init__(self, tables):
         self.tables = tables
-        self.table_refs = {}
+        self._table_refs = {}
         self.aliases = set()
 
     def add_table_ref(self, name, selectable):
-        if name in self.table_refs:
+        if name in self._table_refs:
             raise UnsupportedSQL(f"table name used more than once: {name}")
-        self.table_refs[name] = selectable
+        self._table_refs[name] = selectable
+
+    def get_column(self, name, qualifier=None):
+        if qualifier is None and name in self.aliases:
+            return column(name)
+        candidates = [table_ref.c[name]
+                      for ref_name, table_ref in self._table_refs.items()
+                      if qualifier in (None, ref_name) and name in table_ref.c]
+        reference = f"{qualifier}.{name}" if qualifier else name
+        if not candidates:
+            raise UnsupportedSQL(f"unknown column: {reference}")
+        if len(candidates) > 1:
+            raise UnsupportedSQL(f"ambiguous column: {reference}")
+        return candidates[0]
 
     @property
     def all_columns(self):
-        return [col for table_ref in self.table_refs.values() for col in table_ref.c]
+        return [col for table_ref in self._table_refs.values() for col in table_ref.c]
 
 
 def _convert_select(node, tables):
@@ -433,17 +446,7 @@ def _convert_column(node, scope):
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
-    if qualifier is None and identifier.name in scope.aliases:
-        return column(identifier.name)
-    candidates = [table_ref.c[identifier.name]
-                  for name, table_ref in scope.table_refs.items()
-                  if (qualifier is None or name == qualifier.name)
-                  and identifier.name in table_ref.c]
-    if not candidates:
-        raise UnsupportedSQL(f"unknown column: {str(node)}")
-    if len(candidates) > 1:
-        raise UnsupportedSQL(f"ambiguous column: {str(node)}")
-    return candidates[0]
+    return scope.get_column(identifier.name, qualifier and qualifier.name)
 
 
 BOOLEAN_OPS = {
