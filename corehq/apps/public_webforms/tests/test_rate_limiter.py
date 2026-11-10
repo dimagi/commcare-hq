@@ -6,11 +6,11 @@ from django.test import RequestFactory
 from unmagic import fixture, use
 
 from corehq.apps.public_webforms.rate_limiter import (
-    link_requests_global,
-    link_requests_per_contact,
-    link_requests_per_domain,
-    link_requests_per_ip,
-    rate_limit_link_request,
+    access_requests_global,
+    access_requests_per_contact,
+    access_requests_per_domain,
+    access_requests_per_ip,
+    rate_limit_access_request,
 )
 from corehq.util.global_request.api import set_request
 
@@ -22,7 +22,7 @@ def limiter_on():
     try:
         with mock.patch(
             'corehq.apps.public_webforms.rate_limiter'
-            '.SHOULD_RATE_LIMIT_LINK_REQUESTS', True
+            '.SHOULD_RATE_LIMIT_ACCESS_REQUESTS', True
         ):
             yield
     finally:
@@ -40,7 +40,7 @@ def _a_domain():
 def _requests_allowed_per_hour():
     return next(
         limit
-        for __, limits in link_requests_per_contact.get_rate_limits('')
+        for __, limits in access_requests_per_contact.get_rate_limits('')
         for counter, limit in limits
         if counter.key == 'hour'
     )
@@ -62,8 +62,8 @@ def test_contact_rate_limiter_allows_multiple_requests():
     contact = _a_contact()
     domain = _a_domain()
 
-    assert rate_limit_link_request(domain, contact) is False
-    assert rate_limit_link_request(domain, contact) is False
+    assert rate_limit_access_request(domain, contact) is False
+    assert rate_limit_access_request(domain, contact) is False
 
 
 @use('db', limiter_on)
@@ -72,25 +72,25 @@ def test_contact_rate_limiter_blocks_too_many_requests():
     domain = _a_domain()
 
     for __ in range(_requests_allowed_per_hour()):
-        assert rate_limit_link_request(domain, contact) is False
+        assert rate_limit_access_request(domain, contact) is False
 
-    assert rate_limit_link_request(domain, contact) is True
+    assert rate_limit_access_request(domain, contact) is True
 
 
 @use('db', limiter_on)
 def test_exhausted_domain_limit_blocks_requests_based_on_domain():
     domain = _a_domain()
 
-    with _exhausted(link_requests_per_domain) as exceeded:
-        assert rate_limit_link_request(domain, _a_contact()) is True
+    with _exhausted(access_requests_per_domain) as exceeded:
+        assert rate_limit_access_request(domain, _a_contact()) is True
 
     assert exceeded.call_args.args == (f'domain:{domain}',)
 
 
 @use('db', limiter_on)
 def test_exhausted_ip_limit_blocks_requests_based_on_ip():
-    with _exhausted(link_requests_per_ip) as exceeded:
-        assert rate_limit_link_request(_a_domain(), _a_contact()) is True
+    with _exhausted(access_requests_per_ip) as exceeded:
+        assert rate_limit_access_request(_a_domain(), _a_contact()) is True
 
     # the address the request came from, not the contact it named
     assert exceeded.call_args.args == ('ip:203.0.113.7',)
@@ -98,8 +98,8 @@ def test_exhausted_ip_limit_blocks_requests_based_on_ip():
 
 @use('db', limiter_on)
 def test_exhausted_global_limit_blocks_everything():
-    with _exhausted(link_requests_global):
-        assert rate_limit_link_request(_a_domain(), _a_contact()) is True
+    with _exhausted(access_requests_global):
+        assert rate_limit_access_request(_a_domain(), _a_contact()) is True
 
 
 @use('db', limiter_on)
@@ -108,12 +108,12 @@ def test_accepted_request_counts_toward_all_limits():
     domain = _a_domain()
 
     with (
-        mock.patch.object(link_requests_global, 'report_usage') as globally,
-        mock.patch.object(link_requests_per_domain, 'report_usage') as per_domain,
-        mock.patch.object(link_requests_per_ip, 'report_usage') as per_ip,
-        mock.patch.object(link_requests_per_contact, 'report_usage') as per_contact,
+        mock.patch.object(access_requests_global, 'report_usage') as globally,
+        mock.patch.object(access_requests_per_domain, 'report_usage') as per_domain,
+        mock.patch.object(access_requests_per_ip, 'report_usage') as per_ip,
+        mock.patch.object(access_requests_per_contact, 'report_usage') as per_contact,
     ):
-        rate_limit_link_request(domain, contact)
+        rate_limit_access_request(domain, contact)
 
     assert globally.called
     assert per_domain.call_args.args == (f'domain:{domain}',)
@@ -123,10 +123,10 @@ def test_accepted_request_counts_toward_all_limits():
 
 @use('db', limiter_on)
 def test_refused_request_does_not_count_toward_limits():
-    with _exhausted(link_requests_global):
+    with _exhausted(access_requests_global):
         with mock.patch.object(
-            link_requests_per_contact, 'report_usage'
+            access_requests_per_contact, 'report_usage'
         ) as per_contact:
-            rate_limit_link_request(_a_domain(), _a_contact())
+            rate_limit_access_request(_a_domain(), _a_contact())
 
     assert not per_contact.called

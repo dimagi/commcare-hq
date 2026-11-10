@@ -17,14 +17,14 @@ STATUS_IP_RATE_LIMITED = 'ip_rate_limited'
 STATUS_CONTACT_RATE_LIMITED = 'contact_rate_limited'
 STATUS_ACCEPTED = 'accepted'
 
-SHOULD_RATE_LIMIT_LINK_REQUESTS = not settings.UNIT_TESTING
+SHOULD_RATE_LIMIT_ACCESS_REQUESTS = not settings.UNIT_TESTING
 
 
-@run_only_when(lambda: SHOULD_RATE_LIMIT_LINK_REQUESTS)
+@run_only_when(lambda: SHOULD_RATE_LIMIT_ACCESS_REQUESTS)
 @silence_and_report_error(
-    "Exception raised in the public webform link request rate limiter",
-    'commcare.public_webforms.link_request_rate_limiter_errors')
-def rate_limit_link_request(domain, contact):
+    "Exception raised in the public webform access request rate limiter",
+    'commcare.public_webforms.access_request_rate_limiter_errors')
+def rate_limit_access_request(domain, contact):
     ip_address = _get_ip_address()
     status, window = _check_for_exceeded_rate_limits(
         domain, contact, ip_address
@@ -32,7 +32,7 @@ def rate_limit_link_request(domain, contact):
     if status == STATUS_ACCEPTED:
         _report_usage(domain, contact, ip_address)
 
-    metrics_counter('commcare.public_webforms.link_requests', 1, tags={
+    metrics_counter('commcare.public_webforms.access_requests', 1, tags={
         'status': status,
         'window': window or 'none',
     })
@@ -46,22 +46,22 @@ def _get_ip_address():
 
 def _check_for_exceeded_rate_limits(domain, contact, ip_address):
     # widest scope first, so that the metric names the broadest limit reached
-    window = link_requests_global.get_window_of_first_exceeded_limit()
+    window = access_requests_global.get_window_of_first_exceeded_limit()
     if window:
         return STATUS_GLOBAL_RATE_LIMITED, window
 
-    window = link_requests_per_domain.get_window_of_first_exceeded_limit(
+    window = access_requests_per_domain.get_window_of_first_exceeded_limit(
         'domain:{}'.format(domain))
     if window:
         return STATUS_DOMAIN_RATE_LIMITED, window
 
     if ip_address:
-        window = link_requests_per_ip.get_window_of_first_exceeded_limit(
+        window = access_requests_per_ip.get_window_of_first_exceeded_limit(
             'ip:{}'.format(ip_address))
         if window:
             return STATUS_IP_RATE_LIMITED, window
 
-    window = link_requests_per_contact.get_window_of_first_exceeded_limit(
+    window = access_requests_per_contact.get_window_of_first_exceeded_limit(
         'contact:{}'.format(contact))
     if window:
         return STATUS_CONTACT_RATE_LIMITED, window
@@ -70,17 +70,17 @@ def _check_for_exceeded_rate_limits(domain, contact, ip_address):
 
 
 def _report_usage(domain, contact, ip_address):
-    link_requests_global.report_usage()
-    link_requests_per_domain.report_usage('domain:{}'.format(domain))
+    access_requests_global.report_usage()
+    access_requests_per_domain.report_usage('domain:{}'.format(domain))
     if ip_address:
-        link_requests_per_ip.report_usage('ip:{}'.format(ip_address))
-    link_requests_per_contact.report_usage('contact:{}'.format(contact))
+        access_requests_per_ip.report_usage('ip:{}'.format(ip_address))
+    access_requests_per_contact.report_usage('contact:{}'.format(contact))
 
 
-link_requests_per_contact = RateLimiter(
-    feature_key='public_webform_link_requests_per_contact',
+access_requests_per_contact = RateLimiter(
+    feature_key='public_webform_access_requests_per_contact',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'public_webform_link_requests_per_contact',
+        'public_webform_access_requests_per_contact',
         default=RateDefinition(
             per_week=30,
             per_day=15,
@@ -90,10 +90,10 @@ link_requests_per_contact = RateLimiter(
 )
 
 
-link_requests_per_ip = RateLimiter(
-    feature_key='public_webform_link_requests_per_ip',
+access_requests_per_ip = RateLimiter(
+    feature_key='public_webform_access_requests_per_ip',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'public_webform_link_requests_per_ip',
+        'public_webform_access_requests_per_ip',
         # generous, because a clinic full of respondents may share one address
         default=RateDefinition(
             per_week=2000,
@@ -103,10 +103,10 @@ link_requests_per_ip = RateLimiter(
     ).get_rate_limits(scope),
 )
 
-link_requests_per_domain = RateLimiter(
-    feature_key='public_webform_link_requests_per_domain',
+access_requests_per_domain = RateLimiter(
+    feature_key='public_webform_access_requests_per_domain',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'public_webform_link_requests_per_domain',
+        'public_webform_access_requests_per_domain',
         default=RateDefinition(
             per_week=60000,
             per_day=20000,
@@ -115,10 +115,10 @@ link_requests_per_domain = RateLimiter(
     ).get_rate_limits(scope),
 )
 
-link_requests_global = RateLimiter(
-    feature_key='public_webform_link_requests_global',
+access_requests_global = RateLimiter(
+    feature_key='public_webform_access_requests_global',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'public_webform_link_requests_global',
+        'public_webform_access_requests_global',
         # a ceiling on what the feature can cost HQ as a whole
         default=RateDefinition(
             per_day=500000,
