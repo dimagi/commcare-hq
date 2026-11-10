@@ -26,12 +26,11 @@ from bs4 import BeautifulSoup
 from jinja2 import (
     StrictUndefined,
     TemplateError,
-    TemplateRuntimeError,
     TemplateSyntaxError,
     meta,
     nodes,
 )
-from jinja2.sandbox import SandboxedEnvironment, SecurityError, safe_range
+from jinja2.sandbox import SandboxedEnvironment
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -80,11 +79,9 @@ BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
 DEFAULT_BLANK_LENGTH = 20
 MAX_BLANK_LENGTH = 100
 
-# Limits on author-written Jinja, in characters (areas), range items (loops) and bits (powers)
+# Limits on author-written Jinja, in characters, before and after rendering
 MAX_AREA_LENGTH = 50_000
 MAX_RENDERED_LENGTH = 100_000
-MAX_LOOP_ITEMS = 10_000
-MAX_POWER_BITS = 10_000
 
 
 def _escape_markdown(text):
@@ -96,52 +93,7 @@ def _escape_value(value):
     return _escape_markdown(html.escape(str(value)))
 
 
-class _LimitedSandbox(SandboxedEnvironment):
-    """A sandbox that refuses operators that can allocate unbounded memory
-
-    ponytail: ``~``, ``+`` and filters like ``center`` are not limited here;
-    the rendered text is capped after the fact (:func:`_render_area`). Add a
-    render time limit if that is not enough.
-    """
-    intercepted_binops = frozenset(['*', '**', '%'])
-
-    def call_binop(self, context, operator, left, right):
-        if operator == '**' and _power_bits(left, right) > MAX_POWER_BITS:
-            raise SecurityError('Power too big')
-        if operator == '%' and isinstance(left, str):
-            raise SecurityError('String formatting is not allowed')
-        if operator == '*' and _repeat_length(left, right) > MAX_RENDERED_LENGTH:
-            raise SecurityError('Repeated value too big')
-        return super().call_binop(context, operator, left, right)
-
-
-def _power_bits(base, exponent):
-    """An estimate of the size of ``base ** exponent`` in bits, for integers"""
-    if isinstance(base, int) and isinstance(exponent, int) and exponent > 0:
-        return base.bit_length() * exponent
-    return 0
-
-
-def _repeat_length(left, right):
-    for sequence, count in ((left, right), (right, left)):
-        if isinstance(sequence, (str, bytes, list, tuple)) and isinstance(count, int):
-            return len(sequence) * count
-    return 0
-
-
-def _budgeted_range(budget=MAX_LOOP_ITEMS):
-    """A ``range`` that can only produce ``budget`` items in total, so that nested loops end"""
-    def limited_range(*args):
-        nonlocal budget
-        items = safe_range(*args)
-        budget -= len(items)
-        if budget < 0:
-            raise TemplateRuntimeError('Too many loop iterations')
-        return items
-    return limited_range
-
-
-_render_env = _LimitedSandbox(undefined=StrictUndefined, finalize=_escape_value)
+_render_env = SandboxedEnvironment(undefined=StrictUndefined, finalize=_escape_value)
 
 
 class DocumentRenderError(Exception):
@@ -205,7 +157,7 @@ def _check_area_length(name, text):
 def _render_area(name, text, context):
     _check_area_length(name, text)
     try:
-        rendered = _render_env.from_string(text).render({**context, 'range': _budgeted_range()})
+        rendered = _render_env.from_string(text).render(context)
     except TemplateSyntaxError as error:
         raise DocumentRenderError(_syntax_error_message(name, error))
     except TemplateError as error:

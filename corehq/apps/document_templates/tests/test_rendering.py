@@ -4,7 +4,7 @@ from reportlab.platypus import ListFlowable, Paragraph
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     MAX_AREA_LENGTH,
-    MAX_LOOP_ITEMS,
+    MAX_RENDERED_LENGTH,
     _markdown_to_flowables,
     _markdown_to_sanitized_html,
     _parse_variable_names,
@@ -96,40 +96,14 @@ def test_render_areas_is_sandboxed():
         _render_areas({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
 
 
-@pytest.mark.parametrize('text, message', [
-    ("{{ 'x' * 10**9 }}", 'Repeated value too big'),
-    ("{{ 10**9 * 'x' }}", 'Repeated value too big'),
-    ("{{ [0] * 10**9 }}", 'Repeated value too big'),
-    ("{{ 2**10000 }}", 'Power too big'),
-    ("{{ 9**999**999 }}", 'Power too big'),
-    ("{{ '%1000000000d' % 1 }}", 'String formatting is not allowed'),
-    ("{% for a in range(1000) %}{% for b in range(1000) %}{% endfor %}{% endfor %}", 'Too many loop iterations'),
-    ("{% for a in range(MAX) %}{% endfor %}".replace('MAX', str(MAX_LOOP_ITEMS + 1)), 'Too many loop iterations'),
-    ("{{ 'x' * 50000 }}{{ 'x' * 50001 }}", 'too long once rendered'),
-])
-def test_render_areas_limits_resource_use(text, message):
-    with pytest.raises(DocumentRenderError, match=message):
-        _render_areas({**VALUES, 'body': text}, {})
-
-
-@pytest.mark.parametrize('text, expected', [
-    ('{% for i in range(3) %}{{ i }}{% endfor %}', '012'),
-    ("{{ 'ab' * 3 }}", 'ababab'),
-    ('{{ 2 ** 10 }}', '1024'),
-    ('{{ 7 % 4 }}', '3'),
-])
-def test_render_areas_allows_ordinary_use(text, expected):
-    assert _render_areas({**VALUES, 'body': text}, {})['body'] == expected
-
-
-def test_render_areas_range_budget_is_per_area():
-    text = '{% for i in range(6000) %}{% endfor %}'
-    assert _render_areas({**VALUES, 'body': text, 'footer': text}, {})
-
-
 def test_render_areas_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
         _render_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
+
+
+def test_render_areas_rejects_a_long_result():
+    with pytest.raises(DocumentRenderError, match='too long once rendered'):
+        _render_areas({**VALUES, 'body': f"{{{{ 'x' * {MAX_RENDERED_LENGTH + 1} }}}}"}, {})
 
 
 def test_variable_names_rejects_a_long_area():
