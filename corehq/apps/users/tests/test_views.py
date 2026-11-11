@@ -393,6 +393,38 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
 
 
+class TestUndoRemoveWebUserView(TestCase):
+    domain = 'test-undo-remove-web-user'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'undo-remove-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        removed = WebUser.create(self.domain, 'undo-remove-member', 'password', None, None)
+        self.addCleanup(removed.delete, None, deleted_by=None)
+        record = removed.delete_domain_membership(self.domain, create_record=True)
+        removed.save()
+        self.addCleanup(record.delete)
+        self.removed_user_id = removed.user_id
+        self.url = reverse('undo_remove_web_user', args=[self.domain, record.get_id])
+        self.client.login(username='undo-remove-admin', password='password')
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert not WebUser.get(self.removed_user_id).is_member_of(self.domain)
+
+    def test_post_restores_membership(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert WebUser.get(self.removed_user_id).is_member_of(self.domain)
+
+
 @es_test(requires=[user_adapter], setup_class=True)
 @patch('corehq.apps.users.decorators.can_use_filtered_user_download', return_value=True)
 class TestCountWebUsers(TestCase):

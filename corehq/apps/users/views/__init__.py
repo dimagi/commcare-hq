@@ -826,6 +826,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
+@require_POST
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
