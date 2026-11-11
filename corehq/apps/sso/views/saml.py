@@ -97,11 +97,8 @@ def sso_saml_acs(request, idp_slug):
         auth.login(request, user)
         process_async_signup_requests(request, user)
 
-        relay_state = request.saml2_request_data['post_data'].get('RelayState')
-        if relay_state is not None and relay_state not in [
-            OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
-            get_saml_login_url(request.idp),
-        ]:
+        relay_state = _get_relay_state_redirect_url(request)
+        if relay_state is not None:
             # redirect to next=<relay_state>
             return HttpResponseRedirect(
                 request.saml2_auth.redirect_to(relay_state)
@@ -113,6 +110,16 @@ def sso_saml_acs(request, idp_slug):
         request,
         login_error=getattr(request, 'sso_login_error', None),
     )
+
+
+def _get_relay_state_redirect_url(request):
+    relay_state = request.saml2_request_data['post_data'].get('RelayState')
+    if relay_state not in [
+        OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
+        get_saml_login_url(request.idp),
+    ]:
+        return relay_state
+    return None
 
 
 @use_saml2_auth
