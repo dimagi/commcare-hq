@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, resolve_url
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -341,8 +341,6 @@ class RegisterDomainView(TemplateView):
         return not (Domain.active_for_user(user) or user.is_superuser)
 
     def post(self, request, *args, **kwargs):
-        referer_url = request.GET.get('referer', '')
-        nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
         context = self.get_context_data(form=form)
         if not form.is_valid():
@@ -399,11 +397,7 @@ class RegisterDomainView(TemplateView):
             })
             return render(request, 'registration/confirmation_sent.html', context)
 
-        if nextpage:
-            return HttpResponseRedirect(nextpage)
-        if referer_url:
-            return redirect(referer_url)
-        return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
+        return HttpResponseRedirect(_get_domain_registered_redirect_url(request, domain_name))
 
     def get_context_data(self, **kwargs):
         request = self.request
@@ -438,6 +432,16 @@ class RegisterDomainView(TemplateView):
             'show_multiple_invites': len(invitations) > 1,
         })
         return context
+
+
+def _get_domain_registered_redirect_url(request, domain_name):
+    nextpage = request.POST.get('next')
+    if nextpage:
+        return nextpage
+    referer_url = request.GET.get('referer', '')
+    if referer_url:
+        return resolve_url(referer_url)
+    return reverse("domain_homepage", args=[domain_name])
 
 
 @transaction.atomic
