@@ -1112,6 +1112,7 @@ class DowngradeLocationsView(BaseDomainView):
 
 
 @domain_admin_required
+@require_POST
 def unassign_users(request, domain):
     """
     Unassign all users from their locations.  This is for downgraded domains.

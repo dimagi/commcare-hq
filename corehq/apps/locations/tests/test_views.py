@@ -16,7 +16,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.views import LocationTypesView, LocationImportView
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import WebUser, HQApiKey
+from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
@@ -360,3 +360,34 @@ class BulkLocationUploadAPITest(TestCase):
             'success': False,
             'message': 'only one file can be uploaded at a time'
         })
+
+
+class TestUnassignUsersView(TestCase):
+    domain = 'test-unassign-users-view'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'unassign-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        loc_type = LocationType.objects.create(domain=cls.domain, name='city')
+        cls.location = make_loc('city1', type=loc_type, domain=cls.domain)
+
+    def setUp(self):
+        self.mobile_user = CommCareUser.create(self.domain, 'mobile', 'password', None, None)
+        self.addCleanup(self.mobile_user.delete, self.domain, deleted_by=None)
+        self.mobile_user.set_location(self.location)
+        self.client.login(username='unassign-admin', password='password')
+        self.url = reverse('unassign_users', args=[self.domain])
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert CommCareUser.get(self.mobile_user.user_id).location_id == self.location.location_id
+
+    def test_post_unassigns_users(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert CommCareUser.get(self.mobile_user.user_id).location_id is None
