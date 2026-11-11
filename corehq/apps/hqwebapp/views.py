@@ -135,7 +135,7 @@ from corehq.util.public_only_requests.public_only_requests import (
     get_public_only_session,
 )
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse, set_language_cookie
+from corehq.util.view_utils import get_safe_redirect_url, reverse, set_language_cookie
 
 
 def is_deploy_in_progress():
@@ -419,13 +419,11 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
-        redirect_to = req.GET.get('next', '')
-        if redirect_to:
-            return HttpResponseRedirect(redirect_to)
         if not domain_name:
-            return HttpResponseRedirect(reverse('homepage'))
+            default_url = reverse('homepage')
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
+            default_url = reverse('domain_homepage', args=[domain_name])
+        return HttpResponseRedirect(get_safe_redirect_url(req, req.GET.get('next'), default_url))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         with mutable_querydict(req.POST):

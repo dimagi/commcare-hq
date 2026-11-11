@@ -1,4 +1,6 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
+
+import pytest
 
 from django.core import mail
 from django.test import RequestFactory, SimpleTestCase, TestCase
@@ -11,6 +13,7 @@ from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.views import (
     SolutionsFeatureRequestView,
+    _login,
     set_language,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -367,3 +370,24 @@ class TestSetLanguage(SimpleTestCase):
         )
         response = set_language(request)
         assert response.status_code == 204
+
+
+
+@pytest.mark.parametrize('domain, next_url, expected', [
+    (None, '/a/test-domain/reports/', '/a/test-domain/reports/'),
+    (None, 'https://example.com/', 'homepage'),
+    (None, '//example.com/', 'homepage'),
+    (None, None, 'homepage'),
+    ('test-domain', '/a/test-domain/reports/', '/a/test-domain/reports/'),
+    ('test-domain', 'https://example.com/', 'domain_homepage'),
+    ('test-domain', None, 'domain_homepage'),
+])
+def test_login_redirects_authenticated_user(domain, next_url, expected):
+    params = {'next': next_url} if next_url is not None else {}
+    request = RequestFactory().get('/accounts/login/', params)
+    request.user = Mock(is_authenticated=True)
+    response = _login(request, domain, None)
+    if not expected.startswith('/'):
+        expected = reverse(expected, args=[domain] if domain else [])
+    assert response.status_code == 302
+    assert response['Location'] == expected
