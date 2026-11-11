@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from jsonobject.exceptions import BadValueError
 
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.apps.locations.forms import LocationSelectWidget
@@ -18,7 +19,13 @@ from corehq.motech.openmrs.const import (
     NAME_PROPERTIES,
     PERSON_PROPERTIES,
 )
-from corehq.motech.const import IMPORT_FREQUENCY_CHOICES
+from corehq.motech.const import (
+    ALGO_AES_CBC,
+    IMPORT_FREQUENCY_CHOICES,
+    PASSWORD_PLACEHOLDER,
+)
+from corehq.motech.openmrs.models import ColumnMapping, validate_report_params
+from corehq.motech.utils import b64_aes_cbc_encrypt
 from corehq.motech.repeaters.forms import CaseRepeaterForm
 
 
@@ -107,6 +114,64 @@ class OpenmrsImporterForm(forms.Form):
     column_map = JsonField(label=_('Map columns to properties'), required=True, expected_type=list,
                            help_text=mark_safe(  # nosec: no user input
                                _('e.g. [{"column": "givenName", "property": "first_name"}, ...]')))
+
+    def __init__(self, *args, instance=None, **kwargs):
+        """
+        ``instance`` is the ``OpenmrsImporter`` to update on ``save()``,
+        in the manner of ``ModelForm``.
+        """
+        super().__init__(*args, **kwargs)
+        self.instance = instance
+
+    def clean_report_params(self):
+        report_params = self.cleaned_data['report_params'] or {}
+        try:
+            validate_report_params(report_params)
+        except ValueError as err:
+            raise ValidationError(str(err), code='invalid')
+        return report_params
+
+    def clean_column_map(self):
+        allowed_keys = set(ColumnMapping.properties())
+        column_map = []
+        for item in self.cleaned_data['column_map']:
+            if not isinstance(item, dict):
+                raise ValidationError(
+                    _('Each column mapping must be an object.'),
+                    code='invalid',
+                )
+            unknown_keys = set(item) - allowed_keys
+            if unknown_keys:
+                raise ValidationError(
+                    _('Unknown column mapping keys: %(keys)s'),
+                    code='invalid',
+                    params={'keys': ', '.join(sorted(unknown_keys))},
+                )
+            for key in ('column', 'property'):
+                if not item.get(key) or not isinstance(item[key], str):
+                    raise ValidationError(
+                        _('Each column mapping must have a "%(key)s".'),
+                        code='invalid',
+                        params={'key': key},
+                    )
+            try:
+                column_map.append(ColumnMapping(**item))
+            except BadValueError as err:
+                raise ValidationError(str(err), code='invalid')
+        return column_map
+
+    def save(self, commit=True):
+        for name, value in self.cleaned_data.items():
+            if name in ('import_frequency', 'log_level') and value in (None, ''):
+                continue  # Keep the current value; the document does not accept blanks
+            if name == 'password':
+                if value == PASSWORD_PLACEHOLDER:
+                    continue  # Skip updating the password if it hasn't been changed.
+                value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
+            setattr(self.instance, name, value)
+        if commit:
+            self.instance.save()
+        return self.instance
 
 
 class OpenmrsRepeaterForm(CaseRepeaterForm):
