@@ -1,3 +1,4 @@
+import inspect
 from unittest.mock import Mock, patch
 
 import pytest
@@ -14,6 +15,7 @@ from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.hqwebapp.views import (
     SolutionsFeatureRequestView,
     _login,
+    retrieve_download,
     set_language,
 )
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -391,3 +393,21 @@ def test_login_redirects_authenticated_user(domain, next_url, expected):
         expected = reverse(expected, args=[domain] if domain else [])
     assert response.status_code == 302
     assert response['Location'] == expected
+
+
+@pytest.mark.parametrize('next_url, expected', [
+    ('/a/test-domain/data/export/', '/a/test-domain/data/export/'),
+    ('https://example.com/', None),
+    ('javascript:alert(1)', None),
+    (None, None),
+])
+def test_retrieve_download_next_url(next_url, expected):
+    params = {'next': next_url} if next_url is not None else {}
+    request = RequestFactory().get('/a/test-domain/retreive_download/abc/', params)
+    view = inspect.unwrap(retrieve_download)
+    with patch('corehq.apps.hqwebapp.views.soil_views') as soil_views:
+        view(request, 'test-domain', 'abc')
+    extra_context = soil_views.retrieve_download.call_args.kwargs['extra_context']
+    if expected is None:
+        expected = reverse('my_project_settings', args=['test-domain'])
+    assert extra_context['next_url'] == expected
