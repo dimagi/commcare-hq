@@ -38,21 +38,6 @@
   toggle: CUSTOM_APP_BASE_URL
   supports_linked_app: true
 
-# RemoteApp Only
-- id: profile_url
-  name: "Profile URL"
-  requires: "{$parent.doc_type}='RemoteApp'"
-  hide_if_not_enabled: true
-  widget: text
-
-- id: manage_urls
-  name: "Auto-manage URLs"
-  requires: "{$parent.doc_type}='RemoteApp'"
-  hide_if_not_enabled: true
-  widget: bool
-  default: false
-
-
 # Application only
 - id: case_sharing
   name: "Case Sharing"
