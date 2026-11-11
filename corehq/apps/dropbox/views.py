@@ -6,7 +6,6 @@ from dropbox.oauth import (
     BadRequestException,
     BadStateException,
     CsrfException,
-    DropboxOAuth2Flow,
     NotApprovedException,
     ProviderException,
 )
