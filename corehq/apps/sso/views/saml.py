@@ -28,6 +28,7 @@ from corehq.apps.sso.utils.view_helpers import (
     render_sso_user_login_failed,
     render_saml_acs_error,
 )
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 @identity_provider_required
@@ -113,7 +114,9 @@ def sso_saml_acs(request, idp_slug):
 
 
 def _get_relay_state_redirect_url(request):
-    relay_state = request.saml2_request_data['post_data'].get('RelayState')
+    relay_state = get_safe_redirect_url(
+        request, request.saml2_request_data['post_data'].get('RelayState'), None
+    )
     if relay_state not in [
         OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
         get_saml_login_url(request.idp),
@@ -128,7 +131,10 @@ def sso_saml_login(request, idp_slug):
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
     login_url = add_username_hint_to_login_url(
-        request.saml2_auth.login(return_to=request.GET.get('next'), force_authn=True),
+        request.saml2_auth.login(
+            return_to=get_safe_redirect_url(request, request.GET.get('next'), None),
+            force_authn=True,
+        ),
         request
     )
     return HttpResponseRedirect(login_url)
