@@ -39,7 +39,12 @@ from sqlalchemy import (
     union_all,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import DataError, OperationalError, ProgrammingError
+from sqlalchemy.exc import (
+    CompileError,
+    DataError,
+    OperationalError,
+    ProgrammingError,
+)
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.base import Executable
 from sqlalchemy.sql.expression import ClauseElement
@@ -82,7 +87,6 @@ STATEMENT_TIMEOUT = '5s'
 # restricted to characters that cannot close the placeholder and inject SQL.
 PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
 
-MAX_TREE_DEPTH = 100
 NESTED_TOO_DEEPLY = "SQL is nested too deeply"
 
 
@@ -215,19 +219,25 @@ def translate(sql, tables):
     :param sql: the user-supplied SQL statement
     :param tables: mapping of table name to SQLAlchemy ``Table``
     """
-    if not sql:
-        raise UnsupportedSQL("SQL is required")
     try:
-        statements = sqlglot.parse(sql, read='postgres')
+        query = _translate(sql, tables)
+        query.compile(dialect=postgresql.dialect())  # Ensure it compiles
+        return query
     except SqlglotError:
         raise UnsupportedSQL("could not parse SQL")
+    except CompileError as e:
+        raise UnsupportedSQL(str(e))
     except RecursionError:
         raise UnsupportedSQL(NESTED_TOO_DEEPLY)
-    statements = [s for s in statements if s]
+
+
+def _translate(sql, tables):
+    if not sql:
+        raise UnsupportedSQL("SQL is required")
+    statements = [s for s in sqlglot.parse(sql, read='postgres') if s]
     if len(statements) != 1:
         raise UnsupportedSQL("this only supports a single statement")
     statement, = statements
-    _check_tree_depth(statement)
 
     tables = _add_ctes(statement.args.pop('with_', None), dict(tables))
     return _convert_query(statement, tables)
@@ -245,20 +255,6 @@ def _add_ctes(node, tables):
             raise UnsupportedSQL(f"CTE name already in use: {identifier.name}")
         tables[identifier.name] = _convert_query(query, tables).cte(identifier.name)
     return tables
-
-
-def _check_tree_depth(node):
-    """Reject deep parse trees
-
-    Long chains of operators such as ``a = 1 AND b = 2 AND ...`` parse into a
-    deep tree without any nested parentheses.
-    """
-    nodes = [(node, 1)]
-    while nodes:
-        node, depth = nodes.pop()
-        if depth > MAX_TREE_DEPTH:
-            raise UnsupportedSQL(NESTED_TOO_DEEPLY)
-        nodes.extend((child, depth + 1) for child in node.iter_expressions())
 
 
 def _convert_query(node, tables):
