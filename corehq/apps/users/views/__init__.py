@@ -75,6 +75,7 @@ from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
+    require_can_edit_commcare_users,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_permission_to_edit_user,
@@ -1436,7 +1437,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 
 @always_allow_project_access
 @sensitive_post_parameters('new_password1', 'new_password2')
-@login_and_domain_required
+@require_can_edit_commcare_users
 @location_safe
 def change_password(request, domain, login_id):
     # copied from auth's password_change
