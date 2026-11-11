@@ -33,7 +33,6 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -1550,12 +1549,8 @@ def set_language(request):
     If no http referer is available or it is not safe, just set the language.
     Based on django.views.i18n.set_language.
     """
-    next_url = request.META.get("HTTP_REFERER")
-    if next_url and url_has_allowed_host_and_scheme(
-        url=next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
+    next_url = get_safe_redirect_url(request, request.META.get("HTTP_REFERER"), None)
+    if next_url:
         response = HttpResponseRedirect(next_url)
     else:
         response = HttpResponse(status=204)
