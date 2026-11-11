@@ -52,6 +52,7 @@ from corehq.apps.reports.filters.controllers import EmwfOptionsController
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
+from corehq.util.view_utils import get_safe_redirect_url
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 from .analytics import users_have_locations
@@ -1125,7 +1126,7 @@ def unassign_users(request, domain):
     messages.success(request,
                      _("All users have been unassigned from their locations"))
     fallback_url = reverse('users_default', args=[domain])
-    return HttpResponseRedirect(request.POST.get('redirect', fallback_url))
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.POST.get('redirect'), fallback_url))
 
 
 @require_can_edit_or_view_locations
