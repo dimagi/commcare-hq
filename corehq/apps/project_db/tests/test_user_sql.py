@@ -245,6 +245,7 @@ def _within_distance(coordinates, meters):
      select([CLIENT.c.name.label('n'), func.count().label('total')]).group_by(column('n'))),
     ('SELECT DISTINCT ON (n) name AS n FROM client',
      select([CLIENT.c.name.label('n')]).distinct(column('n'))),
+    ('SELECT name AS name FROM client', select([CLIENT.c.name.label('name')])),
     # Ambiguous aliases are passed through for PostgreSQL to reject
     ('SELECT name AS x, case_id AS x FROM client ORDER BY x',
      select([CLIENT.c.name.label('x'), CLIENT.c.case_id.label('x')])
@@ -518,6 +519,11 @@ def _compiled(query):
     "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
     "SELECT * FROM client WHERE similar_name(name)",
     "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
+
+    # Aliases can't be referenced in WHERE
+    'SELECT count(*) AS n FROM client WHERE n > 5',
+    # nor can they be used to reference the outer query
+    "SELECT * FROM client WHERE case_id IN (SELECT visit_id AS name FROM form WHERE name = 'x')",
 
     # Only columns and aliases can be ordered by
     "SELECT name FROM client ORDER BY string_to_array(name, ' ')",

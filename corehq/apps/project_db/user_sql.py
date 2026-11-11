@@ -300,8 +300,6 @@ class Scope:
         self._table_refs[name] = selectable
 
     def get_column(self, name, qualifier=None):
-        if qualifier is None and name in self.aliases:
-            return column(name)
         candidates = [table_ref.c[name]
                       for ref_name, table_ref in self._table_refs.items()
                       if qualifier in (None, ref_name) and name in table_ref.c]
@@ -351,13 +349,13 @@ def _convert_distinct_on(node, scope):
     on_expressions, = _unpack(on, 'expressions')
     if not on_expressions:
         raise UnsupportedSQL("DISTINCT ON requires at least one column")
-    return [_convert_column(e, scope) for e in on_expressions]
+    return [_convert_column(e, scope, allow_alias=True) for e in on_expressions]
 
 
 def _convert_group(node, scope):
     """Convert a GROUP BY clause to a list of columns"""
     group_expressions, = _unpack(node, 'expressions')
-    return [_convert_column(e, scope) for e in group_expressions]
+    return [_convert_column(e, scope, allow_alias=True) for e in group_expressions]
 
 
 def _convert_order(node, scope):
@@ -365,7 +363,7 @@ def _convert_order(node, scope):
     order_expressions, = _unpack(node, 'expressions')
     for e in order_expressions:
         expression, desc, nulls_first = _unpack(e, 'this', 'desc', 'nulls_first')
-        value = _convert_column(expression, scope)
+        value = _convert_column(expression, scope, allow_alias=True)
         sort_key = value.desc() if desc else value.asc()
         yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
 
@@ -441,11 +439,14 @@ def _convert_aggregated_value(node, scope):
     return _convert_value(node, scope)
 
 
-def _convert_column(node, scope):
+def _convert_column(node, scope, allow_alias=False):
     """Resolve a SQL column reference against the columns in the query"""
     if not isinstance(node, exp.Column):
         raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
     identifier, qualifier = _unpack(node, 'this', 'table')
+    # Postgres allows alias references in ORDER BY, GROUP BY, and DISTINCT ON
+    if allow_alias and qualifier is None and identifier.name in scope.aliases:
+        return column(identifier.name)
     return scope.get_column(identifier.name, qualifier and qualifier.name)
 
 
