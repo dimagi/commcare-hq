@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 
 from memoized import memoized
 
@@ -82,6 +83,7 @@ def select(request, do_not_redirect=False, next_view=None):
 
 
 @login_required
+@require_POST
 def accept_all_invitations(request):
     user = request.couch_user
     invites = Invitation.by_email(user.username)
