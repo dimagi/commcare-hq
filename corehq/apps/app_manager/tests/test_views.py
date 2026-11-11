@@ -9,10 +9,12 @@ from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    ConditionalCaseUpdate,
     FormDatum,
     FormLink,
     Module,
@@ -37,6 +39,7 @@ from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
+from corehq.tests.util.forms import csrf_client, submit_form
 from corehq.util.test_utils import flag_enabled, has_permissions, timelimit
 
 from .app_factory import AppFactory
@@ -963,6 +966,54 @@ class TestEditModuleDetailScreens(TestModuleViewsBase):
             new_sort_elements[1].display,
             {'en': 'Ageee', 'hin': 'Umar'}
         )
+
+
+class TestDropUsercaseView(ViewsBase):
+    domain = 'test-drop-usercase-view'
+
+    def setUp(self):
+        super().setUp()
+        factory = AppFactory(domain=self.domain)
+        __, form = factory.new_basic_module('m0', 'house')
+        form.source = get_simple_form()
+        AppFactory.form_uses_usercase(form, update={
+            'name': ConditionalCaseUpdate(question_path='/data/question1'),
+        })
+        self.app = factory.app
+        self.app.save()
+        self.addCleanup(self.app.delete)
+        self.url = reverse('drop_usercase', args=[self.domain, self.app.get_id])
+        self.client.login(username=self.username, password=self.password)
+
+    def _usercase_update(self):
+        app = Application.get(self.app.get_id)
+        return app.get_module(0).get_form(0).actions.usercase_update.update
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert list(self._usercase_update()) == ['name']
+
+    def test_post_drops_usercase(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert self._usercase_update() == {}
+
+    @es_test(requires=[app_adapter])
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
+    def test_button_on_form_page(self, validate_xform):
+        client = csrf_client(self.username, self.password)
+        form = self.app.get_module(0).get_form(0)
+        # The button is offered when the project has lost the User Properties privilege
+        with patch('corehq.apps.app_manager.views.forms.domain_has_privilege',
+                   lambda domain, privilege: privilege != privileges.USERCASE):
+            page = client.get(reverse('view_form', args=[self.domain, self.app.get_id, form.unique_id]))
+        assert page.status_code == 200
+
+        response = submit_form(client, page, 'Remove User Properties')
+
+        assert response.status_code == 302
+        assert self._usercase_update() == {}
 
 
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):

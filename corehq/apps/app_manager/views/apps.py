@@ -907,7 +907,7 @@ def move_child_modules_after_parents(request, domain, app_id):
     return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
-@require_GET
+@no_conflict_require_POST
 @require_can_edit_apps
 def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)
