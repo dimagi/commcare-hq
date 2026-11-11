@@ -69,6 +69,7 @@ from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import get_safe_redirect_url
 
 _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
@@ -435,10 +436,10 @@ class RegisterDomainView(TemplateView):
 
 
 def _get_domain_registered_redirect_url(request, domain_name):
-    nextpage = request.POST.get('next')
+    nextpage = get_safe_redirect_url(request, request.POST.get('next'), None)
     if nextpage:
         return nextpage
-    referer_url = request.GET.get('referer', '')
+    referer_url = get_safe_redirect_url(request, request.GET.get('referer'), None)
     if referer_url:
         return resolve_url(referer_url)
     return reverse("domain_homepage", args=[domain_name])
@@ -579,7 +580,7 @@ def eula_agreement(request):
             current_user.eulas.append(new_agreement)
         current_user.save()
 
-    return HttpResponseRedirect(request.POST.get('next', '/'))
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.POST.get('next'), '/'))
 
 
 @login_required
