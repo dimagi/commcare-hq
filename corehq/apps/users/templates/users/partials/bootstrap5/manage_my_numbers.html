@@ -29,8 +29,9 @@
             <div class="col-md-8 col-xl-10">
               {% if user_type == "mobile" and can_use_inbound_sms %}
                 {% if phone.status == "unverified" %}
-                  <form class="d-inline" method="post" action="{% url "verify_phone_number" domain couch_user.couch_id %}?phone_number={{phone.number|urlencode}}">
+                  <form class="d-inline" method="post" action="{% url "verify_phone_number" domain couch_user.couch_id %}">
                     {% csrf_token %}
+                    <input type="hidden" name="phone_number" value="{{ phone.number }}">
                     <button type="submit"
                             data-html="true"
                             data-title="<div class='alert alert-warning'><i class='fa-solid fa-triangle-exclamation'></i> <strong>{% trans 'SMS charges will incur.' %}</strong></div>{% trans 'Send a verification SMS to this phone. When the user replies to this SMS, the phone number will be verified.' %}"
