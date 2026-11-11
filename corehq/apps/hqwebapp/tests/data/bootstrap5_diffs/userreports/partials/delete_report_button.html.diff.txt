@@ -1,15 +1,18 @@
 --- 
 +++ 
-@@ -3,7 +3,7 @@
+@@ -3,9 +3,9 @@
  {% if report.spec.report_meta.created_by_builder %}
-   <a
-     id="deleteReport"
--    class="btn btn-danger"
-+    class="btn btn-outline-danger"
-     href="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
-   >
-   {% if use_updated_ucr_naming %}
-@@ -15,16 +15,16 @@
+   <form method="post"
+         action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
+-        style="display: inline;">
++        class="d-inline">
+     {% csrf_token %}
+-    <button type="submit" id="deleteReport" class="btn btn-danger">
++    <button type="submit" id="deleteReport" class="btn btn-outline-danger">
+     {% if use_updated_ucr_naming %}
+       {% trans 'Delete Custom Web Report' %}
+     {% else %}
+@@ -16,16 +16,16 @@
  {% else %}
    <div class="btn-group">
      {% if referring_apps %}
@@ -29,7 +32,7 @@
          {% endif %}
        </form>
      {% endif %}
-@@ -35,7 +35,7 @@
+@@ -36,7 +36,7 @@
        <div class="modal-dialog" role="document">
          <div class="modal-content">
            <div class="modal-header">
@@ -38,7 +41,7 @@
                <span aria-hidden="true">&times;</span>
              </button>
              <h4 class="modal-title">{% trans 'Are you sure you want to delete this report?' %}</h4>
-@@ -58,10 +58,10 @@
+@@ -59,10 +59,10 @@
            <form method='post' action="{% url 'delete_configurable_report' domain report_id %}" >
              {% csrf_token %}
              <div class="modal-footer">
