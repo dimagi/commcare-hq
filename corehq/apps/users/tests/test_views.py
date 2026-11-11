@@ -709,3 +709,58 @@ class TestCommCareUserPasswordResetView(TestCase):
         mock_messages.success.assert_called_once()
         success_call_args = mock_messages.success.call_args[0]
         self.assertIn('sent', str(success_call_args[1]).lower())
+
+
+class TestChangePasswordView(TestCase):
+    domain = 'test-change-password'
+    password = 'Old-passw0rd!'
+    new_password = 'N3w-passw0rd!'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.mobile_worker = CommCareUser.create(cls.domain, 'mobile-worker', cls.password, None, None)
+        cls.addClassCleanup(cls.mobile_worker.delete, cls.domain, deleted_by=None)
+        cls.url = reverse('change_password', args=[cls.domain, cls.mobile_worker.user_id])
+
+        cls.editor = cls._make_web_user('editor', HqPermissions(edit_commcare_users=True))
+        cls.viewer = cls._make_web_user('viewer', HqPermissions(view_commcare_users=True))
+        cls.no_permissions = cls._make_web_user('no-permissions', HqPermissions())
+
+    @classmethod
+    def _make_web_user(cls, name, permissions):
+        role = UserRole.create(cls.domain, name, permissions=permissions)
+        user = WebUser.create(cls.domain, f'{name}@{cls.domain}.com', cls.password, None, None,
+                              role_id=role.get_id)
+        cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
+        return user
+
+    def _post_new_password(self, user):
+        self.client.login(username=user.username, password=self.password)
+        return self.client.post(self.url, {
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+
+    def _mobile_worker_password_was_changed(self):
+        django_user = CommCareUser.get_by_user_id(self.mobile_worker.user_id).get_django_user()
+        return django_user.check_password(self.new_password)
+
+    def test_user_who_can_edit_mobile_workers_can_change_password(self):
+        response = self._post_new_password(self.editor)
+        assert response.status_code == 200
+        assert response.json()['status'] == 'OK'
+        assert self._mobile_worker_password_was_changed()
+
+    def test_view_only_user_cannot_change_password(self):
+        response = self._post_new_password(self.viewer)
+        assert response.status_code == 403
+        assert not self._mobile_worker_password_was_changed()
+
+    def test_user_without_permissions_cannot_change_password(self):
+        response = self._post_new_password(self.no_permissions)
+        assert response.status_code == 403
+        assert not self._mobile_worker_password_was_changed()
