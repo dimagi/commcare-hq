@@ -17,7 +17,7 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
@@ -485,6 +485,7 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
+@require_POST
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     clear_app_cache(request, domain)

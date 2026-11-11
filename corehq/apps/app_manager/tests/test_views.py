@@ -1016,6 +1016,27 @@ class TestDropUsercaseView(ViewsBase):
         assert self._usercase_update() == {}
 
 
+@patch('corehq.apps.app_manager.views.apps.load_app_from_slug')
+class TestAppFromTemplateView(ViewsBase):
+    domain = 'test-app-from-template-view'
+
+    def setUp(self):
+        super().setUp()
+        self.url = reverse('app_from_template', args=[self.domain, 'health'])
+        self.client.login(username=self.username, password=self.password)
+
+    def test_get_is_rejected(self, load_app_from_slug):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        load_app_from_slug.assert_not_called()
+
+    def test_post_creates_app(self, load_app_from_slug):
+        load_app_from_slug.return_value._id = 'abc123'
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        load_app_from_slug.assert_called_once_with(self.domain, self.username, 'health')
+
+
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     """Test that the DownloadCaseSummaryView can be accessed with an API key."""
 
