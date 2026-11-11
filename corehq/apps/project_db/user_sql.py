@@ -751,7 +751,7 @@ VALUE_FUNCTIONS = {
 
 
 def _convert_table_ref(node, scope):
-    """Bring the table a SQL table reference refers to into scope"""
+    """Resolve table reference and add to the query's scope"""
     if not (isinstance(node, exp.Table) and isinstance(node.this, exp.Identifier)):
         raise UnsupportedSQL(f"expected table, got {str(node)}")
     identifier, alias = _unpack(node, 'this', 'alias')
