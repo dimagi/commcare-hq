@@ -98,7 +98,7 @@ def sso_saml_acs(request, idp_slug):
         process_async_signup_requests(request, user)
 
         relay_state = request.saml2_request_data['post_data'].get('RelayState')
-        if relay_state not in [
+        if relay_state is not None and relay_state not in [
             OneLogin_Saml2_Utils.get_self_url(request.saml2_request_data),
             get_saml_login_url(request.idp),
         ]:
