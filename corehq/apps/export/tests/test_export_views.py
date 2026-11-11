@@ -600,6 +600,21 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
 
         assert _copy(self.other_export._id).status_code == 404
 
+    def test_copy_export_next_url(self):
+        def _copy_location(next_url):
+            response = self.client.get(
+                reverse('copy_export', args=[self.domain.name, self.export._id]),
+                {'next': next_url},
+                follow=False,
+            )
+            assert response.status_code == 302
+            return response['Location']
+
+        assert _copy_location('/a/test/data/export/') == '/a/test/data/export/'
+        default_url = reverse('data_interfaces_default', args=[self.domain.name])
+        assert _copy_location('https://example.com/') == default_url
+        assert _copy_location('//example.com/') == default_url
+
     def test_edit_export_name(self):
         def _edit_name(export_id, value):
             return self.client.post(
