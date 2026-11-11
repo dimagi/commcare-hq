@@ -26,7 +26,7 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -1007,11 +1007,9 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def invitation(self):
-        invitation_id = self.kwargs.get("invitation_id")
-        try:
-            return Invitation.objects.get(uuid=invitation_id)
-        except Invitation.DoesNotExist:
-            return None
+        if invitation_id := self.kwargs.get("invitation_id"):
+            return get_object_or_404(Invitation, uuid=invitation_id, domain=self.domain)
+        return None
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
