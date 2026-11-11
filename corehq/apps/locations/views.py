@@ -697,6 +697,7 @@ class NewLocationView(BaseEditLocationView):
 
 @location_safe
 @can_edit_location
+@require_POST
 def archive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.archive()
@@ -749,6 +750,7 @@ def location_descendants_count(request, domain, loc_id):
 
 @can_edit_location
 @location_safe
+@require_POST
 def unarchive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.unarchive()

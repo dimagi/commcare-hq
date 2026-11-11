@@ -391,3 +391,48 @@ class TestUnassignUsersView(TestCase):
         response = self.client.post(self.url)
         assert response.status_code == 302
         assert CommCareUser.get(self.mobile_user.user_id).location_id is None
+
+
+@mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
+class TestArchiveLocationViews(TestCase):
+    domain = 'test-archive-location-views'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'archive-loc-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain, name='city')
+
+    def setUp(self):
+        self.client.login(username='archive-loc-admin', password='password')
+
+    def test_archive_get_is_rejected(self):
+        location = make_loc('archive-get', type=self.loc_type, domain=self.domain)
+        response = self.client.get(reverse('archive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 405
+        location.refresh_from_db()
+        assert not location.is_archived
+
+    def test_archive_post(self):
+        location = make_loc('archive-post', type=self.loc_type, domain=self.domain)
+        response = self.client.post(reverse('archive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 200
+        location.refresh_from_db()
+        assert location.is_archived
+
+    def test_unarchive_get_is_rejected(self):
+        location = make_loc('unarchive-get', type=self.loc_type, domain=self.domain, is_archived=True)
+        response = self.client.get(reverse('unarchive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 405
+        location.refresh_from_db()
+        assert location.is_archived
+
+    def test_unarchive_post(self):
+        location = make_loc('unarchive-post', type=self.loc_type, domain=self.domain, is_archived=True)
+        response = self.client.post(reverse('unarchive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 200
+        location.refresh_from_db()
+        assert not location.is_archived
