@@ -10,6 +10,8 @@ from dropbox.oauth import (
     ProviderException,
 )
 
+from corehq.util.view_utils import get_safe_redirect_url
+
 from .utils import DROPBOX_CSRF_TOKEN, get_dropbox_auth_flow
 
 DROPBOX_ACCESS_TOKEN = 'dropbox_access_token'
@@ -46,4 +48,5 @@ class DropboxAuthCallback(View):
         except ProviderException as e:
             return HttpResponse(e, status=403)
         request.session[DROPBOX_ACCESS_TOKEN] = oauth_result.access_token
-        return HttpResponseRedirect(request.session.get('dropbox_next_url', '/'))
+        next_url = get_safe_redirect_url(request, request.session.get('dropbox_next_url'), '/')
+        return HttpResponseRedirect(next_url)

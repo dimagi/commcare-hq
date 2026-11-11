@@ -682,7 +682,7 @@ def retrieve_download(req, domain, download_id, template="hqwebapp/includes/boot
 
 
 def dropbox_next_url(request, download_id):
-    return request.META.get('HTTP_REFERER', '/')
+    return get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), '/')
 
 
 @login_required
@@ -720,7 +720,7 @@ def dropbox_upload(request, download_id):
             'The file is in the process of being synced to dropbox! It is {0:.2f}% '
             'complete.'.format(uploader.progress * 100)
         )
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+        return HttpResponseRedirect(dropbox_next_url(request, download_id))
 
     uploader.upload()
 
@@ -730,7 +730,7 @@ def dropbox_upload(request, download_id):
             " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
     )
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    return HttpResponseRedirect(dropbox_next_url(request, download_id))
 
 
 @require_superuser
