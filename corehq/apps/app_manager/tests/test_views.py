@@ -1037,6 +1037,48 @@ class TestAppFromTemplateView(ViewsBase):
         load_app_from_slug.assert_called_once_with(self.domain, self.username, 'health')
 
 
+class TestUpgradeShadowModuleView(ViewsBase):
+    domain = 'test-upgrade-shadow-module-view'
+
+    def setUp(self):
+        super().setUp()
+        factory = AppFactory(domain=self.domain)
+        parent, __ = factory.new_basic_module('parent', 'house')
+        factory.new_basic_module('child', 'house', parent_module=parent)
+        shadow = factory.new_shadow_module('shadow', parent, with_form=False, shadow_module_version=1)
+        self.app = factory.app
+        self.app.save()
+        self.addCleanup(self.app.delete)
+        self.shadow_id = shadow.unique_id
+        self.url = reverse('upgrade_shadow_module', args=[self.domain, self.app.get_id, self.shadow_id])
+        self.client.login(username=self.username, password=self.password)
+
+    def _shadow_module_version(self):
+        app = Application.get(self.app.get_id)
+        return app.get_module_by_unique_id(self.shadow_id).shadow_module_version
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert self._shadow_module_version() == 1
+
+    def test_post_upgrades_module(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert self._shadow_module_version() == 2
+
+    @es_test(requires=[app_adapter])
+    def test_button_on_module_page(self):
+        client = csrf_client(self.username, self.password)
+        page = client.get(reverse('view_module', args=[self.domain, self.app.get_id, self.shadow_id]))
+        assert page.status_code == 200
+
+        response = submit_form(client, page, 'Upgrade to version 2')
+
+        assert response.status_code == 302
+        assert self._shadow_module_version() == 2
+
+
 class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     """Test that the DownloadCaseSummaryView can be accessed with an API key."""
 
