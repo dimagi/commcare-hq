@@ -4,9 +4,11 @@ from unittest.mock import patch
 
 from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.public.forms import (
+    PublicWebformDirectAccessForm,
     PublicWebformLinkRequestForm,
 )
 from corehq.apps.public_webforms.tests.utils import (
+    create_session,
     create_webform,
     skip_turnstile,
 )
@@ -151,3 +153,38 @@ class TestPublicWebformLinkRequestForm:
             return_value=project_can_send_sms,
         ):
             return PublicWebformLinkRequestForm(webform, data)
+
+
+@use(skip_turnstile)
+class TestPublicWebformDirectAccessForm:
+
+    @use('db')
+    def test_creates_a_session_without_contact_info(self):
+        webform = create_webform()
+        form = PublicWebformDirectAccessForm(webform, {})
+        assert form.is_valid(), form.errors
+
+        session = form.get_or_create_session()
+
+        assert session.public_webform == webform
+        assert session.email is None
+        assert session.phone_number is None
+
+    @use('db')
+    def test_reuses_the_session_already_started(self):
+        webform = create_webform()
+        started = create_session(webform)
+        form = PublicWebformDirectAccessForm(
+            webform, {}, session_key=started.session_key.hex)
+        assert form.is_valid(), form.errors
+
+        assert form.get_or_create_session() == started
+
+    def test_is_refused_when_rate_limited(self):
+        form = PublicWebformDirectAccessForm(PublicWebform(), {})
+
+        with patch(
+            'corehq.apps.public_webforms.public.forms.rate_limit_link_request',
+            return_value=True,
+        ):
+            assert not form.is_valid()
