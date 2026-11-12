@@ -1,4 +1,6 @@
 from io import BytesIO
+
+from attrs import evolve
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
@@ -133,6 +135,33 @@ def load_images(domain, areas):
             except (ImageError, DocumentRenderError) as error:
                 raise ImageError(f'{name}: {error}')
     return loaded
+
+
+def copy_images(areas, from_domain, to_domain):
+    """:returns: ``areas`` with each image copied to ``to_domain`` under a new key; the copies
+        expire like uploads until a template that uses them is saved
+    :raises ImageError: if an image cannot be used; the message names the area
+    """
+    copied = {}
+    for name, area in areas.items():
+        if area.type == AreaType.IMAGE and area.value:
+            try:
+                meta = get_image(from_domain, area.value)
+                data = read_image(meta)
+            except ImageError as error:
+                raise ImageError(f'{name}: {error}')
+            copy = get_blob_db().put(
+                BytesIO(data),
+                domain=to_domain,
+                parent_id=to_domain,
+                type_code=CODES.document_template_image,
+                name=meta.name,
+                content_type=meta.content_type,
+                timeout=UPLOAD_LIFETIME_MINUTES,
+            )
+            area = evolve(area, value=copy.key)
+        copied[name] = area
+    return copied
 
 
 def get_image_url(domain, key):
