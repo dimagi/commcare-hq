@@ -196,6 +196,23 @@ def test_get_reusable_session_for_contact_requires_exactly_one_channel(email, ph
             PublicWebform(), email=email, phone_number=phone_number)
 
 
+@use('db')
+def test_get_reusable_session_by_key():
+    webform = create_webform()
+    session = create_session(webform)
+
+    assert PublicFormSession.get_reusable_session_by_key(
+        webform, session.session_key.hex) == session
+
+
+@use('db')
+def test_get_reusable_session_by_key_ignores_another_webform():
+    session = create_session(create_webform())
+
+    assert PublicFormSession.get_reusable_session_by_key(
+        create_webform(), session.session_key.hex) is None
+
+
 def test_parse_uuid():
     value = uuid4()
     assert PublicFormSession._parse_uuid(value.hex) == value

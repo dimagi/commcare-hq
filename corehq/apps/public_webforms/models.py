@@ -159,6 +159,13 @@ class PublicFormSession(models.Model):
         return cls._get_reusable_session(public_webform, **contact)
 
     @classmethod
+    def get_reusable_session_by_key(cls, public_webform, session_key):
+        key = cls._parse_uuid(session_key)
+        if key is None:
+            return None
+        return cls._get_reusable_session(public_webform, session_key=key)
+
+    @classmethod
     def _get_reusable_session(cls, public_webform, **lookup):
         return cls.objects.filter(
             public_webform=public_webform,
