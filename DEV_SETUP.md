@@ -410,6 +410,7 @@ Populate your database:
 ```sh
 ./manage.py sync_couch_views
 ./manage.py create_kafka_topics
+CCHQ_TESTING=1 ./manage.py create_kafka_topics
 env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 

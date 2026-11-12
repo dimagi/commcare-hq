@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_GET, require_POST
 
 from couchdbkit import NoResultFound
@@ -18,12 +19,21 @@ from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
 )
-from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
+from corehq.apps.app_manager.exceptions import (
+    AppInDifferentDomainException,
+    FormNotFoundException,
+    ModuleNotFoundException,
+    XFormException,
+)
 from corehq.apps.app_manager.ui_translations import (
     build_ui_translation_download_file,
     process_ui_translation_upload,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.translations.app_translations.ai_failed_labels import (
+    failed_label_reason,
+    get_failed_labels,
+)
 from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
@@ -198,6 +208,123 @@ def ai_translation_status(request, domain, app_id):
         lang: _with_message(AITranslationStatus(app_id, lang).get())
         for lang in langs_to_translate(app)
     })
+
+
+@require_GET
+@require_can_edit_apps
+def ai_translation_failed_labels(request, domain, app_id):
+    """Return the labels the language's last run couldn't translate.
+
+    The page fetches them when someone asks to see them. ``labels`` is
+    None once the list has expired.
+    """
+    if not ai_translation_enabled(domain):
+        return _json_error(_("AI translation isn't available for this project."), 403)
+    app = _get_app(domain, app_id)
+    records = get_failed_labels(app_id, request.GET.get('lang'))
+    if records is None:
+        return JsonResponse({'labels': None})
+    questions_by_form = {}
+    return JsonResponse({
+        'labels': [_failed_label_row(app, record, questions_by_form) for record in records],
+    })
+
+
+# which screen of a menu a module-sheet row's ``list_or_detail`` is on
+CASE_PROPERTY_SECTIONS = {
+    'list': gettext_lazy("Case list"),
+    'detail': gettext_lazy("Case detail"),
+    'case_search_display': gettext_lazy("Case search"),
+    'case_search_hint': gettext_lazy("Case search"),
+}
+
+
+def _failed_label_row(app, record, questions_by_form):
+    """Describe why a label failed to translate, and where it is in the app.
+
+    The row has where the label is in the app as it is now, a link to
+    it, its English text and why it failed. A label whose menu or form
+    has since been deleted has no location or link.
+    """
+    row = {
+        'source': record['source'],
+        'reason': failed_label_reason(record['reason']),
+        'location': [],
+        'url': None,
+    }
+    domain, app_id = app.domain, app.get_id
+    try:
+        if record['type'] in ('menu', 'case_property'):
+            module = app.get_module_by_unique_id(record['unique_id'])
+            row['location'] = [module.default_name()]
+            row['url'] = reverse('view_module', args=[domain, app_id, module.unique_id])
+            if record['type'] == 'case_property':
+                # a report menu's rows say 'list', but it has no case list
+                section = None if module.module_type == 'report' else (
+                    CASE_PROPERTY_SECTIONS.get(record['list_or_detail']))
+                row['location'] += [str(section), record['case_property']] if section else [
+                    record['case_property']]
+        else:
+            form = app.get_form(record['unique_id'])
+            row['location'] = [form.get_module().default_name(), form.default_name()]
+            row['url'] = reverse('view_form', args=[domain, app_id, form.unique_id])
+            if record['type'] == 'form_text':
+                name, url = _form_text_location(app, form, record['itext_id'], questions_by_form)
+                row['location'].append(name)
+                row['url'] = url
+    except (ModuleNotFoundException, FormNotFoundException):
+        row['location'], row['url'] = [], None
+    return row
+
+
+def _form_text_location(app, form, itext_id, questions_by_form):
+    """Name the question ``itext_id`` belongs to, and link to it."""
+    if form.unique_id not in questions_by_form:
+        try:
+            questions = form.get_questions(
+                [app.default_language], include_triggers=True, include_groups=True)
+        except XFormException:
+            # a form that doesn't parse still gets its rows, named by text id
+            questions = []
+        # reverse order puts "age-group" before "age", so "age-group-hint"
+        # matches the question it belongs to, not "age"
+        questions_by_form[form.unique_id] = sorted(
+            questions, key=lambda question: question['value'], reverse=True)
+    url = reverse('form_source', args=[app.domain, app.get_id, form.unique_id])
+    question, part = _question_for_itext(questions_by_form[form.unique_id], itext_id)
+    if question is None:
+        return itext_id, url
+    # the form builder selects the question at /data/<path> for #form/<path>
+    path = question['value'].removeprefix('/data/')
+    name = question['label'] or path
+    if part:
+        name = f'{name} › {part}'
+    return name, f'{url}#form/{path}'
+
+
+def _question_for_itext(questions, itext_id):
+    """Find the part of the question for given ``itext_id``.
+
+    A question has more text than its label, such as a hint or the
+    choices of a multiple choice question. Their ids start with the
+    question's path, e.g. ``age-hint`` is the hint of question ``age``.
+
+    Returns the question and what the text is: None if it is the
+    label, otherwise "hint", "choice" and so on.
+    """
+    for question in questions:
+        if question.get('label_ref') == itext_id:
+            return question, None
+    for question in questions:
+        path = question['value'].removeprefix('/data/')
+        if itext_id.startswith(f'{path}-'):
+            rest = itext_id[len(path) + 1:]
+            return question, {
+                'hint': _("hint"),
+                'help': _("help text"),
+                'constraintMsg': _("validation message"),
+            }.get(rest, _("choice"))
+    return None, None
 
 
 def _with_message(status):

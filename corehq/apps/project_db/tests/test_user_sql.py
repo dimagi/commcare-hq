@@ -1,7 +1,7 @@
 import sys
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import (
@@ -12,6 +12,7 @@ from sqlalchemy import (
     bindparam,
     cast,
     column,
+    distinct,
     func,
     literal_column,
     not_,
@@ -30,12 +31,12 @@ from unmagic import autouse, fixture, use
 
 from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
-    MAX_TREE_DEPTH,
     BadParameters,
     ExplainAnalyze,
     UnsupportedSQL,
     UserSQL,
     UserSQLProgrammingError,
+    UserSQLTimeout,
     _bind_literal,
     _set_timezone,
     translate,
@@ -62,6 +63,9 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+CLIENT_CTE = select([CLIENT]).cte('c')
+CTE_A, CTE_B = CLIENT_CTE.alias('a'), CLIENT_CTE.alias('b')
 
 
 def _string_to_array(value, delimiter):
@@ -98,6 +102,15 @@ def _within_distance(coordinates, meters):
     ('SELECT case_id id FROM client', select([CLIENT.c.case_id.label('id')])),
     ('SELECT case_id AS "My Id" FROM client',
      select([CLIENT.c.case_id.label('My Id')])),
+
+    # Values other than columns may be selected
+    ("SELECT 'x' AS foo FROM client",
+     select([_bind_literal('literal', 'x').label('foo')]).select_from(CLIENT)),
+    ('SELECT :p FROM client', select([bindparam('p')]).select_from(CLIENT)),
+    ('SELECT name, today() AS d FROM client',
+     select([CLIENT.c.name, func.current_date().label('d')])),
+    ("SELECT string_to_array(name, ' ') FROM client",
+     select([_string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' '))])),
 
     ("SELECT * FROM client WHERE name = 'x'",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
@@ -136,6 +149,10 @@ def _within_distance(coordinates, meters):
      select([CLIENT.join(VISIT, and_(ON, VISIT.c.name == _bind_literal('literal', 'x')))])),
     ('SELECT * FROM client LEFT JOIN visit ON client.case_id = visit.parent_id',
      select([CLIENT.join(VISIT, ON, isouter=True)])),
+    ('SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
+     select([CLIENT_VISIT])),
+    ('SELECT * FROM client LEFT OUTER JOIN visit ON client.case_id = visit.parent_id',
+     select([CLIENT.join(VISIT, ON, isouter=True)])),
 
     # Table aliases
     ('SELECT v.visit_id, p.visit_id '
@@ -150,6 +167,61 @@ def _within_distance(coordinates, meters):
     ('SELECT DISTINCT ON (case_id, name) name FROM client',
      select([CLIENT.c.name]).distinct(CLIENT.c.case_id, CLIENT.c.name)),
 
+    # GROUP BY
+    ('SELECT name FROM client GROUP BY name',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)),
+    ('SELECT name FROM client GROUP BY name, case_id',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name, CLIENT.c.case_id)),
+    (f'SELECT visit.name {JOIN_SQL} GROUP BY client.name, visit.name',
+     select([VISIT.c.name]).select_from(CLIENT_VISIT)
+     .group_by(CLIENT.c.name, VISIT.c.name)),
+
+    # aggregations
+    ('SELECT count(*) FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count() FROM client', select([func.count()]).select_from(CLIENT)),
+    ('SELECT count(name) FROM client', select([func.count(CLIENT.c.name)])),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)),
+    ('SELECT sum(case_id) FROM client', select([func.sum(CLIENT.c.case_id)])),
+    ('SELECT avg(case_id) FROM client', select([func.avg(CLIENT.c.case_id)])),
+    ('SELECT min(case_id) FROM client', select([func.min(CLIENT.c.case_id)])),
+    ('SELECT max(case_id) FROM client', select([func.max(CLIENT.c.case_id)])),
+    ('SELECT name, max(case_id) AS latest FROM client GROUP BY name',
+     select([CLIENT.c.name, func.max(CLIENT.c.case_id).label('latest')])
+     .group_by(CLIENT.c.name)),
+    ("SELECT string_agg(name, ', ') FROM client",
+     select([func.string_agg(CLIENT.c.name, _bind_literal('literal', ', '))])),
+    ('SELECT string_agg(name, :sep) FROM client',
+     select([func.string_agg(CLIENT.c.name, bindparam('sep'))])),
+    ('SELECT array_agg(name) FROM client', select([func.array_agg(CLIENT.c.name)])),
+    # Aggregates take any value, not just columns
+    ('SELECT max(name + make_interval(days => 30)) FROM client',
+     select([func.max(CLIENT.c.name + _interval('days', 30))])),
+    ('SELECT count(:p) FROM client', select([func.count(bindparam('p'))]).select_from(CLIENT)),
+    ('SELECT count(DISTINCT name) FROM client', select([func.count(distinct(CLIENT.c.name))])),
+    ('SELECT sum(DISTINCT case_id) FROM client',
+     select([func.sum(distinct(CLIENT.c.case_id))])),
+    ('SELECT array_agg(DISTINCT name) FROM client',
+     select([func.array_agg(distinct(CLIENT.c.name))])),
+    ("SELECT string_agg(DISTINCT name, ', ') FROM client",
+     select([func.string_agg(distinct(CLIENT.c.name), _bind_literal('literal', ', '))])),
+    ("SELECT sum(case_id) FILTER (WHERE name = 'x') AS n FROM client",
+     select([func.sum(CLIENT.c.case_id)
+             .filter(CLIENT.c.name == _bind_literal('literal', 'x')).label('n')])),
+    ("SELECT name FROM client GROUP BY name HAVING count(*) FILTER (WHERE name = :n) > 1",
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count().filter(CLIENT.c.name == bindparam('n'))
+             > _bind_literal('literal', 1))),
+
+    # HAVING
+    ('SELECT name FROM client GROUP BY name HAVING count(*) > 1',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(func.count() > _bind_literal('literal', 1))),
+    ('SELECT name FROM client GROUP BY name HAVING max(case_id) > :since AND name <> :n',
+     select([CLIENT.c.name]).group_by(CLIENT.c.name)
+     .having(and_(func.max(CLIENT.c.case_id) > bindparam('since'),
+                  CLIENT.c.name != bindparam('n')))),
+
     # ORDER BY - each key gets its own direction and default NULLS placement
     ('SELECT * FROM client ORDER BY name, case_id DESC',
      select([CLIENT]).order_by(nullslast(CLIENT.c.name.asc()),
@@ -157,6 +229,26 @@ def _within_distance(coordinates, meters):
     # An explicit NULLS placement overrides the direction's default
     ('SELECT name FROM client ORDER BY name DESC NULLS LAST',
      select([CLIENT.c.name]).order_by(nullslast(CLIENT.c.name.desc()))),
+    # An alias takes precedence over a column of the same name, unless qualified
+    ('SELECT name AS n FROM client ORDER BY n',
+     select([CLIENT.c.name.label('n')]).order_by(nullslast(column('n').asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(column('name').asc()))),
+    ('SELECT case_id AS name FROM client ORDER BY client.name',
+     select([CLIENT.c.case_id.label('name')]).order_by(nullslast(CLIENT.c.name.asc()))),
+    ('SELECT name, count(*) AS n FROM client GROUP BY name ORDER BY n DESC',
+     select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)
+     .order_by(nullsfirst(column('n').desc()))),
+    # An alias can also be grouped by, or made distinct on
+    ('SELECT name AS n, count(*) AS total FROM client GROUP BY n',
+     select([CLIENT.c.name.label('n'), func.count().label('total')]).group_by(column('n'))),
+    ('SELECT DISTINCT ON (n) name AS n FROM client',
+     select([CLIENT.c.name.label('n')]).distinct(column('n'))),
+    ('SELECT name AS name FROM client', select([CLIENT.c.name.label('name')])),
+    # Ambiguous aliases are passed through for PostgreSQL to reject
+    ('SELECT name AS x, case_id AS x FROM client ORDER BY x',
+     select([CLIENT.c.name.label('x'), CLIENT.c.case_id.label('x')])
+     .order_by(nullslast(column('x').asc()))),
 
     # Unions
     ('SELECT case_id FROM client UNION SELECT visit_id FROM visit',
@@ -183,6 +275,8 @@ def _within_distance(coordinates, meters):
                                 CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE NOT name = 'x'",
      select([CLIENT]).where(not_(CLIENT.c.name == _bind_literal('literal', 'x')))),
+    ('SELECT * FROM client WHERE name', select([CLIENT]).where(CLIENT.c.name)),
+    ('SELECT * FROM client WHERE NOT name', select([CLIENT]).where(not_(CLIENT.c.name))),
     ("SELECT * FROM client WHERE (name = 'x')",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     # Parentheses override the usual AND-before-OR precedence
@@ -201,6 +295,10 @@ def _within_distance(coordinates, meters):
      select([CLIENT]).where(CLIENT.c.name.in_([CLIENT.c.case_id]))),
     ("SELECT * FROM client WHERE name NOT IN ('x')",
      select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind_literal('literal', 'x')])))),
+    # IN a subquery, which may read from the same table as the outer query
+    ('SELECT * FROM visit WHERE parent_id IN (SELECT visit_id FROM visit WHERE name = :n)',
+     select([VISIT]).where(VISIT.c.parent_id.in_(
+         select([VISIT.c.visit_id]).where(VISIT.c.name == bindparam('n'))))),
     ('SELECT * FROM client WHERE name = TRUE',
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('bool', True))),
     ('SELECT * FROM client WHERE name IS NULL',
@@ -243,6 +341,17 @@ def _within_distance(coordinates, meters):
      select([CLIENT]).where(
          _string_to_array(CLIENT.c.name, _bind_literal('delimiter', ' ')).bool_op('&&')(
              _bind_literal('array', ['fever'])))),
+
+    ("SELECT * FROM client WHERE name LIKE 'x%'",
+     select([CLIENT]).where(CLIENT.c.name.like(_bind_literal('literal', 'x%')))),
+    ('SELECT * FROM client WHERE name ILIKE :name',
+     select([CLIENT]).where(CLIENT.c.name.ilike(bindparam('name')))),
+    ("SELECT * FROM client WHERE name NOT LIKE 'x%'",
+     select([CLIENT]).where(not_(CLIENT.c.name.like(_bind_literal('literal', 'x%'))))),
+    ("SELECT * FROM client WHERE name NOT ILIKE 'x%'",
+     select([CLIENT]).where(not_(CLIENT.c.name.ilike(_bind_literal('literal', 'x%'))))),
+    ("SELECT * FROM client WHERE name ~~* 'x%'",  # operator spelling of ILIKE
+     select([CLIENT]).where(CLIENT.c.name.ilike(_bind_literal('literal', 'x%')))),
 
     ('SELECT * FROM client WHERE sounds_like(name, :name)',
      select([CLIENT]).where(
@@ -289,6 +398,19 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name > func.now() - func.make_interval(
              literal_column('years').op('=>')(bindparam('y')),
              literal_column('mins').op('=>')(bindparam('m'))))),
+
+    # CTEs
+    ('WITH c AS (SELECT * FROM client) SELECT * FROM c',
+     select([CLIENT_CTE])),
+    # A CTE can build on an earlier one
+    ('WITH c AS (SELECT * FROM client), d AS (SELECT name FROM c) SELECT * FROM d',
+     select([select([CLIENT_CTE.c.name]).cte('d')])),
+    # The main query can be a UNION
+    ('WITH c AS (SELECT * FROM client) SELECT name FROM c UNION SELECT name FROM visit',
+     union(select([CLIENT_CTE.c.name]), select([VISIT.c.name]))),
+    # It can be joined like a table, including to itself under aliases
+    ('WITH c AS (SELECT * FROM client) SELECT a.name FROM c a JOIN c b ON a.case_id = b.case_id',
+     select([CTE_A.c.name]).select_from(CTE_A.join(CTE_B, CTE_A.c.case_id == CTE_B.c.case_id))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -312,8 +434,6 @@ def _compiled(query):
 
     # Not (yet) supported
     'SELECT * FROM client LIMIT 5',       # extra clause
-    # Only columns may be selected, aliased or not
-    "SELECT 'x' AS foo FROM client",      # aliased literal
     'SELECT * FROM (SELECT * FROM client) AS t',  # subquery is not a table
     'SELECT * FROM generate_series(1, 10)',  # table valued function not supported
     "INSERT INTO client VALUES ('x')",    # not a SELECT
@@ -335,9 +455,28 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IS DISTINCT FROM NULL',  # IS DISTINCT FROM
     'SELECT DISTINCT ON () name FROM client',        # DISTINCT ON with no columns
     'SELECT name FROM client ORDER BY 1',           # ORDER BY an ordinal
-    'SELECT name AS n FROM client ORDER BY n',      # ORDER BY a column alias
+    'SELECT name FROM client ORDER BY count(*)',    # ORDER BY an aggregation (needs aliasing)
+    'SELECT name FROM client GROUP BY 1',           # GROUP BY an ordinal
+    'SELECT name FROM client GROUP BY missing',     # GROUP BY an unknown column
+    'SELECT name FROM client GROUP BY ROLLUP (name)',  # grouping sets
+    'SELECT count(missing) FROM client',            # count an unknown column
+    'SELECT count(name, case_id) FROM client',      # count with two arguments
+    "SELECT now() FILTER (WHERE name = 'x') FROM client",  # FILTER on a non-aggregate
+    "SELECT count(*) FILTER (WHERE name SIMILAR TO 'x') FROM client",  # unsupported predicate
+    'SELECT max(name, case_id) FROM client',        # max with two arguments
+    'SELECT sum(missing) FROM client',              # aggregate an unknown column
+    'SELECT count(DISTINCT name, case_id) FROM client',  # DISTINCT over two values
+    'SELECT count(DISTINCT *) FROM client',         # DISTINCT over *
+    'SELECT string_agg(name) FROM client',          # string_agg without a separator
+    "SELECT string_agg(name, ', ' ORDER BY case_id) FROM client",  # ordered string_agg
+    'SELECT array_agg(name ORDER BY case_id) FROM client',  # ordered array_agg
+    'SELECT name FROM client GROUP BY name HAVING count(missing) > 1',  # unknown column
+    'SELECT name FROM client GROUP BY name HAVING name SIMILAR TO :n',  # unsupported predicate
     'SELECT * FROM client WHERE case_id = -1',    # negative number
-    "SELECT * FROM client WHERE name LIKE 'x%'",  # LIKE
+    "SELECT * FROM client WHERE name SIMILAR TO 'x%'",
+    "SELECT * FROM client WHERE name LIKE 'x!%' ESCAPE '!'",
+    "SELECT * FROM client WHERE name LIKE ANY (ARRAY['a%', 'b%'])",
+    "SELECT * FROM client WHERE name LIKE missing",  # unknown column
     'SELECT * FROM client WHERE name IN ()',      # IN with no values
 
     # Query parameters must be named, and the name must be a plain identifier
@@ -350,8 +489,8 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
     'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
-    'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
-    'SELECT * FROM client WHERE name',            # not a comparison
+    # A subquery can't reference the outer query
+    'SELECT * FROM client WHERE case_id IN (SELECT parent_id FROM visit WHERE name = client.name)',
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
     'SELECT * FROM client WHERE bogus(name)',        # unknown function call
 
@@ -380,12 +519,15 @@ def _compiled(query):
     "SELECT * FROM client WHERE similar_name(name)",
     "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
 
-    # Only columns can be selected or ordered by
-    "SELECT string_to_array(name, ' ') FROM client",
+    # Aliases can't be referenced in WHERE
+    'SELECT count(*) AS n FROM client WHERE n > 5',
+    # nor can they be used to reference the outer query
+    "SELECT * FROM client WHERE case_id IN (SELECT visit_id AS name FROM form WHERE name = 'x')",
 
-    # Only `JOIN` and `LEFT JOIN` are supported for now.
-    'SELECT * FROM client INNER JOIN visit ON client.case_id = visit.parent_id',
-    'SELECT * FROM client LEFT OUTER JOIN visit ON client.case_id = visit.parent_id',
+    # Only columns and aliases can be ordered by
+    "SELECT name FROM client ORDER BY string_to_array(name, ' ')",
+
+    # Only `[INNER] JOIN` and `LEFT [OUTER] JOIN` are supported for now.
     'SELECT * FROM client RIGHT JOIN visit ON client.case_id = visit.parent_id',
     'SELECT * FROM client FULL JOIN visit ON client.case_id = visit.parent_id',
     'SELECT * FROM client CROSS JOIN visit',
@@ -412,6 +554,18 @@ def _compiled(query):
     'SELECT * FROM client WHERE name > now() - make_interval(days => 1.5)',
     'SELECT * FROM client WHERE name > now() - make_interval(days => case_id)',
     'SELECT * FROM client WHERE name > case_id - name',  # arithmetic is unsupported
+
+    # CTEs
+    'WITH client AS (SELECT * FROM visit) SELECT * FROM client',  # shadows a table
+    'WITH RECURSIVE c AS (SELECT * FROM client) SELECT * FROM c',
+    'WITH c AS MATERIALIZED (SELECT * FROM client) SELECT * FROM c',
+    'WITH c(a, b) AS (SELECT * FROM client) SELECT * FROM c',  # column aliases
+    'WITH d AS (SELECT * FROM c), c AS (SELECT * FROM client) SELECT * FROM d',  # forward ref
+    # Only the outermost query may have a WITH
+    'WITH c AS (WITH d AS (SELECT * FROM client) SELECT * FROM d) SELECT * FROM c',
+    # SQLAlchemy needs CTE aliases to be unique across the statement
+    'WITH c AS (SELECT * FROM client) SELECT * FROM c AS c',
+    'WITH c AS (SELECT * FROM client) SELECT a.name FROM c a UNION SELECT a.name FROM c a',
 
 ])
 def test_rejects_unsupported(sql):
@@ -510,6 +664,28 @@ def test_clean_parameters_rejects_unexpected_params():
         _user_sql('SELECT * FROM client')._clean_parameters({'stale': 'x'})
 
 
+@fixture
+def restore_trace_function():
+    """Ensure dropping the stack doesn't remove the trace function"""
+    trace = sys.gettrace()
+    try:
+        yield
+    finally:
+        if sys.gettrace() is not trace:
+            sys.settrace(trace)
+
+
+@restore_trace_function
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100,
+    'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000),
+    f'WITH c0 AS (SELECT * FROM client), {', '.join(
+        f'c{i} AS (SELECT * FROM c{i - 1})' for i in range(1, 1000)
+    )} SELECT * FROM c999',
+])
+def test_rejects_deep_nesting(sql):
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
 
 
 def test_handle_quoted_tables():
@@ -519,43 +695,18 @@ def test_handle_quoted_tables():
     assert str(result) == str(select([hyphenated_table]))
 
 
-@fixture
-def restore_trace_function():
-    """Put back a trace function that exhausting the stack has dropped
+def test_join_keeps_columns_whose_labels_collide():
+    # SQLAlchemy labels both of these columns `visit_date_prop__due`
+    visit = table('visit', column('date_prop__due'))
+    visit_date = table('visit_date', column('prop__due'))
+    tables = {'visit': visit, 'visit_date': visit_date}
+    join_sql = 'FROM visit JOIN visit_date ON visit.date_prop__due = visit_date.prop__due'
+    joined = visit.join(visit_date, visit.c.date_prop__due == visit_date.c.prop__due)
 
-    CPython disables tracing when the stack overflows while calling the trace
-    function, which makes coverage warn that its data is unreliable, failing
-    the whole test run at interpreter shutdown.
-    """
-    trace = sys.gettrace()
-    try:
-        yield
-    finally:
-        if sys.gettrace() is not trace:
-            sys.settrace(trace)
-
-
-@use(restore_trace_function)
-def test_rejects_nesting_that_exhausts_the_parser():
-    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
-    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
-        translate(sql, TABLES)
-
-
-def test_rejects_a_parse_tree_too_deep_to_convert():
-    # This parses fine: the nesting is in the tree, not in parentheses
-    sql = 'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000)
-    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
-        translate(sql, TABLES)
-
-
-def test_allows_nesting_up_to_the_limit():
-    # The deepest tree the limit allows must still be translatable, so that
-    # raising the limit past what the stack allows fails here rather than
-    # crashing the interpreter.
-    sql = ('SELECT * FROM client WHERE '
-           + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
-    assert translate(sql, TABLES) is not None
+    assert _compiled(translate(f'SELECT * {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due, visit_date.c.prop__due]).select_from(joined))
+    assert _compiled(translate(f'SELECT visit.date_prop__due {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due]).select_from(joined))
 
 
 to_gps = func.lib_projectdb.coerce_to_gps
@@ -667,18 +818,36 @@ def test_set_timezone_lasts_for_one_transaction():
         assert conn.execute(text('SHOW TimeZone')).scalar() != 'Asia/Kolkata'
 
 
-@pytest.mark.parametrize('error_class', [ProgrammingError, DataError])
-def test_run_reports_a_database_error(error_class):
-    msg = 'column "nope" does not exist\nLINE 1: ...'
-    engine = MagicMock()
-    # The first side_effect is from setting the timezone
-    engine.begin().__enter__().execute.side_effect = [
-        None, error_class('SELECT 1', {}, Exception(msg))]
-    user_sql = _user_sql('SELECT * FROM client')
-    with patch('corehq.apps.project_db.user_sql.get_domain_query_engine',
-               return_value=engine):
+@use('db', project_db_table('test-statement-timeout', 'patient', {'name': 'plain'}))
+def test_queries_have_a_statement_timeout():
+    user_sql = UserSQL('test-statement-timeout', 'SELECT case_id FROM patient')
+    with user_sql._connect() as conn:
+        assert conn.execute(text('SHOW statement_timeout')).scalar() == '5s'
+
+
+@use('db', project_db_table('test-query-timeout', 'patient', {'name': 'plain'}))
+@patch('corehq.apps.project_db.user_sql.STATEMENT_TIMEOUT', '20ms')
+def test_a_timeout_is_reported():
+    user_sql = UserSQL('test-query-timeout', 'SELECT case_id FROM patient')
+    # Can't do this in UserSQL, so just hardcode it for the test
+    user_sql.query = select([func.pg_sleep(1)])
+    with pytest.raises(UserSQLTimeout) as error:
+        user_sql.run({})
+    assert 'query cancelled' in error.value.msg
+
+
+@use('db')
+@pytest.mark.parametrize('sql, error_class, msg', [
+    ('SELECT nope', ProgrammingError, 'column "nope" does not exist'),
+    ("SELECT 'abc'::int", DataError, 'invalid input syntax for type integer'),
+])
+def test_a_database_error_is_reported(sql, error_class, msg):
+    with project_db_table('test-db-error', 'patient', {'name': 'plain'}):
+        user_sql = UserSQL('test-db-error', 'SELECT case_id FROM patient')
         with pytest.raises(UserSQLProgrammingError) as error:
-            user_sql.run({})
+            with user_sql._connect() as conn:
+                conn.execute(text(sql))
+    assert isinstance(error.value.__cause__, error_class)
     assert msg in error.value.msg
 
 

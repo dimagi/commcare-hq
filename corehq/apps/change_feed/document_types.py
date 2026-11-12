@@ -12,6 +12,11 @@ MOBILE_USER_DOC_TYPES = ('CommCareUser', 'CommCareUser-Deleted')
 DOMAIN_DOC_TYPES = ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE')
 CASE_DOC_TYPES = ('CommCareCase', 'CommCareCase-Deleted')
 SYNCLOG_DOC_TYPES = ('SimplifiedSyncLog',)
+# Document types for SQL models that have no doc_type of their own
+LEDGER_DOC_TYPE = 'ledger'
+SMS_DOC_TYPE = 'sms'
+SYNCLOG_SQL_DOC_TYPE = 'synclog-sql'
+LOCATION_DOC_TYPE = 'Location'
 
 
 DocumentMetadata = namedtuple(

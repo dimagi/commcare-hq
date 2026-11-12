@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from django.conf import settings
+from django.db import close_old_connections
+from django.db.utils import InterfaceError, OperationalError
 from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
@@ -197,13 +199,20 @@ def run_rules_for_case(case, rules, now):
 
         try:
             last_result = rule.run_rule(case, now)
-        except Exception:
+        except Exception as exc:
             last_result = CaseRuleActionResult(num_errors=1)
             notify_exception(None, "Error applying case update rule", {
                 'domain': case.domain,
                 'rule_pk': rule.pk,
                 'case_id': case.case_id,
             })
+            if isinstance(exc, (InterfaceError, OperationalError)):
+                # Django does not reconnect a connection the server has
+                # dropped, so every later query on it would fail. Call
+                # close_old_connections() so the next query reconnects.
+                # The failed rule is not retried. This only protects the
+                # rules and cases that follow.
+                close_old_connections()
 
         aggregated_result.add_result(last_result)
         if last_result.num_closes > 0:

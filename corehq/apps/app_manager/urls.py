@@ -56,7 +56,6 @@ from corehq.apps.app_manager.views import (
     get_xform_source,
     list_apps,
     multimedia_ajax,
-    new_app,
     new_form,
     new_module,
     odk_install,
@@ -96,6 +95,7 @@ from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
 from corehq.apps.translations.views import (
+    ai_translation_failed_labels,
     ai_translation_status,
     download_bulk_app_translations,
     download_bulk_ui_translations,
@@ -118,6 +118,8 @@ app_urls = [
         name='start_ai_translation'),
     url(r'^languages/ai_translation/status/$', ai_translation_status,
         name='ai_translation_status'),
+    url(r'^languages/ai_translation/failed_labels/$', ai_translation_failed_labels,
+        name='ai_translation_failed_labels'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
@@ -177,7 +179,6 @@ urlpatterns = [
     url(r'^schema/(?P<app_id>[\w-]+)/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
-    url(r'^new_app/$', new_app, name='new_app'),
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         new_form, name='new_form'),

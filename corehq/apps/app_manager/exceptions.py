@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -28,6 +30,12 @@ class AddOnNotFoundException(AppManagerException, IndexError):
 
 class AppEditingError(AppManagerException):
     pass
+
+
+class RemoteAppsUnsupported(AppEditingError):
+
+    def __init__(self):
+        super().__init__(_("RemoteApps are no longer supported"))
 
 
 class ModuleIdMissingException(AppManagerException):

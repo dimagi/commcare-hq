@@ -6,6 +6,7 @@ from django.db.models import BooleanField, DateTimeField, IntegerField
 from django.test import SimpleTestCase
 
 from corehq.apps.domain.calculations import all_domain_stats
+from corehq.apps.domain.models import DomainAuditRecordEntry
 from corehq.apps.domain.tests.test_domain_calculated_properties import (
     BaseCalculatedPropertiesTest,
 )
@@ -253,6 +254,13 @@ class TestRegistryCoversMap(SimpleTestCase):
             assert generated[field] == cp_name, (
                 f'{field}: expected {cp_name}, got {generated[field]}'
             )
+
+    def test_audit_record_does_not_override_domain_metrics(self):
+        audit_cp_names = {
+            field.name for field in DomainAuditRecordEntry._meta.fields
+            if field.name.startswith('cp_')
+        }
+        assert not audit_cp_names & set(DOMAIN_METRICS_TO_PROPERTIES_MAP.values())
 
     def test_no_duplicate_field_names(self):
         field_names = [m.field_name for m in get_metrics_registry()]

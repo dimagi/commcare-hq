@@ -19,7 +19,6 @@ from corehq.apps.public_webforms.app_builds import (
 )
 from corehq.apps.public_webforms.form_choices import (
     get_public_webform_choices,
-    get_public_webform_eligible_form,
     get_public_webform_type,
 )
 from corehq.apps.public_webforms.form_paths import (
@@ -30,8 +29,11 @@ from corehq.apps.public_webforms.models import (
     PublicWebformStatus,
     PublicWebformType,
 )
+from corehq.apps.public_webforms.utils import get_public_webform_eligible_form
 from corehq.apps.sms.util import domain_can_send_sms
 from corehq.util.timezones.conversions import ServerTime, UserTime
+
+ALPINE_DATETIME_PICKER_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
 class PublicWebformFilterForm(forms.Form):
@@ -94,9 +96,21 @@ class BasePublicWebformForm(forms.Form):
             "One-time links already sent can be used until they expire."
         ),
     )
+    direct_access = forms.BooleanField(
+        label=gettext_lazy("How Respondents Open the Form"),
+        initial=False,
+        required=False,
+        widget=forms.RadioSelect(
+            attrs={'x-model.fill': 'directAccess'},
+            choices=[
+                (False, gettext_lazy("One-time link by email or text message")),
+                (True, gettext_lazy("Anyone with the link")),
+            ],
+        ),
+    )
     allow_email = forms.BooleanField(
         label=gettext_lazy("Email"),
-        help_text=gettext_lazy("A branded email with a single-use link."),
+        help_text=gettext_lazy("A branded email with a one-time-use link."),
         initial=True,
         required=False,
     )
@@ -107,10 +121,10 @@ class BasePublicWebformForm(forms.Form):
     )
     open_to_requests = forms.BooleanField(
         required=False,
-        label=gettext_lazy("Open to Requests"),
+        label=gettext_lazy("Open to Respondents"),
         widget=BootstrapSwitchInput(
             inline_label=gettext_lazy(
-                "Immediately open this public webform to one-time link requests."
+                "Open this public webform to respondents."
             ),
         ),
     )
@@ -188,40 +202,86 @@ class BasePublicWebformForm(forms.Form):
                 x_data=json.dumps(alpine_data_model),
             ),
             crispy.Div(
-                crispy.HTML(
-                    format_html(
-                        '<label id="delivery-options-label" class="field-label">'
-                        '{}<span class="asteriskField">*</span></label>',
-                        _("How Respondents Receive Their One-time Link"),
-                    ),
-                ),
                 crispy.Div(
-                    twbscrispy.InlineField('allow_email'),
                     crispy.HTML(
                         format_html(
-                            '<div class="form-text">{}</div>',
-                            self.fields['allow_email'].help_text,
+                            '<label id="direct-access-label" class="field-label">'
+                            '{}<span class="asteriskField">*</span></label>',
+                            self.fields['direct_access'].label,
                         ),
                     ),
-                    *allow_sms_field,
-                    css_class='field-control',
+                    crispy.Field(
+                        'direct_access',
+                        template='bootstrap3to5/layout/bootstrap5/radio_checkbox_select.html',
+                    ),
+                    css_class='row mb-3',
+                    role='radiogroup',
+                    aria_labelledby='direct-access-label',
                 ),
-                css_class='row mb-3',
-                role='group',
-                aria_labelledby='delivery-options-label',
+                crispy.Div(
+                    crispy.HTML(
+                        format_html(
+                            '<label id="delivery-options-label" class="field-label">'
+                            '{}<span class="asteriskField" x-show="directAccess !== \'True\'">*</span></label>',
+                            _("Verification Method"),
+                        ),
+                    ),
+                    crispy.Div(
+                        crispy.HTML(
+                            format_html(
+                                '<div class="form-text mb-3" x-show="directAccess === \'True\'" x-cloak>'
+                                '{}</div>',
+                                _(
+                                    "To protect your data and project, CommCare runs automated checks "
+                                    "on every respondent who starts the form. If a check flags a "
+                                    "respondent, CommCare sends them a one-time link to open before "
+                                    "the form starts. Choose how CommCare can send that link."
+                                ),
+                            ),
+                        ),
+                        twbscrispy.InlineField('allow_email'),
+                        crispy.HTML(
+                            format_html(
+                                '<div class="form-text">{}</div>',
+                                self.fields['allow_email'].help_text,
+                            ),
+                        ),
+                        *allow_sms_field,
+                        css_class='field-control',
+                    ),
+                    css_class='row mb-3',
+                    role='group',
+                    aria_labelledby='delivery-options-label',
+                ),
+                x_data=json.dumps({'directAccess': None}),
             ),
             twbscrispy.PrependedText('open_to_requests', ''),
         ]
 
     def clean_expires_at(self):
         # The datepicker submits wall-clock time in the project's timezone; store UTC.
-        expires_at = self.cleaned_data['expires_at']
-        return UserTime(expires_at, tzinfo=self.timezone).server_time().done()
+        user_time = UserTime(self.cleaned_data['expires_at'], tzinfo=self.timezone)
+        expires_at = user_time.server_time().done()
+        is_changed = user_time.ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT) != self.initial_expires_at()
+        if is_changed and expires_at <= datetime.now(UTC).replace(tzinfo=None):
+            raise forms.ValidationError(_("Webform must close in the future."))
+        return expires_at
 
     def clean(self):
         cleaned_data = super().clean()
-        if not cleaned_data.get('allow_email') and not cleaned_data.get('allow_sms'):
-            self.add_error(None, _("Choose at least one way for respondents to receive one-time links."))
+        if not (
+            cleaned_data.get('direct_access')
+            or cleaned_data.get('allow_email')
+            or cleaned_data.get('allow_sms')
+        ):
+            self.add_error(None, _("Choose at least one verification method."))
+        expires_at = cleaned_data.get('expires_at')
+        if (
+            cleaned_data.get('direct_access')
+            and expires_at
+            and expires_at > datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90)
+        ):
+            self.add_error('expires_at', _("Webforms open to anyone with the link must close within 90 days."))
         return cleaned_data
 
 
@@ -232,20 +292,39 @@ class CreatePublicWebformForm(BasePublicWebformForm):
     submit_label = gettext_lazy("Create Public Webform")
 
     app_id = forms.CharField(required=False, widget=forms.HiddenInput)
+    menu_id = forms.CharField(required=False, widget=forms.HiddenInput)
     form_unique_id = forms.CharField(required=False, widget=forms.HiddenInput)
+
+    def __init__(self, domain, timezone, *args, app_id=None, form_unique_id=None, **kwargs):
+        form = (
+            get_public_webform_eligible_form(domain, app_id, form_unique_id)
+            if app_id and form_unique_id else None
+        )
+        initial = {
+            'app_id': app_id,
+            'menu_id': form.get_module().unique_id,
+            'form_unique_id': form_unique_id,
+        } if form else {}
+        super().__init__(domain, timezone, *args, initial=initial, **kwargs)
 
     def initial_expires_at(self):
         return (
             ServerTime(datetime.now(UTC).replace(tzinfo=None) + timedelta(days=90))
             .user_time(self.timezone)
-            .ui_string(fmt='%Y-%m-%d %H:%M:%S')
+            .ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT)
         )
 
     def fieldset_fields(self):
+        form_choices = {
+            'apps': get_public_webform_choices(self.domain),
+            'appId': self['app_id'].value() or '',
+            'menuId': self['menu_id'].value() or '',
+            'formId': self['form_unique_id'].value() or '',
+        }
         return [
             crispy.HTML(render_to_string(
                 'public_webforms/partials/create_form_choices.html',
-                context={'form_choices': json.dumps(get_public_webform_choices(self.domain))},
+                context={'form_choices': json.dumps(form_choices)},
             )),
             *super().fieldset_fields(),
         ]
@@ -254,14 +333,12 @@ class CreatePublicWebformForm(BasePublicWebformForm):
         cleaned_data = super().clean()
         app_id = cleaned_data.get('app_id')
         form_unique_id = cleaned_data.get('form_unique_id')
-        if not app_id or not form_unique_id:
-            raise forms.ValidationError(_("Please select an application, menu, and form."))
-
-        form = get_public_webform_eligible_form(self.domain, app_id, form_unique_id)
+        form = (
+            get_public_webform_eligible_form(self.domain, app_id, form_unique_id)
+            if app_id and form_unique_id else None
+        )
         if not form:
-            raise forms.ValidationError(_(
-                "The selected form can't be used for a public webform."
-            ))
+            raise forms.ValidationError(_("Please select an application, menu, and form."))
 
         cleaned_data['session_type'] = get_public_webform_type(form)
         return cleaned_data
@@ -281,6 +358,7 @@ class CreatePublicWebformForm(BasePublicWebformForm):
                 endpoint_id=endpoint_id,
                 session_type=self.cleaned_data['session_type'],
                 expires_at=self.cleaned_data['expires_at'],
+                direct_access=self.cleaned_data['direct_access'],
                 allow_email=self.cleaned_data['allow_email'],
                 allow_sms=self.cleaned_data['allow_sms'],
                 is_disabled=not self.cleaned_data['open_to_requests'],
@@ -320,12 +398,17 @@ class EditPublicWebformForm(BasePublicWebformForm):
             'app_name': f"{form_paths['app_name']} (v{form_paths['app_version']})",
             'menu_name': form_paths['menu_name'],
             'form_name': form_paths['form_name'],
+            'direct_access': webform.direct_access,
             'allow_email': webform.allow_email,
             'allow_sms': webform.allow_sms and not self.fields['allow_sms'].disabled,
         })
 
     def initial_expires_at(self):
-        return ServerTime(self.webform.expires_at).user_time(self.timezone).ui_string(fmt='%Y-%m-%d %H:%M:%S')
+        return (
+            ServerTime(self.webform.expires_at)
+            .user_time(self.timezone)
+            .ui_string(fmt=ALPINE_DATETIME_PICKER_FORMAT)
+        )
 
     def fieldset_fields(self):
         return [
@@ -338,6 +421,7 @@ class EditPublicWebformForm(BasePublicWebformForm):
     def update_public_webform(self):
         self.webform.label = self.cleaned_data['label']
         self.webform.expires_at = self.cleaned_data['expires_at']
+        self.webform.direct_access = self.cleaned_data['direct_access']
         self.webform.allow_email = self.cleaned_data['allow_email']
         self.webform.allow_sms = self.cleaned_data['allow_sms']
         self.webform.set_disabled(not self.cleaned_data['open_to_requests'])

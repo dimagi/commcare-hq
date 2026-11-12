@@ -1,20 +1,13 @@
 --- 
 +++ 
-@@ -1,34 +1,26 @@
+@@ -1,34 +1,35 @@
 -@import "../../../../../../node_modules/bootstrap/less/buttons.less";
-+// b5 default background color for outline buttons is transparent
-+// it looks weird if the container's background is not white.
-+.btn-outline-danger {
-+  background-color: #ffffff;
-+};
- 
+-
 -.btn-primary {
 -  .button-variant(#ffffff; @call-to-action-mid; @call-to-action-mid);
 -  font-weight: bold;
-+.btn-purple {
-+  @include button-variant($cc-dark-cool-accent-mid, $cc-dark-cool-accent-mid, $white, darken($cc-dark-cool-accent-mid, 5));
- }
- 
+-}
+-
 -input::file-selector-button {
 -  .btn;
 -  .btn-xs;
@@ -35,10 +28,26 @@
 -
 -.btn-danger {
 -  .button-variant(@cc-att-neg-mid; #ffffff; @cc-att-neg-mid);
--}
--
--.btn-purple {
++// b5 default background color for outline buttons is transparent
++// it looks weird if the container's background is not white.
++.btn-outline-primary,
++.btn-outline-secondary,
++.btn-outline-success,
++.btn-outline-danger,
++.btn-outline-dark {
++  --#{$prefix}btn-bg: #{$white};
+ }
+ 
+ .btn-purple {
 -  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
++  @include button-variant(
++    $cc-dark-cool-accent-mid,
++    $cc-dark-cool-accent-mid,
++    $white,
++    darken($cc-dark-cool-accent-mid, 5)
++  );
++}
++
 +.btn-prelogin {
 +  @include button-variant(
 +    $white,
@@ -55,7 +64,7 @@
  }
  
  .btn-full-width {
-@@ -38,25 +30,51 @@
+@@ -38,25 +39,50 @@
  // Separated button groups in toolbars need more space between them,
  // since the buttons within the group have space between them
  .btn-toolbar > .btn-group-separated:not(:first-child) {
@@ -73,9 +82,10 @@
 -        color: @call-to-action-mid;
 -        margin-right: 5px;
 -        margin-bottom: 5px;
-+  > button, > .btn {
++  > button,
++  > .btn {
 +    // Styled similarly to .btn-default
-+    border-radius: 20px !important;     // force override bootstrap's per-corner styles for leftmost/rightmost buttons
++    border-radius: 20px !important; // force override bootstrap's per-corner styles for leftmost/rightmost buttons
 +    padding: 3px 15px;
 +    background-color: white;
 +    border: 1px solid $call-to-action-mid;
@@ -89,7 +99,9 @@
 -            background-color: @call-to-action-mid;
 -            color: white;
 -        }
-+    &.active, &.active:focus, &.active:hover {
++    &.active,
++    &.active:focus,
++    &.active:hover {
 +      // Styled similarly to .btn-primary
 +      // Don't bold font because .active often toggles on and off, and we don't want the size to change
 +      background-color: $call-to-action-mid;
@@ -97,10 +109,6 @@
      }
 +  }
  }
-+
-+.btn-outline-danger:hover {
-+  color: #ffffff;
-+}
 +
 +input[type="file"] {
 +  &::file-selector-button {

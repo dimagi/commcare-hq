@@ -7,6 +7,9 @@ from django.utils.translation import gettext as _
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.celery import serial_task
 from corehq.apps.celery.locking import CouldNotAcquireLockError
+from corehq.apps.translations.app_translations.ai_failed_labels import (
+    save_failed_labels,
+)
 from corehq.apps.translations.app_translations.ai_status import (
     AITranslationStatus,
 )
@@ -22,10 +25,6 @@ from corehq.apps.translations.const import (
 from corehq.apps.translations.exceptions import AppChangedDuringTranslation
 from corehq.apps.translations.models import AITranslationConfig
 
-HIGH_SKIP_RATE = 0.2
-# below this many strings, one bad string would trip the warning
-MIN_STRINGS_FOR_SKIP_WARNING = 10
-
 # message codes stored with a run's final status
 NOT_QUEUED = 'not_queued'
 NO_LONGER_AVAILABLE = 'no_longer_available'
@@ -33,7 +32,6 @@ APP_KEPT_CHANGING = 'app_kept_changing'
 WAITED_TOO_LONG = 'waited_too_long'
 FAILED = 'failed'
 NO_STRINGS_TRANSLATED = 'no_strings_translated'
-MANY_SKIPPED = 'many_skipped'
 
 
 def queue_app_translation(domain, app_id, target_lang, mode, username):
@@ -78,6 +76,18 @@ def translate_app_task(domain, app_id, target_lang, mode):
             'domain': domain, 'app_id': app_id, 'target_lang': target_lang})
         status.finish(AITranslationStatus.STATE_ERROR, message_code=FAILED)
         return
+    # the status keeps only the count: the page polls it, and fetches the
+    # list itself when someone asks to see it
+    failed_labels = summary.pop('failed_labels')
+    try:
+        save_failed_labels(domain, app_id, target_lang, failed_labels)
+    except Exception:
+        # the translations are saved; losing their list mustn't fail the run
+        notify_exception(None, 'Saving AI translation failed labels failed', details={
+            'domain': domain, 'app_id': app_id, 'target_lang': target_lang})
+        # the previous run's list may still be there; don't offer it as this run's
+        failed_labels = []
+    summary['failed_label_count'] = len(failed_labels)
     state, message_code = _final_state(summary)
     status.finish(state, summary=summary, message_code=message_code)
 
@@ -100,9 +110,8 @@ def _mark_translation_failed(sender=None, args=None, exception=None, **kwargs):
 def run_message(message_code):
     """The text for a run's message code, in the active language. Runs
     store codes, not text, so each viewer sees messages in their own
-    language. A run that finished cleanly has no code, and no message."""
-    if message_code is None:
-        return None
+    language. A run that finished cleanly has no code, and no message;
+    neither has one stored by a release whose codes are gone."""
     return {
         NOT_QUEUED: _("The translation couldn't be queued. Run it again."),
         NO_LONGER_AVAILABLE: _("AI translation is no longer available for this project."),
@@ -115,10 +124,7 @@ def run_message(message_code):
             "Something went wrong and the translation didn't finish. Run it "
             "again, and contact support if it keeps failing."),
         NO_STRINGS_TRANSLATED: _("No labels could be translated."),
-        MANY_SKIPPED: _(
-            "More than {percent}% of translations failed validation and were "
-            "skipped.").format(percent=round(HIGH_SKIP_RATE * 100)),
-    }[message_code]
+    }.get(message_code)
 
 
 def _update_progress(status, batches_done, batches_total):
@@ -131,14 +137,8 @@ def _update_progress(status, batches_done, batches_total):
 
 
 def _final_state(summary):
-    total = summary['total']
-    if not total:
-        return AITranslationStatus.STATE_DONE, None
-    if summary['failed'] == total:
+    # labels dropped because the app changed under them aren't failures:
+    # the next run translates them
+    if not summary['translated'] and (summary['failed'] or summary['skipped']):
         return AITranslationStatus.STATE_ERROR, NO_STRINGS_TRANSLATED
-
-    skipped_rate = summary['skipped'] / total
-
-    if total >= MIN_STRINGS_FOR_SKIP_WARNING and skipped_rate > HIGH_SKIP_RATE:
-        return AITranslationStatus.STATE_DONE, MANY_SKIPPED
     return AITranslationStatus.STATE_DONE, None
