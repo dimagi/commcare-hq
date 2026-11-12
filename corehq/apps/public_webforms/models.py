@@ -155,14 +155,18 @@ class PublicFormSession(models.Model):
         )
 
     @classmethod
-    def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
+    def get_reusable_session_for_contact(cls, public_webform, email=None, phone_number=None):
         assert bool(email) != bool(phone_number)
         contact = {'email': email} if email else {'phone_number': phone_number}
+        return cls._get_reusable_session(public_webform, **contact)
+
+    @classmethod
+    def _get_reusable_session(cls, public_webform, **lookup):
         return cls.objects.filter(
             public_webform=public_webform,
             submitted_at__isnull=True,
             expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
-            **contact,
+            **lookup,
         ).order_by('-created_at').first()
 
     @property
