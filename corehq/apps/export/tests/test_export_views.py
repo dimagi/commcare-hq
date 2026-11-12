@@ -3,14 +3,16 @@ import json
 import pytest
 import os
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.parse import urlencode
 
 from django.http import HttpResponse
-from django.test import TestCase
+from django.template.loader import render_to_string
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
+from soil.progress import STATES, TaskStatus
 from couchdbkit.exceptions import ResourceNotFound
 
 from corehq import privileges
@@ -31,8 +33,14 @@ from corehq.apps.export.views.new import (
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
 )
-from corehq.apps.export.views.utils import DataFileDownloadDetail
-from corehq.apps.users.models import WebUser
+from corehq.apps.export.schema_builds import BuildRecord
+from corehq.apps.export.views.utils import DataFileDownloadDetail, ExportSchemaBuildStatusView
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    set_bootstrap_version3,
+    set_bootstrap_version5,
+)
+from corehq.apps.locations.models import LocationType, make_location
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 
@@ -618,3 +626,129 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
         response = self.client.get(
             reverse('edit_odata_form_feed', args=[self.domain.name, self.other_export._id]))
         assert response.status_code == 404
+
+
+class ExportSchemaBuildStatusViewTest(ViewTestCase):
+    download_id = 'abc-123'
+
+    def get_status(self, state, percent=None, record_domain=None, params=None):
+        """GET the status endpoint for a build in ``state``
+
+        ``state=None`` means soil has lost the build. ``record_domain=False``
+        means there is no build record for ``download_id``.
+        """
+        if record_domain is False:
+            record = None
+        else:
+            record = BuildRecord('key', record_domain or self.domain.name)
+        if state is None:
+            status = None
+        else:
+            progress = Mock(percent=percent)
+            status = TaskStatus(result=None, error=None, state=state, progress=progress, exception=None)
+        url = reverse(ExportSchemaBuildStatusView.urlname, args=[self.domain.name, self.download_id])
+        with patch('corehq.apps.export.views.utils.get_build_record', return_value=record), \
+                patch('corehq.apps.export.views.utils.get_build_status', return_value=status):
+            return self.client.get(url, params or {})
+
+    @generate_cases([
+        (STATES.started, 42, '42%'),
+        (STATES.not_started, None, '0%'),
+    ])
+    def test_status_unfinished_keeps_polling(self, state, percent, expected):
+        resp = self.get_status(state, percent=percent)
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert 'hx-trigger="every 2s"' in content
+        assert expected in content
+
+    def test_status_success_triggers_event_without_redirect(self):
+        resp = self.get_status(STATES.success, params={'next': 'https://evil'})
+        assert resp.status_code == 200
+        assert resp['HX-Trigger'] == 'schemaBuildSucceeded'
+        assert not resp.has_header('HX-Redirect')
+        content = resp.content.decode()
+        assert 'hx-trigger' not in content
+        assert 'evil' not in content
+
+    @generate_cases([
+        (STATES.failed,),
+        (None,),  # the build vanished from soil
+    ])
+    def test_status_failed_stops_polling(self, state):
+        resp = self.get_status(state)
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert 'hx-trigger' not in content
+        assert "We couldn't load the available columns." in content
+        assert '@click="window.location.reload()"' in content
+
+    @generate_cases([
+        (False,),  # unknown download_id
+        ('other-domain',),
+    ])
+    def test_status_404(self, record_domain):
+        resp = self.get_status(STATES.started, record_domain=record_domain)
+        assert resp.status_code == 404
+
+    def test_status_requires_edit_data_permission(self):
+        reader = WebUser.create(self.domain.name, 'reader', '*******', None, None)
+        reader.set_role(self.domain.name, 'none')
+        reader.save()
+        self.addCleanup(reader.delete, self.domain.name, deleted_by=None)
+        self.client.login(username='reader', password='*******')
+        resp = self.get_status(STATES.started, percent=5)
+        assert resp.status_code == 403
+
+    def test_status_allows_location_restricted_user(self):
+        role = UserRole.create(self.domain.name, 'Restricted editor', HqPermissions(
+            edit_data=True, access_all_locations=False,
+        ))
+        LocationType.objects.create(domain=self.domain.name, name='district')
+        location = make_location(domain=self.domain.name, name='Kigali', location_type='district')
+        location.save()
+        user = WebUser.create(self.domain.name, 'restricted', '*******', None, None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user.set_role(self.domain.name, role.get_qualified_id())
+        user.set_location(self.domain.name, location)
+        user.save()
+        self.client.login(username='restricted', password='*******')
+        resp = self.get_status(STATES.started, percent=5)
+        assert resp.status_code == 200
+        assert '5%' in resp.content.decode()
+
+
+class SchemaBuildWaitingTemplateTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        set_bootstrap_version5()
+        self.addCleanup(set_bootstrap_version3)
+
+    def test_waiting_page(self):
+        request = RequestFactory().get('/')
+        request.user = self.user.get_django_user()
+        request.couch_user = self.user
+        request.domain = self.domain.name
+        request.can_access_all_locations = True
+        html = render_to_string('export/schema_build_waiting.html', {
+            'domain': self.domain.name,
+            'download_id': 'abc-123',
+            'success_url': '/a/donkeykong/data/export/custom/new/?schema_build=abc-123',
+            'export_home_url': '/a/donkeykong/data/export/form/',
+        }, request=request)
+        assert 'Finding available columns' in html
+        # Navigates to its own success URL when the build succeeds
+        assert '@schema-build-succeeded.camel.window' in html
+        assert '&quot;/a/donkeykong/data/export/custom/new/?schema_build=abc-123&quot;' in html
+        # Back link outside the polled partial, so it survives every swap
+        assert '/a/donkeykong/data/export/form/' in html
+        partial = render_to_string('export/partials/schema_build_status.html', {
+            'domain': self.domain.name, 'download_id': 'abc-123', 'failed': False, 'percent': 0,
+        })
+        assert 'Go back' not in partial
+        # Stops polling and shows failure if the poller is refused or keeps failing
+        assert '@htmx:after-request="onPollResponse($event.detail)"' in html
+        assert '[401, 403, 404].includes(detail.xhr.status)' in html
+        assert 'this.errors >= this.maxErrors' in html
+        assert 'x-show="failed"' in html

@@ -1,0 +1,54 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% js_entry "hqwebapp/js/htmx_and_alpine" %}
+
+{% block page_title %}
+  {% trans "Finding available columns…" %}
+{% endblock %}
+
+{% block page_content %}
+  {% comment %}
+    The status endpoint renders the failed state for builds that fail. HTMX does
+    not swap error responses, so when the poller's own requests fail, the page
+    shows the failed state itself: at once if the request is refused, or after
+    several consecutive errors otherwise. The poller swaps itself out, so after
+    a successful poll the event may come from a different element. Any success
+    therefore resets the error count without checking the element.
+  {% endcomment %}
+  <div
+    x-data="{
+      failed: false,
+      errors: 0,
+      maxErrors: 5,
+      onPollResponse(detail) {
+        if (detail.successful) {
+          this.errors = 0;
+        } else if (detail.elt.id === 'schema-build-poller') {
+          this.errors += 1;
+          if ([401, 403, 404].includes(detail.xhr.status) || this.errors >= this.maxErrors) {
+            detail.elt.remove();
+            this.failed = true;
+          }
+        }
+      },
+    }"
+    @schema-build-succeeded.camel.window="window.location.href = {{ success_url|JSON }}"
+    @htmx:after-request="onPollResponse($event.detail)"
+  >
+    <p>
+      {% blocktrans trimmed %}
+        We're checking your applications for the questions and case properties
+        you can include. This can take a few minutes for projects with many
+        applications. Please keep this page open.
+      {% endblocktrans %}
+    </p>
+    {% include "export/partials/schema_build_status.html" with failed=False percent=0 %}
+    <div x-show="failed" x-cloak>
+      {% include "export/partials/schema_build_failed.html" %}
+    </div>
+    <p class="mt-3">
+      <a href="{{ export_home_url }}">{% trans "Go back" %}</a>
+    </p>
+  </div>
+{% endblock %}
