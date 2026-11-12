@@ -80,6 +80,7 @@ domain_specific = [
     url(r'^project_db/', include('corehq.apps.project_db.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^campaign/', include('corehq.apps.campaign.urls')),
+    url(r'^custom_apps/', include('corehq.apps.sidecar.urls')),
     url(r'^microplanning/', include('corehq.apps.geospatial.urls')),
     url(r'^kyc/', include('corehq.apps.integration.kyc.urls')),
     url(r'^payments/', include('corehq.apps.integration.payments.urls')),
