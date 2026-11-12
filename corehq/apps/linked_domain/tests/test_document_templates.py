@@ -1,12 +1,12 @@
-import pytest
+from datetime import datetime
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from corehq.apps.document_templates.images import (
-    get_image,
-    get_image_data,
-    save_image,
-)
+import pytest
+import pytz
+
+from corehq.apps.document_templates.images import get_image, get_image_data, save_image
 from corehq.apps.document_templates.models import Area, AreaType, Template
 from corehq.apps.document_templates.tests.utils import delete_image, make_image
 from corehq.apps.linked_domain.document_templates import (
@@ -14,6 +14,11 @@ from corehq.apps.linked_domain.document_templates import (
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.view_helpers import (
+    build_document_template_view_model,
+    build_pullable_view_models_from_data_models,
+    get_upstream_and_downstream_document_templates,
+)
 from corehq.blobs.models import BlobMeta
 
 UPSTREAM = 'templates-upstream'
@@ -159,3 +164,50 @@ class TestUpdateLinkedDocumentTemplate(TestCase):
             self._update(upstream)
 
         assert not Template.objects.filter(domain=DOWNSTREAM).exists()
+
+
+class TestDocumentTemplateViewModels(TestCase):
+
+    def test_templates_are_split_by_where_they_come_from(self):
+        local = _create_template(DOWNSTREAM, slug='local')
+        linked = _create_template(DOWNSTREAM, slug='linked', is_linked=True)
+        _create_template(DOWNSTREAM, slug='gone', deleted=True)
+        _create_template(DOWNSTREAM, slug='linked-gone', is_linked=True, deleted=True)
+
+        upstream, downstream = get_upstream_and_downstream_document_templates(DOWNSTREAM)
+
+        assert upstream == {'local': local}
+        assert downstream == {'linked': linked}
+
+    def test_pulled_template_shows_when_it_was_last_pulled(self):
+        domain_link = DomainLink.link_domains(DOWNSTREAM, UPSTREAM)
+        self.addCleanup(domain_link.delete)
+        upstream = _create_template(UPSTREAM)
+        update_linked_document_template(domain_link, upstream.slug)
+        domain_link.update_last_pull(
+            'document_template', 'user-id', model_detail={'upstream_slug': 'welcome'},
+        )
+        _, downstream = get_upstream_and_downstream_document_templates(DOWNSTREAM)
+
+        view_models = build_pullable_view_models_from_data_models(
+            DOWNSTREAM, domain_link, {}, {}, {}, {}, {}, {}, {}, downstream, pytz.UTC,
+        )
+
+        [view_model] = [vm for vm in view_models if vm['type'] == 'document_template']
+        assert view_model['detail'] == {'upstream_slug': 'welcome'}
+        assert isinstance(view_model['last_update'], (str, datetime))
+
+
+@pytest.mark.parametrize('is_linked', [False, True])
+def test_view_model_identifies_the_template_by_slug(is_linked):
+    template = Template(name='Welcome', slug='welcome', is_linked=is_linked)
+
+    view_model = build_document_template_view_model(template)
+
+    assert view_model['type'] == 'document_template'
+    assert view_model['name'] == 'Document Template (Welcome)'
+    assert view_model['detail'] == {'upstream_slug': 'welcome'}
+
+
+def test_no_view_model_without_template():
+    assert build_document_template_view_model(None) is None
