@@ -241,6 +241,25 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
     )
 
 
+@task(queue='background_queue', bind=True)
+def build_export_schema(self, export_type, domain, app_id, identifier, for_new_export_instance) -> dict:
+    """Returns ``{'schema_id': ...}``; soil's get_task_status requires a dict result."""
+    export_cls = get_export_data_schema_class(export_type)
+    try:
+        schema = export_cls.generate_schema_from_builds(
+            domain,
+            app_id,
+            identifier,
+            only_process_current_builds=True,
+            task=self,
+            for_new_export_instance=for_new_export_instance,
+        )
+    except Exception:
+        metrics_counter('commcare.exports.schema_build', tags={'outcome': 'failed'})
+        raise
+    return {'schema_id': schema._id}
+
+
 @task(queue='background_queue')
 def process_populate_export_tables(export_id, progress_id=None):
     """

@@ -2008,7 +2008,7 @@ class ExportDataSchema(Document):
                 schema.record_update(app.copy_of, app.version)
 
             apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids))
+            set_task_progress(task, apps_processed, len(app_build_ids), src="export_schema")
 
         return schema
 
@@ -2606,7 +2606,9 @@ class CaseExportDataSchema(ExportDataSchema):
                 schema.record_update(app.copy_of, app.version)
 
             apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
+            set_task_progress(
+                task, apps_processed, len(app_build_ids) * len(case_types_to_use), src="export_schema",
+            )
 
         return schema
 
