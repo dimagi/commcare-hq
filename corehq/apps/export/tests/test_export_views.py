@@ -17,23 +17,33 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq import privileges
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    CaseExportInstance,
+    FormExportInstance,
+)
 from corehq.apps.export.models.new import DataFile
 from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
+from corehq.apps.export.views.list import CaseExportListView
 from corehq.apps.export.views.new import (
+    CreateNewCaseFeedView,
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
+    with_schema_build,
 )
-from corehq.apps.export.schema_builds import BuildRecord
+from corehq.apps.export.schema_builds import BuildRecord, SchemaBuildKey
+from corehq.apps.export.tasks import build_export_schema
+from corehq.apps.export.tests.util import StoreEagerCeleryResults
 from corehq.apps.export.views.utils import DataFileDownloadDetail, ExportSchemaBuildStatusView
 from corehq.apps.hqwebapp.utils.bootstrap import (
     set_bootstrap_version3,
@@ -175,7 +185,7 @@ def test_data_file_download_partial(self, start, end):
     self.assertEqual(resp.getvalue(), expected_content)
 
 
-class ExportViewTest(ViewTestCase):
+class ExportViewTest(StoreEagerCeleryResults, ViewTestCase):
 
     def tearDown(self):
         delete_all_export_instances()
@@ -752,3 +762,139 @@ class SchemaBuildWaitingTemplateTest(ViewTestCase):
         assert '[401, 403, 404].includes(detail.xhr.status)' in html
         assert 'this.errors >= this.maxErrors' in html
         assert 'x-show="failed"' in html
+
+
+@patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
+class ExportViewSchemaBuildTest(StoreEagerCeleryResults, ViewTestCase):
+    """Create and edit views build schemas in the background"""
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def create_case_url(self, urlname=CreateNewCustomCaseExportView.urlname):
+        return reverse(urlname, args=[self.domain.name])
+
+    def edit_case_url(self):
+        export = CaseExportInstance(name='export', domain=self.domain.name, case_type='random_case')
+        export.save()
+        return reverse(EditNewCustomCaseExportView.urlname, args=[self.domain.name, export._id])
+
+    def get_while_build_is_slow(self, url, params=None, download_id='build-1'):
+        with (
+            patch('corehq.apps.export.views.new.start_or_join_build', return_value=download_id) as start,
+            patch('corehq.apps.export.views.new.wait_for_build', return_value=False),
+            patch.object(CaseExportDataSchema, 'generate_schema_from_builds') as generate,
+        ):
+            resp = self.client.get(url, params or {})
+        generate.assert_not_called()
+        start.assert_called_once()
+        return resp
+
+    def test_create_case_export_shows_waiting_page_when_build_slow(self):
+        resp = self.get_while_build_is_slow(self.create_case_url(), {'export_tag': 'random_case'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+        self.assertTemplateNotUsed(resp, 'export/customize_export_new.html')
+        assert resp.context['download_id'] == 'build-1'
+        assert resp.context['success_url'] == (
+            self.create_case_url() + '?export_tag=random_case&schema_build=build-1'
+        )
+        assert resp.context['export_home_url'] == reverse(CaseExportListView.urlname, args=[self.domain.name])
+
+    @generate_cases([
+        ('create',),
+        ('edit',),
+    ])
+    def test_case_export_uses_finished_build(self, view):
+        url = self.create_case_url() if view == 'create' else self.edit_case_url()
+        params = {'export_tag': 'random_case'} if view == 'create' else {}
+        schema = CaseExportDataSchema(domain=self.domain.name, case_type='random_case')
+        with (
+            patch('corehq.apps.export.views.new.get_built_schema', return_value=schema) as get_built,
+            patch('corehq.apps.export.views.new.start_or_join_build') as start,
+            patch.object(CaseExportDataSchema, 'get_number_of_apps_to_process', return_value=3),
+        ):
+            resp = self.client.get(url, {**params, 'schema_build': 'build-1'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        start.assert_not_called()
+        key, download_id = get_built.call_args.args
+        assert download_id == 'build-1'
+        assert key.identifier == 'random_case'
+        # The page context reads the schema that prepare_export_schema() set
+        assert resp.context['number_of_apps_to_process'] == 3
+
+    def test_create_case_export_ignores_build_for_other_key(self):
+        with patch('corehq.apps.export.views.new.get_built_schema', return_value=None):
+            resp = self.get_while_build_is_slow(
+                self.create_case_url(),
+                {'export_tag': 'random_case', 'schema_build': 'other-build'},
+                download_id='build-2',
+            )
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+        assert resp.context['success_url'] == (
+            self.create_case_url() + '?export_tag=random_case&schema_build=build-2'
+        )
+
+    def test_edit_case_export_shows_waiting_page_when_build_slow(self):
+        resp = self.get_while_build_is_slow(self.edit_case_url())
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+
+    @privilege_enabled(privileges.EXCEL_DASHBOARD, privileges.DAILY_SAVED_EXPORT)
+    def test_case_feed_create_shows_waiting_page_when_build_slow(self):
+        resp = self.get_while_build_is_slow(
+            self.create_case_url(CreateNewCaseFeedView.urlname), {'export_tag': 'random_case'}
+        )
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+
+    def test_create_case_export_builds_once_per_request(self):
+        generate = CaseExportDataSchema.generate_schema_from_builds
+        with (
+            patch.object(build_export_schema, 'delay', wraps=build_export_schema.delay) as delay,
+            patch.object(CaseExportDataSchema, 'generate_schema_from_builds', wraps=generate) as gen,
+        ):
+            resp = self.client.get(self.create_case_url(), {'export_tag': 'random_case'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        delay.assert_called_once()
+        gen.assert_called_once()
+
+    @patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
+    def test_create_form_export_builds_in_background(self):
+        with patch.object(build_export_schema, 'delay', wraps=build_export_schema.delay) as delay:
+            resp = self.client.get(
+                reverse(CreateNewCustomFormExportView.urlname, args=[self.domain.name]),
+                {'export_tag': 'my_sweet_xmlns', 'app_id': 'r2d2'},
+            )
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        delay.assert_called_once_with(FORM_EXPORT, self.domain.name, 'r2d2', 'my_sweet_xmlns', False)
+
+    @generate_cases([
+        ('create', True),
+        ('edit', False),
+    ])
+    def test_build_key_for_new_export_instance(self, view, expected):
+        url = self.create_case_url() if view == 'create' else self.edit_case_url()
+        params = {'export_tag': 'random_case'} if view == 'create' else {}
+        with (
+            patch('corehq.apps.export.views.new.start_or_join_build', return_value='b') as start,
+            patch('corehq.apps.export.views.new.wait_for_build', return_value=False),
+        ):
+            self.client.get(url, params)
+        key, = start.call_args.args
+        assert key == SchemaBuildKey(CASE_EXPORT, self.domain.name, None, 'random_case', expected)
+
+
+@pytest.mark.parametrize('full_path, download_id, expected', [
+    ('/a/d/new/', 'b1', '/a/d/new/?schema_build=b1'),
+    ('/a/d/new/?export_tag=x', 'b1', '/a/d/new/?export_tag=x&schema_build=b1'),
+    ('/a/d/new/?schema_build=old&export_tag=x', 'b2', '/a/d/new/?export_tag=x&schema_build=b2'),
+    ('/a/d/new/?schema_build=a&schema_build=b', 'c', '/a/d/new/?schema_build=c'),
+    ('/a/d/new/?export_tag=%22a+b%22&app_id=', 'b1', '/a/d/new/?export_tag=%22a+b%22&app_id=&schema_build=b1'),
+])
+def test_with_schema_build(full_path, download_id, expected):
+    assert with_schema_build(full_path, download_id) == expected

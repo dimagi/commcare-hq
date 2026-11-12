@@ -1,4 +1,5 @@
 import json
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from django.conf import settings
 from django.contrib import messages
@@ -8,6 +9,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
@@ -49,6 +51,12 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     FormExportInstance,
 )
+from corehq.apps.export.schema_builds import (
+    SchemaBuildKey,
+    get_built_schema,
+    start_or_join_build,
+    wait_for_build,
+)
 from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.export.views.utils import (
     DailySavedExportMixin,
@@ -73,6 +81,9 @@ class BaseExportView(BaseProjectDataView):
     export_type = None
     metric_name = None  # Override
     is_async = True
+    # Set by prepare_export_schema(). None for all-case-types exports,
+    # which use an empty schema.
+    export_schema = None
 
     @method_decorator(require_can_edit_data)
     def dispatch(self, request, *args, **kwargs):
@@ -121,18 +132,14 @@ class BaseExportView(BaseProjectDataView):
     @property
     def page_context(self):
         owner_id = self.export_instance.owner_id
-        number_of_apps_to_process = 0
         is_all_case_types_export = self._is_bulk_case_export
         table_count = 0
         if not is_all_case_types_export:
             # Case History table is not a selectable table, so exclude it from count
             table_count = len([t for t in self.export_instance.tables if t.label != 'Case History'])
-            schema = self.get_export_schema(
-                self.domain,
-                self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
-                self.export_instance.identifier,
-            )
-            number_of_apps_to_process = schema.get_number_of_apps_to_process()
+        number_of_apps_to_process = (
+            self.export_schema.get_number_of_apps_to_process() if self.export_schema is not None else 0
+        )
 
         if self.export_instance.owner_id or not self.export_instance._id:
             sharing_options = SharingOption.CHOICES
@@ -334,15 +341,33 @@ class BaseExportView(BaseProjectDataView):
                 return HttpResponse(url)
             return HttpResponseRedirect(url)
 
-    @memoized
-    def get_export_schema(self, domain, app_id, identifier, for_new_export_instance=False):
-        return self.export_schema_cls.generate_schema_from_builds(
-            domain,
-            app_id,
-            identifier,
-            only_process_current_builds=True,
-            for_new_export_instance=for_new_export_instance
-        )
+    def prepare_export_schema(self, app_id, identifier, for_new_export_instance=False):
+        """Set ``self.export_schema``, or return a waiting page if the schema is still being built.
+
+        The schema is built in Celery (see :mod:`corehq.apps.export.schema_builds`).
+        If the build takes longer than a short head start, the response is
+        a waiting page that reloads this page with ``schema_build=<download_id>``
+        once the build has finished. Returns None when the schema is ready.
+        """
+        key = SchemaBuildKey(self.export_type, self.domain, app_id, identifier, for_new_export_instance)
+        download_id = self.request.GET.get('schema_build')
+        schema = get_built_schema(key, download_id) if download_id else None
+        if schema is None:
+            download_id = start_or_join_build(key)
+            if wait_for_build(download_id):
+                schema = get_built_schema(key, download_id)
+        if schema is None:
+            return self._schema_build_waiting_response(download_id)
+        self.export_schema = schema
+        return None
+
+    def _schema_build_waiting_response(self, download_id):
+        return render(self.request, 'export/schema_build_waiting.html', {
+            **self.main_context,
+            'download_id': download_id,
+            'export_home_url': self.export_home_url,
+            'success_url': with_schema_build(self.request.get_full_path(), download_id),
+        })
 
     @memoized
     def get_empty_export_schema(self, domain, identifier):
@@ -354,6 +379,14 @@ class BaseExportView(BaseProjectDataView):
             self.export_type is CASE_EXPORT
             and self.export_instance.case_type == ALL_CASE_TYPE_EXPORT
         )
+
+
+def with_schema_build(full_path, download_id):
+    """Replaces any existing ``schema_build`` param; other params are kept."""
+    parts = urlsplit(full_path)
+    params = [(k, v) for k, v in parse_qsl(parts.query, keep_blank_values=True) if k != 'schema_build']
+    params.append(('schema_build', download_id))
+    return urlunsplit(parts._replace(query=urlencode(params)))
 
 
 @location_safe
@@ -382,10 +415,13 @@ class CreateNewCustomFormExportView(BaseExportView):
         app_id = request.GET.get('app_id')
         xmlns = request.GET.get('export_tag').strip('"')
 
+        waiting_response = self.prepare_export_schema(app_id, xmlns)
+        if waiting_response is not None:
+            return waiting_response
+
         export_settings = get_default_export_settings_if_available(self.domain)
-        schema = self.get_export_schema(self.domain, app_id, xmlns)
         self.export_instance = self.create_new_export_instance(
-            schema,
+            self.export_schema,
             request.user.username,
             export_settings=export_settings)
 
@@ -454,7 +490,10 @@ class CreateNewCustomCaseExportView(BaseExportView):
         if case_type == ALL_CASE_TYPE_EXPORT:
             schema = self.get_empty_export_schema(self.domain, case_type)
         else:
-            schema = self.get_export_schema(self.domain, None, case_type, for_new_export_instance=True)
+            waiting_response = self.prepare_export_schema(None, case_type, for_new_export_instance=True)
+            if waiting_response is not None:
+                return waiting_response
+            schema = self.export_schema
 
         export_settings = get_default_export_settings_if_available(self.domain)
         self.export_instance = self.create_new_export_instance(
