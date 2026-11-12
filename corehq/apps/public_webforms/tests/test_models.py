@@ -139,12 +139,6 @@ def test_get_active_session_by_id_ignores_inactive_session(session_kwargs):
     assert PublicFormSession.get_active_session_by_id(webform, session.id.hex) is None
 
 
-@pytest.mark.parametrize('session_id', ['', 'not-a-uuid', None])
-def test_get_active_session_by_id_ignores_a_malformed_id(session_id):
-    assert PublicFormSession.get_active_session_by_id(
-        PublicWebform(), session_id) is None
-
-
 @use('db')
 def test_get_reusable_session_for_contact():
     webform = create_webform()
@@ -200,6 +194,16 @@ def test_get_reusable_session_for_contact_requires_exactly_one_channel(email, ph
     with pytest.raises(AssertionError):
         PublicFormSession.get_reusable_session_for_contact(
             PublicWebform(), email=email, phone_number=phone_number)
+
+
+def test_parse_uuid():
+    value = uuid4()
+    assert PublicFormSession._parse_uuid(value.hex) == value
+
+
+@pytest.mark.parametrize('value', ['', 'not-a-uuid', None])
+def test_parse_uuid_rejects_a_malformed_value(value):
+    assert PublicFormSession._parse_uuid(value) is None
 
 
 def test_public_form_session_username():
