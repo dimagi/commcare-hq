@@ -29,15 +29,25 @@
       <tbody>
         {% for template in templates %}
           <tr>
-            <td>{{ template.name }}</td>
+            <td>
+              {{ template.name }}
+              {% if template.upstream_id %}
+                <i
+                  class="fa fa-link"
+                  title="{% trans 'Linked from an upstream project space' %}"
+                ></i>
+              {% endif %}
+            </td>
             <td>{{ template.slug }}</td>
             {% if can_edit %}
               <td>
-                <a
-                  class="btn btn-sm btn-outline-primary"
-                  href="{% url 'edit_document_template' domain template.pk %}"
-                  >{% trans "Edit" %}</a
-                >
+                {% if not template.upstream_id %}
+                  <a
+                    class="btn btn-sm btn-outline-primary"
+                    href="{% url 'edit_document_template' domain template.pk %}"
+                    >{% trans "Edit" %}</a
+                  >
+                {% endif %}
                 <button
                   type="button"
                   class="btn btn-sm btn-outline-danger"

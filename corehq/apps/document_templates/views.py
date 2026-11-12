@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from io import BytesIO
 
 from django import forms
+from django.core.exceptions import PermissionDenied
 from django.http import (
     FileResponse,
     Http404,
@@ -254,6 +255,12 @@ class EditDocumentTemplateView(BaseDocumentTemplateFormView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
+
+    def get_object(self, queryset=None):
+        template = super().get_object(queryset)
+        if template.upstream_id:
+            raise PermissionDenied
+        return template
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
