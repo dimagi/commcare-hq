@@ -301,7 +301,10 @@ if [ "$CMD" == "test" ]; then
     # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
     [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
-    docker compose pull --quiet
+    # Pull only the services the test container depends on (skips
+    # formplayer and minio, which tests do not use). Locally-built images
+    # (web, couch, elasticsearch6) are built by `docker compose run`.
+    docker compose pull --quiet --ignore-buildable --include-deps web
 
     # Print service versions
     docker compose run --no-deps --rm garage /garage --version
