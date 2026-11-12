@@ -8,6 +8,12 @@ on:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
   workflow_dispatch:
+concurrency:
+  # Cancel a PR's in-progress run when a newer one starts, freeing runner
+  # slots for other PRs. Scheduled and manual runs each get their own group
+  # (keyed on run_id) and are never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   tests:
     runs-on: ubuntu-22.04
