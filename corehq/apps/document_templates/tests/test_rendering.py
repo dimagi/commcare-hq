@@ -1,25 +1,48 @@
+from io import BytesIO
+
 import pytest
+from PIL import Image
 from reportlab.platypus import ListFlowable, Paragraph, Table
 
+from corehq.apps.document_templates.models import Area
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
+    _image_flowable,
+    get_area_definitions,
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
-    _render_areas,
     get_area_names,
+    generate_document,
     get_variable_names,
     render_pdf,
-    render_preview,
 )
 
 VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
 
 
+def _areas(values):
+    return {name: Area(value=value) for name, value in values.items()}
+
+
+def _generate(values, context):
+    document = generate_document(_areas(values), context)
+    return {name: area.value for name, area in document.items()}
+
+
 def test_get_area_names():
     assert get_area_names() == ['header', 'address', 'body', 'footer']
+
+
+def test_area_definitions_describe_the_size_and_position_of_each_area():
+    assert {area.name: (area.label, area.description) for area in get_area_definitions()} == {
+        'header': ('Header', '7 x 1 in, at the top of the first page. An image is centered.'),
+        'address': ('Address', '7 x 1.25 in, below the header on the first page. An image is left-aligned.'),
+        'body': ('Body', '7 in wide, below the address and over the pages that follow. An image is left-aligned.'),
+        'footer': ('Footer', '7 x 1 in, at the bottom of every page. An image is centered.'),
+    }
 
 
 @pytest.mark.parametrize('text, expected', [
@@ -52,21 +75,21 @@ def test_markdown_to_html_escapes_html(value, expected):
 
 def test_variable_names_lists_variables_used_in_areas():
     area_values = {**VALUES, 'address': '{{ name }}\n{{ street }}', 'body': 'Dear {{ name }}'}
-    assert get_variable_names(area_values) == ['name', 'street']
+    assert get_variable_names(_areas(area_values)) == ['name', 'street']
 
 
 def test_variable_names_is_empty_without_variables():
-    assert get_variable_names(VALUES) == []
+    assert get_variable_names(_areas(VALUES)) == []
 
 
 def test_variable_names_reports_a_syntax_error():
     with pytest.raises(DocumentRenderError, match='syntax error in body, line 1'):
-        get_variable_names({**VALUES, 'body': '{% if %}'})
+        get_variable_names(_areas({**VALUES, 'body': '{% if %}'}))
 
 
-def test_render_areas_fills_in_the_context():
+def test_generate_document_fills_in_the_context():
     area_values = {**VALUES, 'address': '{{ name }}', 'body': 'Dear {{ name }}'}
-    rendered = _render_areas(area_values, {'name': 'Ada'})
+    rendered = _generate(area_values, {'name': 'Ada'})
     assert rendered == {**VALUES, 'address': 'Ada', 'body': 'Dear Ada'}
 
 
@@ -76,44 +99,44 @@ def test_render_areas_fills_in_the_context():
     ('[a](http://b.test)', r'\[a\]\(http://b\.test\)'),
     ('# not a heading', r'\# not a heading'),
 ])
-def test_render_areas_makes_context_values_literal(value, expected):
-    rendered = _render_areas({**VALUES, 'body': '{{ name }}'}, {'name': value})
+def test_generate_document_makes_context_values_literal(value, expected):
+    rendered = _generate({**VALUES, 'body': '{{ name }}'}, {'name': value})
     assert rendered['body'] == expected
 
 
-def test_render_areas_keeps_authors_markdown():
-    rendered = _render_areas({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
+def test_generate_document_keeps_authors_markdown():
+    rendered = _generate({**VALUES, 'body': '**Dear** {{ name }}'}, {'name': 'Ada'})
     assert rendered['body'] == '**Dear** Ada'
 
 
-def test_render_areas_requires_every_variable():
+def test_generate_document_requires_every_variable():
     with pytest.raises(DocumentRenderError, match="body: 'name' is undefined"):
-        _render_areas({**VALUES, 'body': '{{ name }}'}, {})
+        _generate({**VALUES, 'body': '{{ name }}'}, {})
 
 
-def test_render_areas_is_sandboxed():
+def test_generate_document_is_sandboxed():
     with pytest.raises(DocumentRenderError, match='Range too big'):
-        _render_areas({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
+        _generate({**VALUES, 'body': '{{ range(1000000) | list | length }}'}, {})
 
 
-def test_render_areas_rejects_a_long_area():
+def test_generate_document_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
-        _render_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
+        _generate({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}, {})
 
 
-def test_render_areas_rejects_a_long_result():
+def test_generate_document_rejects_a_long_result():
     with pytest.raises(DocumentRenderError, match='too long once rendered'):
-        _render_areas({**VALUES, 'body': f"{{{{ 'x' * {MAX_RENDERED_LENGTH + 1} }}}}"}, {})
+        _generate({**VALUES, 'body': f"{{{{ 'x' * {MAX_RENDERED_LENGTH + 1} }}}}"}, {})
 
 
 def test_variable_names_rejects_a_long_area():
     with pytest.raises(DocumentRenderError, match='body is too long'):
-        get_variable_names({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)})
+        get_variable_names(_areas({**VALUES, 'body': 'x' * (MAX_AREA_LENGTH + 1)}))
 
 
-def test_render_areas_reports_a_syntax_error():
+def test_generate_document_reports_a_syntax_error():
     with pytest.raises(DocumentRenderError, match='syntax error in footer, line 1'):
-        _render_areas({**VALUES, 'footer': '{% if %}'}, {})
+        _generate({**VALUES, 'footer': '{% if %}'}, {})
 
 
 def test_markdown_emphasis_mangles_dunder_names_in_values():
@@ -190,7 +213,7 @@ def test_render_pdf_lays_out_a_table():
 
 
 def _document(**areas):
-    return {area: {'type': 'markdown', 'value': areas.get(area, '')} for area in VALUES}
+    return {name: Area(value=areas.get(name, '')) for name in VALUES}
 
 
 def test_render_pdf_returns_a_pdf():
@@ -198,8 +221,8 @@ def test_render_pdf_returns_a_pdf():
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
-    document = {**_document(), 'body': {'type': 'image', 'value': 'x.png'}}
-    with pytest.raises(ValueError, match="Unknown area type: 'image'"):
+    document = {**_document(), 'body': Area(type='unknown', value='x')}
+    with pytest.raises(ValueError, match="Unknown area type: 'unknown'"):
         render_pdf([document])
 
 
@@ -227,6 +250,73 @@ def test_render_pdf_flows_the_body_over_pages():
     assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
 
 
-def test_render_preview_returns_a_pdf():
-    pdf = render_preview({**VALUES, 'body': 'Dear {{ name }}'}, {'name': 'Ada'})
-    assert pdf.startswith(b'%PDF')
+def test_generate_document_keeps_other_area_types():
+    image = Area(type='image', value=_png())
+    document = generate_document({**_areas(VALUES), 'body': image}, {})
+    assert document['body'] is image
+
+
+def test_variable_names_ignores_other_area_types():
+    areas = {**_areas(VALUES), 'body': Area(type='image', value='{{ name }}')}
+    assert get_variable_names(areas) == []
+
+
+def _png(size=(100, 50)):
+    buffer = BytesIO()
+    Image.new('RGBA', size, color=(200, 30, 30, 128)).save(buffer, format='PNG')
+    return buffer.getvalue()
+
+
+def _image(data):
+    return Area(type='image', value=data)
+
+
+@pytest.mark.parametrize('image_size, frame, expected', [
+    ((100, 50), (504, 72), (100, 50)),  # never scaled up
+    ((2000, 100), (504, 72), (504, 25.2)),  # too wide
+    ((100, 1000), (504, 72), (7.2, 72)),  # too tall
+    ((4000, 4000), (504, 612), (504, 504)),
+])
+def test_image_is_scaled_down_to_fit_keeping_its_ratio(image_size, frame, expected):
+    flowable = _image_flowable(_png(image_size), *frame, 'LEFT')
+    assert (round(flowable.drawWidth, 1), round(flowable.drawHeight, 1)) == expected
+
+
+@pytest.mark.parametrize('alignment', ['LEFT', 'CENTER'])
+def test_image_is_aligned(alignment):
+    assert _image_flowable(_png(), 504, 72, alignment).hAlign == alignment
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_draws_an_image_in_any_area(area_name):
+    pdf = render_pdf([{**_document(), area_name: _image(_png())}])
+    assert b'/Subtype /Image' in pdf
+
+
+def test_render_pdf_draws_an_empty_image_area_as_blank():
+    assert b'/Subtype /Image' not in render_pdf([{**_document(), 'header': _image(b'')}])
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_fits_an_image_that_is_larger_than_the_area(area_name):
+    render_pdf([{**_document(), area_name: _image(_png((4000, 4000)))}])
+
+
+def test_render_pdf_moves_a_body_image_that_does_not_fit_below_the_address_to_the_next_page():
+    small = render_pdf([{**_document(), 'body': _image(_png((100, 50)))}])
+    tall = render_pdf([{**_document(), 'body': _image(_png((100, 4000)))}])
+    assert small.count(b'/Type /Page\n') == 1
+    assert tall.count(b'/Type /Page\n') == 2
+
+
+def test_generate_document_renders_markdown_around_an_image():
+    areas = {**_areas(VALUES), 'header': _image(_png()), 'body': Area(value='Dear {{ name }}')}
+    document = generate_document(areas, {'name': 'Ada'})
+    assert document['header'] is areas['header']
+    assert document['body'].value == 'Dear Ada'
+    assert b'/Subtype /Image' in render_pdf([document])
+
+
+def test_generate_document_reports_an_image_that_cannot_be_read():
+    with pytest.raises(DocumentRenderError, match='header: the image cannot be read'):
+        generate_document({**_areas(VALUES), 'header': _image(b'not an image')}, {})
