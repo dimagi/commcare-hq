@@ -8,9 +8,6 @@
     - hq.use_custom_suite
     - hq.custom_suite
     - hq.custom_base_url
-    # RemoteApp
-    - hq.profile_url
-    - hq.manage_urls
 
 - title: Build Settings
   id: app-settings-general

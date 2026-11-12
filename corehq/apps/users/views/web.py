@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -55,7 +55,7 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
         try:
-            invitation = Invitation.objects.get(uuid=uuid)
+            invitation = Invitation.objects.get(uuid=uuid, domain=self.domain)
         except (Invitation.DoesNotExist, ValidationError):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
@@ -71,8 +71,6 @@ class UserInvitationView(object):
                                           "If you feel this is a mistake, please ask the inviter for "
                                           "another invitation."))
             return HttpResponseRedirect(reverse("login"))
-
-        self.validate_invitation(invitation)
 
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -97,6 +95,14 @@ class UserInvitationView(object):
             context['current_page'] = {'page_name': _('Project Invitation')}
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
+
+        domain_obj = Domain.get_by_name(invitation.domain)
+        allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
+
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(invitation.email)
+
         if request.user.is_authenticated:
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
@@ -114,6 +120,13 @@ class UserInvitationView(object):
                                                  invited=invitation.email,
                                                  current=request.couch_user.username))
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
+
+            if not is_invited_user and (allow_invite_email_only or idp):
+                context.update({
+                    'email_mismatch_blocked': True,
+                    'invited_user': invitation.email,
+                })
+                return render(request, self.template, context)
 
             if not is_invited_user:
                 messages.error(request, _("The invited user {invited} and your user {current} "
@@ -142,13 +155,6 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
-            domain_obj = Domain.get_by_name(invitation.domain)
-            allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
-
-            idp = None
-            if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_required_identity_provider(invitation.email)
-
             if request.method == "POST":
                 form = AcceptedWebUserInvitationForm(
                     request.POST,
@@ -223,9 +229,6 @@ class UserInvitationView(object):
         context.update({"form": form})
         return render(request, self.template, context)
 
-    def validate_invitation(self, invitation):
-        assert invitation.domain == self.domain
-
     def is_invited(self, invitation, couch_user):
         return couch_user.is_member_of(invitation.domain)
 
@@ -256,7 +259,7 @@ def accept_invitation(request, domain, uuid):
 def reinvite_web_user(request, domain):
     uuid = request.POST['uuid']
     try:
-        invitation = Invitation.objects.get(uuid=uuid)
+        invitation = Invitation.objects.get(uuid=uuid, domain=domain)
     except Invitation.DoesNotExist:
         return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
     if not user_can_access_invite(domain, request.couch_user, invitation):
@@ -274,7 +277,7 @@ def reinvite_web_user(request, domain):
 @location_safe
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
-    invitation = Invitation.objects.get(uuid=uuid)
+    invitation = get_object_or_404(Invitation, uuid=uuid, domain=domain)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
     invitation.delete(deleted_by=request.couch_user.user_id)

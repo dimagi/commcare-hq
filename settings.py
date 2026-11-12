@@ -259,6 +259,8 @@ SILENCED_SYSTEM_CHECKS = [
     'oauth2_provider.W007',
     'oauth2_provider.W008',
 ]
+# Per-environment additions, set in localsettings
+LOCAL_SILENCED_SYSTEM_CHECKS = []
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
@@ -1285,6 +1287,8 @@ AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 COMMCARE_EXTENSIONS.extend(DEFAULT_COMMCARE_EXTENSIONS)
+
+SILENCED_SYSTEM_CHECKS.extend(LOCAL_SILENCED_SYSTEM_CHECKS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
