@@ -26,7 +26,10 @@ from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformLinkRequestForm,
 )
-from corehq.apps.public_webforms.utils import public_webforms_enabled
+from corehq.apps.public_webforms.utils import (
+    get_analytics_delivery,
+    public_webforms_enabled,
+)
 from corehq.util.strings import get_masked_email, get_masked_string
 
 
@@ -184,7 +187,7 @@ class PublicFormView(BasePublicWebformView):
                 'public_webform_one_time_link_accessed', self.session.analytics_id, {
                     'domain': self.webform.domain,
                     'webform_id': self.webform.id,
-                    'delivery': 'email' if self.session.email else 'sms',
+                    'delivery': get_analytics_delivery(self.session),
                 })
         request.public_form_session = self.session
 
