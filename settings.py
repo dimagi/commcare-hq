@@ -259,6 +259,8 @@ SILENCED_SYSTEM_CHECKS = [
     'oauth2_provider.W007',
     'oauth2_provider.W008',
 ]
+# Per-environment additions, set in localsettings
+LOCAL_SILENCED_SYSTEM_CHECKS = []
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
 
@@ -291,6 +293,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_cleaning',
     'corehq.apps.data_pipeline_audit',
+    'corehq.apps.document_templates',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
@@ -1241,7 +1244,7 @@ OCS_OAUTH_CLIENT_SECRET = None
 # AITranslationConfig row overrides them. Override in localsettings.py.
 AI_TRANSLATION_DEFAULTS = {
     'provider': 'openai',
-    'model': 'gpt-4.1',
+    # 'model' defaults to the provider's default model
     'monthly_word_limit': 1_000_000,
 }
 
@@ -1284,6 +1287,8 @@ AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 COMMCARE_EXTENSIONS.extend(DEFAULT_COMMCARE_EXTENSIONS)
+
+SILENCED_SYSTEM_CHECKS.extend(LOCAL_SILENCED_SYSTEM_CHECKS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -2107,10 +2112,10 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 
-    'epic-integration-test': 'custom.mgh_epic',
-    'sudcare-dev': 'custom.mgh_epic',
     # Temporarily disabled SUDCare integration (paused 2025-06-13)
-    #'sudcare': 'custom.mgh_epic',
+    # 'epic-integration-test': 'custom.mgh_epic',
+    # 'sudcare-dev': 'custom.mgh_epic',
+    # 'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)

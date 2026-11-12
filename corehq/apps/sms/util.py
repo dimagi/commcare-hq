@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
 from django.db.transaction import atomic
 from django.utils.translation import gettext as _
 
@@ -17,6 +18,7 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_block_from_template
+from corehq.apps.sms.const import SELF_ENABLE_PAYMENT_THRESHOLD
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -356,3 +358,35 @@ def domain_can_send_sms(domain):
         domain_has_privilege(domain, privileges.OUTBOUND_SMS)
         and is_granted_messaging_access(Domain.get_by_name(domain))
     )
+
+
+def can_self_enable_messaging(domain, user):
+    from corehq.apps.accounting.models import BillingAccount
+    account = BillingAccount.get_account_by_domain(domain)
+    if account.auto_pay_enabled:
+        return True
+
+    return _account_paid_at_threshold(account) or _user_has_saved_card(user)
+
+
+def _account_paid_at_threshold(account):
+    from corehq.apps.accounting.models import (
+        CreditAdjustment,
+        CreditAdjustmentReason,
+    )
+    total = CreditAdjustment.objects.filter(
+        credit_line__account=account,
+        amount__gt=0,
+    ).exclude(
+        # transfers duplicate credit already counted on the source line
+        reason=CreditAdjustmentReason.TRANSFER,
+    ).aggregate(Sum('amount', default=0))['amount__sum']
+    return (total or 0) >= SELF_ENABLE_PAYMENT_THRESHOLD
+
+
+def _user_has_saved_card(user):
+    from corehq.apps.accounting.models import StripePaymentMethod
+    payment_method = StripePaymentMethod.objects.filter(
+        web_user=user.username
+    ).first()
+    return bool(payment_method and payment_method.all_cards)

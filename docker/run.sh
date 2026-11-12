@@ -188,8 +188,8 @@ function _run_tests {
     esac
 
     function _test_python {
-        ./manage.py create_kafka_topics
-        if [ -n "$CI" ]; then
+        CCHQ_TESTING=1 ./manage.py create_kafka_topics
+        if [ "$COVERAGE" == "yes" ]; then
             logmsg INFO "coverage run $(which pytest) ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
             coverage run $(which pytest) "${py_test_args[@]}"

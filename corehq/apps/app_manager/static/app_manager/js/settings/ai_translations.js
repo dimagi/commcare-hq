@@ -9,6 +9,8 @@ import initialPageData from "hqwebapp/js/initial_page_data";
 
 const POLL_INTERVAL = 3000;
 const MAX_POLL_INTERVAL = 60000;
+// failed labels shown for each reason until "Show all"
+const FAILED_LABELS_SHOWN = 10;
 // the states of AITranslationStatus; the active ones come from the page
 const STATE = Object.freeze({
     QUEUED: "queued",
@@ -115,12 +117,101 @@ var languageModel = function (options, panel) {
     self.savedRun = ko.observable(options.last_run);
     self.starting = ko.observable(false);
     self.startError = ko.observable("");
+    var failedLabelsRun;  // when the run the failed-label list is for finished
 
     self.status.subscribe(function (status) {
         if (status.state === STATE.DONE && status.translated) {
             self.savedRun(savedRunFromStatus(status, options.last_run));
         }
+        // polls repeat a run's status; only another run's replaces the list
+        if (status.finished_on !== failedLabelsRun) {
+            failedLabelsRun = status.finished_on;
+            self.failedLabels(null);
+            self.failedLabelsExpired(false);
+            self.failedLabelsError(false);
+            self.showFailedLabels(false);
+            self.showAllFailedLabels(false);
+        }
     });
+
+    // the labels the finished run couldn't translate, fetched when asked
+    // for. A run that failed outright can have them too, e.g. when every
+    // batch failed; queued and running statuses never have a count.
+    self.failedLabelCount = ko.computed(function () {
+        return self.status().failed_label_count || 0;
+    });
+    self.failedLabels = ko.observable(null);  // null until fetched
+    self.failedLabelsExpired = ko.observable(false);
+    self.failedLabelsError = ko.observable(false);
+    self.loadingFailedLabels = ko.observable(false);
+    self.showFailedLabels = ko.observable(false);
+    self.showAllFailedLabels = ko.observable(false);
+    // for the toggle's aria-controls
+    self.failedLabelsId = "ai-translation-failed-labels-" + self.code;
+    self.failedLabelGroups = ko.computed(function () {
+        return groupByReason(self.failedLabels() || [], self.showAllFailedLabels());
+    });
+    self.failedLabelsLine = ko.computed(function () {
+        return interpolate(ngettext(
+            "%(count)s label couldn't be translated",
+            "%(count)s labels couldn't be translated",
+            self.failedLabelCount()), {count: _number(self.failedLabelCount())}, true);
+    });
+    // the saved list stops at a limit; the count is every label that failed
+    self.failedLabelsCutLine = ko.computed(function () {
+        var shown = (self.failedLabels() || []).length;
+        if (!shown || shown >= self.failedLabelCount()) {
+            return "";
+        }
+        return interpolate(gettext("Showing the first %(shown)s of %(count)s labels."), {
+            shown: _number(shown),
+            count: _number(self.failedLabelCount()),
+        }, true);
+    });
+    self.anyFailedLabelsHidden = ko.computed(function () {
+        return self.failedLabelGroups().some(function (group) { return group.hidden; });
+    });
+
+    self.toggleFailedLabels = function () {
+        self.showFailedLabels(!self.showFailedLabels());
+        if (self.showFailedLabels() && !self.failedLabels() && !self.loadingFailedLabels()) {
+            fetchFailedLabels();
+        }
+    };
+
+    self.showAllLabels = function () {
+        self.showAllFailedLabels(true);
+    };
+
+    var fetchFailedLabels = function () {
+        var run = failedLabelsRun;
+        self.loadingFailedLabels(true);
+        self.failedLabelsError(false);
+        self.failedLabelsExpired(false);
+        $.get(initialPageData.reverse("ai_translation_failed_labels"), {lang: self.code})
+            .done(function (data) {
+                // a newer run finished meanwhile; its list replaces this one
+                if (run !== failedLabelsRun) {
+                    return;
+                }
+                self.failedLabelsExpired(data.labels === null);
+                self.failedLabels(data.labels || []);
+            })
+            .fail(function () {
+                if (run !== failedLabelsRun) {
+                    return;
+                }
+                self.failedLabelsError(true);
+                self.showFailedLabels(false);
+            })
+            .always(function () {
+                self.loadingFailedLabels(false);
+                // the newer run's list was asked for while this one loaded
+                if (run !== failedLabelsRun && self.showFailedLabels() && !self.failedLabels()) {
+                    fetchFailedLabels();
+                }
+            });
+    };
 
     self.isActive = ko.computed(function () {
         return panel.activeStates.includes(self.status().state);
@@ -183,11 +274,37 @@ var savedRunFromStatus = function (status, pageLoadRun) {
 };
 
 /**
+ * Failed labels grouped by why they failed, in the order each reason
+ * first appears. Until ``showAll``, each group shows its first few.
+ */
+var groupByReason = function (labels, showAll) {
+    var groups = [];
+    var byReason = {};
+    labels.forEach(function (label) {
+        if (!(label.reason in byReason)) {
+            byReason[label.reason] = {reason: label.reason, labels: []};
+            groups.push(byReason[label.reason]);
+        }
+        byReason[label.reason].labels.push(label);
+    });
+    return groups.map(function (group) {
+        var hidden = showAll ? 0 : Math.max(group.labels.length - FAILED_LABELS_SHOWN, 0);
+        return {
+            reason: group.reason,
+            count: _number(group.labels.length),
+            labels: showAll ? group.labels : group.labels.slice(0, FAILED_LABELS_SHOWN),
+            hidden: hidden,
+            hiddenLine: interpolate(gettext("and %(count)s more"), {count: _number(hidden)}, true),
+        };
+    });
+};
+
+/**
  * The status label and detail lines for one language.
  */
 var statusDisplay = function (supported, status, lastRun) {
     var display = {
-        label: "", labelClass: "text-bg-secondary", detail: "", warning: "", progress: null, share: "", partial: false,
+        label: "", labelClass: "text-bg-secondary", detail: "", progress: null, share: "", partial: false,
     };
     if (!supported) {
         display.label = gettext("Not yet supported");
@@ -226,8 +343,6 @@ var statusDisplay = function (supported, status, lastRun) {
 };
 
 var _finishedRunDisplay = function (display, status) {
-    // a finished run's message is a warning, e.g. many strings skipped
-    display.warning = status.message || "";
     if (!status.total) {
         display.label = gettext("Nothing to translate");
         display.labelClass = "text-bg-success";
@@ -248,17 +363,12 @@ var _finishedRunDisplay = function (display, status) {
             total: _number(status.total),
             percent: _percent(status.translated, status.total),
         }, true)];
-        if (status.skipped) {
-            parts.push(interpolate(gettext("%(count)s skipped"), {count: _number(status.skipped)}, true));
-        }
-        if (status.failed) {
-            parts.push(interpolate(gettext("%(count)s failed"), {count: _number(status.failed)}, true));
-        }
+        // labels that were skipped or failed are listed under the status
         if (status.changed) {
             parts.push(interpolate(gettext("%(count)s changed during the run"), {count: _number(status.changed)}, true));
         }
-        display.detail = parts.join(" · ") + ". "
-            + gettext("Run AI Translate again to retry the labels that weren't translated.");
+        // how to translate the rest is in the template, under the status
+        display.detail = parts.join(" · ");
     }
 };
 

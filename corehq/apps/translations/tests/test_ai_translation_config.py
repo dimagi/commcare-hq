@@ -6,6 +6,7 @@ from time_machine import travel
 from corehq.apps.translations.app_translations.ai_translator import (
     monthly_word_limit_reached,
 )
+from corehq.apps.translations.integrations.llm import DEFAULT_MODEL
 from corehq.apps.translations.models import (
     AITranslationConfig,
     AITranslationUsage,
@@ -49,6 +50,14 @@ class TestGetModelConfig(TestCase):
             'provider': 'openai',
             'model': 'gpt-4.1',
         }
+
+    def test_settings_without_model_use_provider_default(self):
+        defaults = {key: value for key, value in DEFAULTS.items() if key != 'model'}
+        with override_settings(AI_TRANSLATION_DEFAULTS=defaults):
+            assert AITranslationConfig.get_model_config('d', 'fra') == {
+                'provider': 'openai',
+                'model': DEFAULT_MODEL,
+            }
 
     def test_domain_row_overrides_defaults(self):
         AITranslationConfig.objects.create(domain='d', provider='anthropic', model='claude')

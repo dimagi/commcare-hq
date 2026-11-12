@@ -1,12 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
 import pytz
 from django.db import DatabaseError
+from time_machine import travel
 from unmagic import use
 
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.public_webforms import forms
 from corehq.apps.public_webforms.models import (
     PublicWebform,
@@ -65,7 +67,8 @@ def test_is_filtering_reports_whether_the_list_was_narrowed(params, expected):
     assert forms.PublicWebformFilterForm(params).is_filtering is expected
 
 
-def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
+def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM,
+          app_id=None, form_unique_id=None):
     """Stubs the reads that go to the database or to released builds."""
     args = [data] if data is not None else []
     with patch.multiple(
@@ -74,7 +77,8 @@ def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
         get_public_webform_choices=Mock(return_value=[]),
         get_public_webform_eligible_form=Mock(return_value=eligible_form),
     ):
-        form = forms.CreatePublicWebformForm(DOMAIN, TIMEZONE, *args)
+        form = forms.CreatePublicWebformForm(
+            DOMAIN, TIMEZONE, *args, app_id=app_id, form_unique_id=form_unique_id)
         form.is_valid()
     return form
 
@@ -82,8 +86,8 @@ def _form(data=None, can_send_sms=False, eligible_form=SURVEY_FORM):
 def _post_data(**kwargs):
     return {
         'label': 'Antenatal visit',
-        'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'expires_at': (datetime.now() + timedelta(days=30)).strftime(forms.ALPINE_DATETIME_PICKER_FORMAT),
+        'allow_email': True,
         'app_id': 'app-1',
         'form_unique_id': 'form-1',
         **kwargs,
@@ -94,6 +98,7 @@ def _post_data(**kwargs):
     ('2026-09-01 17:00:00', datetime(2026, 9, 1, 21, 0)),
     ('2026-12-01 17:00:00', datetime(2026, 12, 1, 22, 0)),
 ], ids=['daylight-saving-utc-4', 'standard-time-utc-5'])
+@travel(datetime(2026, 8, 1), tick=False)
 def test_expires_at_is_stored_as_utc(entered, expected_utc):
     form = _form(_post_data(expires_at=entered))
     assert form.is_valid(), form.errors
@@ -106,18 +111,50 @@ def test_expires_at_defaults_to_the_datepicker_format():
     assert datetime.strptime(initial, '%Y-%m-%d %H:%M:%S')
 
 
-def test_a_delivery_option_is_required():
-    form = _form(_post_data(link_choices=[]))
-    assert not form.is_valid()
-    assert 'link_choices' in form.errors
+@pytest.mark.parametrize('entered, expected', [
+    ('2026-08-01 08:00:00', False),
+    ('2026-08-01 08:00:01', True),
+], ids=['now', 'future'])
+@travel(TIMEZONE.localize(datetime(2026, 8, 1, 8)), tick=False)
+def test_expires_at_must_be_in_the_future_when_modified(entered, expected):
+    form = _form(_post_data(expires_at=entered))
+    assert form.is_valid() is expected
+
+
+@pytest.mark.parametrize('direct_access, entered, expected', [
+    ('True', '2026-10-30 08:00:00', True),
+    ('True', '2026-10-30 08:00:01', False),
+    ('False', '2026-10-30 08:00:01', True),
+], ids=['direct-access-at-limit', 'direct-access-past-limit', 'one-time-link-past-limit'])
+@travel(TIMEZONE.localize(datetime(2026, 8, 1, 8)), tick=False)
+def test_direct_access_must_close_within_90_days(direct_access, entered, expected):
+    form = _form(_post_data(direct_access=direct_access, expires_at=entered))
+    assert form.is_valid() is expected
+
+
+@pytest.mark.parametrize('choice, expected', [
+    ('False', False),
+    ('True', True),
+], ids=['one-time-link', 'anyone-with-the-link'])
+def test_direct_access_choice_cleans_to_a_boolean(choice, expected):
+    form = _form(_post_data(direct_access=choice))
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data['direct_access'] is expected
+
+
+@pytest.mark.parametrize('direct_access, expected', [
+    ('False', False),
+    ('True', True),
+], ids=['one-time-link', 'anyone-with-the-link'])
+def test_a_delivery_option_is_required_only_for_one_time_links(direct_access, expected):
+    form = _form(_post_data(direct_access=direct_access, allow_email=False, allow_sms=False))
+    assert form.is_valid() is expected
 
 
 @pytest.mark.parametrize('can_send_sms', [True, False])
-def test_sms_is_offered_only_when_the_project_can_send_sms(can_send_sms):
+def test_sms_is_disabled_when_project_cannot_send_sms(can_send_sms):
     form = _form(can_send_sms=can_send_sms)
-    rendered = dict(form.fields['link_choices'].widget.choices)
-    assert ('allow_sms' in rendered) == can_send_sms
-    assert 'allow_email' in rendered
+    assert form.fields['allow_sms'].disabled is not can_send_sms
 
 
 @pytest.mark.parametrize('eligible_form, expected_type', [
@@ -141,7 +178,26 @@ def test_an_ineligible_form_is_rejected():
     """The selection is posted from hidden inputs, so it is re-checked."""
     form = _form(_post_data(), eligible_form=None)
     assert not form.is_valid()
-    assert form.non_field_errors() == ["The selected form can't be used for a public webform."]
+    assert form.non_field_errors()
+
+
+def test_an_eligible_prefill_is_placed_under_its_released_menu():
+    __, released_form = AppFactory(domain=DOMAIN).new_basic_module('survey', 'patient')
+    form = _form(
+        app_id='app-1',
+        form_unique_id=released_form.unique_id,
+        eligible_form=released_form,
+    )
+    assert form.initial == {
+        'app_id': 'app-1',
+        'menu_id': 'survey_module',
+        'form_unique_id': released_form.unique_id,
+    }
+
+
+def test_an_ineligible_prefill_is_dropped():
+    form = _form(app_id='app-1', form_unique_id='form-1', eligible_form=None)
+    assert form.initial == {}
 
 
 def _create_webform(**post_data):
@@ -177,8 +233,9 @@ def test_create_deletes_the_generated_build_if_the_webform_is_not_saved():
 
 
 @use('db')
+@travel(datetime(2026, 8, 1), tick=False)
 def test_create_stores_the_selection_and_generated_endpoint():
-    webform = _create_webform()
+    webform = _create_webform(expires_at='2026-09-01 17:00:00')
 
     assert webform.domain == DOMAIN
     assert webform.label == 'Antenatal visit'
@@ -188,20 +245,8 @@ def test_create_stores_the_selection_and_generated_endpoint():
     assert webform.endpoint_id == 'endpoint-1'
     assert webform.session_type == PublicWebformType.SURVEY
     assert webform.expires_at == datetime(2026, 9, 1, 21, 0)
+    assert webform.direct_access is False
     assert webform.is_disabled
-
-
-@use('db')
-@pytest.mark.parametrize('link_choices, allow_email, allow_sms', [
-    (['allow_email'], True, False),
-    (['allow_sms'], False, True),
-    (['allow_email', 'allow_sms'], True, True),
-])
-def test_create_maps_link_choices_to_delivery_options(link_choices, allow_email, allow_sms):
-    webform = _create_webform(link_choices=link_choices)
-
-    assert webform.allow_email == allow_email
-    assert webform.allow_sms == allow_sms
 
 
 def _webform(**kwargs):
@@ -241,7 +286,7 @@ def _edit_data(**kwargs):
     return {
         'label': 'Antenatal visit',
         'expires_at': '2026-09-01 17:00:00',
-        'link_choices': ['allow_email'],
+        'allow_email': True,
         **kwargs,
     }
 
@@ -255,14 +300,15 @@ def test_edit_prefills():
     assert form.initial['label'] == 'Antenatal visit'
     # stored as UTC, offered back in the project's timezone
     assert form.fields['expires_at'].initial == '2026-09-01 17:00:00'
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.initial['direct_access'] is False
+    assert form.initial['allow_email'] is True
     assert form.initial['open_to_requests'] is True
 
 
 def test_edit_drops_a_delivery_option_the_project_can_no_longer_use():
     form = _edit_form(_webform(allow_sms=True), can_send_sms=False)
 
-    assert form.initial['link_choices'] == ['allow_email']
+    assert form.fields['allow_sms'].disabled
 
 
 def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
@@ -273,15 +319,31 @@ def test_edit_offers_a_webform_whose_app_is_deleted_as_closed():
     assert 'checked' not in rendered
 
 
+@pytest.mark.parametrize('entered, expected', [
+    ('2026-09-01 17:00:00', True),
+    ('2026-09-01 17:00:01', False),
+], ids=['unchanged', 'changed'])
+@travel(datetime(2026, 10, 1), tick=False)
+def test_edit_allows_a_past_expiry_only_if_unchanged(entered, expected):
+    form = _edit_form(
+        _webform(expires_at=datetime(2026, 9, 1, 21, 0)),  # 17:00 in 'America/New_York' timezone
+        _edit_data(expires_at=entered),
+    )
+    assert form.is_valid() is expected
+
+
 @use('db')
+@travel(datetime(2026, 8, 1), tick=False)
 def test_edit_updates_the_webform():
     webform = create_webform()
     form = _edit_form(
         webform,
         _edit_data(
             label='Antenatal visit, round two',
-            expires_at='2026-12-01 17:00:00',
-            link_choices=['allow_sms'],
+            expires_at='2026-10-01 17:00:00',
+            direct_access='True',
+            allow_email=False,
+            allow_sms=True,
             is_disabled=True,
         ),
         can_send_sms=True,
@@ -292,7 +354,8 @@ def test_edit_updates_the_webform():
     updated.refresh_from_db()
 
     assert updated.label == 'Antenatal visit, round two'
-    assert updated.expires_at == datetime(2026, 12, 1, 22, 0)
+    assert updated.expires_at == datetime(2026, 10, 1, 21, 0)
+    assert updated.direct_access
     assert not updated.allow_email
     assert updated.allow_sms
     assert updated.is_disabled

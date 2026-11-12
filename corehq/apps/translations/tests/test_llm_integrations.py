@@ -26,8 +26,8 @@ def test_language_name(code, name):
 def test_get_llm_translator_returns_openai():
     translator = get_llm_translator('hin', translation_format=None, api_key='sk-test')
     assert isinstance(translator, OpenaiTranslator)
-    assert translator.model == 'gpt-4.1'
-    assert translator.backup_model == 'gpt-4o'
+    assert translator.model == 'gpt-6-luna'
+    assert translator.backup_model == 'gpt-5.6-luna'
 
 
 @override_settings(AI_TRANSLATION_API_KEYS={'openai': 'sk-from-settings'})

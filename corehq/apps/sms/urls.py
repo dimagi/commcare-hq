@@ -25,6 +25,7 @@ from corehq.apps.sms.views import (
     default,
     download_sms_translations,
     edit_sms_languages,
+    enable_messaging,
     send_to_recipients,
     upload_sms_translations,
 )
@@ -34,6 +35,7 @@ from corehq.messaging.smsbackends.telerivet.urls import \
 
 urlpatterns = [
     url(r'^$', default, name='sms_default'),
+    url(r'^enable_messaging/$', enable_messaging, name='enable_messaging'),
     url(r'^send_to_recipients/$', send_to_recipients, name='send_to_recipients'),
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
     url(r'^message_test/$', TestSMSMessageView.as_view(), name=TestSMSMessageView.urlname),

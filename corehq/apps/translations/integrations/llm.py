@@ -17,6 +17,9 @@ import requests
 
 from langcodes import get_name as _langcodes_get_name
 
+DEFAULT_MODEL = 'gpt-6-luna'
+BACKUP_MODEL = 'gpt-5.6-luna'
+
 
 class LLMTranslatorError(Exception):
     pass
@@ -112,9 +115,6 @@ class LLMTranslator(abc.ABC):
             this model will be used, optional, default is ''
         """
         self.api_key = api_key
-        if model not in self.supported_models:
-            raise LLMTranslatorError(
-                f"Model {model} is not supported by {self.__class__.__name__}.")
         self.model = model
         self.lang = lang
         self.backup_model = backup_model
@@ -133,10 +133,6 @@ class LLMTranslator(abc.ABC):
 
     def output_format_prompt(self):
         return f"Output format: {self.translation_format.format_output_description()}"
-
-    @abc.abstractmethod
-    def supported_models(self):
-        return []
 
     def translate(self, input_data):
         system_prompt = "\n".join([
@@ -190,11 +186,20 @@ class TranslationFormat(abc.ABC):
         pass
 
 
-class OpenaiTranslator(LLMTranslator):
-    @property
-    def supported_models(self):
-        return ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-4.1"]
+# These reject a non-default temperature unless reasoning is off.
+# Reasoning gave no measurable translation quality gain for the extra
+# cost and latency.
+REASONING_MODELS = ("gpt-5.6-luna", "gpt-6-luna")
 
+
+def openai_model_params(model):
+    params = {"temperature": 0.2}
+    if model in REASONING_MODELS:
+        params["reasoning_effort"] = "none"
+    return params
+
+
+class OpenaiTranslator(LLMTranslator):
     def __init__(self, api_key, model, lang, translation_format, backup_model=''):
         super().__init__(api_key, model, lang, translation_format, backup_model=backup_model)
         try:
@@ -246,8 +251,8 @@ class OpenaiTranslator(LLMTranslator):
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
                     ],
-                    temperature=0.2,
                     response_format=response_format,
+                    **openai_model_params(model),
                 )
 
             try:
@@ -274,7 +279,7 @@ class OpenaiTranslator(LLMTranslator):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
                 ],
-                "temperature": 0.2,
+                **openai_model_params(self.model),
             }
 
             def post(response_format):
@@ -335,7 +340,7 @@ def translate_string(text, target_lang, provider='openai', model=None):
 PROVIDERS = {
     'openai': ProviderSpec(
         translator_class=OpenaiTranslator,
-        default_model='gpt-4.1',
-        backup_model='gpt-4o',
+        default_model=DEFAULT_MODEL,
+        backup_model=BACKUP_MODEL,
     ),
 }

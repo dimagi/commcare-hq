@@ -23,6 +23,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
@@ -46,6 +47,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_plaintext_response,
     requires_privilege_with_fallback,
 )
+from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.utils import fmt_dollar_amount
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -69,6 +72,7 @@ from corehq.apps.sms.api import (
     send_message_to_verified_number,
     send_sms_with_backend_name,
 )
+from corehq.apps.sms.const import SELF_ENABLE_PAYMENT_THRESHOLD
 from corehq.apps.sms.forms import (
     CUSTOM,
     DEFAULT,
@@ -105,6 +109,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.phonenumbers_helper import country_name_for_country_code
 from corehq.apps.sms.util import (
     ContactNotFoundException,
+    can_self_enable_messaging,
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
@@ -155,16 +160,49 @@ class BaseMessagingSectionView(BaseDomainView):
     def is_system_admin(self):
         return is_superuser_or_contractor(self.request.couch_user)
 
+    @property
+    def enable_messaging_context(self):
+        if not self.request.couch_user.can_edit_billing():
+            return {}
+
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        return {
+            'can_self_enable_messaging': can_self_enable_messaging(self.domain, self.request.couch_user),
+            'domain_name': self.domain_object.hr_name or self.domain,
+            'billing_account': subscription.account.name,
+            'billing_contacts': subscription.account.billingcontactinfo.email_list,
+            'public_webforms_enabled': (
+                has_privilege(self.request, privileges.PUBLIC_WEBFORMS)
+                and toggles.PUBLIC_WEBFORMS.enabled(self.domain, namespace=toggles.NAMESPACE_DOMAIN)
+            ),
+            'self_enable_payment_threshold': fmt_dollar_amount(SELF_ENABLE_PAYMENT_THRESHOLD),
+        }
+
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not is_granted_messaging_access(self.domain_object):
-            return render(request, "sms/wall.html", self.main_context)
+            return render(request, "sms/wall.html", self.main_context | self.enable_messaging_context)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
     @property
     def section_url(self):
         return reverse("sms_default", args=[self.domain])
+
+
+@login_and_domain_required
+@require_permission(HqPermissions.edit_billing)
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@require_POST
+def enable_messaging(request, domain):
+    if can_self_enable_messaging(domain, request.couch_user):
+        domain_obj = Domain.get_by_name(domain)
+        domain_obj.granted_messaging_access = True
+        domain_obj.save()
+        messages.success(request, _("Messaging enabled successfully."))
+    else:
+        messages.error(request, _("Messaging cannot be enabled right now."))
+    return default(request, domain)
 
 
 class ComposeMessageView(BaseMessagingSectionView):

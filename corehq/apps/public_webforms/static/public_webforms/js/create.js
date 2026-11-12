@@ -8,9 +8,9 @@ import 'hqwebapp/js/alpinejs/directives/select2';
 document.addEventListener('alpine:init', () => {
     Alpine.data('formChoices', (initial) => ({
         apps: initial.apps,
-        appId: '',
-        menuId: '',
-        formId: '',
+        appId: initial.appId,
+        menuId: initial.menuId,
+        formId: initial.formId,
         get menus() {
             const app = this.apps.find((app) => app.id === this.appId);
             return app ? app.menus : [];

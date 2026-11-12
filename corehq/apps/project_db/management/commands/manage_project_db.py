@@ -1,17 +1,20 @@
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 import dateutil.parser
 
 from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.project_db.describe import describe_project_db
-from corehq.apps.project_db.populate import populate_case_type
+from corehq.apps.project_db.populate import (
+    backfill_typed_columns,
+    populate_case_type,
+)
 from corehq.apps.project_db.table_ddl import (
     DomainSchema,
     create_or_update_project_db,
+    get_coercion_fn,
+    get_domain_tables,
     get_project_db_engine,
     preview_drop,
-    setup_project_db,
 )
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseReindexAccessor,
@@ -49,25 +52,30 @@ class Command(BaseCommand):
             ),
         )
         parser.add_argument(
+            '--backfill',
+            action='store_true',
+            help="Recalculate every typed column from its raw property column.",
+        )
+        parser.add_argument(
             '--describe',
             action='store_true',
             help="Describe the tables in the domain's ProjectDB",
         )
 
-    def handle(self, domain, sync, drop, populate, since, describe, **options):
+    def handle(self, domain, sync, drop, populate, since, backfill, describe, **options):
         if since and not populate:
             raise CommandError("--since is only used in conjunction with --populate.")
 
         if drop:
             _drop(domain, self.stdout)
         if sync:
-            if settings.DEBUG:
-                setup_project_db()
             create_or_update_project_db(domain)
             self.stdout.write("Synced ProjectDB table definition")
         if populate:
             _populate(domain, since)
             self.stdout.write("Populated ProjectDB")
+        if backfill:
+            _backfill(domain, self.stdout)
         if describe:
             self.stdout.write(describe_project_db(domain))
 
@@ -90,6 +98,14 @@ def _drop(domain, stdout):
         stdout.write("Dropped ProjectDB schema")
     else:
         stdout.write("Aborted; nothing was dropped")
+
+
+def _backfill(domain, stdout):
+    for case_type, table in get_domain_tables(domain).items():
+        columns = [col for col in table.c if get_coercion_fn(col)]
+        if columns:
+            stdout.write(f"Backfilling {len(columns)} typed columns of {case_type}")
+            backfill_typed_columns(table, columns)
 
 
 def _populate(domain, start_date):

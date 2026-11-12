@@ -13,6 +13,8 @@ import gevent
 import polib
 
 from corehq.apps.translations.integrations.llm import (
+    BACKUP_MODEL,
+    DEFAULT_MODEL,
     OpenaiTranslator,
     TranslationFormat,
 )
@@ -525,8 +527,8 @@ class Command(BaseCommand):
         parser.add_argument(
             '--model',
             type=str,
-            default='gpt-4.1',
-            help='LLM model to use for translation (e.g., gpt-4o-mini, gpt-4o, gpt-4.1)'
+            default=DEFAULT_MODEL,
+            help=f'LLM model to use for translation (default: {DEFAULT_MODEL})'
         )
         parser.add_argument(
             '--langs',
@@ -605,7 +607,7 @@ class Command(BaseCommand):
             model=model,
             lang=lang,
             translation_format=translation_format,
-            backup_model='gpt-4o'  # Hard coded right now, but can be made dynamic if needed
+            backup_model=BACKUP_MODEL,
         )
         untranslated = translation_format.load_input()
         if self.check_and_remove_errors:

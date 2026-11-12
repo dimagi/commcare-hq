@@ -8,6 +8,7 @@ from corehq.apps.users.models import WebUser
 from corehq.util.test_utils import flag_disabled, flag_enabled
 from urls import urlpatterns as base_urlpatterns
 
+from ..middleware import is_valid_ip
 from ..models import IPAccessConfig
 
 
@@ -142,3 +143,35 @@ class TestIPAccessMiddleware(TestCase):
         res = self.client.get(f'/a/{self.domain}/')
         self.assertEqual(res.status_code, 403)
         self.assertEqual(is_allowed.call_count, 2)
+
+
+@patch('corehq.apps.ip_access.models.IPAccessConfig.is_allowed')
+class TestIsValidIP(TestCase):
+    """``is_valid_ip`` is shared with the session details endpoint, which has a
+    session but no request, so it is exercised here with a bare session."""
+    domain = 'test-is-valid-ip'
+    ip = '203.0.113.7'
+
+    @classmethod
+    def setUpTestData(cls):
+        IPAccessConfig.objects.create(domain=cls.domain)
+
+    def test_allowed_ip_is_remembered(self, is_allowed):
+        is_allowed.return_value = True
+        session = {}
+        assert is_valid_ip(session, self.ip, self.domain)
+        assert session[f'hq_session_ips-{self.domain}'] == [self.ip]
+        assert is_valid_ip(session, self.ip, self.domain)
+        is_allowed.assert_called_once_with(self.ip)
+
+    def test_blocked_ip_is_remembered(self, is_allowed):
+        is_allowed.return_value = False
+        session = {}
+        assert not is_valid_ip(session, self.ip, self.domain)
+        assert session[f'hq_session_blocked_ips-{self.domain}'] == [self.ip]
+        assert not is_valid_ip(session, self.ip, self.domain)
+        is_allowed.assert_called_once_with(self.ip)
+
+    def test_domain_without_config_allows_any_ip(self, is_allowed):
+        assert is_valid_ip({}, self.ip, 'no-config-domain')
+        is_allowed.assert_not_called()
