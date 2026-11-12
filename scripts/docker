@@ -228,6 +228,7 @@ fi
 # export variables for compose file (they must be set or it complains)
 export CI="$CI"
 export CODECOV_TOKEN="$CODECOV_TOKEN"
+export COVERAGE="$COVERAGE"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"

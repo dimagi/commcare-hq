@@ -33,6 +33,9 @@ jobs:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       REUSE_DB: true  # do not drop databases on completion to save time
+      # Coverage tracing slows tests, and the Codecov check is informational
+      # only, so collect coverage on scheduled and manual runs, not PRs.
+      COVERAGE: ${{ github.event_name != 'pull_request' && 'yes' || 'no' }}
     steps:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
@@ -78,7 +81,7 @@ jobs:
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      if: env.TOKEN != ''
+      if: env.TOKEN != '' && env.COVERAGE == 'yes'
       uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4.6.0
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
