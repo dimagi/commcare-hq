@@ -1,4 +1,5 @@
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.test import RequestFactory, TestCase
@@ -68,6 +69,12 @@ class TestDeleteDocumentTemplateView(TestCase):
         _post(DeleteDocumentTemplateView, template.pk)
         assert list(Template.objects.filter(deleted=False)) == [other]
 
+    def test_linked_template_can_be_deleted(self):
+        template = Template.objects.create(domain=DOMAIN, name='Linked', slug='linked', areas={}, upstream_id=1)
+        _post(DeleteDocumentTemplateView, template.pk)
+        template.refresh_from_db()
+        assert template.deleted
+
     def test_cannot_delete_a_template_of_another_domain(self):
         template = Template.objects.create(domain=OTHER_DOMAIN, name='Theirs', slug='theirs', areas={})
         with self.assertRaises(Http404):
@@ -109,6 +116,13 @@ class TestEditDocumentTemplateView(TestCase):
         # jsonb does not keep key order
         assert set(template.areas) == set(get_area_names())
         assert template.areas['header'].value == ''
+
+    def test_cannot_edit_a_linked_template(self):
+        template = Template.objects.create(domain=DOMAIN, name='Linked', slug='linked', areas={}, upstream_id=1)
+        with self.assertRaises(PermissionDenied):
+            _post(EditDocumentTemplateView, template.pk, self._data())
+        template.refresh_from_db()
+        assert template.name == 'Linked'
 
     def test_cannot_edit_a_template_of_another_domain(self):
         template = Template.objects.create(domain=OTHER_DOMAIN, name='Theirs', slug='theirs', areas={})
