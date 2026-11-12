@@ -31,7 +31,6 @@ from unmagic import autouse, fixture, use
 
 from corehq.apps.project_db.table_ddl import Earth, get_project_db_engine
 from corehq.apps.project_db.user_sql import (
-    MAX_TREE_DEPTH,
     BadParameters,
     ExplainAnalyze,
     UnsupportedSQL,
@@ -64,6 +63,9 @@ JOIN_SQL = 'FROM client JOIN visit ON client.case_id = visit.parent_id'
 # An alias is what makes joining a table to itself possible
 VISIT_V, VISIT_P = VISIT.alias('v'), VISIT.alias('p')
 SELF_JOIN = VISIT_V.join(VISIT_P, VISIT_V.c.parent_id == VISIT_P.c.visit_id)
+
+CLIENT_CTE = select([CLIENT]).cte('c')
+CTE_A, CTE_B = CLIENT_CTE.alias('a'), CLIENT_CTE.alias('b')
 
 
 def _string_to_array(value, delimiter):
@@ -237,6 +239,12 @@ def _within_distance(coordinates, meters):
     ('SELECT name, count(*) AS n FROM client GROUP BY name ORDER BY n DESC',
      select([CLIENT.c.name, func.count().label('n')]).group_by(CLIENT.c.name)
      .order_by(nullsfirst(column('n').desc()))),
+    # An alias can also be grouped by, or made distinct on
+    ('SELECT name AS n, count(*) AS total FROM client GROUP BY n',
+     select([CLIENT.c.name.label('n'), func.count().label('total')]).group_by(column('n'))),
+    ('SELECT DISTINCT ON (n) name AS n FROM client',
+     select([CLIENT.c.name.label('n')]).distinct(column('n'))),
+    ('SELECT name AS name FROM client', select([CLIENT.c.name.label('name')])),
     # Ambiguous aliases are passed through for PostgreSQL to reject
     ('SELECT name AS x, case_id AS x FROM client ORDER BY x',
      select([CLIENT.c.name.label('x'), CLIENT.c.case_id.label('x')])
@@ -267,6 +275,8 @@ def _within_distance(coordinates, meters):
                                 CLIENT.c.case_id == _bind_literal('literal', 'c1')))),
     ("SELECT * FROM client WHERE NOT name = 'x'",
      select([CLIENT]).where(not_(CLIENT.c.name == _bind_literal('literal', 'x')))),
+    ('SELECT * FROM client WHERE name', select([CLIENT]).where(CLIENT.c.name)),
+    ('SELECT * FROM client WHERE NOT name', select([CLIENT]).where(not_(CLIENT.c.name))),
     ("SELECT * FROM client WHERE (name = 'x')",
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('literal', 'x'))),
     # Parentheses override the usual AND-before-OR precedence
@@ -285,6 +295,10 @@ def _within_distance(coordinates, meters):
      select([CLIENT]).where(CLIENT.c.name.in_([CLIENT.c.case_id]))),
     ("SELECT * FROM client WHERE name NOT IN ('x')",
      select([CLIENT]).where(not_(CLIENT.c.name.in_([_bind_literal('literal', 'x')])))),
+    # IN a subquery, which may read from the same table as the outer query
+    ('SELECT * FROM visit WHERE parent_id IN (SELECT visit_id FROM visit WHERE name = :n)',
+     select([VISIT]).where(VISIT.c.parent_id.in_(
+         select([VISIT.c.visit_id]).where(VISIT.c.name == bindparam('n'))))),
     ('SELECT * FROM client WHERE name = TRUE',
      select([CLIENT]).where(CLIENT.c.name == _bind_literal('bool', True))),
     ('SELECT * FROM client WHERE name IS NULL',
@@ -384,6 +398,19 @@ def _within_distance(coordinates, meters):
          CLIENT.c.name > func.now() - func.make_interval(
              literal_column('years').op('=>')(bindparam('y')),
              literal_column('mins').op('=>')(bindparam('m'))))),
+
+    # CTEs
+    ('WITH c AS (SELECT * FROM client) SELECT * FROM c',
+     select([CLIENT_CTE])),
+    # A CTE can build on an earlier one
+    ('WITH c AS (SELECT * FROM client), d AS (SELECT name FROM c) SELECT * FROM d',
+     select([select([CLIENT_CTE.c.name]).cte('d')])),
+    # The main query can be a UNION
+    ('WITH c AS (SELECT * FROM client) SELECT name FROM c UNION SELECT name FROM visit',
+     union(select([CLIENT_CTE.c.name]), select([VISIT.c.name]))),
+    # It can be joined like a table, including to itself under aliases
+    ('WITH c AS (SELECT * FROM client) SELECT a.name FROM c a JOIN c b ON a.case_id = b.case_id',
+     select([CTE_A.c.name]).select_from(CTE_A.join(CTE_B, CTE_A.c.case_id == CTE_B.c.case_id))),
 ])
 def test_valid_queries(sql, expected):
     assert _compiled(translate(sql, TABLES)) == _compiled(expected)
@@ -462,8 +489,8 @@ def _compiled(query):
     'SELECT * FROM client WHERE name IN tbl',         # IN takes a list or parameter
     'SELECT * FROM client WHERE name = :"a)s; DROP TABLE client; --"',
     'SELECT * FROM survey WHERE symptoms @> ARRAY[symptoms]', # Array literals only
-    'SELECT * FROM client WHERE name IN (SELECT name FROM client)',  # IN a subquery
-    'SELECT * FROM client WHERE name',            # not a comparison
+    # A subquery can't reference the outer query
+    'SELECT * FROM client WHERE case_id IN (SELECT parent_id FROM visit WHERE name = client.name)',
     "SELECT * FROM client WHERE LOWER(name) = 'x'",  # function call
     'SELECT * FROM client WHERE bogus(name)',        # unknown function call
 
@@ -491,6 +518,11 @@ def _compiled(query):
     "SELECT * FROM client WHERE fuzzy_match(name, 'a', 0.5)",
     "SELECT * FROM client WHERE similar_name(name)",
     "SELECT * FROM client WHERE similar_name(name, 'a', 'b')",
+
+    # Aliases can't be referenced in WHERE
+    'SELECT count(*) AS n FROM client WHERE n > 5',
+    # nor can they be used to reference the outer query
+    "SELECT * FROM client WHERE case_id IN (SELECT visit_id AS name FROM form WHERE name = 'x')",
 
     # Only columns and aliases can be ordered by
     "SELECT name FROM client ORDER BY string_to_array(name, ' ')",
@@ -522,6 +554,18 @@ def _compiled(query):
     'SELECT * FROM client WHERE name > now() - make_interval(days => 1.5)',
     'SELECT * FROM client WHERE name > now() - make_interval(days => case_id)',
     'SELECT * FROM client WHERE name > case_id - name',  # arithmetic is unsupported
+
+    # CTEs
+    'WITH client AS (SELECT * FROM visit) SELECT * FROM client',  # shadows a table
+    'WITH RECURSIVE c AS (SELECT * FROM client) SELECT * FROM c',
+    'WITH c AS MATERIALIZED (SELECT * FROM client) SELECT * FROM c',
+    'WITH c(a, b) AS (SELECT * FROM client) SELECT * FROM c',  # column aliases
+    'WITH d AS (SELECT * FROM c), c AS (SELECT * FROM client) SELECT * FROM d',  # forward ref
+    # Only the outermost query may have a WITH
+    'WITH c AS (WITH d AS (SELECT * FROM client) SELECT * FROM d) SELECT * FROM c',
+    # SQLAlchemy needs CTE aliases to be unique across the statement
+    'WITH c AS (SELECT * FROM client) SELECT * FROM c AS c',
+    'WITH c AS (SELECT * FROM client) SELECT a.name FROM c a UNION SELECT a.name FROM c a',
 
 ])
 def test_rejects_unsupported(sql):
@@ -620,6 +664,28 @@ def test_clean_parameters_rejects_unexpected_params():
         _user_sql('SELECT * FROM client')._clean_parameters({'stale': 'x'})
 
 
+@fixture
+def restore_trace_function():
+    """Ensure dropping the stack doesn't remove the trace function"""
+    trace = sys.gettrace()
+    try:
+        yield
+    finally:
+        if sys.gettrace() is not trace:
+            sys.settrace(trace)
+
+
+@restore_trace_function
+@pytest.mark.parametrize('sql', [
+    'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100,
+    'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000),
+    f'WITH c0 AS (SELECT * FROM client), {', '.join(
+        f'c{i} AS (SELECT * FROM c{i - 1})' for i in range(1, 1000)
+    )} SELECT * FROM c999',
+])
+def test_rejects_deep_nesting(sql):
+    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
+        translate(sql, TABLES)
 
 
 def test_handle_quoted_tables():
@@ -629,43 +695,18 @@ def test_handle_quoted_tables():
     assert str(result) == str(select([hyphenated_table]))
 
 
-@fixture
-def restore_trace_function():
-    """Put back a trace function that exhausting the stack has dropped
+def test_join_keeps_columns_whose_labels_collide():
+    # SQLAlchemy labels both of these columns `visit_date_prop__due`
+    visit = table('visit', column('date_prop__due'))
+    visit_date = table('visit_date', column('prop__due'))
+    tables = {'visit': visit, 'visit_date': visit_date}
+    join_sql = 'FROM visit JOIN visit_date ON visit.date_prop__due = visit_date.prop__due'
+    joined = visit.join(visit_date, visit.c.date_prop__due == visit_date.c.prop__due)
 
-    CPython disables tracing when the stack overflows while calling the trace
-    function, which makes coverage warn that its data is unreliable, failing
-    the whole test run at interpreter shutdown.
-    """
-    trace = sys.gettrace()
-    try:
-        yield
-    finally:
-        if sys.gettrace() is not trace:
-            sys.settrace(trace)
-
-
-@use(restore_trace_function)
-def test_rejects_nesting_that_exhausts_the_parser():
-    sql = 'SELECT * FROM client WHERE ' + '(' * 100 + 'name = 1' + ')' * 100
-    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
-        translate(sql, TABLES)
-
-
-def test_rejects_a_parse_tree_too_deep_to_convert():
-    # This parses fine: the nesting is in the tree, not in parentheses
-    sql = 'SELECT * FROM client WHERE ' + ' AND '.join(['name = 1'] * 1000)
-    with pytest.raises(UnsupportedSQL, match='nested too deeply'):
-        translate(sql, TABLES)
-
-
-def test_allows_nesting_up_to_the_limit():
-    # The deepest tree the limit allows must still be translatable, so that
-    # raising the limit past what the stack allows fails here rather than
-    # crashing the interpreter.
-    sql = ('SELECT * FROM client WHERE '
-           + ' AND '.join(['name = 1'] * (MAX_TREE_DEPTH - 5)))
-    assert translate(sql, TABLES) is not None
+    assert _compiled(translate(f'SELECT * {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due, visit_date.c.prop__due]).select_from(joined))
+    assert _compiled(translate(f'SELECT visit.date_prop__due {join_sql}', tables)) == _compiled(
+        select([visit.c.date_prop__due]).select_from(joined))
 
 
 to_gps = func.lib_projectdb.coerce_to_gps

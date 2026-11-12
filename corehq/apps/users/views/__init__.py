@@ -26,7 +26,7 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -75,6 +75,7 @@ from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
+    require_can_edit_commcare_users,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_permission_to_edit_user,
@@ -1007,11 +1008,9 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def invitation(self):
-        invitation_id = self.kwargs.get("invitation_id")
-        try:
-            return Invitation.objects.get(uuid=invitation_id)
-        except Invitation.DoesNotExist:
-            return None
+        if invitation_id := self.kwargs.get("invitation_id"):
+            return get_object_or_404(Invitation, uuid=invitation_id, domain=self.domain)
+        return None
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
@@ -1438,7 +1437,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 
 @always_allow_project_access
 @sensitive_post_parameters('new_password1', 'new_password2')
-@login_and_domain_required
+@require_can_edit_commcare_users
 @location_safe
 def change_password(request, domain, login_id):
     # copied from auth's password_change

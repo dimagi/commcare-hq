@@ -8,6 +8,9 @@ from corehq.apps.project_db.table_ddl import (
     get_project_db_engine,
 )
 
+# This text is for people who know SQL well - it describes the specifics of
+# this constrained environment, and should not have general guidance on writing
+# correct or performant SQL
 DESCRIPTION_TEMPLATE = """\
 This is the ProjectDB for {{ domain }}: relational, schema'd tables of the
 project's case data, generated automatically from the data dictionary.
@@ -28,46 +31,52 @@ Schema:
  * Datetime columns carry a timezone, and will be queried in the project timezone
 
 Supported SQL:
- * SELECT of *, or a list of columns, aggregates and any value allowed in a
-   WHERE condition, with optional AS aliases.
- * DISTINCT, and DISTINCT ON (columns).
- * A single table in the FROM clause, with an optional alias.
+ * SELECT of *, or a list of values and aggregates, with optional AS aliases.
+ * DISTINCT, and DISTINCT ON (columns or SELECT aliases).
+ * A single table or CTE in the FROM clause, with an optional alias.
  * JOIN (or INNER JOIN) and LEFT JOIN (or LEFT OUTER JOIN), with an ON
-   condition. A table can be joined to itself if each side is given a
-   different alias.
- * WHERE, combining conditions with AND, OR and NOT, and comparing columns and
-   literals with =, <>, <, <=, >, >=, IS NULL/TRUE/FALSE and IN.
- * Pattern matching with LIKE, and ILIKE to ignore case, where % matches any
-   text and _ any single character. Escape them with a backslash, as in '100\\%'.
- * Array containment against an ARRAY['a', 'b'] literal, for select_prop__
-   columns: @> holds all of these, <@ holds only these, && holds any of these.
- * string_to_array(value, '<delimiter>'), which splits text into an array to
-   compare against those columns. The delimiter must be a literal, so a
-   parameter holding 'fever cough' is written string_to_array(:symptoms, ' ').
- * within_distance(gps_prop__ column, '<latitude> <longitude>', distance, unit),
-   which matches cases within that distance of the point. The unit is optional
-   and defaults to 'meters'. It may be 'meters', 'kilometers', 'miles',
-   'yards', 'feet' or 'nauticalmiles', and must be a literal.
- * Name matching, comparing two values case-insensitively:
-   sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
-   fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
-   similar_name(a, b) matches if either does.
- * Dates and times, which resolve in the project's timezone. now() gives the
-   current time and today() the current date. A date or time written as a
-   literal is read in that same timezone, so '2026-01-01' means midnight there.
- * make_interval(days => 30), added to or subtracted from a date or time, as in
-   opened_on > now() - make_interval(months => 3). Its units are years, months,
-   weeks, days, hours, mins and secs, and a count may be a parameter or integer literal
- * GROUP BY columns, and HAVING to filter the groups with the same conditions
-   as WHERE.
+   condition.
+ * WHERE with a condition.
+ * GROUP BY columns or aliases, and HAVING.
  * Aggregates: count(*), count(value), sum, avg, min, max, array_agg(value)
-   and string_agg(value, '<delimiter>'). Each may aggregate only DISTINCT
-   values, as in count(DISTINCT value), and take a FILTER (WHERE condition)
-   to aggregate only the matching rows.
+   and string_agg(value, '<delimiter>'). Each may take DISTINCT and
+   FILTER (WHERE condition).
  * ORDER BY a column or a SELECT alias, with ASC/DESC and NULLS FIRST/LAST.
    To sort by an aggregate or other value, give it an alias and order by that.
  * UNION and UNION ALL of the above.
- * Named :parameters wherever a literal is allowed
+ * WITH CTEs, only at the top level of the query. A CTE the query never
+   references is dropped, along with any parameters in it.
+ * Values: columns, literals, and named :parameters wherever a literal is
+   allowed, plus:
+   - now() for the current time and today() for the current date. Dates and
+     times resolve in the project's timezone, and a date or time literal is
+     read in that same timezone, so '2026-01-01' means midnight there.
+   - make_interval(days => 30), added to or subtracted from a date or time,
+     as in opened_on > now() - make_interval(months => 3). Its units are
+     years, months, weeks, days, hours, mins and secs, and a count may be a
+     parameter or integer literal.
+   - string_to_array(value, '<delimiter>'), which splits text into an array
+     to compare against select_prop__ columns. The delimiter must be a
+     literal, so a parameter holding 'fever cough' is written
+     string_to_array(:symptoms, ' ').
+ * Conditions, combined with AND, OR, NOT and parentheses:
+   - Comparisons between values: =, <>, <, <=, >, >=
+   - IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE
+   - IN (a, b, ...) or IN :parameter
+   - IN (SELECT ...), where the subquery may not reference the outer query.
+   - LIKE and ILIKE, with % and _ pattern support.
+   - A boolean column on its own, as in WHERE NOT closed
+   - Array containment against an ARRAY['a', 'b'] literal, for select_prop__
+     columns: @> holds all of these, <@ holds only these, && holds any of
+     these.
+   - within_distance(gps_prop__ column, '<latitude> <longitude>', distance,
+     unit), which matches cases within that distance of the point. The unit
+     is optional and defaults to 'meters'. It may be 'meters', 'kilometers',
+     'miles', 'yards', 'feet' or 'nauticalmiles', and must be a literal.
+   - Name matching, comparing two values case-insensitively:
+     sounds_like(a, b) matches by pronunciation (Smith/Smyth, Brown/Braun),
+     fuzzy_match(a, b) by spelling (Michael/Micheal, Robert/Roberto), and
+     similar_name(a, b) matches if either does.
 
 Not supported:
  * Other function calls and casts (::type).
@@ -76,7 +85,8 @@ Not supported:
  * INTERVAL literals, such as INTERVAL '30 days'. Use make_interval() instead.
  * LIMIT, BETWEEN, SIMILAR TO, and LIKE with ESCAPE or ANY.
  * Negative numbers.
- * Subqueries and CTEs.
+ * Subqueries other than IN (SELECT ...).
+ * WITH RECURSIVE, [NOT] MATERIALIZED, and column aliases on a CTE.
  * INTERSECT and EXCEPT.
  * ORDER BY on a UNION.
  * RIGHT, FULL and CROSS JOIN. Write a RIGHT JOIN as a LEFT JOIN with the
