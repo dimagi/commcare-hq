@@ -1,13 +1,30 @@
+from io import BytesIO
+
 from django import forms
-from django.http import HttpResponseRedirect
+from django.http import (
+    FileResponse,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
-from corehq.apps.document_templates.models import Template, Variable
+from corehq.apps.document_templates.models import Area, Template
+from corehq.apps.document_templates.rendering import (
+    DocumentRenderError,
+    get_area_names,
+    get_variable_names,
+    render_preview,
+)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sms.views import BaseMessagingSectionView
 
@@ -34,29 +51,26 @@ class DocumentTemplatesView(BaseMessagingSectionView):
         }
 
 
-VARIABLE_FIELD_PREFIX = 'var_'
+AREA_FIELD_PREFIX = 'area_'
+CONTEXT_FIELD_PREFIX = 'context_'
 
-
-def get_variable_names():
-    # TODO: replace with the real list of variable names
-    return ['header', 'address', 'body', 'footer']
 
 class TemplateForm(forms.ModelForm):
     class Meta:
         model = Template
         fields = ['name', 'slug']
 
-    def __init__(self, *args, domain, variable_names, **kwargs):
+    def __init__(self, *args, domain, area_names, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.domain = domain
-        self.variable_names = variable_names
-        saved_variables = self.instance.variables or {}
-        for variable_name in variable_names:
-            variable = saved_variables.get(variable_name)
-            self.fields[self._field_name(variable_name)] = forms.CharField(
-                label=variable_name,
+        self.area_names = area_names
+        saved_areas = self.instance.areas or {}
+        for area_name in area_names:
+            area = saved_areas.get(area_name)
+            self.fields[self._field_name(area_name)] = forms.CharField(
+                label=area_name,
                 required=False,
-                initial=variable.value if variable else '',
+                initial=area.value if area else '',
                 widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             )
 
@@ -70,20 +84,20 @@ class TemplateForm(forms.ModelForm):
         return slug
 
     @staticmethod
-    def _field_name(variable_name):
-        return f'{VARIABLE_FIELD_PREFIX}{variable_name}'
+    def _field_name(area_name):
+        return f'{AREA_FIELD_PREFIX}{area_name}'
 
-    def variable_fields(self):
-        return [self[self._field_name(name)] for name in self.variable_names]
+    def area_fields(self):
+        return [self[self._field_name(name)] for name in self.area_names]
 
-    def get_variables(self):
+    def get_areas(self):
         return {
-            variable_name: Variable(value=self.cleaned_data[self._field_name(variable_name)])
-            for variable_name in self.variable_names
+            area_name: Area(value=self.cleaned_data[self._field_name(area_name)])
+            for area_name in self.area_names
         }
 
     def save(self, commit=True):
-        self.instance.variables = self.get_variables()
+        self.instance.areas = self.get_areas()
         return super().save(commit=commit)
 
 
@@ -99,7 +113,7 @@ class BaseDocumentTemplateFormView(BaseMessagingSectionView, ModelFormMixin, Pro
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['domain'] = self.domain
-        kwargs['variable_names'] = get_variable_names()
+        kwargs['area_names'] = get_area_names()
         return kwargs
 
     def get_success_url(self):
@@ -152,3 +166,49 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
         return HttpResponseRedirect(
             reverse(DocumentTemplatesView.urlname, args=[self.domain])
         )
+
+
+def _posted_area_values(request):
+    """The area values of the template form, as posted (the rest of the form is ignored)"""
+    return {
+        name: request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')
+        for name in get_area_names()
+    }
+
+
+def _posted_context(request, names):
+    """The values posted for the variables ``names``; unfilled variables are empty"""
+    return {name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '') for name in names}
+
+
+@login_and_domain_required
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def preview_document_variables(request, domain):
+    """HTMX partial for the preview modal: an input for each variable the posted areas use
+
+    The form is posted with the request, so values already typed into the modal are kept.
+    """
+    try:
+        names = get_variable_names(_posted_area_values(request))
+    except DocumentRenderError as error:
+        template_context = {'error': str(error)}
+    else:
+        template_context = {'context': _posted_context(request, names), 'field_prefix': CONTEXT_FIELD_PREFIX}
+    return HttpResponse(render_to_string('document_templates/partials/preview_modal_body.html', template_context))
+
+
+@login_and_domain_required
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def preview_document(request, domain):
+    """The rendered document as a PDF, for opening in a new tab"""
+    area_values = _posted_area_values(request)
+    try:
+        context = _posted_context(request, get_variable_names(area_values))
+        pdf = render_preview(area_values, context)
+    except DocumentRenderError as error:
+        return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
+    response = FileResponse(BytesIO(pdf), filename='preview.pdf')
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response

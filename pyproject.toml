@@ -150,7 +150,7 @@ docs = [
 ]
 prod = [
     "flower",
-    "setproctitle",
+    "setproctitle", # for gunicorn integration with datadog
     "ipython", # for nicer django shell experience
     "idna",
     "certifi",
