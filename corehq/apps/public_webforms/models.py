@@ -131,9 +131,8 @@ class PublicFormSession(models.Model):
         """Return the usable (unsubmitted, unexpired) session for a raw
         session_key value, or None if the key is malformed or no such
         session is usable."""
-        try:
-            key = UUID(str(session_key))
-        except (ValueError, TypeError):
+        key = cls._parse_uuid(session_key)
+        if key is None:
             return None
         return cls.objects.get_or_none(
             session_key=key,
@@ -143,9 +142,8 @@ class PublicFormSession(models.Model):
 
     @classmethod
     def get_active_session_by_id(cls, public_webform, session_id):
-        try:
-            session_uuid = UUID(str(session_id))
-        except (ValueError, TypeError):
+        session_uuid = cls._parse_uuid(session_id)
+        if session_uuid is None:
             return None
         return cls.objects.get_or_none(
             public_webform=public_webform,
@@ -168,6 +166,13 @@ class PublicFormSession(models.Model):
             expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
             **lookup,
         ).order_by('-created_at').first()
+
+    @staticmethod
+    def _parse_uuid(value):
+        try:
+            return UUID(str(value))
+        except (ValueError, TypeError):
+            return None
 
     @property
     def one_time_link(self):
