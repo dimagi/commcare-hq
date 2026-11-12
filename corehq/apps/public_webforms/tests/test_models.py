@@ -146,22 +146,22 @@ def test_get_active_session_by_id_ignores_a_malformed_id(session_id):
 
 
 @use('db')
-def test_get_active_session_for_contact():
+def test_get_reusable_session_for_contact():
     webform = create_webform()
     session = create_session(webform, email='respondent@example.com')
 
-    found = PublicFormSession.get_active_session_for_contact(
+    found = PublicFormSession.get_reusable_session_for_contact(
         webform, email='respondent@example.com', phone_number='')
 
     assert found == session
 
 
 @use('db')
-def test_get_active_session_for_contact_ignores_another_contact():
+def test_get_reusable_session_for_contact_ignores_another_contact():
     webform = create_webform()
     create_session(webform, email='someone-else@example.com')
 
-    assert PublicFormSession.get_active_session_for_contact(
+    assert PublicFormSession.get_reusable_session_for_contact(
         webform, email='respondent@example.com', phone_number='') is None
 
 
@@ -170,11 +170,11 @@ def test_get_active_session_for_contact_ignores_another_contact():
     {'expires_at': timezone.now() - datetime.timedelta(minutes=1)},
     {'submitted_at': timezone.now()},
 ], ids=['expired', 'already-submitted'])
-def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs):
+def test_get_reusable_session_for_contact_ignores_inactive_session(session_kwargs):
     webform = create_webform()
     create_session(webform, email='respondent@example.com', **session_kwargs)
 
-    assert PublicFormSession.get_active_session_for_contact(
+    assert PublicFormSession.get_reusable_session_for_contact(
         webform, email='respondent@example.com', phone_number='') is None
 
 
@@ -184,11 +184,11 @@ def test_get_active_session_for_contact_ignores_inactive_session(session_kwargs)
     (PublicFormSession.REUSE_MARGIN, True),
 ], ids=['before-margin', 'at-margin'])
 @travel('2026-10-02', tick=False)
-def test_get_active_session_for_contact_reuse_margin(expires_in, expected):
+def test_get_reusable_session_for_contact_reuse_margin(expires_in, expected):
     webform = create_webform()
     create_session(webform, email='respondent@example.com', expires_at=timezone.now() + expires_in)
 
-    assert bool(PublicFormSession.get_active_session_for_contact(
+    assert bool(PublicFormSession.get_reusable_session_for_contact(
         webform, email='respondent@example.com', phone_number='')) is expected
 
 
@@ -196,9 +196,9 @@ def test_get_active_session_for_contact_reuse_margin(expires_in, expected):
     ('respondent@example.com', '15551234567'),
     ('', ''),
 ], ids=['both', 'neither'])
-def test_get_active_session_for_contact_requires_exactly_one_channel(email, phone_number):
+def test_get_reusable_session_for_contact_requires_exactly_one_channel(email, phone_number):
     with pytest.raises(AssertionError):
-        PublicFormSession.get_active_session_for_contact(
+        PublicFormSession.get_reusable_session_for_contact(
             PublicWebform(), email=email, phone_number=phone_number)
 
 

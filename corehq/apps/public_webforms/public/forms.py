@@ -95,7 +95,7 @@ class PublicWebformLinkRequestForm(forms.Form):
         email = self.cleaned_data['email']
         phone_number = self.cleaned_data['phone_number']
         contact = {'email': email} if email else {'phone_number': phone_number}
-        session = PublicFormSession.get_active_session_for_contact(
+        session = PublicFormSession.get_reusable_session_for_contact(
             self.webform, **contact)
         return session or PublicFormSession.objects.create(
             public_webform=self.webform,
