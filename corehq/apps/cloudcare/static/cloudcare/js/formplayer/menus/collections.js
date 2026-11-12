@@ -31,6 +31,7 @@ var MenuSelect = Backbone.Collection.extend({
         'selections',
         'tiles',
         'title',
+        'menuTitle',
         'type',
         'noItemsText',
         'dynamicSearch',

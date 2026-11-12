@@ -23,6 +23,7 @@ Example case graphs with outcomes:
 """
 import logging
 from collections import defaultdict
+from contextlib import contextmanager
 from functools import partial
 from itertools import chain, islice
 
@@ -30,13 +31,18 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from corehq.celery_monitoring.signals import CELERY_STATE_SENT
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
+from corehq.toggles import CHUNKED_LIVEQUERY, NAMESPACE_DOMAIN
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.timer import TimingContext
 
+from dimagi.utils.chunked import chunked
+
 from .load_testing import get_xml_for_response
 from .stock import get_stock_payload
 from .utils import get_case_sync_updates
+
+MAX_RELATED_CHUNK = 1000
 
 
 def do_livequery(timing_context, restore_state, response, async_task=None):
@@ -116,7 +122,7 @@ def get_all_related_live_cases(domain, case_ids):
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     def index_key(index):
-        return '{} {}'.format(index.case_id, index.identifier)
+        return index.case_id, index.identifier
 
     def is_extension(case_id):
         """Determine if case_id is an extension case
@@ -258,6 +264,30 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     def filter_deleted_indices(related):
         return [index for index in related if index.referenced_id]
 
+    @contextmanager
+    def get_related_with_db_exclude(next_ids):
+        exclude_pairs = chain.from_iterable(seen_ix[id] for id in next_ids)
+        exclude = set('{} {}'.format(*p) for p in exclude_pairs)
+        with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
+            yield get_related_indices(list(next_ids), exclude)
+
+    @contextmanager
+    def chunked_get_related(next_ids):
+        with timing_context("get_related_indices({} cases)".format(len(next_ids))):
+            index_by_key = {}
+            for next_chunk in chunked(next_ids, MAX_RELATED_CHUNK, collection=list):
+                index_by_key.update(
+                    (index_key(index), index)
+                    for index in get_related_indices(next_chunk, [])
+                    if index_key(index) not in seen_ix[index.case_id]
+                )
+            yield list(index_by_key.values())
+
+    if CHUNKED_LIVEQUERY.enabled(domain, namespace=NAMESPACE_DOMAIN):
+        timed_get_related = chunked_get_related
+    else:
+        timed_get_related = get_related_with_db_exclude
+
     IGNORE = object()
     debug = logging.getLogger(__name__).debug
 
@@ -268,16 +298,14 @@ def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like, used as a cache for later
-    seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
+    seen_ix = defaultdict(set)   # case_id -> set of (<index.case_id>, <index.identifier>)
 
     next_ids = all_ids = set(owned_ids)
     owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
     open_ids = set(owned_ids)
     get_related_indices = partial(CommCareCaseIndex.objects.get_related_indices, domain)
     while next_ids:
-        exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
-        with timing_context("get_related_indices({} cases, {} seen)".format(len(next_ids), len(exclude))):
-            related = get_related_indices(list(next_ids), exclude)
+        with timed_get_related(next_ids) as related:
             if not related:
                 break
 

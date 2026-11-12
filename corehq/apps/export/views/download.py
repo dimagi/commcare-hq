@@ -18,7 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from memoized import memoized
 
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_or_404
 from corehq.apps.export.det.exceptions import DETConfigError
 from corehq.apps.export.det.schema_generator import (
     generate_from_export_instance,
@@ -52,7 +52,6 @@ from corehq.apps.export.forms import (
     FilterSmsESExportDownloadForm,
     DatasourceExportDownloadForm,
 )
-from corehq.apps.export.models import FormExportInstance
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest, datasource_export_instance
 from corehq.apps.export.utils import get_export
 from corehq.apps.export.views.utils import (
@@ -64,7 +63,7 @@ from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import media_export_is_too_big
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import FormSubmitterFilter
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tasks import build_form_multimedia_zipfile
 from corehq.apps.reports.util import datespan_from_beginning
@@ -419,7 +418,7 @@ def poll_custom_export_download(request, domain):
 @location_safe
 class DownloadNewFormExportView(BaseDownloadExportView):
     urlname = 'new_export_download_forms'
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = FormSubmitterFilter
     show_date_range = True
     page_title = gettext_noop("Download Form Data Export")
     check_for_multimedia = True
@@ -499,7 +498,7 @@ def has_multimedia(request, domain):
         raise ValueError("has_multimedia is only available for form exports")
     permissions = ExportsPermissionsManager(form_or_case, domain, request.couch_user)
     permissions.access_download_export_or_404()
-    export_object = FormExportInstance.get(request.GET.get('export_id'))
+    export_object = get_export(form_or_case, domain, request.GET.get('export_id'))
     return json_response({
         'success': True,
         'hasMultimedia': export_object.has_multimedia,
@@ -574,7 +573,7 @@ class DownloadNewSmsExportView(BaseDownloadExportView):
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = gettext_noop("Download Form Data Exports")
-    export_filter_class = ExpandedMobileWorkerFilter
+    export_filter_class = FormSubmitterFilter
     check_for_multimedia = False
 
 
@@ -606,9 +605,7 @@ class DownloadDETSchemaView(View):
     urlname = 'download-det-schema'
 
     def get(self, request, domain, export_instance_id):
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        assert domain == export_instance.domain
-
+        export_instance = get_export_instance_or_404(domain, export_instance_id)
         return _render_det_download(
             filename=export_instance.name,
             export_instance=export_instance,

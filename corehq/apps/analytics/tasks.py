@@ -219,8 +219,8 @@ def _get_user_hubspot_id(web_user, retry_num=0):
 
 def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
     """
-    This sends hubspot the user's first and last names and tracks everything they did
-    up until the point they signed up.
+    This sends hubspot the user's first and last names and, when the tracking
+    cookie is present, everything they did up until the point they signed up.
     """
     if ((webuser and not hubspot_enabled_for_user(webuser))
             or (not webuser and not hubspot_enabled_for_email(email))):
@@ -231,7 +231,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
-    if hubspot_id and hubspot_cookie:
+    if hubspot_id:
         data = {
             'email': email if email else webuser.username,
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": get_client_ip_from_meta(meta)}),
@@ -742,17 +742,20 @@ def record_google_analytics_event(event_name, couch_user, event_properties=None)
     if not couch_user.analytics_enabled:
         return
 
+    record_google_analytics_event_for_client(event_name, couch_user.userID, event_properties)
+
+
+def record_google_analytics_event_for_client(event_name, client_id, event_properties=None):
     event_properties = event_properties or {}
 
     timestamp = unix_time_in_micros(datetime.utcnow())
 
     event_body = {
         # The client_id is meant to represent a unique user/device pairing, but we don't have access to that
-        # from the backend. Using the user ID as a placeholder, but the important identifying information
-        # is making sure the user ID is assigned correctly, as that needs to match between the frontend
-        # and backend to trace metrics
-        'client_id': couch_user.userID,
-        'user_id': couch_user.userID,
+        # from the backend. Callers pass an ID as a placeholder; for an HQ user that's the user ID, which
+        # needs to match between the frontend and backend to trace metrics
+        'client_id': client_id,
+        'user_id': client_id,
         'timestamp_micros': timestamp,
         'user_properties': {
             'hq_environment': {

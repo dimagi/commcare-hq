@@ -21,7 +21,7 @@
 -            {% if not allow_domain_requests %}
 -              <p class="lead">
 -                 {% blocktrans %}
-+          <div class="card sign-up-bubble form-bubble-purple">
++          <div class="card sign-up-bubble form-bubble-cta">
 +            <div class="card-body mt-3">
 +              <h2>
 +                {% blocktrans %}
@@ -40,7 +40,7 @@
 +                </p>
 +              {% endif %}
 +              <p class="text-center">
-+                <a class="btn btn-purple btn-lg"
++                <a class="btn btn-prelogin btn-lg"
 +                  {% if allow_domain_requests %}
 +                  href="{% url "domain_request" domain %}"
 +                  {% else %}

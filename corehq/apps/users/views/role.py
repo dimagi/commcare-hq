@@ -254,7 +254,7 @@ def _delete_user_role(domain, role_id):
     if user_count:
         raise InvalidRequestException(ngettext(
             "Unable to delete role '{role}'. "
-            "It has one user and/or invitation still assigned to it. "
+            "It has {user_count} user and/or invitation still assigned to it. "
             "Remove all users assigned to the role before deleting it.",
             "Unable to delete role '{role}'. "
             "It has {user_count} users and/or invitations still assigned to it. "

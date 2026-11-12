@@ -24,6 +24,8 @@ WHITELIST_PATTERNS=(
     'logger is being changed to' # ignore error when FIX_LOGGER_ERROR_OBFUSCATION is true
     'yacc table file version is out of date' # warning whenever building docs on a freshly created virtual environment
     "^<unknown>:[0-9]+: SyntaxWarning: invalid escape sequence '\\\\_'$"  # ignore '\_' syntax warning
+    'WARNING: failed to reach any of the inventories'  # intersphinx remote unavailable
+    "intersphinx inventory '.*' not fetchable"  # intersphinx remote unavailable
     # Only whitelist docs build warnings/errors when absolutely necessary
 )
 

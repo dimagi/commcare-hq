@@ -45,13 +45,15 @@ from corehq.apps.reports.filters.case_list import (
     CaseListFilterUtils,
 )
 from corehq.apps.reports.filters.users import (
-    EmwfUtils,
     ExpandedMobileWorkerFilter,
+    FormSubmitterFilter,
+    SubmittedByEmwfUtils,
 )
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import datespan_from_beginning
 from corehq.util import flatten_non_iterable_list
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.users.util import PUBLIC_USER_ID
 
 
 class DateSpanField(forms.CharField):
@@ -347,7 +349,7 @@ class DashboardFeedFilterForm(forms.Form):
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
         )
         self.fields['emwf_form_filter'].widget.set_url(
-            reverse(ExpandedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
+            reverse(FormSubmitterFilter.options_url, args=(self.domain_object.name,))
         )
 
         self.helper = HQModalFormHelper()
@@ -520,7 +522,7 @@ class DashboardFeedFilterForm(forms.Form):
                 )
 
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else \
-                EmwfUtils
+                SubmittedByEmwfUtils
             emwf_data = []
             for item in selected_items:
                 choice_tuple = emwf_utils_class(domain).id_to_choice_tuple(str(item))
@@ -721,6 +723,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
                 active=HQUserType.ACTIVE in user_types,
                 deactivated=HQUserType.DEACTIVATED in user_types,
             )
+            if HQUserType.PUBLIC in user_types:
+                user_ids = user_ids + [PUBLIC_USER_ID]
             form_filters.append(FormSubmittedByFilter(user_ids))
             return form_filters
 

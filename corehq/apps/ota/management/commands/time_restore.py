@@ -4,13 +4,13 @@ from django.core.management.base import BaseCommand
 
 import csv
 from couchdbkit import ResourceNotFound
-from lxml import etree
 
 from corehq.apps.app_manager.dbaccessors import get_app_doc
 from corehq.apps.hqadmin.views.users import AdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import get_timestamp_for_filename
+from corehq.util.xml_utils import safe_fromstring
 
 
 class Command(BaseCommand):
@@ -57,7 +57,7 @@ def _get_headers_and_rows(domain, users, app_id):
             domain, user, app_id=app_id, version="2.0"
         )
         timing_dict = timing_context.to_dict()
-        xml_payload = etree.fromstring(b''.join(response.streaming_content))
+        xml_payload = safe_fromstring(b''.join(response.streaming_content))
         stats = AdminRestoreView.get_stats_from_xml(xml_payload)
         row = {
             'timestamp': datetime.datetime.now().isoformat(),

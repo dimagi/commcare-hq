@@ -1,4 +1,3 @@
-/* eslint-env node */
 /* eslint-disable no-useless-escape */
 // NOTE: double escapes are needed for file path delimiters in webpack regexes for cross-platform support
 
@@ -106,7 +105,7 @@ const getDetails = function (entryRegex, allAppPaths, isProdMode) {
             entryRegex,
             allAppPaths,
             details,
-            isProdMode
+            isProdMode,
         );
     }
     return details;
@@ -148,12 +147,12 @@ if (require.main === module) {
     const defaultDetails = getDetails(
         /{% js_entry ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
-        isProductionMode
+        isProductionMode,
     );
     const b3Details = getDetails(
         /{% js_entry_b3 ["']([\/\w\-]+)["'] %}/g,
         allAppPaths,
-        isProductionMode
+        isProductionMode,
     );
 
     // Directly copy the default entry point into B3.
@@ -169,15 +168,15 @@ if (require.main === module) {
             aliases: Object.assign(
                 aliases,
                 defaultDetails.aliases,
-                b3Details.aliases
+                b3Details.aliases,
             ),
             appsWithEntries: Object.assign(
                 appsWithEntries,
                 defaultDetails.appsWithEntries,
-                b3Details.appsWithEntries
+                b3Details.appsWithEntries,
             ),
             allAppPaths: allAppPaths,
-        }, null, 2)
+        }, null, 2),
     );
 }
 

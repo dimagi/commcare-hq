@@ -19,11 +19,13 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     CustomerInvoiceNumberAsyncHandler,
+    WireInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
     ProBonoStatus,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
     SubscriptionAdjustmentMethod,
@@ -210,6 +212,13 @@ class IsHiddenFilter(BaseSingleOptionFilter):
         (IS_HIDDEN, 'Is Hidden'),
         (IS_NOT_HIDDEN, 'Is Not Hidden'),
     ]
+
+
+class ScheduledInvoiceStatusFilter(BaseSingleOptionFilter):
+    slug = 'scheduled_invoice_status'
+    label = _('Status')
+    default_text = _('All')
+    options = ScheduledPrepaymentInvoiceStatus.CHOICES
 
 
 class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
@@ -441,6 +450,14 @@ class CustomerInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
     default_text = 'All'
     async_handler = CustomerInvoiceNumberAsyncHandler
     async_action = 'customer_invoice_number'
+
+
+class WireInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'wire_invoice_number'
+    label = 'Invoice Number'
+    default_text = 'All'
+    async_handler = WireInvoiceNumberAsyncHandler
+    async_action = 'wire_invoice_number'
 
 
 class InvoiceBalanceFilter(BaseAccountingSingleOptionFilter):

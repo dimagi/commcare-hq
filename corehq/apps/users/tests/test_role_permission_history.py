@@ -5,13 +5,26 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
+from field_audit.field_audit import request as audit_request
 from field_audit.models import AuditEvent
+from unmagic import fixture, use
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import PermissionInfo
 from corehq.apps.users.models_role import Permission, UserRole
 
 
+@fixture
+def no_audit_request():
+    # FieldAuditMiddleware does not unset the request after a response,
+    # so a request made by an earlier test would be used as the change
+    # context of audit events created here.
+    token = audit_request.set(None)
+    yield
+    audit_request.reset(token)
+
+
+@use(no_audit_request)
 class BaseRoleHistoryTest(TestCase):
 
     domain_name = "test-role-history"

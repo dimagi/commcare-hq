@@ -1,0 +1,26 @@
+{% load i18n %}
+<p>
+  A prepayment invoice is scheduled to be generated and emailed on
+  <strong>{{ send_date|date:"Y-m-d" }}</strong>.
+</p>
+
+<p>
+  Project Space: {{ domain }}<br />
+  Billing Account: {{ billing_account.name }}<br />
+  Software Plan: {{ plan_version }}
+</p>
+
+<p>
+  Description: {{ credit_label }}<br />
+  Amount: <strong>{{ amount }}</strong> ({{ quantity }} x {{ unit_cost }})<br />
+  Prepayment Term: {{ date_start|date:"Y-m-d" }} to {{ date_end|date:"Y-m-d" }}<br />
+  Scheduled By: {{ created_by }}
+</p>
+
+<p>Recipients: {{ contact_emails }}</p>
+
+<p>
+  If the amount or the dates are no longer right,
+  <a href="{{ report_url }}">cancel this scheduled invoice</a>
+  and schedule a replacement before {{ send_date|date:"Y-m-d" }}.
+</p>

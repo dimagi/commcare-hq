@@ -228,6 +228,7 @@ fi
 # export variables for compose file (they must be set or it complains)
 export CI="$CI"
 export CODECOV_TOKEN="$CODECOV_TOKEN"
+export COVERAGE="$COVERAGE"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
 export DATADOG_APP_KEY="$DATADOG_APP_KEY"
 export DOCKERFILE="${DOCKERFILE:-Dockerfile}"
@@ -300,10 +301,13 @@ if [ "$CMD" == "test" ]; then
     # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
     [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
-    docker compose pull --quiet
+    # Pull only the services the test container depends on (skips
+    # formplayer and minio, which tests do not use). Locally-built images
+    # (web, couch, elasticsearch6) are built by `docker compose run`.
+    docker compose pull --quiet --ignore-buildable --include-deps web
 
     # Print service versions
-    docker compose run --no-deps --rm minio minio --version
+    docker compose run --no-deps --rm garage /garage --version
     docker compose run --no-deps --rm postgres postgres --version
     docker compose run --no-deps --rm redis redis-server --version
     # Cannot get Couch version easily before it is running.
@@ -361,6 +365,8 @@ else
             ${VOLUME_PREFIX}redis \
             ${VOLUME_PREFIX}minio-conf \
             ${VOLUME_PREFIX}minio-data \
+            ${VOLUME_PREFIX}garage-meta \
+            ${VOLUME_PREFIX}garage-data \
             ${VOLUME_PREFIX}zookeeper
     fi
 fi

@@ -139,6 +139,13 @@ accounting
  0117_locked_admin_questions_priv
  0118_vellum_save_to_case_priv
  0119_public_webforms_priv
+ 0120_billingaccountdomainhistory
+ 0121_invoicing_plan_monthly
+ 0122_stop_declaring_invoicing_plan
+ 0123_subscription_skip_auto_downgrade_until
+ 0124_scheduled_prepayment_invoice
+ 0125_ai_app_translation_priv
+ 0126_domainwebuserhistory
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -187,6 +194,9 @@ app_manager
  0029_delete_case_list_custom_variable_xml
  0030_credentialapplication
  0031_delete_latestenabledbuildprofiles
+ 0032_publicwebform_publicformsession
+ 0033_delete_publicformsession_delete_publicwebform
+ 0034_template_app_catalog
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -271,6 +281,11 @@ case_search
  0017_add_case_search_endpoint_models
  0018_add_endpoint_version_audit_fields
  0019_rename_target_name_casesearchendpoint_case_type
+ 0020_remove_casesearchendpoint_case_type_and_more
+ 0021_casesearchendpointversion_dangerous_sql
+ 0022_casesearchendpoint_deactivated
+ 0023_delete_inactive_endpoints
+ 0024_casesearchendpoint_upstream_id
 celery
  0001_taskrecord
  0002_taskrecord_kombu_serialization
@@ -352,6 +367,8 @@ data_analytics
  0012_update_domainmetrics_fields
  0013_domainmetrics_bulk_case_editing_sessions_and_more
  0014_domainmetrics_users_with_web_apps_submission_in_last_30_days_and_more
+ 0015_domainmetrics_public_webform_submissions_and_more
+ 0016_domainmetrics_questions_locked
 data_cleaning
  0001_initial
  0002_update_fields_and_ordering
@@ -418,6 +435,9 @@ data_interfaces
  0037_add_dedupe_update_toggle
  0038_alter_caseduplicate_potential_duplicates
  0039_rename_caserulesubmission_domain_created_on_data_interf_domain_718740_idx_and_more
+ 0040_bulkasyncjob
+ 0041_clear_bulkasyncjob
+ 0042_partition_bulkasyncjob
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -447,6 +467,10 @@ django_digest
  0001_initial
 django_prbac
  0001_initial
+document_templates
+ 0001_initial
+ 0002_template_deleted
+ 0003_rename_variables_to_areas
 domain
  0001_initial
  0002_auto_20171020_1428
@@ -469,6 +493,10 @@ domain
  0019_remove_usercase_enabled_field
  0020_delete_transferdomainrequest
  0021_delete_smsaccountconfirmationsettings
+ 0022_domainauditrecordentry_cp_n_enterprise_console_exports_and_more
+ 0023_domainauditrecordentry_cp_n_questions_locked
+ 0024_chatbotdomainsettings
+ 0025_stop_declaring_cp_n_questions_locked
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -502,6 +530,7 @@ es
  0015_add_user_domain_memberships
  0016_add_new_index_for_cc_perf
  0017_add_is_account_confirmed
+ 0018_add_new_index_for_philly_ubr
 experiments
  0001_initial
 export
@@ -647,6 +676,7 @@ form_processor
  0097_case_domain_type_id_index
  0098_rename_caseattachment_case_name_form_proces_case_id_2fd259_idx_and_more
  0099_xforminstance_form_proces_domain_3bcfdd_idx_and_more
+ 0100_remove_commcarecaseindex_form_proces_domain_7afdfe_idx_and_more
 formplayer_api
  0001_drop_old_tables
 generic_inbound
@@ -688,6 +718,7 @@ hqadmin
  0018_back_populate_deploy_commit
  0019_celery_taskmeta_sequence
  0020_celery_results_sequence
+ 0021_platformdeactivationlog
 hqmedia
  0001_initial
 hqwebapp
@@ -753,6 +784,7 @@ linked_domain
  0023_alter_domainlinkhistory_model
  0024_alter_domainlinkhistory_model
  0025_alter_domainlinkhistory_model_choices
+ 0026_domainlinkhistory_case_search_endpoint
 locations
  0001_initial
  0002_auto_20160420_2105
@@ -820,6 +852,19 @@ oauth2_provider
  0005_auto_20211222_2352
  0006_alter_application_client_secret
  0007_application_post_logout_redirect_uris
+ 0008_alter_accesstoken_token
+ 0009_add_hash_client_secret
+ 0010_application_allowed_origins
+ 0011_refreshtoken_token_family
+ 0012_add_token_checksum
+ 0013_alter_application_authorization_grant_type_device
+ 0014_alter_help_text
+ 0015_refreshtoken_token_checksum
+ 0016_alter_devicegrant_scope
+ 0017_application_dcr_created
+ 0018_resource_indicators
+ 0019_application_registration_source
+ 0020_cimd_application_fields
 ota
  0001_initial
  0002_alter_db_index
@@ -899,12 +944,19 @@ preindex
  0008_initial
 products
  0001_initial
+project_db
+ 0001_setup_projectdb
+ 0002_pendingoperation
 project_limits
  0001_initial
  0002_ratelimitedtwofactorlog
  0003_pillowlaggaugedefinition
  0004_systemlimit
  0005_systemlimit_owneriddefault
+public_webforms
+ 0001_initial
+ 0002_publicformsession_contact_info
+ 0003_publicwebform_direct_access
 registration
  0001_initial
  0002_alter_request_ip
@@ -1013,6 +1065,8 @@ scheduling_partitioned
  0008_track_attempts
  0009_rename_alertscheduleinstance_active_next_event_due_scheduling__active_c8422f_idx_and_more
 sessions
+ 0001_initial
+short_links
  0001_initial
 sites
  0001_initial
@@ -1183,6 +1237,7 @@ sql_accessors
  0067_livequery_sql_include_deleted_indices
  0068_remove_deleted_state
  0069_drop_DELETED_references_fn
+ 0070_livequery_without_exclusions
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -1235,6 +1290,7 @@ sql_proxy_accessors
  0049_drop_unused_function
  0050_remove_deleted_state
  0051_drop_DELETED_references_fn
+ 0052_livequery_without_exclusions
 sql_proxy_standby_accessors
  0001_initial
 sso
@@ -1248,6 +1304,7 @@ sso
  0008_alter_identityprovider_idp_type
  0009_identityprovider_require_api_key_for_api_access
  0010_remove_identityprovider_require_api_key_for_api_access
+ 0011_drop_identityprovider_require_api_key_for_api_access
 start_enterprise
  0001_initial
 stock
@@ -1289,6 +1346,10 @@ translations
  0009_auto_20200924_1753
  0010_transifex_organization_api_token_encryption
  0011_delete_transifexblacklist_and_more
+ 0012_aitranslation_aitranslationconfig_aitranslationusage
+ 0013_rename_aitranslationusage_counts
+ 0014_alter_aitranslation_status
+ 0015_aitranslationusage_run_counts
 two_factor
  (no migrations)
 user_importer

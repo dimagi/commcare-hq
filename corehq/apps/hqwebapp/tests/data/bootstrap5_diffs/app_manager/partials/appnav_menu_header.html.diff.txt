@@ -12,7 +12,7 @@
      </a>
    </div>
 @@ -18,9 +18,7 @@
-       <span class="variable-app_name appname-text">{{ app_name }}</span>
+       <span class="variable-app_name appname-text" data-ocs-app-name>{{ app_name }}</span>
      </a>
    </h2>
 -  <div id="js-publish-status"

@@ -904,11 +904,13 @@ class DomainAuditRecordEntry(models.Model):
     cp_n_click_app_deploy = models.BigIntegerField(default=0)
     cp_n_form_builder_entered = models.BigIntegerField(default=0)
     cp_n_saved_app_changes = models.BigIntegerField(default=0)
+    cp_n_enterprise_console_exports = models.BigIntegerField(default=0)
+    cp_n_enterprise_settings_edits = models.BigIntegerField(default=0)
 
     @classmethod
     @atomic
     def update_calculations(cls, domain, property_to_update):
-        obj, is_new = cls.objects.get_or_create(domain=domain)
+        obj, __ = cls.objects.get_or_create(domain=domain)
         setattr(obj, property_to_update, F(property_to_update) + 1)
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
@@ -999,3 +1001,8 @@ def all_app_manager_add_ons_enabled(domain):
 
     app_mgr = AppManagerDomainSettings.objects.get_or_none(domain=domain)
     return bool(app_mgr and app_mgr.all_add_ons_enabled)
+
+
+class ChatbotDomainSettings(models.Model):
+    domain = models.CharField(max_length=255, primary_key=True)
+    disabled = models.BooleanField(default=False)

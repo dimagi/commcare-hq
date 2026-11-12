@@ -1,6 +1,6 @@
 import ko from "knockout";
 import _ from "underscore";
-import "Caret.js/dist/jquery.caret";
+import "jquery.caret/dist/jquery.caret";
 import "At.js/dist/js/jquery.atwho";
 
 var _init = function ($input, options, afterInsert, replaceValue) {
@@ -68,7 +68,7 @@ ko.bindingHandlers.autocompleteAtwho = {
     init: function (element) {
         var $element = $(element);
         if (!$element.atwho) {
-            throw new Error("The autocompleteAtwho binding requires Atwho.js and Caret.js");
+            throw new Error("The autocompleteAtwho binding requires Atwho.js and jquery.caret");
         }
 
         init($element, {

@@ -56,6 +56,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
+from corehq.apps.hqadmin.template_apps.views import ManageTemplateAppsView
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
@@ -63,6 +64,7 @@ from corehq.apps.integration.kyc.views import KycConfigurationView
 from corehq.apps.integration.payments.views import PaymentConfigurationView
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.public_webforms.utils import can_access_public_webforms
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
 )
@@ -468,6 +470,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
+        '/a/{domain}/project_db/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/',
         '/a/{domain}/payments/'
@@ -632,12 +635,6 @@ class ProjectDataTab(UITab):
             items.append([_('CSQL Fixtures'), [{
                 'title': _(CSQLFixtureExpressionView.page_title),
                 'url': reverse(CSQLFixtureExpressionView.urlname, args=[self.domain]),
-            }]])
-
-        if toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain):
-            items.append([_('Case Search Endpoints'), [{
-                'title': _(CaseSearchEndpointsView.page_title),
-                'url': reverse(CaseSearchEndpointsView.urlname, args=[self.domain]),
             }]])
 
         if self._can_view_data_dictionary:
@@ -1024,6 +1021,24 @@ class ProjectDataTab(UITab):
                     'show_in_dropdown': False,
                     'subpages': [],
                 }])
+            if toggles.PROJECT_DB.enabled(self.domain):
+                from corehq.apps.project_db.views import QueryProjectDBView
+                explore_data_views.append({
+                    'title': _(QueryProjectDBView.page_title),
+                    'url': reverse(QueryProjectDBView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-database',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        if (toggles.CASE_SEARCH_ENDPOINTS.enabled(self.domain)
+                and self.couch_user.is_domain_admin(self.domain)):
+            explore_data_views.append({
+                'title': _(CaseSearchEndpointsView.page_title),
+                'url': reverse(CaseSearchEndpointsView.urlname, args=(self.domain,)),
+                'icon': 'fa fa-search',
+                'show_in_dropdown': False,
+                'subpages': [],
+            })
         return explore_data_views
 
     def _get_geospatial_views(self):
@@ -1151,7 +1166,10 @@ class ProjectDataTab(UITab):
 class ApplicationsTab(UITab):
     view = "default_new_app"
 
-    url_prefix_formats = ('/a/{domain}/apps/',)
+    url_prefix_formats = (
+        '/a/{domain}/apps/',
+        '/a/{domain}/public_webforms/',
+    )
 
     @property
     def title(self):
@@ -1179,6 +1197,14 @@ class ApplicationsTab(UITab):
         if not apps:
             return submenu_context
 
+        if can_access_public_webforms(self._request, self.domain):
+            submenu_context.append(dropdown_dict(_("Public Webforms"), is_header=True))
+            submenu_context.append(dropdown_dict(
+                _("Manage Public Webforms"),
+                url=(reverse('manage_public_webforms', args=[self.domain])),
+            ))
+            submenu_context.append(self.divider)
+
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
         for app in apps:
@@ -1199,6 +1225,41 @@ class ApplicationsTab(UITab):
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
         return submenu_context
+
+    @property
+    def sidebar_items(self):
+        items = []
+        if self.public_webforms_urls:
+            items.append((_("Public Webforms"), self.public_webforms_urls))
+        return items
+
+    @property
+    def public_webforms_urls(self):
+        from corehq.apps.public_webforms.views import (
+            CreatePublicWebformView,
+            EditPublicWebformView,
+            ManagePublicWebformsView,
+        )
+        if not can_access_public_webforms(self._request, self.domain):
+            return []
+
+        return [{
+            'title': _(ManagePublicWebformsView.page_title),
+            'url': reverse(
+                ManagePublicWebformsView.urlname, args=[self.domain]
+            ),
+            'description': _('Create and manage public webforms.'),
+            'subpages': [
+                {
+                    'title': _(CreatePublicWebformView.page_title),
+                    'urlname': CreatePublicWebformView.urlname,
+                },
+                {
+                    'title': _(EditPublicWebformView.page_title),
+                    'urlname': EditPublicWebformView.urlname,
+                },
+            ],
+        }]
 
     @property
     def _is_viewable(self):
@@ -1239,6 +1300,7 @@ class MessagingTab(UITab):
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
         '/a/{domain}/email/',
+        '/a/{domain}/document_templates/',
     )
 
     @property
@@ -1480,6 +1542,18 @@ class MessagingTab(UITab):
         return connect_urls
 
     @property
+    def document_templates_urls(self):
+        from corehq.apps.document_templates.views import DocumentTemplatesView
+
+        document_templates_urls = []
+        if toggles.DOCUMENT_TEMPLATES.enabled(self.domain):
+            document_templates_urls.append({
+                'title': DocumentTemplatesView.page_title,
+                'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
+            })
+        return document_templates_urls
+
+    @property
     def dropdown_items(self):
         result = []
 
@@ -1531,7 +1605,8 @@ class MessagingTab(UITab):
             (_("Contacts"), self.contacts_urls),
             (_("Settings"), self.settings_urls),
             (_("WhatsApp Settings"), self.whatsapp_urls),
-            (_("Connect Messsaging"), self.connect_urls),
+            (_("Connect Messaging"), self.connect_urls),
+            (_("Document Templates"), self.document_templates_urls),
         ):
             if urls:
                 items.append((title, urls))
@@ -2401,6 +2476,7 @@ class AccountingTab(UITab):
         )))
 
         from corehq.apps.accounting.views import (
+            GeneratePrepaymentInvoiceView,
             TestRenewalEmailView,
             TriggerBookkeeperEmailView,
             TriggerCustomerInvoiceView,
@@ -2414,6 +2490,10 @@ class AccountingTab(UITab):
             {
                 'title': _(TriggerCustomerInvoiceView.page_title),
                 'url': reverse(TriggerCustomerInvoiceView.urlname),
+            },
+            {
+                'title': _(GeneratePrepaymentInvoiceView.page_title),
+                'url': reverse(GeneratePrepaymentInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),
@@ -2576,6 +2656,9 @@ class AdminTab(UITab):
                 {'title': _('Get users for offboarding'),
                  'url': reverse('get_offboarding_list'),
                  'icon': 'fa fa-sign-out'},
+                {'title': _('Offboard staff from external platforms'),
+                 'url': reverse('offboard_external_platforms'),
+                 'icon': 'fa fa-user-slash'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},
@@ -2603,6 +2686,9 @@ class AdminTab(UITab):
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname),
                  'icon': 'fa fa-refresh'},
+                {'title': _('Manage Template Apps'),
+                 'url': reverse(ManageTemplateAppsView.urlname),
+                 'icon': 'fa fa-layer-group'},
             ] + admin_operations
         sections = [
             (_('Administrative Reports'), [

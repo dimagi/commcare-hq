@@ -702,7 +702,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_add_extra_users(self):
-        return can_add_extra_mobile_workers(self.request)
+        return can_add_extra_mobile_workers(self.domain)
 
     @property
     @memoized

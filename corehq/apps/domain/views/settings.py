@@ -71,7 +71,7 @@ from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, GA_OCS_CHATBOT
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from corehq.apps.app_manager.models import CredentialApplication
@@ -516,7 +516,10 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     @memoized
     def features(self):
         features = []
+        chatbot_released = GA_OCS_CHATBOT.enabled(self.domain, namespace=NAMESPACE_DOMAIN)
         for preview_name in dir(feature_previews):
+            if preview_name == 'OCS_CHATBOT' and chatbot_released:
+                continue
             if not preview_name.startswith('__'):
                 preview = getattr(feature_previews, preview_name)
                 if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):

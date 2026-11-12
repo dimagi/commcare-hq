@@ -16,7 +16,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.app_manager.models import import_app
+from corehq.apps.app_manager.models import import_app_from_doc
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -171,7 +171,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         with open(full_filename, "r") as f:
             app_source = f.read()
             app_source = json.loads(app_source)
-        app = import_app(app_source, self.domain)
+        app = import_app_from_doc(app_source, self.domain)
         self.apps.append(app)
         return app
 

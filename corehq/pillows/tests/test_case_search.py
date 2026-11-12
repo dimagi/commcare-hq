@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from attrs import define, field
 
 from pillowtop.processors import elastic
@@ -30,6 +31,38 @@ class TestCaseSearchPillowProcessor:
             assert adapter.bulk_calls == [[FakeChange(1), FakeChange(2)]]
             assert not retries, 'excluded changes should not be retried'
             assert not errors
+
+
+@pytest.mark.parametrize("options, partial", [
+    ({}, False),
+    ({'domain': 'test'}, True),
+    ({'limit_to_db': 'p1'}, True),
+    ({'domain': 'test', 'limit_to_db': 'p1'}, True),
+])
+def test_reindexer_is_partial(options, partial):
+    with (
+        patch.object(mod, 'domain_needs_search_index', lambda domain: True),
+        patch.object(mod, '_domains_needing_search_index', lambda: {'test'}),
+        patch.object(mod, 'get_domain_case_change_provider'),
+    ):
+        reindexer = mod.CaseSearchReindexerFactory(**options).build()
+    assert reindexer.partial is partial
+
+
+def test_reindexer_does_not_create_index_on_build():
+    with (
+        patch.object(mod, '_domains_needing_search_index', lambda: {'test'}),
+        patch.object(mod, 'get_domain_case_change_provider'),
+        patch.object(mod, 'initialize_index_and_mapping') as initialize,
+    ):
+        mod.CaseSearchReindexerFactory().build()
+    initialize.assert_not_called()
+
+
+def test_resumable_reindexer_is_partial():
+    with patch.object(mod, 'domain_needs_search_index', lambda domain: True):
+        reindexer = mod.ResumableCaseSearchReindexerFactory(domain='test').build()
+    assert reindexer.partial
 
 
 @define

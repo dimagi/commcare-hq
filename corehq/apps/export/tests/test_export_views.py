@@ -1,13 +1,17 @@
 import datetime
 import json
+import pytest
 import os
 from io import BytesIO
 from unittest.mock import patch
+from urllib.parse import urlencode
 
+from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
+from couchdbkit.exceptions import ResourceNotFound
 
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -16,7 +20,7 @@ from corehq.apps.export.dbaccessors import (
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.export.models import CaseExportInstance
+from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.export.models.new import DataFile
 from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
@@ -52,18 +56,14 @@ class ViewTestCase(TestCase):
         super(ViewTestCase, cls).setUpClass()
         cls.domain = Domain(name="donkeykong", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.username = 'bananafana'
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(ViewTestCase, cls).tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
@@ -110,6 +110,35 @@ class DataFileDownloadDetailTest(ViewTestCase):
         self.data_file._meta.save()
         resp = self.client.get(self.data_file_url)
         self.assertEqual(resp.status_code, 404)
+
+    def test_data_file_download_suffix_range(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=-500')
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(
+            resp['Content-Range'],
+            'bytes {}-{}/{}'.format(content_length - 500, content_length - 1, content_length),
+        )
+        self.assertEqual(resp['Content-Length'], '500')
+        self.assertEqual(resp.getvalue(), self.content[-500:])
+
+    def test_data_file_download_range_end_beyond_content(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=1000-{}'.format(content_length + 1000))
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(resp['Content-Range'], 'bytes 1000-{}/{}'.format(content_length - 1, content_length))
+        self.assertEqual(resp.getvalue(), self.content[1000:])
+
+    def test_data_file_download_range_not_satisfiable(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}-'.format(content_length))
+        self.assertEqual(resp.status_code, 416)
+        self.assertEqual(resp['Content-Range'], 'bytes */{}'.format(content_length))
+
+    def test_data_file_download_multiple_ranges_ignored(self):
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=0-99,200-299')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.getvalue(), self.content)
 
 
 @generate_cases([
@@ -176,6 +205,12 @@ class ExportViewTest(ViewTestCase):
 
         resp = self.client.get(
             reverse(EditNewCustomCaseExportView.urlname, args=[self.domain.name, export._id]),
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    def test_edit_post_for_missing_export(self):
+        resp = self.client.post(
+            reverse(EditNewCustomFormExportView.urlname, args=[self.domain.name, 'missing-id']),
         )
         self.assertEqual(resp.status_code, 404)
 
@@ -351,3 +386,235 @@ class ExportViewTest(ViewTestCase):
             follow=True
         )
         self.assertEqual(resp.status_code, 500)  # This is an ajax call which handles the 500
+
+
+class ExportListCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.export = FormExportInstance(
+            domain=self.domain.name, name='mine', auto_rebuild_enabled=True,
+        )
+        self.export.save()
+        self.other_export = FormExportInstance(
+            domain='other-domain', name='theirs', auto_rebuild_enabled=True,
+        )
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def test_get_saved_export_progress(self):
+        def _get_saved_export_progress(export_id):
+            return self.client.get(
+                reverse('get_saved_export_progress', args=[self.domain.name]),
+                {'export_instance_id': export_id, 'model_type': 'form', 'is_deid': 'false'},
+            )
+        assert _get_saved_export_progress(self.export._id).status_code == 200
+        assert _get_saved_export_progress(self.other_export._id).status_code == 404
+
+    def test_toggle_saved_export_enabled(self):
+        def _toggle_saved_export_enabled(export_id):
+            return self.client.post(
+                reverse('toggle_saved_export_enabled', args=[self.domain.name]),
+                {'export_id': export_id, 'is_deid': 'false', 'is_auto_rebuild_enabled': 'true'},
+            )
+        assert _toggle_saved_export_enabled(self.export._id).status_code == 200
+        assert _toggle_saved_export_enabled(self.other_export._id).status_code == 404
+        assert FormExportInstance.get(self.other_export._id).auto_rebuild_enabled
+
+    @patch('corehq.apps.export.views.list.rebuild_saved_export')
+    def test_update_emailed_export_data(self, rebuild_saved_export):
+        def _update_emailed_export_data(export_id):
+            return self.client.post(
+                reverse('update_emailed_export_data', args=[self.domain.name]),
+                {'export_id': export_id, 'is_deid': 'false'},
+            )
+        assert _update_emailed_export_data(self.export._id).status_code == 200
+        assert rebuild_saved_export.call_count == 1
+
+        assert _update_emailed_export_data(self.other_export._id).status_code == 404
+        assert rebuild_saved_export.call_count == 1
+
+    def test_commit_filters(self):
+        def _commit_filters(export_id):
+            return self.client.post(
+                reverse('commit_filters', args=[self.domain.name]),
+                {
+                    'export_id': export_id,
+                    'model_type': 'form',
+                    'form_data': json.dumps(
+                        {
+                            'date_range': 'last7',
+                            'emwf_form_filter': [],
+                        }
+                    ),
+                },
+            )
+        response = _commit_filters(self.export._id)
+        assert response.status_code == 200
+        assert json.loads(response.content)['success'] is True
+
+        assert _commit_filters(self.other_export._id).status_code == 404
+        assert FormExportInstance.get(self.other_export._id)._rev == self.other_export._rev
+
+    def test_download_daily_saved_export(self):
+        response = self.client.get(reverse(
+            'download_daily_saved_export',
+            args=[self.domain.name, self.other_export._id],
+        ))
+        assert response.status_code == 404
+        assert FormExportInstance.get(self.other_export._id).last_accessed is None
+
+
+class ExportDownloadCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def _post(self, urlname):
+        return self.client.post(
+            reverse(urlname, args=[self.domain.name]),
+            {
+                'form_or_case': 'form',
+                'sms_export': 'false',
+                'exports': json.dumps([{'export_id': self.other_export._id}]),
+                'form_data': json.dumps({
+                    'date_range': '2020-01-01 to 2020-12-31', 'emw': '',
+                }),
+            },
+        )
+
+    @patch('corehq.apps.export.views.download.get_export_download')
+    def test_prepare_custom_export_rejects_other_domain(self, get_export_download):
+        assert self._post('prepare_custom_export').status_code == 404
+        assert get_export_download.call_count == 0
+
+    @patch('corehq.apps.export.views.download.build_form_multimedia_zipfile')
+    def test_prepare_form_multimedia_rejects_other_domain(self, build_form_multimedia_zipfile):
+        assert self._post('prepare_form_multimedia').status_code == 404
+        assert build_form_multimedia_zipfile.delay.call_count == 0
+
+
+class ExportSchemaAndMultimediaCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.export = FormExportInstance(domain=self.domain.name, name='mine')
+        self.export.save()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def test_has_multimedia(self):
+        def _has_multimedia(export_id):
+            return self.client.get(
+                reverse('has_multimedia', args=[self.domain.name]),
+                {'export_id': export_id, 'form_or_case': 'form'},
+            )
+        assert _has_multimedia(self.export._id).status_code == 200
+        assert _has_multimedia(self.other_export._id).status_code == 404
+
+    @patch('corehq.apps.export.views.download._render_det_download')
+    def test_download_det_schema(self, render_det):
+        render_det.return_value = HttpResponse()
+
+        my_det = self.client.get(reverse(
+            'download-det-schema', args=[self.domain.name, self.export._id]))
+        assert my_det.status_code == 200
+        assert render_det.call_count == 1
+
+        other = self.client.get(reverse(
+            'download-det-schema', args=[self.domain.name, self.other_export._id]))
+        assert other.status_code == 404
+        assert render_det.call_count == 1  # still at 1
+
+
+class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.export = FormExportInstance(domain=self.domain.name, name='mine')
+        self.export.save()
+        self.other_export = FormExportInstance(domain='other-domain', name='theirs')
+        self.other_export.save()
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def _delete(self, export_id, post=None):
+        return self.client.post(
+            reverse('delete_new_custom_export', args=[self.domain.name, 'form', export_id]),
+            urlencode(post or {}),
+            content_type='application/x-www-form-urlencoded'
+        )
+
+    def test_delete_url_export(self):
+        assert self._delete(self.export._id).status_code == 302
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(self.export._id)
+        assert self._delete(self.other_export._id).status_code == 404
+        assert FormExportInstance.get(self.other_export._id) is not None
+
+    def test_delete_list_export(self):
+        response = self._delete(self.export._id, post={
+            'count': '2',
+            'deleteList': json.dumps([{'id': self.other_export._id}]),
+        })
+        assert response.status_code == 404
+        assert FormExportInstance.get(self.export._id) is not None
+        assert FormExportInstance.get(self.other_export._id) is not None
+
+        tmp_export = FormExportInstance(domain=self.domain.name, name='my-tmp-export')
+        tmp_export.save()
+        response = self._delete(self.export._id, post={
+            'count': '2',
+            'deleteList': json.dumps([{'id': tmp_export._id}]),
+        })
+        assert response.status_code == 200
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(self.export._id)
+        with pytest.raises(ResourceNotFound):
+            FormExportInstance.get(tmp_export._id)
+
+    def test_copy_export(self):
+        def _copy(export_id):
+            return self.client.get(
+                reverse('copy_export', args=[self.domain.name, export_id]),
+                follow=False,
+            )
+        before = len(get_form_exports_by_domain(self.domain.name))
+        assert _copy(self.export._id).status_code == 302
+        assert len(get_form_exports_by_domain(self.domain.name)) == before + 1
+
+        assert _copy(self.other_export._id).status_code == 404
+
+    def test_edit_export_name(self):
+        def _edit_name(export_id, value):
+            return self.client.post(
+                reverse('edit_export_name', args=[self.domain.name, export_id]),
+                urlencode({'value': value}),
+                content_type='application/x-www-form-urlencoded',
+            )
+        assert _edit_name(self.export._id, 'renamed').status_code == 200
+        assert FormExportInstance.get(self.export._id).name == 'renamed'
+
+        assert _edit_name(self.other_export._id, 'hacked').status_code == 404
+        assert FormExportInstance.get(self.other_export._id).name == 'theirs'
+
+    @privilege_enabled(privileges.ODATA_FEED)
+    def test_copy_odata_feed(self):
+        response = self.client.get(
+            reverse('edit_odata_form_feed', args=[self.domain.name, self.other_export._id]))
+        assert response.status_code == 404

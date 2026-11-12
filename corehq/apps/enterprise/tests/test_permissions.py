@@ -94,6 +94,12 @@ class EnterprisePermissionsTest(TestCase):
         self.assertListEqual(EnterprisePermissions.get_domains('county'), [])
         self.assertListEqual(EnterprisePermissions.get_domains('staging'), [])
 
+    def test_expand_domains(self):
+        self.assertListEqual(EnterprisePermissions.expand_domains(['state']), ['county', 'state'])
+        self.assertListEqual(EnterprisePermissions.expand_domains(['county']), ['county'])
+        self.assertListEqual(EnterprisePermissions.expand_domains(['staging']), ['staging'])
+        self.assertListEqual(EnterprisePermissions.expand_domains([]), [])
+
     def test_is_source_domain(self):
         self.assertTrue(EnterprisePermissions.is_source_domain('state'))
         self.assertFalse(EnterprisePermissions.is_source_domain('county'))

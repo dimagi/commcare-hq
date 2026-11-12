@@ -53,7 +53,7 @@
     <div class="alert alert-info">
       This build was made before I knew how to save the files for a specific build.
       To see this view for the current not-yet-built version of this app,
-      <a href="{% url "download_index" app.domain app.copy_of%}">click here</a>.
+      <a href="{% url "download_index" app.domain app.origin_id %}">click here</a>.
     </div>
   {% endif %}
 {% endblock post_files %}

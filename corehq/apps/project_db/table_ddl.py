@@ -1,16 +1,31 @@
+from collections import namedtuple
 import hashlib
+from functools import lru_cache
+
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 import sqlalchemy
 from alembic.migration import MigrationContext
 from alembic.operations import Operations
-from sqlalchemy import Boolean, Column, Date, DateTime, Numeric, Table, Text
+from psycopg2 import errorcodes
+from sqlalchemy import Column, Table, Text, func
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import UserDefinedType
 
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.sql_db.connections import PROJECT_DB_ENGINE_ID, connection_manager
+from corehq.util.metrics import metrics_histogram_timer
+from corehq.sql_db.connections import (
+    PROJECT_DB_ENGINE_ID,
+    connection_manager,
+    create_engine,
+)
+
+from .models import PendingOperation
 
 MAX_IDENTIFIER_LENGTH = 63
 _HASH_LENGTH = 8
+SCHEMA_SYNC_LOCK_TIMEOUT = '5s'
 
 
 def truncate_identifier(identifier):
@@ -32,7 +47,30 @@ def property_column(name, data_type=None):
 
 def get_project_db_engine():
     """Return a SQLAlchemy engine for project DB tables"""
-    return connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
+    _assert_project_db_configured()
+    engine = connection_manager.get_engine(PROJECT_DB_ENGINE_ID)
+    _register_earth_type(engine.dialect)
+    return engine
+
+
+@lru_cache(maxsize=64)
+def get_domain_query_engine(domain):
+    """Return an engine that connects as the domain's read-only role"""
+    _assert_project_db_configured()
+    schema = DomainSchema(domain)
+    engine = create_engine(
+        connection_manager.get_connection_string(PROJECT_DB_ENGINE_ID),
+        connect_args={'user': schema.role_name, 'password': schema._get_password()},
+    )
+    _register_earth_type(engine.dialect)
+    return engine
+
+
+def _assert_project_db_configured():
+    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
+        raise ImproperlyConfigured(
+            f"'{PROJECT_DB_ENGINE_ID}' database not defined in REPORTING_DATABASES"
+        )
 
 
 class DomainSchema:
@@ -57,6 +95,36 @@ class DomainSchema:
             sqlalchemy.text(f'COMMENT ON SCHEMA {self._quoted_name} IS :comment'),
             {'comment': self.domain},
         )
+        self._create_role(conn)
+
+    role_name = name
+    _quoted_role_name = _quoted_name
+
+    def _create_role(self, conn):
+        try:
+            with conn.begin_nested():
+                conn.execute(
+                    sqlalchemy.text('SELECT public.projectdb_provision_role(:name, :password)'),
+                    {'name': self.role_name, 'password': self._get_password()},
+                )
+        except sqlalchemy.exc.ProgrammingError as err:
+            if err.orig.pgcode != errorcodes.DUPLICATE_OBJECT:
+                raise
+
+    def grant_role_read_access(self, conn):
+        # Must be reapplied after every new table is added
+        conn.execute(sqlalchemy.text(
+            f'GRANT USAGE ON SCHEMA {self._quoted_name} TO {self._quoted_role_name}'
+        ))
+        conn.execute(sqlalchemy.text(
+            f'GRANT SELECT ON ALL TABLES IN SCHEMA {self._quoted_name} '
+            f'TO {self._quoted_role_name}'
+        ))
+
+    def _get_password(self):
+        # All projectdb_ roles share one password; access is scoped by which
+        # role a domain is given, not by that role having its own secret.
+        return settings.PROJECTDB_USERS_PASSWORD
 
     def get_comment(self, conn):
         """Return the raw domain stored as this schema's Postgres comment"""
@@ -71,22 +139,51 @@ class DomainSchema:
     def set_local_search_path(self, conn):
         """Scope the connection's search_path to a domain's project DB schema"""
         conn.execute(sqlalchemy.text(
-            f'SET LOCAL search_path TO {self._quoted_name}'
+            f'SET LOCAL search_path TO {self._quoted_name}, public'
         ))
 
+    def exists(self, conn):
+        return self.name in sqlalchemy.inspect(conn).get_schema_names()
+
     def drop(self, conn):
+        conn.execute(
+            sqlalchemy.text('SELECT public.projectdb_drop_role(:name)'),
+            {'name': self.role_name},
+        )
         conn.execute(sqlalchemy.text(
             f'DROP SCHEMA IF EXISTS {self._quoted_name} CASCADE'
         ))
 
 
-class CaseTable:
-    COERCED_PROPERTY_TYPES = {
-        # CaseProperty data_type to SQLAlchemy column type
-        CaseProperty.DataType.DATE: Date,
-        CaseProperty.DataType.NUMBER: Numeric,
-    }
+class Earth(UserDefinedType):
+    """The ``earth`` type from PostgreSQL's earthdistance extension."""
 
+    def get_col_spec(self, **kw):
+        return 'earth'
+
+
+def _register_earth_type(dialect):
+    if 'earth' not in dialect.ischema_names:
+        dialect.ischema_names = {**dialect.ischema_names, 'earth': Earth}
+
+
+_Type = namedtuple('_Type', 'dd_type sql_type coercion_fn default')
+_lib = func.lib_projectdb  # Functions defined in lib_projectdb.sql
+PROJECT_DB_TYPES = [
+    _Type(CaseProperty.DataType.DATE,   sqlalchemy.Date,        _lib.coerce_to_date,   None),
+    _Type(CaseProperty.DataType.NUMBER, sqlalchemy.Numeric,     _lib.coerce_to_number, None),
+    _Type(CaseProperty.DataType.SELECT, sqlalchemy.ARRAY(Text), _lib.coerce_to_array,  '{}'),
+    _Type(CaseProperty.DataType.GPS,    Earth,                  _lib.coerce_to_gps,    None),
+]
+
+
+def get_coercion_fn(column):
+    for type_ in PROJECT_DB_TYPES:
+        if column.comment and column.name == property_column(column.comment, type_.dd_type):
+            return type_.coercion_fn
+
+
+class CaseTable:
     def __init__(self, domain, case_type):
         self.domain = domain
         self.case_type = case_type
@@ -115,11 +212,13 @@ class CaseTable:
         ``<data_type>_prop__<name>``. The raw property name is stored as a
         postgres comment.
         """
+        coerced_types = {t.dd_type: t for t in PROJECT_DB_TYPES}
         for name, data_type in self._get_dd_properties():
             yield Column(property_column(name), Text, nullable=False, server_default='', comment=name)
 
-            if col_type := self.COERCED_PROPERTY_TYPES.get(data_type):
-                yield Column(property_column(name, data_type), col_type, comment=name)
+            if t := coerced_types.get(data_type):
+                yield Column(property_column(name, data_type), t.sql_type, comment=name,
+                             nullable=t.default is None, server_default=t.default)
 
     def _get_dd_properties(self):
         return CaseProperty.objects.filter(
@@ -135,12 +234,12 @@ class CaseTable:
             Column('case_id', Text, primary_key=True),
             Column('owner_id', Text, nullable=False, index=True),
             Column('case_name', Text),
-            Column('opened_on', DateTime),
-            Column('closed_on', DateTime),
-            Column('modified_on', DateTime),
-            Column('closed', Boolean),
+            Column('opened_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed_on', sqlalchemy.DateTime(timezone=True)),
+            Column('modified_on', sqlalchemy.DateTime(timezone=True)),
+            Column('closed', sqlalchemy.Boolean),
             Column('external_id', Text, nullable=False, server_default=''),
-            Column('server_modified_on', DateTime),
+            Column('server_modified_on', sqlalchemy.DateTime(timezone=True)),
             Column('parent_id', Text, index=True),
             Column('host_id', Text, index=True),
         ]
@@ -160,11 +259,23 @@ class CaseTable:
 
 
 def create_or_update_project_db(domain):
-    metadata = sqlalchemy.MetaData()
+    """Sync a domain's tables with the data dictionary
 
+    Records pending backfills for new typed columns
+    """
+    with metrics_histogram_timer(
+        'commcare.project_db.schema_sync.duration',
+        timing_buckets=(.5, 1, 5, 20, 60),
+        tags={'domain': domain},
+    ):
+        _create_or_update_project_db(domain)
+
+
+def _create_or_update_project_db(domain):
     case_types = _get_case_types(domain)
     if not case_types:
         return
+    metadata = sqlalchemy.MetaData()
     case_tables = [
         CaseTable(domain, case_type).build_definition(metadata)
         for case_type in case_types
@@ -172,10 +283,34 @@ def create_or_update_project_db(domain):
 
     engine = get_project_db_engine()
     with engine.begin() as conn:
-        DomainSchema(domain).create(conn)
+        _set_lock_timeout(conn)
+        schema = DomainSchema(domain)
+        schema.create(conn)
         metadata.create_all(bind=conn, checkfirst=True)
         for table in case_tables:
-            update_table(conn, table)
+            backfill_columns = update_table(conn, table)
+            if backfill_columns:
+                _record_backfill(domain, table.comment, backfill_columns)
+        schema.grant_role_read_access(conn)
+
+
+def _record_backfill(domain, case_type, columns):
+    PendingOperation.objects.create(domain=domain, operation=PendingOperation.Operation.BACKFILL, args={
+        'case_type': case_type,
+        'columns': columns,
+    })
+
+
+def _set_lock_timeout(conn):
+    """Fail rather than queue behind a long-running query"""
+    conn.execute(sqlalchemy.text(f"SET LOCAL lock_timeout = '{SCHEMA_SYNC_LOCK_TIMEOUT}'"))
+
+
+def get_domain_tables(domain):
+    engine = get_project_db_engine()
+    metadata = sqlalchemy.MetaData()
+    metadata.reflect(bind=engine, schema=DomainSchema(domain).name, resolve_fks=False)
+    return {t.comment: t for t in metadata.tables.values()}
 
 
 def preview_drop(domain):
@@ -193,6 +328,15 @@ def preview_drop(domain):
         raw.close()
 
 
+def drop_project_db(domain):
+    if not connection_manager.engine_id_is_available(PROJECT_DB_ENGINE_ID):
+        return
+    schema = DomainSchema(domain)
+    with get_project_db_engine().begin() as conn:
+        if schema.exists(conn):
+            schema.drop(conn)
+
+
 def _get_case_types(domain):
     return list(CaseType.objects.filter(
         domain=domain, is_deprecated=False,
@@ -202,8 +346,7 @@ def _get_case_types(domain):
 def update_table(conn, table):
     """Add columns and indexes present in ``table`` but missing from the database.
 
-    This is append-only: columns and indexes that exist in the database
-    but not in ``table`` are left in place (never dropped).
+    Returns the names of new typed columns that need backfilling
     """
     inspector = sqlalchemy.inspect(conn)
     schema = table.schema
@@ -221,7 +364,7 @@ def update_table(conn, table):
     ]
 
     if not new_columns and not new_indexes:
-        return
+        return []
 
     op = Operations(MigrationContext.configure(conn))
     for column in new_columns:
@@ -231,6 +374,11 @@ def update_table(conn, table):
         op.add_column(table.name, detached_col, schema=schema)
     for index in new_indexes:
         index.create(bind=conn)
+
+    return [
+        col.name for col in new_columns if get_coercion_fn(col)  # Is coercible
+        and property_column(col.comment) in existing_columns  # Has existing data
+    ]
 
 
 def _index_name(index, dialect):

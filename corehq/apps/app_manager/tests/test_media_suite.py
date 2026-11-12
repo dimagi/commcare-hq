@@ -5,7 +5,6 @@ from copy import deepcopy
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
-from lxml import etree
 from unittest.mock import patch
 
 import commcare_translations
@@ -28,6 +27,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize, pa
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
 from corehq.util.test_utils import softer_assert, privilege_enabled
+from corehq.util.xml_utils import XML
 
 
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
@@ -556,7 +556,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertNotIn('modules.m0.audio', locale_ids['hin'])
 
     def _assert_app_strings_available(self, app, lang):
-        et = etree.XML(app.create_suite())
+        et = XML(app.create_suite())
         locale_elems = et.findall(".//locale/[@id]")
         locale_strings = [elem.attrib['id'] for elem in locale_elems]
 

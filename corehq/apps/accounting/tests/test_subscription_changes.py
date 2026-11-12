@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, time
+from datetime import date, time, timedelta
 from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TestCase, TransactionTestCase
@@ -10,9 +10,12 @@ from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
+    MINIMUM_SUBSCRIPTION_LENGTH,
     SoftwarePlanEdition,
     Subscriber,
     Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentReason,
 )
 from corehq.apps.accounting.subscription_changes import (
     DomainDowngradeActionHandler,
@@ -20,6 +23,7 @@ from corehq.apps.accounting.subscription_changes import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
+from corehq.apps.accounting.utils import pause_current_subscription
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CreateScheduleInstanceActionDefinition,
@@ -262,6 +266,89 @@ class TestSoftwarePlanChanges(BaseAccountingTest):
             self.account, self.domain2.name, self.free_plan
         )
         self.assertRaises(SubscriptionAdjustmentError, lambda: sub2.change_plan(self.advanced_plan))
+
+    def test_downgrade_below_minimum_defers_until_minimum_ends(self):
+        today = date.today()
+        subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain.name,
+            self.advanced_plan,
+            date_start=today,
+        )
+        assert subscription.is_below_minimum_subscription
+
+        downgraded = pause_current_subscription(
+            self.domain.name, self.admin_username, subscription
+        )
+
+        subscription.refresh_from_db()
+        expected_effective_date = today + timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH)
+        assert subscription.is_active
+        assert subscription.date_end == expected_effective_date
+        assert downgraded.date_start == expected_effective_date
+        assert not downgraded.is_active
+        assert downgraded.plan_version.plan.edition == SoftwarePlanEdition.PAUSED
+        self._assert_downgrade_creates_correct_subscription_adjustment(subscription, downgraded)
+
+    def test_downgrade_after_minimum_takes_effect_immediately(self):
+        today = date.today()
+        subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain.name,
+            self.advanced_plan,
+            date_start=today - timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH + 1),
+        )
+        assert not subscription.is_below_minimum_subscription
+
+        downgraded = pause_current_subscription(
+            self.domain.name, self.admin_username, subscription
+        )
+
+        subscription.refresh_from_db()
+        assert not subscription.is_active
+        assert subscription.date_end == today
+        assert downgraded.is_active
+        assert downgraded.date_start == today
+        assert downgraded.plan_version.plan.edition == SoftwarePlanEdition.PAUSED
+        self._assert_downgrade_creates_correct_subscription_adjustment(subscription, downgraded)
+
+    def test_downgrade_cancels_future_subscriptions(self):
+        today = date.today()
+        subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain.name,
+            self.advanced_plan,
+            date_start=today - timedelta(days=MINIMUM_SUBSCRIPTION_LENGTH + 1),
+            date_end=today + timedelta(days=10),
+        )
+        future = Subscription.new_domain_subscription(
+            self.account,
+            self.domain.name,
+            self.free_plan,
+            date_start=today + timedelta(days=10),
+        )
+
+        pause_current_subscription(self.domain.name, self.admin_username, subscription)
+
+        future.refresh_from_db()
+        assert future.date_end == future.date_start
+        cancel_adjustment = SubscriptionAdjustment.objects.get(
+            subscription=future,
+            reason=SubscriptionAdjustmentReason.CANCEL,
+        )
+        assert cancel_adjustment.web_user == self.admin_username
+
+    def _assert_downgrade_creates_correct_subscription_adjustment(self, old_subscription, new_subscription):
+        downgrade_adjustment = SubscriptionAdjustment.objects.get(
+            subscription=old_subscription,
+            reason=SubscriptionAdjustmentReason.DOWNGRADE,
+        )
+        assert downgrade_adjustment.related_subscription_id == new_subscription.id
+
+        assert SubscriptionAdjustment.objects.filter(
+            subscription=new_subscription,
+            reason=SubscriptionAdjustmentReason.CREATE,
+        ).exists()
 
 
 class DeactivateScheduleTest(TransactionTestCase):

@@ -12,8 +12,11 @@ from .applications import (  # noqa: F401
     LinkedApplication,
     RemoteApp,
     SavedAppBuild,
+    TemplateAppSector,
     absolute_url_property,
-    import_app,
+    import_app_from_doc,
+    import_app_from_id,
+    overwrite_app_from_source,
     validate_lang,
 )
 from .base import (  # noqa: F401

@@ -1,26 +1,46 @@
 --- 
 +++ 
-@@ -1,7 +1,7 @@
+@@ -1,70 +1,82 @@
  .form-with-steps .form-step-number {
    margin: 0;
-   font-size: 1.2rem;
+-  font-size: 1.2rem;
 -  padding: 0 0 20px;
++  font-size: 0.75rem;
++  font-weight: $font-weight-bold;
++  letter-spacing: 0.04em;
++  text-transform: uppercase;
 +  padding: 0 0 12px;
++  color: $prelogin-muted-text;
  }
  
  .form-with-steps-centered {
-@@ -16,8 +16,7 @@
    text-align: center;
-   padding: 40px 0 10px;
-   margin-top: 20px;
+ }
+ 
++$form-step-circle: 28px;
++
+ ul.form-step-progress {
+   margin-bottom: 0;
+-  background-color: rgba(0, 0, 0, .25);
+-  overflow: hidden;
++  margin-top: 20px;
++  padding: 44px 0 10px;
+   counter-reset: step;
+   text-align: center;
+-  padding: 40px 0 10px;
+-  margin-top: 20px;
 -  .border-top-radius(5px);
 -  .border-bottom-radius(5px);
-+  border-radius: 5px;
  
    li {
      list-style-type: none;
-@@ -26,7 +25,7 @@
-     font-size: 9px;
+-    color: white;
++    color: rgba($white, 0.7);
+     text-transform: uppercase;
+-    font-size: 9px;
++    font-size: 0.66rem;
++    font-weight: $font-weight-bold;
++    letter-spacing: 0.05em;
      float: left;
      position: relative;
 -    .transition(background 500ms ease-out);
@@ -28,44 +48,68 @@
  
      &:after {
        content: counter(step);
-@@ -35,17 +34,16 @@
-       line-height: 20px;
+       counter-increment: step;
+-      width: 20px;
+-      line-height: 20px;
        display: block;
-       font-size: 10px;
+-      font-size: 10px;
 -      color: @cc-text;
-+      color: $cc-text;
-       background: white;
+-      background: white;
 -      .border-top-radius(5px);
 -      .border-bottom-radius(5px);
-+      border-radius: 5px;
-       margin: 0 auto 5px auto;
-       top: -25px;
+-      margin: 0 auto 5px auto;
+-      top: -25px;
++      position: absolute;
        left: 50%;
-       margin-left: -10px;
-       font-weight: bold;
-       position: absolute;
+-      margin-left: -10px;
+-      font-weight: bold;
+-      position: absolute;
 -      .transition(background 500ms ease-out);
++      top: -36px;
++      width: $form-step-circle;
++      line-height: $form-step-circle - 2px;
++      margin-left: $form-step-circle * -0.5;
++      border-radius: 50%;
++      font-size: 0.8125rem;
++      font-weight: $font-weight-bold;
++      background: rgba($white, 0.14);
++      color: rgba($white, 0.75);
++      border: 1px solid rgba($white, 0.35);
 +      transition: background 500ms ease-out;
      }
++
      &:before {
        content: '';
-@@ -54,7 +52,7 @@
+       height: 2px;
+-      background: white;
++      background: rgba($white, 0.35);
        position: absolute;
        left: -40%;
-       top: -15px;
+-      top: -15px;
 -      .transition(background 500ms ease-out);
++      top: -22px;
 +      transition: background 500ms ease-out;
      }
    }
++
    li:first-child:before {
-@@ -63,8 +61,8 @@
+     display: none;
+   }
++
    li.active {
-     &:before,
+-    &:before,
++    color: $white;
++
      &:after {
 -      background-color: @color-purple-dark;
 -      color: @color-purple-dark-inverse;
-+      background-color: $color-purple-dark;
-+      color: $color-purple-dark-inverse;
++      background: $white;
++      color: $prelogin-deep-blue;
++      border-color: $white;
++    }
++
++    &:before {
++      background: $white;
      }
    }
  }

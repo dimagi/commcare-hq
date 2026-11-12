@@ -29,7 +29,9 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         super().setUpClass()
 
         cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain1.delete)
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain2.delete)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
@@ -91,6 +93,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         subscription2.funding_source = FundingSource.EXTERNAL
         subscription2.skip_auto_downgrade = True
         subscription2.skip_auto_downgrade_reason = "test skip auto downgrade"
+        subscription2.skip_auto_downgrade_until = today + datetime.timedelta(days=14)
         subscription2.save()
 
         new_product_rate = SoftwareProductRate.objects.create(
@@ -128,6 +131,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         assert new_subscription1.funding_source == FundingSource.CLIENT
         assert not new_subscription1.skip_auto_downgrade
         assert new_subscription1.skip_auto_downgrade_reason == ''
+        assert new_subscription1.skip_auto_downgrade_until is None
 
         new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
         assert new_subscription2.plan_version == self.newest_version
@@ -144,6 +148,7 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         assert new_subscription2.funding_source == FundingSource.EXTERNAL
         assert new_subscription2.skip_auto_downgrade
         assert new_subscription2.skip_auto_downgrade_reason == "test skip auto downgrade"
+        assert new_subscription2.skip_auto_downgrade_until == old_subscription2.skip_auto_downgrade_until
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
@@ -153,7 +158,9 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
         super().setUpClass()
 
         cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain1.delete)
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain2.delete)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         cls.account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
@@ -223,12 +230,12 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
     def test_keep_software_plan_consistent_for_customer_billing_accounts(self):
         with patch('builtins.input', side_effect=[self.account.name, 'DONE']):
             old_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
-            self.assertEqual(old_subscription1.plan_version, self.newest_version)
+            assert old_subscription1.plan_version == self.newest_version
 
             old_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-            self.assertEqual(old_subscription2.plan_version, self.first_version)
+            assert old_subscription2.plan_version == self.first_version
 
             call_command('list_customer_billing_account_software_plan', update=True)
 
             new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
-            self.assertEqual(new_subscription2.plan_version, self.newest_version)
+            assert new_subscription2.plan_version == self.newest_version

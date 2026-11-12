@@ -9,15 +9,20 @@ from corehq.apps.cloudcare.views import session_endpoint
 from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
+from corehq.apps.hqwebapp.chat_auth import chat_token
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.oauth_views import (
+    HQAuthorizationView,
+    OauthApplicationRegistration,
+)
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
-    OauthApplicationRegistration,
     SolutionsFeatureRequestView,
+    chat_quota,
     check_sso_login_status,
     create_alert,
     debug_notify,
@@ -116,11 +121,14 @@ urlpatterns = [
         waf_allow('EC2MetaDataSSRF_BODY')(OauthApplicationRegistration.as_view()),
         name=OauthApplicationRegistration.urlname
     ),
+    url(r'^oauth/authorize/$', HQAuthorizationView.as_view(), name=HQAuthorizationView.urlname),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
 ]
 
 domain_specific = [
+    url(r'^chat_token/$', chat_token, name='chat_token'),
+    url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),

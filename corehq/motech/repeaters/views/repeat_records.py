@@ -28,7 +28,6 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.users.decorators import require_can_edit_web_users
-from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.dhis2.parse_response import (
     get_diagnosis_message,
     get_errors,
@@ -38,8 +37,8 @@ from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 
-from ..const import State
-from ..exceptions import BulkActionMissingParameters
+from ..const import states_for_key
+from ..exceptions import BulkActionMissingParameters, PayloadNotFoundError
 from ..models import RepeatRecord
 from .repeat_record_display import RepeatRecordDisplay
 
@@ -97,8 +96,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         query = RepeatRecord.objects.filter(domain=self.domain)
         if self.repeater_id:
             query = query.filter(repeater_id=self.repeater_id)
-        if self.state:
-            query = query.filter(state=self.state)
+        if self.states:
+            query = query.filter(state__in=self.states)
         return query.count()
 
     @property
@@ -117,8 +116,8 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
         if self.repeater_id:
             query = query.filter(repeater_id=self.repeater_id)
-        if self.state:
-            query = query.filter(state=self.state)
+        if self.states:
+            query = query.filter(state__in=self.states)
         return list(query)
 
     @property
@@ -130,8 +129,14 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         return self.request.GET.get('repeater', None)
 
     @property
-    def state(self):
-        return State.state_for_key(self.request.GET.get('record_state'))
+    def state_group(self):
+        """The STATE_GROUPS key selected in the Record Status filter"""
+        key = self.request.GET.get('record_state')
+        return key.upper() if states_for_key(key) else None
+
+    @property
+    def states(self):
+        return states_for_key(self.state_group)
 
     @property
     def rows(self):
@@ -144,7 +149,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 self.pagination.start,
                 self.pagination.count,
                 repeater_id=self.repeater_id,
-                state=self.state
+                states=self.states,
             )
         rows = [self._make_row(record) for record in records]
         return rows
@@ -197,7 +202,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Remote Service')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Delivery Attempts')),
-            DataTablesColumn(_('View Responses')),
+            DataTablesColumn(_('Preview Payloads')),
         ]
         if toggles.SUPPORT.enabled_for_request(self.request):
             columns.insert(2, DataTablesColumn(_('Payload ID')))
@@ -213,15 +218,15 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             where &= Q(repeater_id=self.repeater_id)
         if self.payload_id:
             where &= Q(payload_id=self.payload_id)
-        if self.state:
-            where &= Q(state=self.state)
+        if self.states:
+            where &= Q(state__in=self.states)
         total = RepeatRecord.objects.filter(where).count()
 
         context.update(
             total=total,
             payload_id=self.payload_id,
             repeater_id=self.repeater_id,
-            state=self.state.name.upper() if self.state else None,
+            state=self.state_group,
         )
         return context
 
@@ -250,9 +255,9 @@ class RepeatRecordView(View):
         content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
-        except XFormNotFound:
+        except PayloadNotFoundError:
             return JsonResponse({
-                'error': 'Odd, could not find payload for: {}'.format(record.payload_id)
+                'error': _('The payload could not be found.')
             }, status=404)
 
         if content_type == 'text/xml':
@@ -350,14 +355,14 @@ def _get_record_ids_from_request(request):
     return record_ids.strip().split()
 
 
-def _get_state(request: HttpRequest) -> str:
+def _get_states(request: HttpRequest) -> tuple | None:
     state_from_request = request.POST.get('state')
     if not state_from_request:
         return None
-    state = State.state_for_key(state_from_request)
-    if not state:
-        raise KeyError(f"{state_from_request} is not a valid option for RepeatRecord.State")
-    return state
+    states = states_for_key(state_from_request)
+    if not states:
+        raise KeyError(f"{state_from_request} does not name a group in STATE_GROUPS")
+    return states
 
 
 def _schedule_task_with_state(
@@ -370,9 +375,9 @@ def _schedule_task_with_state(
     repeater_id = request.POST.get('repeater_id', None)
     if not any([repeater_id, payload_id]):
         raise BulkActionMissingParameters
-    state = _get_state(request)
+    states = _get_states(request)
     task = task_generate_ids_and_operate_on_payloads.delay(
-        payload_id, repeater_id, domain, action, state=state)
+        payload_id, repeater_id, domain, action, state=states)
     task_ref.set_task(task)
 
 

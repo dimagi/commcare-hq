@@ -10,8 +10,9 @@ Overview
 
     This API provides three endpoints:
 
-    1. **Import App** — Upload an application source JSON file to create
-       a new application.
+    1. **Import App** — Upload an application source JSON file to create a
+       new application, or update an existing application in place when an
+       ``app_id`` is supplied.
     2. **Upload Multimedia** — Upload a ZIP archive of multimedia files
        for an imported application (processed asynchronously).
     3. **Poll Multimedia Status** — Check the progress of an
@@ -55,8 +56,13 @@ Request & Response Details
      - The application source JSON file
      - yes
    * - app_name
-     - Name for the imported application
-     - yes
+     - Name for the application. On update, renames the app if given;
+       otherwise the existing name is kept.
+     - yes on create, optional on update
+   * - app_id
+     - ID of an existing application to update in place. When omitted, a new
+       application is created.
+     - no
 
 **Sample cURL Request**
 
@@ -90,6 +96,31 @@ multimedia references or UCR configuration), the response includes a
       ]
     }
 
+**Sample cURL Request — Update**
+
+.. code-block:: bash
+
+    curl -X POST https://www.commcarehq.org/a/[domain]/apps/api/import_app/ \
+         -u user@domain.com:password \
+         -F "app_file=@app_source.json" \
+         -F "app_id=abc123def456..."
+
+**Response (200 OK) — Update**
+
+When ``app_id`` is supplied, the existing application is updated in place and
+its version is bumped. The response returns the new version:
+
+.. code-block:: json
+
+    {
+      "success": true,
+      "app_id": "abc123def456...",
+      "version": 8
+    }
+
+As with the create response, if the update succeeds but encounters non-fatal
+issues, the response also includes a ``warnings`` field.
+
 **Error Responses**
 
 .. list-table::
@@ -98,10 +129,13 @@ multimedia references or UCR configuration), the response includes a
    * - Status
      - Condition
    * - 400
-     - Missing ``app_file`` or ``app_name``, or the uploaded file is not
-       valid JSON
+     - Missing ``app_file``; missing ``app_name`` when creating; the uploaded
+       file is not valid JSON; or (on update) the uploaded source's app type
+       is incompatible with the existing app
    * - 403
      - Insufficient permissions
+   * - 404
+     - ``app_id`` was supplied but no matching application exists in the domain
    * - 405
      - Request method is not POST
 

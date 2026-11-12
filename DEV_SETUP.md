@@ -299,7 +299,7 @@ needs of most developers.
     ```sh
     ./scripts/docker up -d
     # Optionally, start only specific containers.
-    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka minio formplayer
+    ./scripts/docker up -d postgres couch redis elasticsearch6 zookeeper kafka garage formplayer
     ```
 
    **Mac OS:** You may encounter issues with formplayer and elasticsearch at this stage.
@@ -410,6 +410,7 @@ Populate your database:
 ```sh
 ./manage.py sync_couch_views
 ./manage.py create_kafka_topics
+CCHQ_TESTING=1 ./manage.py create_kafka_topics
 env CCHQ_IS_FRESH_INSTALL=1 ./manage.py migrate --noinput
 ```
 
@@ -1038,6 +1039,18 @@ export PATH="$(yarn global bin):$PATH"
 
 More information can be found [here](https://classic.yarnpkg.com/en/docs/cli/global/)
 
+`.yarnrc` sets `ignore-scripts true` repo-wide as a supply-chain control, so no
+package's install hooks run — including puppeteer's, which is what downloads the
+Chrome build the tests drive. You'll need to install that browser explicitly,
+once:
+
+```sh
+npx puppeteer browsers install chrome
+```
+
+This is only needed to run the tests locally; CI uses the Chrome installed in
+the docker image.
+
 In order for the tests to run the **development server needs to be running on port 8000**.
 
 
@@ -1096,3 +1109,53 @@ This script goes through the steps to prepare a report for test coverage of
 JavaScript files _that are touched by tests_, i.e., apps and files with 0% test
 coverage will not be shown. A coverage summary is output to the terminal and a
 detailed html report is generated at ``coverage-js/index.html``.
+
+## Checking an API against its OpenAPI spec
+
+[Schemathesis](https://schemathesis.readthedocs.io/) generates requests from an
+OpenAPI spec and reports where the responses disagree with it.
+
+Run it with `uvx`, which fetches it into a cache on first use and leaves the
+project virtualenv alone:
+
+```sh
+uvx schemathesis@4.31.1 --version
+```
+
+
+
+To see what it does, run it against Schemathesis' own demo service, whose
+endpoints are named after the defects they contain. The run is meant to report
+failures:
+
+```sh
+uvx schemathesis@4.31.1 --config-file /dev/null \
+    run https://example.schemathesis.io/openapi.json \
+    --include-path-regex '/response-conformance/' -n 2
+```
+
+`--config-file /dev/null` keeps the config below out of this run. Without it,
+once `schemathesis.toml` exists the demo run picks it up and sends the requests
+to `base-url`, your local dev server, instead of the demo service.
+
+To run it against a commcare-hq spec, give it a file path or the URL that serves one.
+Copy the example config first and add a valid API key and project slug:
+
+```sh
+cp schemathesis.toml.example schemathesis.toml
+export CCHQ_API_KEY="me@example.com:<key>"
+export CCHQ_DOMAIN=my-project
+uvx schemathesis@4.31.1 run <spec.json>
+```
+
+Schemathesis picks up `schemathesis.toml` from the directory you run it in or
+any parent, stopping at the repository root, so run it from the root.
+
+Generated requests are real requests, sent to the project space you name in
+`CCHQ_DOMAIN`.
+
+The example config keeps the run read-only: the `[[operations]]` block with
+`enabled = false` deselects POST, PUT, PATCH and DELETE, so the run never
+sends them.
+
+Remove the `[[operations]]` block and the run writes to the project space.

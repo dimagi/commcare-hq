@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 
@@ -111,3 +111,7 @@ def setup_stripe_common_mocks(mock_list_sources, mock_modify_source):
 
     mock_modify_source.side_effect = modify_source_side_effect
     mock_list_sources.side_effect = list_sources_side_effect
+
+
+def in_days(days):
+    return date.today() + timedelta(days=days)

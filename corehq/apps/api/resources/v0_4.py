@@ -265,6 +265,13 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     are correct.
     """
 
+    username = fields.CharField(
+        help_text="Username to authenticate.",
+    )
+    password = fields.CharField(
+        help_text="Password for the given username.",
+    )
+
     def post_list(self, request, **kwargs):
         domain = kwargs.get('domain')
         request.domain = domain
@@ -337,9 +344,14 @@ class ApplicationResource(BaseApplicationResource):
     is_released = fields.BooleanField(attribute='is_released', null=True)
     built_on = fields.DateTimeField(attribute='built_on', null=True)
     build_comment = fields.CharField(attribute='build_comment', null=True)
-    built_from_app_id = fields.CharField(attribute='copy_of', null=True)
+    built_from_app_id = fields.CharField(null=True)
     modules = fields.ListField()
     versions = fields.ListField()
+
+    @staticmethod
+    def dehydrate_built_from_app_id(bundle):
+        app = bundle.obj
+        return app.origin_id if app.copy_of else None
 
     @staticmethod
     def dehydrate_versions(bundle):

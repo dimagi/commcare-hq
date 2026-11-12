@@ -137,14 +137,14 @@ class RepeatRecordStateFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [(s.name.upper(), s.label) for s in [
-            State.Success,  # Includes Empty
-            State.Pending,
-            State.Cancelled,
-            State.Fail,
-            State.PayloadRejected,  # Includes ErrorGeneratingPayload
-            # See templates/repeaters/partials/repeater_row.html
-        ]]
+        # Keys are the groups in STATE_GROUPS
+        return [
+            ('SUCCESS', State.Success.label),  # Includes Empty
+            ('PENDING', State.Pending.label),
+            ('CANCELLED', State.Cancelled.label),
+            ('FAIL', State.Fail.label),
+            ('PAYLOADERROR', gettext_lazy('Payload Error')),
+        ]
 
 
 class UCRRebuildStatusFilter(BaseSingleOptionFilter):

@@ -128,8 +128,11 @@ def _get_accounts_over_threshold_in_daterange(date_start, date_end):
 
 
 def get_flagged_pay_annually_prepay_invoice(invoice):
-    plan = invoice.subscription.plan_version.plan
-    if not plan.is_annual_plan:
+    subscription = invoice.subscription
+    if (
+        subscription.account.auto_pay_enabled
+        or not subscription.plan_version.plan.is_annual_plan
+    ):
         return None
 
     product_line_item = invoice.lineitem_set.get_products().first()

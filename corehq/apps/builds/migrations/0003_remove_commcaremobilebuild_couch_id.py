@@ -2,6 +2,9 @@
 
 from django.db import migrations
 
+INDEX_NAME = 'builds_comm_couch_i_3b9fc6_idx'
+
+
 class Migration(migrations.Migration):
     atomic = False
 
@@ -12,13 +15,28 @@ class Migration(migrations.Migration):
     operations = [
         migrations.SeparateDatabaseAndState(
             state_operations=[
+                migrations.RemoveIndex(
+                    model_name='commcaremobilebuild',
+                    name=INDEX_NAME,
+                ),
                 migrations.RemoveField(
                     model_name='CommCareMobileBuild',
                     name='couch_id',
                 ),
             ],
             database_operations=[
-                # Empty - don't touch database yet
+                # The column and its index are dropped in a later PR. Until
+                # then inserts no longer supply couch_id, so it must be nullable.
+                migrations.RunSQL(
+                    sql="ALTER TABLE builds_commcaremobilebuild "
+                        "ALTER COLUMN couch_id DROP NOT NULL",
+                    reverse_sql=[
+                        "UPDATE builds_commcaremobilebuild SET couch_id = '' "
+                        "WHERE couch_id IS NULL",
+                        "ALTER TABLE builds_commcaremobilebuild "
+                        "ALTER COLUMN couch_id SET NOT NULL",
+                    ],
+                ),
             ],
         ),
     ]

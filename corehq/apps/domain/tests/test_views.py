@@ -13,6 +13,7 @@ from corehq import privileges
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
+    Subscription,
     SubscriptionAdjustmentMethod,
 )
 from corehq.apps.accounting.tests import generator
@@ -72,6 +73,27 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
         self.domain.delete()
         clear_plan_version_cache()
         super().tearDown()
+
+    def test_annual_pro_cannot_downgrade_to_monthly_standard(self):
+        self.setup_subscription(self.domain.name, SoftwarePlanEdition.PRO, use_annual_plan=True)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain.name)
+        self.client.force_login(self.user.get_django_user())
+
+        response = self.client.post(reverse('confirm_selected_plan', args=[self.domain.name]), {
+            'plan_edition': SoftwarePlanEdition.STANDARD,
+            'is_annual_plan': 'false',
+        })
+
+        self.assertRedirects(
+            response, reverse('domain_select_plan', args=[self.domain.name]), fetch_redirect_response=False
+        )
+        banner, = get_messages(response.wsgi_request)
+        assert banner.level == ERROR
+        assert 'Your annual subscription only allows upgrades.' in str(banner)
+        assert Subscription.get_active_subscription_by_domain(self.domain.name) == subscription
+        subscription.refresh_from_db()
+        assert subscription.plan_version.plan.edition == SoftwarePlanEdition.PRO
+        assert subscription.plan_version.plan.is_annual_plan
 
     def test_allow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)

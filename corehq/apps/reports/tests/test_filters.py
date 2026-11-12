@@ -10,7 +10,10 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.controllers import paginate_options
+from corehq.apps.reports.filters.controllers import (
+    SubmittedByOptionsController,
+    paginate_options,
+)
 from corehq.apps.reports.filters.forms import (
     PARAM_SLUG_APP_ID,
     PARAM_SLUG_MODULE,
@@ -19,11 +22,20 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilter,
     FormsByApplicationFilterParams,
 )
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.filters.users import (
+    ExpandedMobileWorkerFilter,
+    FormSubmitterFilter,
+)
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.util.test_utils import generate_cases, has_permissions
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import (
+    flag_enabled,
+    generate_cases,
+    has_permissions,
+    privilege_enabled,
+)
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -150,6 +162,13 @@ class TestExpandedMobileWorkerFilter(TestCase):
         emwf = ExpandedMobileWorkerFilter(self.request)
         loc_defaults = emwf._get_assigned_locations_default()
         self.assertEqual(loc_defaults, list(map(emwf.utils.location_tuple, self.user_assigned_locations)))
+
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
+    def test_submitted_by_options_offer_public_users(self):
+        controller = SubmittedByOptionsController(self.request, self.domain.name, 'public')
+        options = controller.get_all_static_options('public')
+        self.assertEqual(options, [('t__8', '[Public Users]')])
 
 
 class TestLocationRestrictedMobileWorkerFilter(TestCase):
@@ -320,6 +339,7 @@ COMMTRACK = f't__{HQUserType.COMMTRACK}'
 DEACTIVATED = f't__{HQUserType.DEACTIVATED}'
 WEB = f't__{HQUserType.WEB}'
 DEACTIVATED_WEB = f't__{HQUserType.DEACTIVATED_WEB}'
+PUBLIC = f't__{HQUserType.PUBLIC}'
 
 
 @generate_cases([
@@ -361,3 +381,13 @@ def test_restricted_user_es_query(self, slugs, expected_ids):
     with has_permissions(access_all_locations=False):
         user_query = ExpandedMobileWorkerFilter.user_es_query(self.domain, slugs, self.user)
         self.assertCountEqual(user_query.values_list('_id', flat=True), expected_ids)
+
+
+@generate_cases([
+    ([PUBLIC], ['_public_']),
+    ([UNKNOWN], []),
+    ([ACTIVE, PUBLIC], ['active', 'active_accessible', 'active_inaccessible', '_public_']),
+], TestEMWFilterOutput)
+def test_submitter_ids(self, slugs, expected_ids):
+    submitter_ids = FormSubmitterFilter.submitter_ids(self.domain, slugs, self.user)
+    self.assertCountEqual(submitter_ids, expected_ids)

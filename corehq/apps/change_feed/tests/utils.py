@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from kafka import KafkaConsumer
-from kafka.errors import KafkaUnavailableError
+from kafka.errors import NoBrokersAvailable
 from corehq.tests.tools import nottest
 
 from corehq.util.test_utils import trap_extra_setup
@@ -13,7 +13,7 @@ def get_test_kafka_consumer(*topics):
     Gets a KafkaConsumer object for the topic, or conditionally raises
     a skip error for the test if Kafka is not available
     """
-    with trap_extra_setup(KafkaUnavailableError):
+    with trap_extra_setup(NoBrokersAvailable):
         configs = {
             'bootstrap_servers': settings.KAFKA_BROKERS,
             'consumer_timeout_ms': 500,

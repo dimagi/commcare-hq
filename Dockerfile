@@ -50,7 +50,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   && rm -rf /tmp-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
-#   executablePath: 'google-chrome-stable'
+#   executablePath: '/usr/bin/google-chrome-stable'
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY package.json /vendor/

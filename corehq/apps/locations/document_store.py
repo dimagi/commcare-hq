@@ -5,11 +5,10 @@ from pillowtop.dao.django import DjangoDocumentStore
 from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.document_types import LOCATION_DOC_TYPE
 from corehq.apps.change_feed.producer import producer
 
 from .models import SQLLocation
-
-LOCATION_DOC_TYPE = "Location"
 
 
 class LocationDocumentStore(DjangoDocumentStore):

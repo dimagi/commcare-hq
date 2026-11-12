@@ -38,8 +38,8 @@
   do the move or the rename in one commit and make the changes in another
   commit, so that the changes are clear.
 
-- When creating PRs, always create them as drafts with the "DON'T REVIEW
-  YET" label, and always use the GitHub PR template.
+- When creating PRs, always create them as drafts, and always use the
+  GitHub PR template.
 
 - When adding PR descriptions, avoid restating the code diff. Focus on
   useful context for the reviewer.

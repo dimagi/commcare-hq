@@ -1,4 +1,3 @@
-/* eslint-env node */
 
 const fs = require('fs');
 const path = require('path');
@@ -47,7 +46,7 @@ const hasTemplateFolder = function (dirEnt) {
     const templatePath = path.resolve(APPS_PATH, dirEnt.name, TEMPLATES_DIR);
     try {
         return fs.readdirSync(templatePath);
-    } catch (e) {
+    } catch {
         // throws an error if the templates directory does not exist
         return false;
     }

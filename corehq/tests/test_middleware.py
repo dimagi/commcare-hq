@@ -16,7 +16,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.users.models import FakeUser, WebUser
-from corehq.middleware import SyncUserLanguageMiddleware
+from corehq.middleware import (
+    NoCacheMiddleware,
+    SyncUserLanguageMiddleware,
+    always_allow_browser_caching,
+)
 from corehq.util.timer import set_request_duration_reporting_threshold, TimingContext
 
 
@@ -132,6 +136,17 @@ def no_cookie_view(request):
     return HttpResponse()
 
 
+def session_view(request):
+    """Reads the session, as any authenticated view does."""
+    request.session['some-key'] = 'some-value'
+    return HttpResponse('content')
+
+
+@always_allow_browser_caching
+def cacheable_session_view(request):
+    return session_view(request)
+
+
 urlpatterns = [
     path('slow_class', SlowClassView.as_view()),
     path('slow_function', slow_function_view),
@@ -141,6 +156,8 @@ urlpatterns = [
     path('cookie', cookie_view),
     path('secure_cookie', secure_cookie_view),
     path('no_cookie', no_cookie_view),
+    path('session', session_view),
+    path('cacheable_session.xml', cacheable_session_view),
 ]
 
 
@@ -293,3 +310,48 @@ class TestSyncUserLanguageMiddleware(SimpleTestCase):
 
         language_cookie = response.cookies.get(settings.LANGUAGE_COOKIE_NAME)
         assert language_cookie is None
+
+
+class TestNoCacheMiddlewareCookies(SimpleTestCase):
+
+    def run_middleware(self, view):
+        request = RequestFactory().get('/a/domain/apps/download/profile.xml')
+        return NoCacheMiddleware(view)(request)
+
+    def test_cacheable_response_drops_its_cookies(self):
+        @always_allow_browser_caching
+        def view(request):
+            response = HttpResponse('content')
+            response.set_cookie('test-cookie', 'abc123')
+            return response
+
+        response = self.run_middleware(view)
+        assert not response.cookies
+
+    def test_uncacheable_response_keeps_its_cookies(self):
+        def view(request):
+            response = HttpResponse('content')
+            response.set_cookie('test-cookie', 'abc123')
+            return response
+
+        response = self.run_middleware(view)
+        assert response.cookies['test-cookie'].value == 'abc123'
+
+
+@override_settings(
+    ROOT_URLCONF='corehq.tests.test_middleware',
+    # order mirrors settings.MIDDLEWARE
+    MIDDLEWARE=(
+        'corehq.middleware.NoCacheMiddleware',
+        'django.contrib.sessions.middleware.SessionMiddleware',
+    ),
+)
+class TestSessionViewCookies(SimpleTestCase):
+
+    def test_cacheable_response_drops_the_session_cookie(self):
+        response = self.client.get('/cacheable_session.xml')
+        assert settings.SESSION_COOKIE_NAME not in response.cookies
+
+    def test_uncacheable_response_keeps_the_session_cookie(self):
+        response = self.client.get('/session')
+        assert settings.SESSION_COOKIE_NAME in response.cookies

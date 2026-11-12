@@ -43,7 +43,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppMisconfigurationError,
@@ -283,7 +283,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'instance_name': module.search_config.instance_name or "",
                 'include_all_related_cases': module.search_config.include_all_related_cases,
                 'search_on_clear': module.search_config.search_on_clear,
-                'case_search_endpoint_id': module.search_config.case_search_endpoint_id or "",
+                'case_search_endpoint_id': str(module.search_config.case_search_endpoint_id or ""),
             },
         },
     }
@@ -500,7 +500,7 @@ def _case_list_form_options(app, module, lang=None):
         'is_registration_form': True,
     } for f in reg_forms})
     if (hasattr(module, 'parent_select')  # AdvancedModule doesn't have parent_select
-            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM
+            and toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain)
             and module.parent_select.active):
         followup_forms = get_parent_select_followup_forms(app, module)
         if followup_forms:
@@ -533,11 +533,10 @@ def _form_endpoint_options(app, module, lang=None):
 def get_parent_select_followup_forms(app, module):
     if not module.parent_select.active or not module.parent_select.module_id:
         return []
-    parent_module = app.get_module_by_unique_id(
-        module.parent_select.module_id,
-        error=_("Case list used by Select Parent First in '{}' not found").format(
-            module.default_name()),
-    )
+    try:
+        parent_module = app.get_module_by_unique_id(module.parent_select.module_id)
+    except ModuleNotFoundException:
+        return []
     parent_case_type = parent_module.case_type
     rel = module.parent_select.relationship
     if (rel == 'parent' and parent_case_type != module.case_type) or rel is None:
@@ -900,6 +899,18 @@ def delete_module(request, domain, app_id, module_unique_id):
                                       'you can delete it.').format(module.default_name()))
             return back_to_main(request, domain, app_id)
 
+    dependents = [
+        m.default_name(app=app) for m in app.get_modules()
+        if hasattr(m, 'parent_select') and m.parent_select.active
+        and m.parent_select.module_id == module_unique_id
+    ]
+    if dependents:
+        messages.error(request, _(
+            '"{module}" is used by "{dependents}" for Parent Child Selection. '
+            'Change or turn off that setting before deleting it.'
+        ).format(module=module.default_name(), dependents=', '.join(dependents)))
+        return back_to_main(request, domain, app_id)
+
     shadow_children = [
         m.unique_id for m in app.get_modules()
         if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
@@ -1235,7 +1246,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
 
-    _gather_and_update_search_properties(params, app, module, lang)
+    error_response = _gather_and_update_search_properties(params, app, module, lang)
+    if error_response:
+        return error_response
 
     resp = {}
     app.save(resp)
@@ -1348,11 +1361,18 @@ def _gather_and_update_search_properties(params, app, module, lang):
                 "'{}' is an invalid instance name. It can contain only letters, numbers, and underscores."
             ).format(instance_name))
 
+        case_search_endpoint_id = None
         if toggles.CASE_SEARCH_ENDPOINTS.enabled(app.domain):
             endpoint_id_raw = search_properties.get('case_search_endpoint_id')
-            case_search_endpoint_id = int(endpoint_id_raw) if endpoint_id_raw else None
-        else:
-            case_search_endpoint_id = None
+            if endpoint_id_raw:
+                try:
+                    case_search_endpoint_id = int(endpoint_id_raw)
+                except (TypeError, ValueError):
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
+                if not CaseSearchEndpoint.objects.filter(
+                    id=case_search_endpoint_id, domain=app.domain, is_active=True
+                ).exists():
+                    return HttpResponseBadRequest(_("Invalid case search endpoint."))
 
         module.search_config = CaseSearch(
             title_label=title_label,
@@ -1694,14 +1714,14 @@ def _init_biometrics_identify_module(app, lang, enroll_form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_module(request, domain, app_id, module_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_unique_id=module_unique_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_module_legacy(request, domain, app_id, module_id):
     """
     This view has been kept around to not break any documentation on example apps

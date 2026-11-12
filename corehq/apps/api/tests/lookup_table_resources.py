@@ -202,6 +202,22 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(1, LookupTable.objects.by_domain(self.domain.name).count())
 
+    def test_cant_delete_lookup_table_in_another_domain(self):
+        not_my_domain = 'not-my-project'
+        not_my_data_type = LookupTable(
+            domain=not_my_domain,
+            tag="lookup_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_data_type.save()
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_type.id), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert LookupTable.objects.filter(id=not_my_data_type.id).exists()
+
     def test_create(self):
         lookup_table = {
             "tag": "table_name",
@@ -236,6 +252,35 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(data_type.fields[0].field_name, 'fixture_property')
         self.assertEqual(data_type.fields[0].properties, ['lang', 'name'])
         self.assertEqual(data_type.item_attributes, ['X'])
+
+    def test_cant_update_missing_lookup_table(self):
+        missing_id = uuid.uuid4()
+        lookup_table = {"tag": "brand_new_tag", "item_attributes": ["X"]}
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(missing_id), json.dumps(lookup_table), method="PUT")
+
+        assert response.status_code == 404, response.content
+        assert not LookupTable.objects.filter(id=missing_id).exists()
+        assert LookupTable.objects.by_domain(self.domain.name).count() == 1
+
+    def test_cant_update_lookup_table_in_another_domain(self):
+        not_my_domain = 'not-my-domain'
+        not_my_lookup_table = LookupTable(
+            domain=not_my_domain,
+            tag="their_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_lookup_table.save()
+        lookup_table = {"tag": "their_table", "item_attributes": ["X"]}
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_lookup_table.id), json.dumps(lookup_table), method="PUT")
+
+        assert response.status_code == 404, response.content
+        assert LookupTable.objects.by_domain(self.domain.name).count() == 1
+        assert LookupTable.objects.get(id=not_my_lookup_table.id).item_attributes == []
 
     def test_update_field_name(self):
         lookup_table = {
@@ -372,6 +417,50 @@ class TestLookupTableItemResourceV06(APIResourceTest):
         data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.assertIsNone(data_item)
 
+    def test_cant_update_missing_lookup_table_row(self):
+        missing_id = uuid.uuid4()
+        data_item_update = self._get_data_item_update()
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(missing_id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+
+        assert response.status_code == 404, response.content
+        assert not LookupTableRow.objects.filter(id=missing_id).exists()
+        assert not LookupTableRow.objects.filter(domain=self.domain.name).exists()
+
+    def test_cant_update_lookup_table_row_in_another_domain(self):
+        not_my_domain = 'not-my-project'
+        not_my_data_type = LookupTable(
+            domain=not_my_domain,
+            tag="their_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_data_type.save()
+        not_my_data_item = LookupTableRow(
+            domain=not_my_domain,
+            table_id=not_my_data_type.id,
+            fields={"state_name": [Field(value="Tennessee", properties={"lang": "en"})]},
+            item_attributes={},
+            sort_key=1
+        )
+        not_my_data_item.save()
+        data_item_update = self._get_data_item_update()
+        data_item_update["data_type_id"] = not_my_data_type.id.hex
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_item.id.hex),
+            json.dumps(data_item_update),
+            method="PUT",
+        )
+
+        assert response.status_code == 404, response.content
+        assert not LookupTableRow.objects.filter(domain=self.domain.name).exists()
+        assert LookupTableRow.objects.get(id=not_my_data_item.id).item_attributes == {}
+
     def test_update_field_value(self):
         data_item = self._create_data_item()
         data_item_update = self._get_data_item_update()
@@ -454,6 +543,30 @@ class TestLookupTableItemResourceV05(TestLookupTableItemResourceV06):
         response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
+
+    def test_cant_delete_lookup_table_item_in_another_domain(self):
+        not_my_domain = 'not-my-project'
+        not_my_data_type = LookupTable(
+            domain=not_my_domain,
+            tag="lookup_table",
+            fields=[TypeField("fixture_property", ["lang", "name"])],
+            item_attributes=[]
+        )
+        not_my_data_type.save()
+        not_my_data_item = LookupTableRow(
+            domain=not_my_domain,
+            table_id=not_my_data_type.id,
+            fields={"state_name": [Field(value="Tennessee", properties={"lang": "en"})]},
+            item_attributes={},
+            sort_key=1
+        )
+        not_my_data_item.save()
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_data_item.id.hex), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert LookupTableRow.objects.filter(id=not_my_data_item.id).exists()
 
     def test_create(self):
         data_item_json = self._get_data_item_create()

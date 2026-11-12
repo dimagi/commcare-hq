@@ -335,7 +335,7 @@
 -              class="control-label {% css_label_class %}"
 +              class="form-label {% css_label_class %}"
              >
-               {% trans "Display Condition" %}
+               {% trans "Search Button Display Condition" %}
                <span
 @@ -395,10 +395,10 @@
                ></textarea>

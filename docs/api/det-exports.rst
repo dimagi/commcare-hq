@@ -36,7 +36,7 @@ export_format:
     very large volumes of data.
 
 is_deidentified:
-    Whether personal ideintifiers are excluded from the export data.
+    Whether personal identifiers are excluded from the export data.
 
 case_type:
     (Case exports only) The case type of exported cases.

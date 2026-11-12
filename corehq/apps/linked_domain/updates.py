@@ -1,3 +1,6 @@
+from corehq.apps.linked_domain.case_search_endpoints import (
+    update_linked_case_search_endpoint,
+)
 from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
@@ -31,6 +34,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_AUTO_UPDATE_RULE,
     MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
+    MODEL_CASE_SEARCH_ENDPOINT,
     MODEL_FIXTURE,
     MODEL_FLAGS,
     MODEL_KEYWORD,
@@ -114,6 +118,7 @@ def update_model_type(domain_link, model_type, model_detail=None, is_pull=False,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
         MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
+        MODEL_CASE_SEARCH_ENDPOINT: update_linked_case_search_endpoint,
     }.get(model_type)
 
     kwargs = {}

@@ -1,18 +1,17 @@
 --- 
 +++ 
-@@ -1,9 +1,9 @@
+@@ -1,8 +1,8 @@
 -{% extends login_template_b3 %}
 +{% extends login_template %}
  {% load i18n %}
  {% load field_tags %}
  {% load hq_shared_tags %}
- 
 -{% js_entry_b3 'users/js/bootstrap3/accept_invite' %}
 +{% js_entry 'users/js/bootstrap5/accept_invite' %}
  
- {% block title %}{% trans "Invitation to join the " %}{{ invite_to }} {{ invite_type }}{% endblock title %}
- 
-@@ -12,7 +12,7 @@
+ {% block title %}
+   {% trans "Invitation to join the " %}{{ invite_to }}
+@@ -15,7 +15,7 @@
  {% block login-content %}
    <div class="container-fluid">
      <div class="row">
@@ -21,34 +20,51 @@
          <div class="reg-form-container sign-in-container">
            {% if request.user.is_authenticated %}
              <div class="form-bubble form-bubble-lg">
-@@ -63,13 +63,13 @@
+@@ -66,11 +66,11 @@
                  </p>
                  <p>
                    {% trans 'Please' %}
--                  <a href="?switch=true" class="btn btn-default">{% trans 'switch accounts' %}</a>
-+                  <a href="?switch=true" class="btn btn-outline-primary">{% trans 'switch accounts' %}</a>
+-                  <a href="?switch=true" class="btn btn-default"
++                  <a href="?switch=true" class="btn btn-outline-primary"
+                     >{% trans 'switch accounts' %}</a
+                   >
                    {% trans 'or' %}
--                  <a href="?create=true" class="btn btn-default">{% trans "create a web account" %}</a>
-+                  <a href="?create=true" class="btn btn-outline-primary">{% trans "create a web account" %}</a>
+-                  <a href="?create=true" class="btn btn-default"
++                  <a href="?create=true" class="btn btn-outline-primary"
+                     >{% trans "create a web account" %}</a
+                   >
+                 </p>
+@@ -84,18 +84,19 @@
                  </p>
                {% endif %}
              </div>
 -            <div class="well sign-up-bubble form-bubble-purple">
-+            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
++            <div class="card sign-up-bubble form-bubble-cta">
++              {# todo B5: css-well #}
                <h2 class="text-center break-all-words">
                  {% blocktrans with formatted_username as username %}
                    Not {{ username }}?
-@@ -106,17 +106,17 @@
-               {% endif %}
+                 {% endblocktrans %}
+               </h2>
+               <p class="text-center">
+-                <a href="?create=true" class="btn btn-purple btn-lg">
++                <a href="?create=true" class="btn btn-prelogin btn-lg">
+                   {% trans 'Create an Account' %}
+                 </a>
+                 or
+-                <a href="?switch=true" class="btn btn-purple btn-lg">
++                <a href="?switch=true" class="btn btn-prelogin btn-lg">
+                   {% trans 'Switch Accounts' %}
+                 </a>
+               </p>
+@@ -121,21 +122,23 @@
                <form name="form" method="post" action="">
                  {% if is_sso %}
--                  <div class="form-group">
+                   <div class="form-group">
 -                    <label class="control-label">{% trans "Username" %}</label>
-+                  <div class="form-group">  {# todo B5: css-form-group #}
++                    {# todo B5: css-form-group #}
 +                    <label class="form-label">{% trans "Username" %}</label>
-                     <p class="lead">
-                       {{ invited_user }}
-                     </p>
+                     <p class="lead">{{ invited_user }}</p>
                    </div>
                  {% endif %}
 -                {% include 'users/partials/bootstrap3/register_user_form_fields.html' %}
@@ -56,7 +72,16 @@
                </form>
              </div>
 -            <div class="well sign-up-bubble form-bubble-purple">
-+            <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
-               <h2 class="text-center">{% trans 'Already have an account?' %}</h2>
++            <div class="card sign-up-bubble form-bubble-cta">
++              {# todo B5: css-well #}
+               <h2 class="text-center">
+                 {% trans 'Already have an account?' %}
+               </h2>
                <p class="text-center">
-                 <a href="{% url "login" %}?next={{ request.path }}" class="btn btn-purple btn-lg">
+                 <a
+                   href="{% url "login" %}?next={{ request.path }}"
+-                  class="btn btn-purple btn-lg"
++                  class="btn btn-prelogin btn-lg"
+                 >
+                   {% trans 'Sign In Now' %}
+                 </a>

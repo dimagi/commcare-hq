@@ -4,6 +4,7 @@ import "hqwebapp/spec/assert_properties_spec";
 import "hqwebapp/spec/email_validator_spec";
 import "hqwebapp/spec/bootstrap5/inactivity_spec";
 import "hqwebapp/spec/urllib_spec";
+import "hqwebapp/spec/ocs_page_errors_spec";
 import "hqwebapp/spec/bootstrap5/widgets_spec";
 
 hqMocha.run();

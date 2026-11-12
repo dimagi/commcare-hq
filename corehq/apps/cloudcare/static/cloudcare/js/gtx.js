@@ -44,9 +44,10 @@ const logNavigateMenu = function (menuResponse) {
 
 const logCaseList = function (menuResponse, searchFieldList) {
     const selections = extractSelections(menuResponse);
+    const moduleName = menuResponse.menuTitle || menuResponse.title;
     let gtxEventData = {
         selections: selections,
-        moduleName: menuResponse.title,
+        moduleName: moduleName,
     };
     if (searchFieldList.length > 0) {
         let searchFieldData = formatSearchFieldData(searchFieldList);
@@ -56,7 +57,7 @@ const logCaseList = function (menuResponse, searchFieldList) {
     if (selections !== lastCaseListSelections) {
         lastCaseListSelections = selections;
         lastCaseListTimeMs = Date.now();
-        lastCaseListModuleName = menuResponse.title;
+        lastCaseListModuleName = moduleName;
     }
     gtx.sendEvent("web_apps_viewed_case_list", gtxEventData);
 };

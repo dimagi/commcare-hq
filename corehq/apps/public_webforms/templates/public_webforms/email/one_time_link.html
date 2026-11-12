@@ -1,0 +1,59 @@
+{% extends "registration/email/base_templates/_base.html" %}
+{% load i18n %}
+
+{% block preview_text %}
+  {% blocktrans %}
+    Your one-time link for {{ form_name }}
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    Your link is ready
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Open the form
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    You asked for a link to complete {{ form_name }}.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  <p>
+    {% blocktrans %}
+      Click the button or copy and paste the link below.
+    {% endblocktrans %}
+  </p>
+  <div
+    style="
+      background-color: #ffffff;
+      border: 1px solid #f2f2f1;
+      border-radius: 0.5em;
+      padding: 0.5em;
+      word-break: break-all;
+    "
+  >
+    <code> {{ url }} </code>
+  </div>
+  <p>
+    {% blocktrans %}
+      This link expires in {{ expires_in }} and can only be used once. If you
+      didn't request this, you can ignore this email.
+    {% endblocktrans %}
+  </p>
+{% endblock %}
+
+{% block reason_for_email %}
+  {% blocktrans %}
+    You received this message because a one-time link was requested
+  {% endblocktrans %}
+{% endblock %}

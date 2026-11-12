@@ -47,7 +47,7 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppEditingError,
@@ -62,7 +62,6 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.form_action_diff import (
     collect_locked_advanced_mappings,
     collect_locked_mappings,
-    from_combined_diff,
     get_case_mappings,
     make_multi,
     merge_case_mappings,
@@ -128,6 +127,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
+from corehq.apps.public_webforms.utils import get_create_public_webform_url
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.project_limits.const import (
@@ -254,16 +254,8 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     old_load_from_form = form.actions.load_from_form
 
     actions_json = json.loads(request.POST['actions'])
-
-    if 'case_mapping_diff' in request.POST:
-        diff = json.loads(request.POST['case_mapping_diff'])
-    elif 'update_diff' in request.POST:
-        # LEGACY can be removed after case_mapping_diff is deployed
-        # and enough time has passed for front-end code to be updated
-        diff = json.loads(request.POST['update_diff'])
-    else:
-        diff = {}
-
+    diff_json = request.POST.get('case_mapping_diff')
+    diff = json.loads(diff_json) if diff_json else {}
     try:
         _apply_form_actions_change(request, domain, form, actions_json, diff)
     except LockedQuestionError:
@@ -487,7 +479,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                case_mapping_diff = _get_case_mapping_diff(request, form)
+                case_mapping_diff = _get_case_mapping_diff(request)
                 try:
                     _check_locked_questions_unmodified(request, domain, form, xform)
                 except LockedQuestionError:
@@ -621,7 +613,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
-        _add_case_management_data(resp, form, request)
+        _add_case_management_data(resp, form)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -701,7 +693,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     xml = apply_patch(patch, form.source)
     new_xml = xml.encode('utf-8')
-    case_mapping_diff = _get_case_mapping_diff(request, form)
+    case_mapping_diff = _get_case_mapping_diff(request)
 
     try:
         _check_locked_questions_unmodified(request, domain, form, new_xml)
@@ -735,7 +727,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
             request.couch_user,
         )
 
-    _add_case_management_data(response_json, form, request)
+    _add_case_management_data(response_json, form)
     return JsonResponse(response_json)
 
 
@@ -758,20 +750,9 @@ def apply_patch(patch, text):
     return unquote(encoded_result)
 
 
-def _get_case_mapping_diff(request, form):
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    is_advanced_form = isinstance(form, AdvancedForm)
-    if has_vellum_case_mapping and not is_advanced_form:
-        if 'case_mapping_diff' in request.POST:
-            return json.loads(request.POST['case_mapping_diff'])
-        if 'mapping_diff' in request.POST:
-            # Legacy, can be removed when Vellum always sends case_mapping_diff
-            return from_combined_diff(
-                json.loads(request.POST['mapping_diff']),
-                is_registration=form.is_registration_form(),
-            )
-        return {}  # not None, prevent name mapping in save_xform
-    return None
+def _get_case_mapping_diff(request):
+    diff_json = request.POST.get('case_mapping_diff')
+    return json.loads(diff_json) if diff_json else None
 
 
 def _case_mapping_diff_has_changes(diff):
@@ -785,12 +766,9 @@ def _get_xform_conflict_response(form, sha1_checksum):
     return None
 
 
-def _add_case_management_data(response_json, form, request):
+def _add_case_management_data(response_json, form):
     """Allow clients to immediately display concurrent edit conflict warnings"""
-    has_vellum_case_mapping = toggles.FORMBUILDER_SAVE_TO_CASE.enabled_for_request(request)
-    is_advanced_form = isinstance(form, AdvancedForm)
-    case_type = form.get_module().case_type
-    if case_type and has_vellum_case_mapping and not is_advanced_form:
+    if form.get_module().case_type and not isinstance(form, AdvancedForm):
         response_json['caseManagement'] = {
             "mappings": get_case_mappings(form.actions),
         }
@@ -1061,6 +1039,7 @@ def get_form_view_context(
         ],
         'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'create_public_webform_url': get_create_public_webform_url(request, form),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
         'case_property_warning': {
@@ -1268,7 +1247,7 @@ def _get_form_datums(domain, app_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form_legacy(request, domain, app_id, module_id, form_id):
     """
     This view has been kept around to not break any documentation on example apps
@@ -1280,7 +1259,7 @@ def view_form_legacy(request, domain, app_id, module_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form(request, domain, app_id, form_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(

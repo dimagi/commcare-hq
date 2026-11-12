@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
@@ -7,6 +8,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from dateutil.parser import parse
 from sqlalchemy import and_, asc, or_, select
 from tastypie.bundle import Bundle
+from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.http import HttpNotFound
 
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
@@ -46,6 +49,18 @@ def object_does_not_exist(doc_type, doc_id):
     return ObjectDoesNotExist(
         _("Could not find %(doc_type)s with id %(id)s") % {"doc_type": doc_type, "id": doc_id}
     )
+
+
+def not_found(message):
+    """Build a 404 that survives tastypie
+
+    ``Resource.put_detail`` catches ``tastypie.exceptions.NotFound`` and
+    retries the request as ``obj_create``, which creates a new object at a
+    server-generated id rather than the one named in the URL. Raising an
+    ``ImmediateHttpResponse`` instead bypasses that fallback.
+    """
+    return ImmediateHttpResponse(response=HttpNotFound(
+        json.dumps({"error": message}), content_type="application/json"))
 
 
 def get_obj(bundle_or_obj):

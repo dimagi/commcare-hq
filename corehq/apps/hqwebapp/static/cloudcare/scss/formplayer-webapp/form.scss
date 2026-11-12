@@ -81,6 +81,36 @@ $form-text-size: 16px; // If updating, update .checkbox, .radio margin-top to fi
   }
 }
 
+$dense-text-size: 14px;
+
+.form-container.form-dense {
+  @include media-breakpoint-up(md) {
+    font-size: $dense-text-size;
+
+    .form-control, .form-select {
+      font-size: $dense-text-size;
+    }
+
+    .question-tile-row:has(div.q) {
+      padding: 3px 0px;
+    }
+
+    .children.card-body {
+      padding: .25rem;
+
+      .row > * {
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+
+    }
+
+    textarea.textfield {
+      field-sizing: content;
+    }
+  }
+}
+
 .has-debugger {
   .sticky-submit {
     bottom: $minimized-debugger-height;

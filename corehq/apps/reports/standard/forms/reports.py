@@ -15,6 +15,7 @@ from corehq.apps.reports.analytics.esaccessors import get_paged_forms_by_type, P
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import FormSubmitterFilter
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.apps.reports.standard.deployments import DeploymentsReport
 from corehq.apps.reports.standard.monitoring import MultiFormDrilldownMixin
@@ -39,7 +40,7 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     asynchronous = False
     base_template = 'reports/standard/bootstrap3/submission_error_report.html'
 
-    fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+    fields = ['corehq.apps.reports.filters.users.FormSubmitterFilter',
               'corehq.apps.reports.standard.forms.filters.SubmissionTypeFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter']
 
@@ -63,11 +64,11 @@ class SubmissionErrorReport(DeploymentsReport, MultiFormDrilldownMixin):
     @property
     @memoized
     def selected_user_ids(self):
-        return EMWF.user_es_query(
+        return FormSubmitterFilter.submitter_ids(
             self.domain,
             self.get_request_param(EMWF.slug, as_list=True),
             self.request.couch_user,
-        ).get_ids()
+        )
 
     @property
     def has_user_filters(self):

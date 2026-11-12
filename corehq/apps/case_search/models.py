@@ -525,7 +525,6 @@ class CaseSearchEndpoint(models.Model):
         choices=TargetType.choices,
         default=TargetType.PROJECT_DB,
     )
-    case_type = models.CharField(max_length=255)
     current_version = models.ForeignKey(
         'CaseSearchEndpointVersion',
         null=True,
@@ -535,9 +534,12 @@ class CaseSearchEndpoint(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(null=True, blank=True)
+    deactivated_by = models.CharField(max_length=255, blank=True, default='')
+    upstream_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        unique_together = [('domain', 'name')]
+        unique_together = [('domain', 'name'), ('domain', 'upstream_id')]
 
     def __str__(self):
         return f'{self.domain}/{self.name}'
@@ -547,7 +549,6 @@ class CaseSearchEndpointVersion(models.Model):
     class Action(models.TextChoices):
         CREATE = 'create', _('Create')
         UPDATE = 'update', _('Update')
-        DEACTIVATE = 'deactivate', _('Deactivate')
 
     endpoint = models.ForeignKey(
         CaseSearchEndpoint,
@@ -556,7 +557,10 @@ class CaseSearchEndpointVersion(models.Model):
     )
     version_number = models.IntegerField()
     parameters = models.JSONField(default=list, null=True, blank=True)
+    case_type = models.CharField(max_length=255, null=True, blank=True)
     query = models.JSONField(default=dict, null=True, blank=True)
+    # SQL exactly as the user typed it. Never execute this.
+    dangerous_sql = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.CharField(max_length=255, blank=True, default='')
     action = models.CharField(

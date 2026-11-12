@@ -37,11 +37,18 @@ class State(IntegerChoices):
     PayloadRejected = 32, _('Payload Rejected')  # Implies Cancelled.
     ErrorGeneratingPayload = 64, _('Error Generating Payload')  # Unsent like Empty, but implies Cancelled
 
-    @staticmethod
-    def state_for_key(key):
-        # Keys match RepeatRecordStateFilter.options[*][0]
-        state_map = {s.name.upper(): s for s in State}
-        return state_map.get(key.upper() if key else None)
+
+STATE_GROUPS = {
+    'SUCCESS': (State.Success, State.Empty),
+    'PENDING': (State.Pending,),
+    'CANCELLED': (State.Cancelled,),
+    'FAIL': (State.Fail,),
+    'PAYLOADERROR': (State.PayloadRejected, State.ErrorGeneratingPayload),
+}
+
+
+def states_for_key(key):
+    return STATE_GROUPS.get(key.upper() if key else None)
 
 
 RECORD_QUEUED_STATES = (State.Pending, State.Fail)

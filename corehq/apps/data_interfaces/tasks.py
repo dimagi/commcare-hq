@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
-from typing import List, Literal, Optional  # noqa: F401
+from typing import List, Literal, Optional, Sequence  # noqa: F401
 
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
+from celery.signals import task_failure
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
@@ -28,10 +28,11 @@ from corehq.toggles import DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.log import send_HTML_email
 
+from .bulk_form_actions import mark_job_failed, run_bulk_form_action
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
-from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseDuplicate,
     CaseDuplicateNew,
     CaseRuleSubmission,
@@ -39,7 +40,6 @@ from .models import (
 )
 from .utils import (
     add_cases_to_case_group,
-    archive_or_restore_forms,
     iter_cases_and_run_rules,
     operate_on_payloads,
     run_rules_for_case,
@@ -98,16 +98,15 @@ def bulk_upload_cases_to_group(upload_id, domain, case_group_id, cases):
     cache.set(upload_id, results, ONE_HOUR)
 
 
-@task(serializer='pickle')
-def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
-    task = bulk_form_management_async
-    mode = FormManagementMode(archive_or_restore, validate=True)
+@serial_task('{domain}', default_retry_delay=300, max_retries=48, timeout=60 * 60)
+def bulk_form_action_async(job_id, domain):
+    run_bulk_form_action(BulkAsyncJob.objects.get(id=job_id))
 
-    if not form_ids:
-        return {'messages': {'errors': [_('No Forms are supplied')]}}
 
-    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, form_ids, mode, task)
-    return response
+@task_failure.connect(sender=bulk_form_action_async)
+def _mark_bulk_form_action_job_failed(sender=None, args=None, **kwargs):
+    if job_id := (args[0] if args else None):
+        mark_job_failed(job_id)
 
 
 @periodic_task(
@@ -220,10 +219,12 @@ def task_generate_ids_and_operate_on_payloads(
     repeater_id: Optional[str],
     domain: str,
     action: Literal['resend', 'cancel', 'requeue'],
-    state: Literal[None, State.Pending, State.Cancelled] = None,
+    state: Optional[Sequence[State]] = None,
 ) -> dict:
+    # Backwards compatibility with already queued tasks.
+    states = [state] if isinstance(state, State) else state
     repeat_record_ids = RepeatRecord.objects.get_repeat_record_ids(
-        domain, repeater_id=repeater_id, state=state, payload_id=payload_id,
+        domain, repeater_id=repeater_id, states=states, payload_id=payload_id,
     )
     return operate_on_payloads(repeat_record_ids, domain, action,
                                task=task_generate_ids_and_operate_on_payloads)

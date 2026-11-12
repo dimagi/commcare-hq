@@ -188,8 +188,8 @@ def save_xform(app, form, xml, case_mapping_diff=None):
 
     form.source = xml.decode('utf-8')
 
-    from corehq.apps.app_manager.models import ConditionalCaseUpdate
-    if form.is_registration_form() and case_mapping_diff is None:
+    from corehq.apps.app_manager.models import AdvancedForm, ConditionalCaseUpdate
+    if form.is_registration_form() and isinstance(form, AdvancedForm):
         # Except for AdvancedForms, this is now handled by
         # Case Management in the Form Builder.
         # For registration forms, assume that the first question is the
@@ -405,6 +405,14 @@ def module_offers_search(module):
         and module.search_config
         and (module.search_config.properties
         or module.search_config.default_properties)
+    )
+
+
+def module_uses_case_search_endpoint(module):
+    return bool(
+        module_offers_search(module)
+        and toggles.CASE_SEARCH_ENDPOINTS.enabled(module.get_app().domain)
+        and module.search_config.case_search_endpoint_id
     )
 
 

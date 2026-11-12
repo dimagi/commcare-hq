@@ -89,7 +89,7 @@ const PricingTable = function (options) {
         self.form = $(e.currentTarget).closest("form");
 
         const invoicingContact = _.escape(self.invoicingContact);
-        if (self.oIsDowngrade() && self.subscriptionBelowMinimum) {
+        if (!self.currentIsAnnualPlan && self.oIsDowngrade() && self.subscriptionBelowMinimum) {
             const oldPlan = utils.capitalize(self.currentEdition);
             const newPlan = utils.capitalize(self.oSelectedEdition());
             const newStartDate = self.startDateAfterMinimumSubscription;

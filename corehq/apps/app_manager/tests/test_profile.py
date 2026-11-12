@@ -1,5 +1,4 @@
 import uuid
-import xml.etree.cElementTree as ET
 from itertools import combinations
 from unittest.mock import patch
 
@@ -19,6 +18,7 @@ from corehq.apps.app_manager.tests.util import (
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
+from corehq.util.xml_utils import safe_fromstring
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
@@ -39,7 +39,7 @@ class ProfileTest(TestCase, TestXmlMixin):
         profile = app.create_profile()
         assert isinstance(profile, bytes), type(profile)
         assert "TÉST ÁPP" in profile.decode('utf-8')
-        profile_xml = ET.fromstring(profile)
+        profile_xml = safe_fromstring(profile)
         types = {
             'features': self._test_feature,
             'properties': self._test_property,
@@ -135,13 +135,13 @@ class ProfileTest(TestCase, TestXmlMixin):
         }
         profile = self.app.create_profile()
         self._test_profile(self.app)
-        self._test_custom_property(ET.fromstring(profile), 'random', 'value')
+        self._test_custom_property(safe_fromstring(profile), 'random', 'value')
 
     def test_heartbeat_url_in_profile(self):
         profile = self.app.create_profile()
-        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url())
+        self._test_custom_property(safe_fromstring(profile), 'heartbeat-url', self.app.heartbeat_url())
         profile = self.app.create_profile(build_profile_id=self.build_profile_id)
-        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url',
+        self._test_custom_property(safe_fromstring(profile), 'heartbeat-url',
                                    self.app.heartbeat_url(self.build_profile_id))
 
     def test_credentials_in_profile(self):
@@ -152,7 +152,7 @@ class ProfileTest(TestCase, TestXmlMixin):
         }
         profile = self.app.create_profile()
 
-        profile_xml = ET.fromstring(profile)
+        profile_xml = safe_fromstring(profile)
         credentials_element = self._get_node(profile_xml, "credentials", './features/{}')
 
         self.assertEqual(credentials_element.attrib.get("active"), "true")
@@ -161,7 +161,7 @@ class ProfileTest(TestCase, TestXmlMixin):
         self.assertEqual(credential_el.attrib.get("level"), "3MON_ACTIVE")
 
     def test_version(self):
-        profile_xml = ET.fromstring(self.app.create_profile())
+        profile_xml = safe_fromstring(self.app.create_profile())
         root = profile_xml.find('.')
         self.assertEqual(root.get('requiredMajor'), '2')
         self.assertEqual(root.get('requiredMinor'), '7')
@@ -171,7 +171,7 @@ class ProfileTest(TestCase, TestXmlMixin):
     def test_mobile_recovery_measure(self):
         profile = self.app.create_profile()
         self._test_property(
-            ET.fromstring(profile),
+            safe_fromstring(profile),
             key='recovery-measures-url',
             value=self.app.recovery_measures_url,
             setting={'force': True},
@@ -181,7 +181,7 @@ class ProfileTest(TestCase, TestXmlMixin):
     def test_support_email_setting(self):
         profile = self.app.create_profile()
         self._test_property(
-            ET.fromstring(profile),
+            safe_fromstring(profile),
             key='support-email-address',
             value=settings.SUPPORT_EMAIL,
             setting={'force': True},
@@ -203,7 +203,7 @@ class ProfileBuildTests(TestCase):
     def test_build_urls_in_profile_use_app_id_of_copy(self):
         copy = self.app.make_build()
         profile_xml = copy.lazy_fetch_attachment('files/profile.xml')
-        profile = ET.fromstring(profile_xml)
+        profile = safe_fromstring(profile_xml)
 
         self.assertEqual(profile.get("uniqueid"), self.app.get_id)
         self.assertIn(copy.profile_url, profile.get("update"))

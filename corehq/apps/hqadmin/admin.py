@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint, HqDeploy
+from corehq.apps.hqadmin.models import (
+    HistoricalPillowCheckpoint,
+    HqDeploy,
+    PlatformDeactivationLog,
+)
 
 
 @admin.register(HistoricalPillowCheckpoint)
@@ -31,3 +35,34 @@ class HqDeployAdmin(admin.ModelAdmin):
     ]
 
     ordering = ['-date']
+
+
+@admin.register(PlatformDeactivationLog)
+class PlatformDeactivationLogAdmin(admin.ModelAdmin):
+    date_hierarchy = 'created_on'
+    list_display = [
+        'created_on',
+        'target_email',
+        'platform',
+        'succeeded',
+        'performed_by',
+    ]
+    list_filter = [
+        'platform',
+        'succeeded',
+    ]
+    search_fields = [
+        'target_email',
+        'performed_by',
+    ]
+
+    ordering = ['-created_on']
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

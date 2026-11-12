@@ -5,14 +5,14 @@
 
 {% block page_content %}
   {% registerurl 'diff' app.domain app.id '---' %}
-  {% registerurl 'paginate_releases' app.domain app.copy_of %}
+  {% registerurl 'paginate_releases' app.domain app.origin_id %}
   {% registerurl 'get_multimedia_sizes' app.domain '---' %}
   {% registerurl 'get_multimedia_sizes_for_build_profile' app.domain '---' '---' %}
   {% initial_page_data 'current_version' app.built_with.build_number %}
 
   <p class="form-inline" id="compare-form">  {# todo B5: css-form-inline #}
     See
-    <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
+    <a href="{% url "view_app" app.domain app.origin_id %}">
       current app
     </a> for the latest work in progress.
 

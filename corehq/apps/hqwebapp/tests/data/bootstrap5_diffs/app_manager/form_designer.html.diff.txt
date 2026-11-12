@@ -15,7 +15,7 @@
  
  {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
  
-@@ -42,7 +42,7 @@
+@@ -43,7 +43,7 @@
    <div id="formdesigner" class="clearfix loading"></div>
  
    <script type="text/html" id="js-fd-form-actions">
@@ -24,7 +24,7 @@
        <!-- B5 TODO: Replace btn-form-action with bootstrap 5 utils after migration -->
        <a
          class="btn btn-form-action track-usage-link custom-button-style"
-@@ -67,7 +67,7 @@
+@@ -68,7 +68,7 @@
    </script>
  
    <script type="text/html" id="js-fd-view-submissions-only">
@@ -33,7 +33,7 @@
        {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
      </div>
    </script>
-@@ -85,7 +85,7 @@
+@@ -86,7 +86,7 @@
    </script>
  
    <script type="text/html" id="fd-hq-helptext-close">

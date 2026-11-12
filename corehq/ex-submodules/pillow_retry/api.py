@@ -69,10 +69,7 @@ def _process_kafka_change(producer, error):
     change_metadata = error.change_object.metadata
     change_metadata.publish_timestamp = datetime.utcnow()
     producer.send_change(
-        get_topic_for_doc_type(
-            change_metadata.document_type,
-            change_metadata.data_source_type
-        ),
+        get_topic_for_doc_type(change_metadata.document_type),
         change_metadata
     )
     PillowError.objects.filter(doc_id=error.doc_id).delete()

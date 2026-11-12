@@ -5,6 +5,7 @@ from unittest import mock
 
 from lxml import etree
 from corehq.tests.tools import nottest
+from corehq.util.xml_utils import XML
 
 from dimagi.utils.couch.database import iter_bulk_delete
 
@@ -57,7 +58,7 @@ class TestXmlMixin(TestFileMixin):
 class SuiteMixin(TestXmlMixin):
 
     def _assertHasAllStrings(self, app, strings):
-        et = etree.XML(app)
+        et = XML(app)
         locale_elems = et.findall(".//locale/[@id]")
         locale_strings = [elem.attrib['id'] for elem in locale_elems]
 
@@ -93,7 +94,7 @@ class SuiteMixin(TestXmlMixin):
         :param: module_index - The index of the module under test, usually ``module.id``
         :param: datums - List of tuple(datum_xml_tag, datum_id)
         """
-        suite_xml = etree.XML(suite)
+        suite_xml = XML(suite)
 
         session_nodes = suite_xml.findall(f"./entry[{module_index + 1}]/session")
         assert len(session_nodes) == 1

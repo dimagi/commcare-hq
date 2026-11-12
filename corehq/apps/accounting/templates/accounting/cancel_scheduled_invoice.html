@@ -1,0 +1,46 @@
+{% extends 'hqwebapp/bootstrap3/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block page_content %}
+  <dl class="dl-horizontal">
+    <dt>{% trans "Project Space" %}</dt>
+    <dd>{{ scheduled_invoice.domain }}</dd>
+    <dt>{% trans "Send On" %}</dt>
+    <dd>{{ scheduled_invoice.send_date|date:"Y-m-d" }}</dd>
+    <dt>{% trans "Description" %}</dt>
+    <dd>{{ scheduled_invoice.credit_label }}</dd>
+    <dt>{% trans "Amount" %}</dt>
+    <dd>
+      {{ scheduled_invoice.amount }} ({{ scheduled_invoice.quantity }} &times;
+      {{ scheduled_invoice.unit_cost }})
+    </dd>
+    <dt>{% trans "Prepayment Term" %}</dt>
+    <dd>
+      {{ scheduled_invoice.date_start|date:"Y-m-d" }} to
+      {{ scheduled_invoice.date_end|date:"Y-m-d" }}
+    </dd>
+    <dt>{% trans "Recipients" %}</dt>
+    <dd>{{ scheduled_invoice.contact_emails|join:", " }}</dd>
+    <dt>{% trans "Scheduled By" %}</dt>
+    <dd>{{ scheduled_invoice.created_by }}</dd>
+    <dt>{% trans "Status" %}</dt>
+    <dd>{{ scheduled_invoice.get_status_display }}</dd>
+  </dl>
+
+  {% if is_pending %}
+    <div class="alert alert-warning">
+      {% blocktrans %}
+        Cancelling stops this invoice from being generated and emailed. It
+        cannot be undone. Schedule a replacement if the amount or dates need
+        to change.
+      {% endblocktrans %}
+    </div>
+    {% crispy cancel_form %}
+  {% else %}
+    <div class="alert alert-info">
+      {% trans "This invoice is no longer pending, so there is nothing to cancel." %}
+    </div>
+  {% endif %}
+{% endblock %}
