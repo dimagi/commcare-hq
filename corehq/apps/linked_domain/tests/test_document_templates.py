@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from django.test import TestCase
 
 import pytest
+import pytz
 
 from corehq.apps.document_templates.images import get_image
 from corehq.apps.document_templates.models import IMAGE, Area, Template
@@ -11,6 +14,11 @@ from corehq.apps.linked_domain.document_templates import (
 )
 from corehq.apps.linked_domain.exceptions import DomainLinkError
 from corehq.apps.linked_domain.models import DomainLink
+from corehq.apps.linked_domain.view_helpers import (
+    build_document_template_view_model,
+    build_pullable_view_models_from_data_models,
+    get_upstream_and_downstream_document_templates,
+)
 
 UPSTREAM = 'templates-upstream'
 DOWNSTREAM = 'templates-downstream'
@@ -114,3 +122,50 @@ class TestUpdateLinkedDocumentTemplate(TestCase):
 
         assert not Template.objects.filter(domain=DOWNSTREAM).exists()
         assert DOWNSTREAM not in CommCareImage.get(image_id).valid_domains
+
+
+class TestDocumentTemplateViewModels(TestCase):
+
+    def test_templates_are_split_by_where_they_come_from(self):
+        local = _create_template(DOWNSTREAM, slug='local')
+        linked = _create_template(DOWNSTREAM, slug='linked', upstream_id=7)
+        _create_template(DOWNSTREAM, slug='gone', deleted=True)
+        _create_template(DOWNSTREAM, slug='linked-gone', upstream_id=8, deleted=True)
+
+        upstream, downstream = get_upstream_and_downstream_document_templates(DOWNSTREAM)
+
+        assert upstream == {str(local.id): local}
+        assert downstream == {'7': linked}
+
+    def test_pulled_template_shows_when_it_was_last_pulled(self):
+        domain_link = DomainLink.link_domains(DOWNSTREAM, UPSTREAM)
+        self.addCleanup(domain_link.delete)
+        upstream = _create_template(UPSTREAM)
+        update_linked_document_template(domain_link, str(upstream.id))
+        domain_link.update_last_pull(
+            'document_template', 'user-id', model_detail={'upstream_template_id': str(upstream.id)},
+        )
+        _, downstream = get_upstream_and_downstream_document_templates(DOWNSTREAM)
+
+        view_models = build_pullable_view_models_from_data_models(
+            DOWNSTREAM, domain_link, {}, {}, {}, {}, {}, {}, {}, downstream, pytz.UTC,
+        )
+
+        [view_model] = [vm for vm in view_models if vm['type'] == 'document_template']
+        assert view_model['detail'] == {'upstream_template_id': str(upstream.id)}
+        assert isinstance(view_model['last_update'], (str, datetime))
+
+
+@pytest.mark.parametrize('upstream_id, expected', [(None, '3'), (7, '7')])
+def test_view_model_identifies_the_upstream_template(upstream_id, expected):
+    template = Template(id=3, name='Welcome', upstream_id=upstream_id)
+
+    view_model = build_document_template_view_model(template)
+
+    assert view_model['type'] == 'document_template'
+    assert view_model['name'] == 'Document Template (Welcome)'
+    assert view_model['detail'] == {'upstream_template_id': expected}
+
+
+def test_no_view_model_without_template():
+    assert build_document_template_view_model(None) is None
