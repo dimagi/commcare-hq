@@ -1,0 +1,333 @@
+"""
+Renders document templates to PDF for the preview in the document template editor.
+
+Rendering takes two steps:
+
+1. :func:`_render_areas` renders the Jinja variables (``{{ first_name }}``) in the
+   markdown of each area with a context of values for those variables.
+   Area text is author-written, so it runs in a sandbox. Context
+   values are escaped, so they cannot add markup of their own.
+2. :func:`render_pdf` lays the markdown out on the page with reportlab.
+   The markdown is converted to HTML and then to reportlab flowables.
+   HTML in the markdown is not supported: it is escaped and shown as text.
+
+The layout lives in a single function (:func:`_us_letter`) so that another
+can be added next to it.
+"""
+import html
+import re
+from io import BytesIO
+from xml.sax.saxutils import escape, quoteattr
+
+import markdown
+from bs4 import BeautifulSoup
+from jinja2 import (
+    StrictUndefined,
+    TemplateError,
+    TemplateSyntaxError,
+    meta,
+    nodes,
+)
+from jinja2.sandbox import SandboxedEnvironment
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
+    ListFlowable,
+    ListItem,
+    NextPageTemplate,
+    PageBreak,
+    PageTemplate,
+    Paragraph,
+    Table,
+)
+
+_US_LETTER_AREAS = ('header', 'address', 'body', 'footer')
+
+_sheet = getSampleStyleSheet()
+BODY = _sheet['BodyText']
+QUOTE = ParagraphStyle(
+    'quote', parent=BODY, fontName='Helvetica-Oblique', leftIndent=18, textColor=colors.HexColor('#555555'),
+)
+TABLE_HEADER = ParagraphStyle('table_header', parent=BODY, fontName='Helvetica-Bold')
+HEADINGS = {f'h{n}': _sheet[f'Heading{min(n, 3)}'] for n in range(1, 7)}
+
+# HTML tag -> reportlab paragraph markup tag
+INLINE_TAGS = {'strong': 'b', 'em': 'i'}
+
+# Links in the PDF can only open these
+LINK_SCHEME_RE = re.compile(r'(https?|mailto):', re.IGNORECASE)
+
+# ``[[blank]]`` or ``[[blank:30]]``: an underlined space for filling in by hand, in characters
+BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
+DEFAULT_BLANK_LENGTH = 20
+MAX_BLANK_LENGTH = 100
+
+# Limits on author-written Jinja, in characters, before and after rendering
+MAX_AREA_LENGTH = 50_000
+MAX_RENDERED_LENGTH = 100_000
+
+
+def _escape_markdown(text):
+    return re.sub(r'([\\`*_{}\[\]()>#+\-.!])', r'\\\1', text)
+
+
+def _escape_value(value):
+    """Make a context value literal text: neither markup nor markdown"""
+    return _escape_markdown(html.escape(str(value)))
+
+
+_render_env = SandboxedEnvironment(undefined=StrictUndefined, finalize=_escape_value)
+
+
+class DocumentRenderError(Exception):
+    pass
+
+
+def get_area_names():
+    return list(_US_LETTER_AREAS)
+
+
+def _parse_variable_names(text):
+    """Names a Jinja template reads but does not define itself, in order of first use"""
+    ast = _render_env.parse(text)
+    undeclared = meta.find_undeclared_variables(ast)
+    used = (node.name for node in ast.find_all(nodes.Name))
+    return [name for name in dict.fromkeys(used) if name in undeclared]
+
+
+def _markdown_to_html(value):
+    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through"""
+    md = markdown.Markdown(extensions=['nl2br', 'tables'])
+    md.preprocessors.deregister('html_block')
+    md.inlinePatterns.deregister('html')
+    return md.convert(value)
+
+
+def get_variable_names(area_values):
+    """Each variable the areas use, in order of first use"""
+    names = {}
+    for area_name, text in area_values.items():
+        _check_area_length(area_name, text)
+        try:
+            names.update(dict.fromkeys(_parse_variable_names(text)))
+        except TemplateSyntaxError as error:
+            raise DocumentRenderError(_syntax_error_message(area_name, error))
+    return list(names)
+
+
+def _render_areas(area_values, context):
+    """Render the Jinja in the text of each area
+
+    :param area_values: ``{area name: markdown text}``
+    :returns: ``{area name: markdown text}``
+    """
+    return {name: _render_area(name, text, context) for name, text in area_values.items()}
+
+
+def _check_area_length(name, text):
+    if len(text) > MAX_AREA_LENGTH:
+        raise DocumentRenderError(f'{name} is too long: {len(text)} of {MAX_AREA_LENGTH} characters')
+
+
+def _render_area(name, text, context):
+    _check_area_length(name, text)
+    try:
+        rendered = _render_env.from_string(text).render(context)
+    except TemplateSyntaxError as error:
+        raise DocumentRenderError(_syntax_error_message(name, error))
+    except TemplateError as error:
+        raise DocumentRenderError(f'{name}: {error}')
+    except Exception as error:  # user-authored template: any runtime error is a render error
+        raise DocumentRenderError(f'{name}: {type(error).__name__}: {error}')
+    if len(rendered) > MAX_RENDERED_LENGTH:
+        raise DocumentRenderError(f'{name} is too long once rendered: more than {MAX_RENDERED_LENGTH} characters')
+    return rendered
+
+
+def _syntax_error_message(area_name, error):
+    return f'Template syntax error in {area_name}, line {error.lineno}: {error.message}'
+
+
+def render_preview(area_values, context):
+    """:returns: PDF bytes of the document template with ``area_values`` (markdown) and ``context``"""
+    rendered = _render_areas(area_values, context)
+    return render_pdf([{name: {'type': 'markdown', 'value': text} for name, text in rendered.items()}])
+
+
+def render_pdf(documents):
+    """One PDF with each document starting on a new page
+
+    :param documents: ``[{area: {'type': 'markdown', 'value': ...}}]`` with an
+        entry for each area
+    """
+    templates = []
+    flowables = []
+    for n, document in enumerate(documents):
+        document_templates, document_flowables = _us_letter(n, document)
+        templates.extend(document_templates)
+        if n:
+            flowables.extend([NextPageTemplate(f'{n}-first'), PageBreak()])
+        flowables.extend(document_flowables)
+
+    buffer = BytesIO()
+    BaseDocTemplate(buffer, pagesize=letter, pageTemplates=templates).build(flowables)
+    return buffer.getvalue()
+
+
+def _us_letter(n, document):
+    """The US letter layout: header and address on the first page, footer on every page
+
+    Header, address and footer are clipped to their area. The body flows
+    between the address (first page) or the top margin and the footer.
+
+    :returns: ``(page templates, flowables)`` for ``document``, the ``n``-th in the PDF
+    """
+    margin = 0.75 * inch
+    page_height = letter[1]
+    width = letter[0] - 2 * margin
+    header_height = 1 * inch
+    address_top = 2.25 * inch  # distances from the top edge of the page
+    body_top = 3.5 * inch
+    footer_height = 1 * inch
+
+    def frame(top, height, **kwargs):
+        return Frame(
+            margin, page_height - top - height, width, height,
+            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0, **kwargs,
+        )
+
+    def draw(canvas, area_name, top, height):
+        frame(top, height).addFromList(_area_flowables(document.get(area_name)), canvas)
+
+    def draw_footer(canvas):
+        draw(canvas, 'footer', top=page_height - margin - footer_height, height=footer_height)
+
+    def draw_first_page(canvas, doc):
+        draw(canvas, 'header', top=margin, height=header_height)
+        draw(canvas, 'address', top=address_top, height=body_top - address_top)
+        draw_footer(canvas)
+
+    def draw_later_page(canvas, doc):
+        draw_footer(canvas)
+
+    def body_frame(top):
+        return frame(top, page_height - top - margin - footer_height, id='body')
+
+    templates = [
+        PageTemplate(id=f'{n}-first', frames=[body_frame(body_top)], onPage=draw_first_page),
+        PageTemplate(id=f'{n}-later', frames=[body_frame(margin)], onPage=draw_later_page),
+    ]
+    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.get('body'))]
+    return templates, flowables
+
+
+def _area_flowables(area):
+    """:param area: ``{'type': 'markdown', 'value': ...}`` or ``None``"""
+    if not area:
+        return []
+    if area['type'] == 'markdown':
+        return _markdown_to_flowables(area['value'])
+    raise ValueError(f'Unknown area type: {area["type"]!r}')
+
+
+def _markdown_to_flowables(text):
+    """:returns: reportlab flowables for markdown ``text``"""
+    soup = BeautifulSoup(_markdown_to_html(text), 'html.parser')
+    return _children_to_flowables(soup.children, BODY)
+
+
+def _children_to_flowables(children, style):
+    """Flowables for block-level ``children``; loose text and inline tags are grouped into paragraphs"""
+    flowables = []
+    inline = []
+
+    def flush():
+        markup = ''.join(inline).strip()
+        if markup:
+            flowables.append(Paragraph(markup, style))
+        inline.clear()
+
+    for child in children:
+        if isinstance(child, str) or child.name in INLINE_TAGS or child.name in ('a', 'code', 'br'):
+            inline.append(_inline(child))
+        elif child.name == 'p':
+            flush()
+            flowables.append(Paragraph(_inline_children(child), style))
+        elif child.name in HEADINGS:
+            flush()
+            flowables.append(Paragraph(_inline_children(child), HEADINGS[child.name]))
+        elif child.name in ('ul', 'ol'):
+            flush()
+            items = [
+                ListItem(_children_to_flowables(item.children, style))
+                for item in child.children if not isinstance(item, str) and item.name == 'li'
+            ]
+            if items:
+                flowables.append(_list(child.name, items))
+        elif child.name == 'table':
+            flush()
+            flowables.append(_table(child, style))
+        elif child.name == 'blockquote':
+            flush()
+            flowables.extend(_children_to_flowables(child.children, QUOTE))
+        else:  # pre, hr: keep what is inside
+            flush()
+            flowables.extend(_children_to_flowables(child.children, style))
+    flush()
+    return flowables
+
+
+def _list(tag, items):
+    bullets = {'bulletFontName': BODY.fontName, 'bulletFontSize': BODY.fontSize, 'leftIndent': 18}
+    if tag == 'ul':
+        return ListFlowable(items, bulletType='bullet', start='•', **bullets)
+    return ListFlowable(items, bulletType='1', bulletFormat='%s.', **bullets)
+
+
+def _table(element, style):
+    """A table with equal columns over the full width; the header row repeats on each page"""
+    rows = [
+        [Paragraph(_inline_children(cell), TABLE_HEADER if cell.name == 'th' else style)
+         for cell in row.find_all(['th', 'td'])]
+        for row in element.find_all('tr')
+    ]
+    columns = len(rows[0])
+    return Table(
+        rows,
+        colWidths=[f'{100 / columns}%'] * columns,
+        repeatRows=1,
+        style=[
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ],
+    )
+
+
+def _inline_children(element):
+    return ''.join(_inline(child) for child in element.children)
+
+
+def _blank(match):
+    length = min(int(match[1] or DEFAULT_BLANK_LENGTH), MAX_BLANK_LENGTH)
+    return f'<u>{"&nbsp;" * length}</u>'
+
+
+def _inline(child):
+    """Paragraph markup for an inline element or text; user text is escaped, the tags are ours"""
+    if isinstance(child, str):
+        return BLANK_RE.sub(_blank, escape(child))
+    if child.name == 'br':
+        return '<br/>'
+    inner = _inline_children(child)
+    if child.name in INLINE_TAGS:
+        tag = INLINE_TAGS[child.name]
+        return f'<{tag}>{inner}</{tag}>'
+    if child.name == 'a' and LINK_SCHEME_RE.match(child.attrs.get('href', '')):
+        return f'<a href={quoteattr(child.attrs["href"])} color="#0b57d0">{inner}</a>'
+    if child.name == 'code':
+        return f'<font name="Courier">{inner}</font>'
+    return inner  # img, links to other schemes
