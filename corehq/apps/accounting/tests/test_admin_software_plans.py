@@ -29,7 +29,9 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
         super().setUpClass()
 
         cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain1.delete)
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain2.delete)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
@@ -156,7 +158,9 @@ class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
         super().setUpClass()
 
         cls.domain1, subscriber1 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain1.delete)
         cls.domain2, subscriber2 = generator.arbitrary_domain_and_subscriber()
+        cls.addClassCleanup(cls.domain2.delete)
         cls.admin_web_user = generator.create_arbitrary_web_user_name()
 
         cls.account = generator.billing_account(cls.admin_web_user, cls.admin_web_user)
