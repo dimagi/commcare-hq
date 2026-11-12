@@ -1,5 +1,6 @@
 import json
 
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -10,22 +11,20 @@ from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
-from dimagi.utils.web import json_response
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.motech.const import PASSWORD_PLACEHOLDER, ALGO_AES_CBC
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
     OpenmrsConfigForm,
     OpenmrsImporterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.openmrs.models import ColumnMapping, OpenmrsImporter
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.openmrs_config import (
     OpenmrsCaseConfig,
     OpenmrsFormConfig,
@@ -38,7 +37,6 @@ from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
-from corehq.motech.utils import b64_aes_cbc_encrypt
 
 
 def require_openmrs_repeater_access(view_func):
@@ -162,6 +160,47 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
+def parse_posted_importers(post_data):
+    """
+    Returns the list of importer dicts posted as JSON in
+    ``openmrs_importers``. Raises ``ValidationError`` if the payload is
+    missing or is not a list of objects.
+    """
+    try:
+        importers = json.loads(post_data['openmrs_importers'])
+    except KeyError:
+        raise ValidationError(_('No OpenMRS Importers were submitted.'))
+    except ValueError:
+        raise ValidationError(_('OpenMRS Importers are not valid JSON.'))
+    if not isinstance(importers, list) or not all(isinstance(i, dict) for i in importers):
+        raise ValidationError(_('OpenMRS Importers must be a list of objects.'))
+    return importers
+
+
+def build_importer_forms(domain, posted_importers, current_importers):
+    """
+    Returns an ``OpenmrsImporterForm`` for each posted importer. Posted
+    importers are paired with current importers by position; any beyond
+    the current importers are new.
+    """
+    importer_forms = []
+    for i, data in enumerate(posted_importers):
+        if i < len(current_importers):
+            importer = current_importers[i]
+        else:
+            importer = OpenmrsImporter(domain=domain)
+        importer_forms.append(OpenmrsImporterForm(data, instance=importer))
+    return importer_forms
+
+
+def format_form_errors(forms):
+    return '; '.join(
+        f'{field}: {" ".join(messages)}'
+        for form in forms
+        for field, messages in form.errors.items()
+    )
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
@@ -170,41 +209,28 @@ class OpenmrsImporterView(BaseProjectSettingsView):
     page_title = gettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
-    def _update_importer(self, importer, data):
-        for key, value in data.items():
-            if key == 'password':
-                if value == PASSWORD_PLACEHOLDER:
-                    continue  # Skip updating the password if it hasn't been changed.
-                else:
-                    value = f'${ALGO_AES_CBC}${b64_aes_cbc_encrypt(value)}'
-            elif key == 'report_params':
-                value = json.loads(value)
-            elif key == 'column_map':
-                list_of_dicts = json.loads(value)
-                value = [ColumnMapping(**d) for d in list_of_dicts]
-            setattr(importer, key, value)
-        importer.save()
-
     def post(self, request, *args, **kwargs):
         try:
-            new_openmrs_importers = json.loads(request.POST['openmrs_importers'])
-            current_openmrs_importers = get_openmrs_importers_by_domain(request.domain)
-            i = -1
-            for i, openmrs_importer in enumerate(current_openmrs_importers):
-                if i < len(new_openmrs_importers):
-                    self._update_importer(openmrs_importer, new_openmrs_importers[i])
-                else:
-                    # Delete removed OpenMRS Importers
-                    openmrs_importer.delete()
-            if i + 1 < len(new_openmrs_importers):
-                # Insert new OpenMRS Importers
-                for j in range(i + 1, len(new_openmrs_importers)):
-                    openmrs_importer = OpenmrsImporter(domain=request.domain)
-                    self._update_importer(openmrs_importer, new_openmrs_importers[j])
+            posted_importers = parse_posted_importers(request.POST)
+        except ValidationError as err:
+            return JsonResponse({'message': None, 'error': ' '.join(err.messages)}, status=400)
+        current_importers = get_openmrs_importers_by_domain(request.domain)
+        importer_forms = build_importer_forms(request.domain, posted_importers, current_importers)
+        # Validate all importers before saving any of them
+        invalid_forms = [form for form in importer_forms if not form.is_valid()]
+        if invalid_forms:
+            return JsonResponse(
+                {'message': None, 'error': format_form_errors(invalid_forms)},
+                status=400,
+            )
+        try:
+            for form in importer_forms:
+                form.save()
+            for importer in current_importers[len(posted_importers):]:
+                importer.delete()
+        finally:
             get_openmrs_importers_by_domain.clear(request.domain)
-            return json_response({'message': _('OpenMRS Importers saved'), 'error': None})
-        except Exception as err:
-            return json_response({'message': None, 'error': str(err)}, status_code=500)
+        return JsonResponse({'message': _('OpenMRS Importers saved'), 'error': None})
 
     @property
     def page_context(self):

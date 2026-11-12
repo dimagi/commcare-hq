@@ -1408,14 +1408,6 @@ msgstr[2] ""
 msgid "Payment Received - Thank You!"
 msgstr "Payement reçu - Merci"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Le paiement de l'abonnement pour la facture CommCare "
-"{context['invoice_number']} a été refusé"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "Gérer les administrateur de Compte"
@@ -5538,9 +5530,10 @@ msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr ""
 "'{}' est défini par le profil et ne peut donc pas être défini directement"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Paramètre(s) invalide(s) : {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -7146,6 +7139,7 @@ msgstr "Non"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -14655,12 +14649,14 @@ msgid "Not set"
 msgstr "Non défini"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "Traduction U\\u200BI"
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
+msgstr "Traduction de l’interface utilisateur"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "Traductions U\\u200BI"
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
+msgstr "Traductions de l’interface utilisateur"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -15147,10 +15143,6 @@ msgstr ""
 #: corehq/apps/app_manager/views/releases.py
 msgid "App diff"
 msgstr "App diff"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Rétabli à la version {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
@@ -15670,13 +15662,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Exemple : La cellule de la ligne {row_num} contient \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"Les importations de cas peuvent contenir au maximum {MAX_CASE_IMPORTER_ROWS}"
-" lignes. "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Nom de propriétaire invalide"
 
@@ -15845,23 +15830,8 @@ msgid "Name Too Long"
 msgstr "Nom trop long"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Le nom du cas ne peut pas dépasser {STANDARD_CHARFIELD_LENGTH} caractères"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "Identifiant externe trop long"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"L'identifiant externe ne peut pas dépasser {STANDARD_CHARFIELD_LENGTH} "
-"caractères"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -16625,10 +16595,6 @@ msgid "{param} must be a string"
 msgstr "{param} doit être une chaîne de caractères"
 
 #: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Opérateur invalide \"{criteria[\"operator\"]}\". Les valeurs autorisées sont "
-
-#: corehq/apps/case_search/models.py
 msgid "Project Database"
 msgstr "Base de données du projet"
 
@@ -17058,12 +17024,10 @@ msgid "Endpoint '{}' parameters are invalid"
 msgstr "Les paramètres du point de terminaison '{}' sont invalides"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' query timed out"
 msgstr "La requête du point de terminaison « {} » a expiré"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' query failed"
 msgstr "Échec de la requête du point de terminaison « {} »"
 
@@ -17101,11 +17065,6 @@ msgid "Profile Case Search"
 msgstr "Recherche de cas de profil"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} n'est pas pris en charge avec ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -17125,54 +17084,6 @@ msgid ""
 msgstr ""
 "Le côté droit d'une comparaison doit être un nombre ou une date. Les dates "
 "doivent être entourées de guillemets"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} n'est pas une date ou une date-heure correctement formatée."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} n'est pas une date valide."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} n'est pas une date et heure valide."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr ""
-"Le deuxième argument de '{node.name}' doit être des coordonnées valides"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Le troisième argument de '{node.name}' doit être un nombre, reçu "
-"'{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' n'est pas une unité de distance valide. Une des valeurs attendues :"
-" {', '.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' n'est pas une date valide. Format attendu : 'AAAA-MM-JJ"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Le premier argument de '{node.name}' doit être un nom de propriété de cas "
-"valide"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -17211,15 +17122,6 @@ msgstr "'{name}' attend un ou deux arguments"
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 "Erreur '{name}'. L'identifiant d'index doit être une chaîne de caractères"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"La fonction '{node.name}' accepte exactement {expected} arguments, reçu "
-"{actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -18056,7 +17958,6 @@ msgstr "Une étiquette est requise pour chaque champ."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 #, python-format
-#| msgid "Table ID must be between 1 and %(max_length)s characters."
 msgid "Labels must be at most %(limit_value)d characters."
 msgstr "Les libellés ne doivent pas dépasser %(limit_value)d caractères."
 
@@ -20872,7 +20773,7 @@ msgstr "Ajouter une règle de déduplication"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -21784,27 +21685,19 @@ msgstr "Slug"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
-#| msgid "Document Template"
 msgid "Document Templates"
 msgstr "Modèles de document"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "Document Template"
 msgid "New Document Template"
 msgstr "Nouveau modèle de document"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "Document Template"
 msgid "Delete Document Template"
 msgstr "Supprimer le modèle de document"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to permanently delete\n"
-#| "                  <strong>%(friendly_name)s</strong>?\n"
-#| "                "
 msgid ""
 "\n"
 "                  Are you sure you want to delete the document template\n"
@@ -21817,22 +21710,18 @@ msgstr ""
 "                "
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "No endpoints configured."
 msgid "No document templates configured."
 msgstr "Aucun modèle de document n’est configuré."
 
 #: corehq/apps/document_templates/views.py
-#| msgid "A sector with this name already exists."
 msgid "A template with this slug already exists."
 msgstr "Un modèle portant ce slug existe déjà."
 
 #: corehq/apps/document_templates/views.py
-#| msgid "Chat Template"
 msgid "New Template"
 msgstr "Nouveau modèle"
 
 #: corehq/apps/document_templates/views.py
-#| msgid "Document Template"
 msgid "Edit Document Template"
 msgstr "Modifier le modèle de document"
 
@@ -22509,11 +22398,6 @@ msgstr ""
 "Les limites des règles de mise à jour de cas ne peuvent être modifiées que "
 "par les administrateurs Dimagi. Veuillez contacter {support_email} si vous "
 "souhaitez modifier ce paramètre."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Expression inconnue {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -27167,11 +27051,6 @@ msgstr ""
 msgid "Select A Project"
 msgstr "Sélectionnez un projet"
 
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Vous avez été ajouté à l'espace projet \"{invitation.domain}\"."
-
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
 msgstr "Elément de site"
@@ -29827,6 +29706,7 @@ msgstr "Masquer les options"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Ajouter"
 
@@ -33015,8 +32895,16 @@ msgid "UCR rebuild restriction status"
 msgstr "Statut de la restriction de reconstruction UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "Restriction de reconstruction requise"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Reconstruction restreinte"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "Restriction de reconstruction non requise"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -38315,13 +38203,8 @@ msgstr ""
 "feuille '{type}', à l'index '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Impossible de supprimer le type d'emplacement '{deleted_type.code}'. Il est "
-"référencé par le type "
+msgid " and try again."
+msgstr " et réessayez."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -38480,19 +38363,9 @@ msgstr ""
 "d'informations sont disponibles ici</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Code du site d'emplacement : {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr ""
 "Impossible de mettre à jour : impossible de trouver l'emplacement avec"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr ""
-"Des champs invalides ont été inclus dans la requête : {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -39673,32 +39546,73 @@ msgstr ""
 " déjà envoyés peuvent être utilisés jusqu'à leur expiration."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Un e-mail personnalisé avec un lien à usage unique."
+#| msgid "How Respondents Receive Their One-time Link"
+msgid "How Respondents Open the Form"
+msgstr "Comment les personnes répondantes ouvrent le formulaire"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "One-time link by email or text message"
+msgstr "Lien à usage unique par e-mail ou SMS"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Anyone with the link"
+msgstr "Toute personne disposant du lien"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "A branded email with a single-use link."
+msgid "A branded email with a one-time-use link."
+msgstr ""
+"Un e-mail aux couleurs de votre marque contenant un lien à usage unique."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "A short text with a shortened link. Billed per message sent."
 msgstr "Un court texte avec un lien raccourci. Facturé par message envoyé."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Open to Requests"
-msgstr "Ouvert aux demandes"
+#| msgid "Open to Requests"
+msgid "Open to Respondents"
+msgstr "Ouvert aux personnes répondantes"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Immediately open this public webform to one-time link requests."
+#| msgid ""
+#| "Immediately open this public webform to one-time link requests."
+msgid "Open this public webform to respondents."
+msgstr "Ouvrez ce formulaire Web public aux personnes répondantes."
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Verification"
+msgid "Verification Method"
+msgstr "Méthode de vérification"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"To protect your data and project, CommCare runs automated checks on every "
+"respondent who starts the form. If a check flags a respondent, CommCare "
+"sends them a one-time link to open before the form starts. Choose how "
+"CommCare can send that link."
 msgstr ""
-"Ouvrir immédiatement ce formulaire web public aux demandes de lien à usage "
-"unique."
+"Pour protéger vos données et votre projet, CommCare effectue des "
+"vérifications automatisées sur chaque personne répondante qui commence à "
+"remplir le formulaire. Si une vérification signale une personne répondante, "
+"CommCare lui envoie un lien à usage unique à ouvrir avant de commencer le "
+"formulaire. Choisissez comment CommCare peut envoyer ce lien."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Comment les répondants reçoivent leur lien à usage unique"
-
-#: corehq/apps/public_webforms/forms.py
-msgid "Choose at least one way for respondents to receive one-time links."
+#| msgid "The send date must be in the future."
+msgid "Webform must close in the future."
 msgstr ""
-"Choisissez au moins un moyen permettant aux personnes répondantes de "
-"recevoir des liens à usage unique."
+"Le formulaire Web doit avoir une date de fermeture ultérieure à aujourd’hui."
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Choose at least one project space."
+msgid "Choose at least one verification method."
+msgstr "Sélectionnez au moins une méthode de vérification."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webforms open to anyone with the link must close within 90 days."
+msgstr ""
+"Les formulaires Web accessibles à toute personne disposant du lien doivent "
+"fermer dans un délai de 90 jours."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -40059,10 +39973,6 @@ msgstr "Vérifiez vos messages"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Welcome Back to %(cc_name)s\n"
-#| "      "
 msgid ""
 "\n"
 "        We texted a link to %(masked_phone_number)s.\n"
@@ -40074,10 +39984,6 @@ msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "        Welcome Back to %(cc_name)s\n"
-#| "      "
 msgid ""
 "\n"
 "        We emailed a link to %(masked_email)s.\n"
@@ -40088,10 +39994,6 @@ msgstr ""
 "      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#| msgid ""
-#| "\n"
-#| "      We sent a link using the contact information you provided.\n"
-#| "    "
 msgid ""
 "\n"
 "        We sent a link using the contact information you provided.\n"
@@ -41347,9 +41249,8 @@ msgstr ""
 "support."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Veuillez attendre au moins {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "secondes avant de faire une nouvelle demande."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -43395,6 +43296,14 @@ msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr ""
 "Nombre de formulaires non envoyés sur les téléphones des utilisateurs pour "
 "{app_info}"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...Voir plus"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Réduire"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -45735,13 +45644,6 @@ msgstr ""
 " ?"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr ""
-"Impossible de supprimer le formulaire {instance_id} car il n'est pas "
-"archivé."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (ce dossier)"
 
@@ -46315,12 +46217,6 @@ msgstr "Copiez ceci dans un endroit sécurisé. Il ne sera plus affiché."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Toutes les adresses IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-"Une clé API portant le nom \"{create_form.cleaned_data['name']}\" existe "
-"déjà."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -47468,7 +47364,6 @@ msgid "Connect user not found for recipient."
 msgstr "Utilisateur Connect introuvable pour le destinataire."
 
 #: corehq/apps/sms/models.py
-#| msgid "Connect Messaging Users"
 msgid "Connect Messaging Gateway Error"
 msgstr "Erreur de la passerelle de messagerie Connect"
 
@@ -49601,11 +49496,6 @@ msgid "today!"
 msgstr "aujourd'hui !"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "le {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -49613,11 +49503,6 @@ msgid ""
 msgstr ""
 "Alerte CommCare : Le certificat du fournisseur d'identité %(idp_name)s "
 "expire le %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Comptes Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -50731,15 +50616,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Traductions manquantes pour {} dans la feuille téléchargée"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Impossible de trouver un module ou formulaire avec l'ID "
-"'{module_or_form_id}' dans l'application '{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Impossible de trouver la/les colonne(s) '{}'"
 
@@ -50895,11 +50771,6 @@ msgid ""
 msgstr ""
 "L'e-mail a été rejeté pour l'invitation de cet utilisateur : {}. Veuillez "
 "réessayer avec un autre nom d'utilisateur"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Le domaine ne peut pas être défini sur '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -51194,16 +51065,6 @@ msgstr "Recharger"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Supprimer"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression n'est pas autorisé pour le domaine {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} n'est pas autorisé pour le domaine {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -53049,21 +52910,8 @@ msgid "UCR Expressions"
 msgstr "Expressions UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr ""
-"Une expression UCR portant le nom \"{create_form.cleaned_data['name']}\" "
-"existe déjà."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Modifier l'expression UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Confirmez votre compte CommCare pour {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -56403,13 +56251,9 @@ msgid "is_active"
 msgstr "est_actif"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Vous avez confirmé avec succès le compte {user.raw_username}. Vous pouvez "
-"maintenant vous connecter"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "Vous pouvez maintenant vous connecter"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -59305,24 +59149,25 @@ msgstr ""
 "période de trimestre valide au format aaaaQn (ex. « 2004Q1 » pour janvier-"
 "mars 2004), ou saisir une colonne valide."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Ajouter/Modifier les paramètres de connexion</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Rapport configurable par l'utilisateur"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
 "Les cartes DataSet associent les UCR CommCare aux DataSets DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">Plus"
+" d’informations</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -59805,13 +59650,11 @@ msgid "There is an error in your data API validations"
 msgstr "Il y a une erreur dans vos validations de l'API de données"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
+#| msgid "Please select the applicable day(s) of the week."
+msgid "Please select the applicable API auth settings for the "
 msgstr ""
-"Impossible de résoudre les points de terminaison API "
-"{self.api_auth_settings!r}. Veuillez sélectionner les paramètres "
-"d'authentification API appropriés pour le "
+"Veuillez sélectionner les paramètres d’authentification API applicables pour"
+" le "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -59847,54 +59690,19 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "Il y a une erreur de syntaxe XML dans le flux Atom OpenMRS à "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"Aucun utilisateur trouvé à l'emplacement \"{repeater.location_id}\" pour "
-"posséder les patients ajoutés depuis le flux OpenMRS Atom."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "patients ajoutés depuis le flux Atom OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain} : {repeater} : Erreur dans les paramètres : impossible de "
-"mettre à jour "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "patients depuis OpenMRS sauf si un seul type de cas est spécifié."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr ""
-"{repeater.domain} : {repeater} : Erreur lors de la récupération du patient "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain} : {repeater} : Plus d'un cas trouvé "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr ""
-"{repeater.domain} : {repeater} : Erreur lors de la récupération de "
-"l'Encounter "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain} : {repeater} : Plusieurs cas trouvés correspondant à "
-"l'UUID OpenMRS unique. case external_id : "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Impossible de déterminer le travailleur mobile pour posséder le nouveau "
-"« {case_type} » "
+#| msgid ""
+#| "{repeater.domain}: {repeater}: More than one case found matching unique "
+#| "OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "UUID OpenMRS unique correspondant. cas external_id : "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -61157,7 +60965,6 @@ msgid "WhatsApp Settings"
 msgstr "Paramètres WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-#| msgid "Connect Messsaging"
 msgid "Connect Messaging"
 msgstr "Messagerie Connect"
 
@@ -62026,6 +61833,231 @@ msgstr "Les colonnes requises sont {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "Le paiement de l'abonnement pour la facture CommCare "
+#~ "{context['invoice_number']} a été refusé"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Paramètre(s) invalide(s) : {', '.join(invalid_params)}"
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Rétabli à la version {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "Les importations de cas peuvent contenir au maximum {MAX_CASE_IMPORTER_ROWS}"
+#~ " lignes. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Le nom du cas ne peut pas dépasser {STANDARD_CHARFIELD_LENGTH} caractères"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "L'identifiant externe ne peut pas dépasser {STANDARD_CHARFIELD_LENGTH} "
+#~ "caractères"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Opérateur invalide \"{criteria[\"operator\"]}\". Les valeurs autorisées sont "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} n'est pas pris en charge avec ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} n'est pas une date ou une date-heure correctement formatée."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} n'est pas une date valide."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} n'est pas une date et heure valide."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr ""
+#~ "Le deuxième argument de '{node.name}' doit être des coordonnées valides"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Le troisième argument de '{node.name}' doit être un nombre, reçu "
+#~ "'{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' n'est pas une unité de distance valide. Une des valeurs attendues :"
+#~ " {', '.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' n'est pas une date valide. Format attendu : 'AAAA-MM-JJ"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Le premier argument de '{node.name}' doit être un nom de propriété de cas "
+#~ "valide"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "La fonction '{node.name}' accepte exactement {expected} arguments, reçu "
+#~ "{actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Expression inconnue {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Vous avez été ajouté à l'espace projet \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Impossible de supprimer le type d'emplacement '{deleted_type.code}'. Il est "
+#~ "référencé par le type "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Code du site d'emplacement : {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr ""
+#~ "Des champs invalides ont été inclus dans la requête : {list(data.keys())}."
+
+#~ msgid "Choose at least one way for respondents to receive one-time links."
+#~ msgstr ""
+#~ "Choisissez au moins un moyen permettant aux personnes répondantes de "
+#~ "recevoir des liens à usage unique."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Veuillez attendre au moins {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr ""
+#~ "Impossible de supprimer le formulaire {instance_id} car il n'est pas "
+#~ "archivé."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr ""
+#~ "Une clé API portant le nom \"{create_form.cleaned_data['name']}\" existe "
+#~ "déjà."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "le {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Comptes Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Impossible de trouver un module ou formulaire avec l'ID "
+#~ "'{module_or_form_id}' dans l'application '{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Le domaine ne peut pas être défini sur '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression n'est pas autorisé pour le domaine {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} n'est pas autorisé pour le domaine {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr ""
+#~ "Une expression UCR portant le nom \"{create_form.cleaned_data['name']}\" "
+#~ "existe déjà."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Confirmez votre compte CommCare pour {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Vous avez confirmé avec succès le compte {user.raw_username}. Vous pouvez "
+#~ "maintenant vous connecter"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Ajouter/Modifier les paramètres de connexion</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "Impossible de résoudre les points de terminaison API "
+#~ "{self.api_auth_settings!r}. Veuillez sélectionner les paramètres "
+#~ "d'authentification API appropriés pour le "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "Aucun utilisateur trouvé à l'emplacement \"{repeater.location_id}\" pour "
+#~ "posséder les patients ajoutés depuis le flux OpenMRS Atom."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain} : {repeater} : Erreur dans les paramètres : impossible de "
+#~ "mettre à jour "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr ""
+#~ "{repeater.domain} : {repeater} : Erreur lors de la récupération du patient "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain} : {repeater} : Plus d'un cas trouvé "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr ""
+#~ "{repeater.domain} : {repeater} : Erreur lors de la récupération de "
+#~ "l'Encounter "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr ""
+#~ "Impossible de déterminer le travailleur mobile pour posséder le nouveau "
+#~ "« {case_type} » "
 
 #~ msgid "The selected form can't be used for a public webform."
 #~ msgstr ""
@@ -65289,35 +65321,8 @@ msgstr "Saisir un JSON valide"
 #~ "      inclus dans votre forfait, des frais vous seront facturés selon les conditions du forfait.\n"
 #~ "    "
 
-#~ msgid ", "
-#~ msgstr ", "
-
 #~ msgid "Workflow:"
 #~ msgstr "Workflow :"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Restriction de reconstruction requise"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Restriction de reconstruction non requise"
-
-#~ msgid " and try again."
-#~ msgstr " et réessayez."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "secondes avant de faire une nouvelle demande."
-
-#~ msgid "...See more"
-#~ msgstr "...Voir plus"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Réduire"
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "patients ajoutés depuis le flux Atom OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "patients depuis OpenMRS sauf si un seul type de cas est spécifié."
 
 #~ msgid "Data cleaning action"
 #~ msgstr "Action de nettoyage des données"
