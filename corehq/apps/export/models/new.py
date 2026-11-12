@@ -2632,6 +2632,10 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
 
+def get_export_data_schema_class(export_type):
+    return CaseExportDataSchema if export_type == CASE_EXPORT else FormExportDataSchema
+
+
 def _string_path_to_list(path):
     return path if path is None else path[1:].split('/')
 

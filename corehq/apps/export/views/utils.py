@@ -33,10 +33,6 @@ from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT
 )
 from corehq.apps.export.dbaccessors import get_export_instance_or_404
-from corehq.apps.export.models import (
-    CaseExportDataSchema,
-    FormExportDataSchema,
-)
 from corehq.apps.export.models.new import DataFile, DatePeriod, CaseExportInstance
 from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -260,10 +256,6 @@ class ODataFeedMixin(object):
 
 class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
     urlname = 'build_full_schema'
-
-    @staticmethod
-    def export_cls(export_type):
-        return CaseExportDataSchema if export_type == CASE_EXPORT else FormExportDataSchema
 
     def get(self, request, *args, **kwargs):
         download_id = request.GET.get('download_id')
