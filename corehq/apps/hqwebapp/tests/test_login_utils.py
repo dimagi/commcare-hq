@@ -38,6 +38,7 @@ class TestIsLoggedIn(TestCase):
 
     def test_returns_true_if_user_without_2fa_is_authenticated(self):
         user = User(username="test-user", password="abc123")
+        user.save()
         self.assertTrue(is_logged_in(user))
 
     def test_returns_false_if_user_without_2fa_is_not_authenticated(self):
