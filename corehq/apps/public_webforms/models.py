@@ -131,9 +131,8 @@ class PublicFormSession(models.Model):
         """Return the usable (unsubmitted, unexpired) session for a raw
         session_key value, or None if the key is malformed or no such
         session is usable."""
-        try:
-            key = UUID(str(session_key))
-        except (ValueError, TypeError):
+        key = cls._parse_uuid(session_key)
+        if key is None:
             return None
         return cls.objects.get_or_none(
             session_key=key,
@@ -143,9 +142,8 @@ class PublicFormSession(models.Model):
 
     @classmethod
     def get_active_session_by_id(cls, public_webform, session_id):
-        try:
-            session_uuid = UUID(str(session_id))
-        except (ValueError, TypeError):
+        session_uuid = cls._parse_uuid(session_id)
+        if session_uuid is None:
             return None
         return cls.objects.get_or_none(
             public_webform=public_webform,
@@ -155,15 +153,33 @@ class PublicFormSession(models.Model):
         )
 
     @classmethod
-    def get_active_session_for_contact(cls, public_webform, email=None, phone_number=None):
+    def get_reusable_session_for_contact(cls, public_webform, email=None, phone_number=None):
         assert bool(email) != bool(phone_number)
         contact = {'email': email} if email else {'phone_number': phone_number}
+        return cls._get_reusable_session(public_webform, **contact)
+
+    @classmethod
+    def get_reusable_session_by_key(cls, public_webform, session_key):
+        key = cls._parse_uuid(session_key)
+        if key is None:
+            return None
+        return cls._get_reusable_session(public_webform, session_key=key)
+
+    @classmethod
+    def _get_reusable_session(cls, public_webform, **lookup):
         return cls.objects.filter(
             public_webform=public_webform,
             submitted_at__isnull=True,
             expires_at__gte=timezone.now() + cls.REUSE_MARGIN,
-            **contact,
+            **lookup,
         ).order_by('-created_at').first()
+
+    @staticmethod
+    def _parse_uuid(value):
+        try:
+            return UUID(str(value))
+        except (ValueError, TypeError):
+            return None
 
     @property
     def one_time_link(self):
