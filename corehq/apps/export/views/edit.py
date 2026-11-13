@@ -59,11 +59,13 @@ class BaseEditNewCustomExportView(BaseExportView):
         ):
             schema = self.get_empty_export_schema(self.domain, export_instance.case_type)
         else:
-            schema = self.get_export_schema(
-                self.domain,
+            waiting_response = self.prepare_export_schema(
                 self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
-                export_instance.identifier
+                export_instance.identifier,
             )
+            if waiting_response is not None:
+                return waiting_response
+            schema = self.export_schema
         self.export_instance = self.get_export_instance(schema, export_instance)
         for message in self.export_instance.error_messages():
             messages.error(request, message)
