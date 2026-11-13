@@ -218,4 +218,4 @@
 +      <label class="form-check-label" for="cta-marketing-opt-in">
          {% blocktrans trimmed %}
            Yes, I would like to receive relevant email updates from Dimagi,
-           including newsletters, product updates, webinars, podcasts and
+           including newsletters, product updates, webinars, podcasts, and
