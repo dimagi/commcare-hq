@@ -367,14 +367,21 @@ def preview_document(request, domain):
 def render_document(request, domain):
     """Called from web apps with space separated case IDs as the request body
 
-    Responds with a PDF with a document for each case.
+    Responds with a PDF with a document for each case. If any case fails,
+    responds with status 400 and JSON
+    ``{"error": message, "failed": [{"case_id", "name", "reason"}]}``.
+    ``failed`` is empty if the request itself is invalid.
     """
     try:
         pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
-    except CaseDocumentError:
-        return JsonResponse(
-            {'error': gettext('Unable to render document.')}, status=400
-        )
+    except CaseDocumentError as error:
+        return JsonResponse({
+            'error': str(error),
+            'failed': [
+                {'case_id': failure.case_id, 'name': failure.name, 'reason': failure.reason}
+                for failure in error.failures
+            ],
+        }, status=400)
     response = FileResponse(BytesIO(pdf), filename='document.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
