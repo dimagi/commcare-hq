@@ -68,6 +68,12 @@ class TestDeleteDocumentTemplateView(TestCase):
         _post(DeleteDocumentTemplateView, template.pk)
         assert list(Template.objects.filter(deleted=False)) == [other]
 
+    def test_linked_template_can_be_deleted(self):
+        template = Template.objects.create(domain=DOMAIN, name='Linked', slug='linked', areas={}, upstream_id=1)
+        _post(DeleteDocumentTemplateView, template.pk)
+        template.refresh_from_db()
+        assert template.deleted
+
     def test_cannot_delete_a_template_of_another_domain(self):
         template = Template.objects.create(domain=OTHER_DOMAIN, name='Theirs', slug='theirs', areas={})
         with self.assertRaises(Http404):

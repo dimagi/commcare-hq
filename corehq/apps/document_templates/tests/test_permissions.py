@@ -12,6 +12,7 @@ PASSWORD = 'Passw0rd!'
 ROLES = {
     'viewer': HqPermissions(view_document_templates=True),
     'editor': HqPermissions(edit_document_templates=True),
+    'linked_editor': HqPermissions(edit_document_templates=True, edit_linked_configurations=True),
     'nobody': HqPermissions(),
 }
 
@@ -85,3 +86,16 @@ class TestDocumentTemplatePermissions(TestCase):
         assert self._status('editor', 'post', 'delete_document_template', self.template.pk) == 302
         self.template.refresh_from_db()
         assert self.template.deleted
+
+    def test_linked_template_needs_edit_linked_configurations(self):
+        linked = Template.objects.create(domain=DOMAIN, name='Linked', slug='linked', areas={}, upstream_id=1)
+        edit_url = reverse('edit_document_template', args=[DOMAIN, linked.pk])
+        for role, expected in [('editor', 403), ('linked_editor', 200)]:
+            client = Client()
+            client.login(username=f'{role}@example.com', password=PASSWORD)
+            with self.subTest(role=role):
+                for method in ['get', 'post']:
+                    assert getattr(client, method)(edit_url).status_code == expected
+                content = client.get(reverse('document_templates', args=[DOMAIN])).content.decode()
+                assert (f'href="{edit_url}"' in content) == (expected == 200)
+                assert f'delete-template-{linked.pk}' in content

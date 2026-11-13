@@ -7,6 +7,16 @@
   <form method="post">
     {% csrf_token %}
 
+    {% if form.instance.upstream_id %}
+      <div class="alert alert-warning">
+        <i class="fa fa-link"></i>
+        {% blocktrans %}
+          This template is linked from an upstream project space. Changes made
+          here are overwritten the next time it is pushed or pulled.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+
     <div class="row g-3 mb-3">
       <div class="col-md-6">
         <label for="template-name" class="form-label fw-semibold"

@@ -21,6 +21,7 @@ class Template(models.Model):
     slug = models.SlugField(max_length=50)
     areas = AttrsDict(Area)
     deleted = models.BooleanField(default=False)
+    upstream_id = models.IntegerField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -28,6 +29,10 @@ class Template(models.Model):
                 fields=['domain', 'slug'],
                 condition=models.Q(deleted=False),
                 name='document_templates_template_domain_slug',
+            ),
+            models.UniqueConstraint(
+                fields=['domain', 'upstream_id'],
+                name='document_templates_template_domain_upstream_id',
             ),
         ]
 

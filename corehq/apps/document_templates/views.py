@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from io import BytesIO
 
 from django import forms
+from django.core.exceptions import PermissionDenied
 from django.http import (
     FileResponse,
     Http404,
@@ -88,6 +89,7 @@ class DocumentTemplatesView(BaseDocumentTemplatesView):
             'can_edit': self.request.couch_user.has_permission(
                 self.domain, get_permission_name(HqPermissions.edit_document_templates)
             ),
+            'can_edit_linked': self.request.couch_user.can_edit_linked_data(self.domain),
         }
 
 
@@ -254,6 +256,12 @@ class EditDocumentTemplateView(BaseDocumentTemplateFormView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.kwargs['pk']])
+
+    def get_object(self, queryset=None):
+        template = super().get_object(queryset)
+        if template.upstream_id and not self.request.couch_user.can_edit_linked_data(self.domain):
+            raise PermissionDenied
+        return template
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
