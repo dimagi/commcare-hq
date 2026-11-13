@@ -242,7 +242,7 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
 
 
 @task(queue='background_queue', bind=True)
-def build_export_schema(self, export_type, domain, app_id, identifier, for_new_export_instance) -> dict:
+def build_export_schema(self, export_type, domain, app_id, identifier, for_new_export_instance):
     """Returns ``{'schema_id': ...}``; soil's get_task_status requires a dict result."""
     export_cls = get_export_data_schema_class(export_type)
     try:
