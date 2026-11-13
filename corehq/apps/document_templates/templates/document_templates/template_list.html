@@ -41,7 +41,7 @@
             <td>{{ template.slug }}</td>
             {% if can_edit %}
               <td>
-                {% if not template.upstream_id %}
+                {% if not template.upstream_id or can_edit_linked %}
                   <a
                     class="btn btn-sm btn-outline-primary"
                     href="{% url 'edit_document_template' domain template.pk %}"
