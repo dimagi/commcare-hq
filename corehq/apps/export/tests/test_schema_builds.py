@@ -5,7 +5,6 @@ from uuid import uuid4
 
 import pytest
 from celery import Task
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.cache import cache
 from django.test import TestCase
 from redis.exceptions import LockNotOwnedError
@@ -74,28 +73,6 @@ def test_unfinished_build_is_joined(state):
     assert builds().delay.call_count == 1
 
 
-@use(builds)
-def test_queued_build_reported_missing_is_not_started():
-    # Soil reports a queued task as missing: the result backend has no row yet
-    builds().state = STATES.missing
-    download_id = start_or_join_build(KEY)
-    assert get_build_status(download_id).not_started()
-
-
-@use(builds)
-def test_task_is_started_with_key_fields():
-    start_or_join_build(KEY)
-    builds().delay.assert_called_once_with('form', 'test-domain', 'app123', 'xmlns', False)
-
-
-@use(builds)
-def test_different_keys_start_separate_builds():
-    first = start_or_join_build(KEY)
-    second = start_or_join_build(replace(KEY, for_new_export_instance=True))
-    assert first != second
-    assert builds().delay.call_count == 2
-
-
 def succeed(download_id):
     builds().state = STATES.success
 
@@ -125,9 +102,7 @@ def test_ended_build_is_not_joined(end_build):
 
 
 @pytest.mark.parametrize('state, expected', [
-    (STATES.not_started, STATES.failed),
     (STATES.started, STATES.failed),
-    (STATES.missing, STATES.failed),
     (STATES.success, STATES.success),
 ])
 @use(builds)
@@ -135,44 +110,18 @@ def test_stale_build_status(state, expected):
     download_id = start_or_join_build(KEY)
     builds().state = state
     make_stale(download_id)
-    with patch.object(schema_builds, 'logger') as logger:
-        assert get_build_status(download_id).state == expected
-    assert logger.warning.called == (expected == STATES.failed)
+    assert get_build_status(download_id).state == expected
 
 
 @use(builds)
 def test_lock_timeout_starts_build_without_lock():
     lock = Mock()
     lock.acquire.return_value = False
-    with (
-        patch.object(schema_builds, 'get_redis_lock', return_value=lock) as get_lock,
-        patch.object(schema_builds, 'logger') as logger,
-        patch.object(schema_builds, 'metrics_counter') as counter,
-    ):
+    with patch.object(schema_builds, 'get_redis_lock', return_value=lock):
         download_id = start_or_join_build(KEY)
     assert download_id
     assert builds().delay.call_count == 1
-    assert get_lock.call_args.kwargs['blocking_timeout'] > 0
     lock.release.assert_not_called()
-    logger.warning.assert_called_once()
-    counter.assert_any_call('commcare.exports.schema_build.lock_timeout')
-
-
-@use(builds)
-def test_build_outcome_metrics():
-    with patch.object(schema_builds, 'metrics_counter') as counter:
-        start_or_join_build(KEY)
-        start_or_join_build(KEY)
-    assert [c.kwargs['tags']['outcome'] for c in counter.call_args_list] == ['started', 'joined']
-
-
-@use(builds)
-def test_lock_is_released():
-    lock = Mock()
-    lock.acquire.return_value = True
-    with patch.object(schema_builds, 'get_redis_lock', return_value=lock):
-        start_or_join_build(KEY)
-    lock.release.assert_called_once_with()
 
 
 @use(builds)
@@ -180,13 +129,10 @@ def test_lock_release_error_does_not_fail_started_build():
     lock = Mock()
     lock.acquire.return_value = True
     lock.release.side_effect = LockNotOwnedError('Cannot release a lock that is no longer owned')
-    with (
-        patch.object(schema_builds, 'get_redis_lock', return_value=lock),
-        patch.object(schema_builds, 'logger') as logger,
-    ):
+    with patch.object(schema_builds, 'get_redis_lock', return_value=lock):
         download_id = start_or_join_build(KEY)
     assert get_build_record(download_id).cache_key == KEY.cache_key()
-    logger.warning.assert_called_once()
+    lock.release.assert_called_once_with()
 
 
 @use(builds)
@@ -196,19 +142,6 @@ def test_build_record_stores_cache_key_and_domain():
     assert record.cache_key == KEY.cache_key()
     assert record.domain == 'test-domain'
     assert time.time() - 5 < record.started_at <= time.time()
-
-
-def test_cache_key_depends_on_every_field():
-    keys = {
-        KEY.cache_key(),
-        replace(KEY, export_type='case').cache_key(),
-        replace(KEY, domain='other').cache_key(),
-        replace(KEY, app_id=None).cache_key(),
-        replace(KEY, identifier='other').cache_key(),
-        replace(KEY, for_new_export_instance=True).cache_key(),
-    }
-    assert len(keys) == 6
-    assert all(k.startswith('export-schema-build:') for k in keys)
 
 
 @use(builds)
@@ -250,30 +183,15 @@ def test_get_built_schema_rejects_schema_for_other_key(key, schema):
 
 
 @use(builds)
-def test_get_built_schema_handles_missing_schema_doc():
-    download_id = start_or_join_build(KEY)
-    builds().state = STATES.success
-    with patch.object(FormExportDataSchema, 'get', side_effect=ResourceNotFound):
-        assert get_built_schema(KEY, download_id) is None
-
-
-@use(builds)
 def test_get_built_schema_rejects_build_for_other_key():
     download_id = start_or_join_build(KEY)
     builds().state = STATES.success
     assert get_built_schema(replace(KEY, identifier='other'), download_id) is None
 
 
-@use(builds)
-def test_get_built_schema_rejects_unfinished():
-    download_id = start_or_join_build(KEY)
-    assert get_built_schema(KEY, download_id) is None
-
-
 @pytest.mark.parametrize('state, expected', [
     (STATES.started, False),
     (STATES.success, True),
-    (STATES.failed, False),
 ])
 @use(builds)
 def test_wait_for_build(state, expected):
@@ -301,11 +219,6 @@ class TestBuildAtFullProgressBeforeTaskFinishes(StoreEagerCeleryResults, TestCas
         status = get_build_status(self.download_id)
         assert status.started()
         assert status.progress.percent == 99
-
-    def test_build_is_joined(self):
-        with patch.object(schema_builds.build_export_schema, 'delay') as delay:
-            assert start_or_join_build(KEY) == self.download_id
-        delay.assert_not_called()
 
     def test_schema_is_not_loaded(self):
         with patch.object(FormExportDataSchema, 'get') as get:

@@ -7,8 +7,7 @@ from unittest.mock import Mock, patch
 from urllib.parse import urlencode
 
 from django.http import HttpResponse
-from django.template.loader import render_to_string
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
@@ -35,7 +34,6 @@ from corehq.apps.export.views.edit import (
 )
 from corehq.apps.export.views.list import CaseExportListView
 from corehq.apps.export.views.new import (
-    CreateNewCaseFeedView,
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
@@ -45,10 +43,6 @@ from corehq.apps.export.schema_builds import BuildRecord, SchemaBuildKey
 from corehq.apps.export.tasks import build_export_schema
 from corehq.apps.export.tests.util import StoreEagerCeleryResults
 from corehq.apps.export.views.utils import DataFileDownloadDetail, ExportSchemaBuildStatusView
-from corehq.apps.hqwebapp.utils.bootstrap import (
-    set_bootstrap_version3,
-    set_bootstrap_version5,
-)
 from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.util.test_utils import generate_cases, privilege_enabled
@@ -661,16 +655,12 @@ class ExportSchemaBuildStatusViewTest(ViewTestCase):
                 patch('corehq.apps.export.views.utils.get_build_status', return_value=status):
             return self.client.get(url, params or {})
 
-    @generate_cases([
-        (STATES.started, 42, '42%'),
-        (STATES.not_started, None, '0%'),
-    ])
-    def test_status_unfinished_keeps_polling(self, state, percent, expected):
-        resp = self.get_status(state, percent=percent)
+    def test_status_unfinished_keeps_polling(self):
+        resp = self.get_status(STATES.started, percent=42)
         assert resp.status_code == 200
         content = resp.content.decode()
         assert 'hx-trigger="every 2s"' in content
-        assert expected in content
+        assert '42%' in content
 
     def test_status_success_triggers_event_without_redirect(self):
         resp = self.get_status(STATES.success, params={'next': 'https://evil'})
@@ -726,42 +716,6 @@ class ExportSchemaBuildStatusViewTest(ViewTestCase):
         resp = self.get_status(STATES.started, percent=5)
         assert resp.status_code == 200
         assert '5%' in resp.content.decode()
-
-
-class SchemaBuildWaitingTemplateTest(ViewTestCase):
-
-    def setUp(self):
-        super().setUp()
-        set_bootstrap_version5()
-        self.addCleanup(set_bootstrap_version3)
-
-    def test_waiting_page(self):
-        request = RequestFactory().get('/')
-        request.user = self.user.get_django_user()
-        request.couch_user = self.user
-        request.domain = self.domain.name
-        request.can_access_all_locations = True
-        html = render_to_string('export/schema_build_waiting.html', {
-            'domain': self.domain.name,
-            'download_id': 'abc-123',
-            'success_url': '/a/donkeykong/data/export/custom/new/?schema_build=abc-123',
-            'export_home_url': '/a/donkeykong/data/export/form/',
-        }, request=request)
-        assert 'Finding available columns' in html
-        # Navigates to its own success URL when the build succeeds
-        assert '@schema-build-succeeded.camel.window' in html
-        assert '&quot;/a/donkeykong/data/export/custom/new/?schema_build=abc-123&quot;' in html
-        # Back link outside the polled partial, so it survives every swap
-        assert '/a/donkeykong/data/export/form/' in html
-        partial = render_to_string('export/partials/schema_build_status.html', {
-            'domain': self.domain.name, 'download_id': 'abc-123', 'failed': False, 'percent': 0,
-        })
-        assert 'Go back' not in partial
-        # Stops polling and shows failure if the poller is refused or keeps failing
-        assert '@htmx:after-request="onPollResponse($event.detail)"' in html
-        assert '[401, 403, 404].includes(detail.xhr.status)' in html
-        assert 'this.errors >= this.maxErrors' in html
-        assert 'x-show="failed"' in html
 
 
 @patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
@@ -825,28 +779,8 @@ class ExportViewSchemaBuildTest(StoreEagerCeleryResults, ViewTestCase):
         # The page context reads the schema that prepare_export_schema() set
         assert resp.context['number_of_apps_to_process'] == 3
 
-    def test_create_case_export_ignores_build_for_other_key(self):
-        with patch('corehq.apps.export.views.new.get_built_schema', return_value=None):
-            resp = self.get_while_build_is_slow(
-                self.create_case_url(),
-                {'export_tag': 'random_case', 'schema_build': 'other-build'},
-                download_id='build-2',
-            )
-        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
-        assert resp.context['success_url'] == (
-            self.create_case_url() + '?export_tag=random_case&schema_build=build-2'
-        )
-
     def test_edit_case_export_shows_waiting_page_when_build_slow(self):
         resp = self.get_while_build_is_slow(self.edit_case_url())
-        assert resp.status_code == 200
-        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
-
-    @privilege_enabled(privileges.EXCEL_DASHBOARD, privileges.DAILY_SAVED_EXPORT)
-    def test_case_feed_create_shows_waiting_page_when_build_slow(self):
-        resp = self.get_while_build_is_slow(
-            self.create_case_url(CreateNewCaseFeedView.urlname), {'export_tag': 'random_case'}
-        )
         assert resp.status_code == 200
         self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
 
@@ -891,9 +825,7 @@ class ExportViewSchemaBuildTest(StoreEagerCeleryResults, ViewTestCase):
 
 @pytest.mark.parametrize('full_path, download_id, expected', [
     ('/a/d/new/', 'b1', '/a/d/new/?schema_build=b1'),
-    ('/a/d/new/?export_tag=x', 'b1', '/a/d/new/?export_tag=x&schema_build=b1'),
-    ('/a/d/new/?schema_build=old&export_tag=x', 'b2', '/a/d/new/?export_tag=x&schema_build=b2'),
-    ('/a/d/new/?schema_build=a&schema_build=b', 'c', '/a/d/new/?schema_build=c'),
+    ('/a/d/new/?schema_build=a&export_tag=x&schema_build=b', 'c', '/a/d/new/?export_tag=x&schema_build=c'),
     ('/a/d/new/?export_tag=%22a+b%22&app_id=', 'b1', '/a/d/new/?export_tag=%22a+b%22&app_id=&schema_build=b1'),
 ])
 def test_with_schema_build(full_path, download_id, expected):

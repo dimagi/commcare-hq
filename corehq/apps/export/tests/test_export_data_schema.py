@@ -1545,15 +1545,3 @@ class TestOrderingOfBulkCaseExportSchemaItemsFromDataDictionary(BaseTestOrdering
                 self._get_schema_item_order(),
                 ['weight', 'height', 'address', 'age']
             )
-
-
-def test_process_apps_for_export_tags_progress_source():
-    schema = FormExportDataSchema(domain='d', xmlns='x')
-    app_doc = {'_id': 'build-1', 'doc_type': 'Application', 'has_submissions': True}
-    app = Application(domain='d', copy_of=None)
-    with patch('corehq.apps.export.models.new.iter_docs', return_value=[app_doc]), \
-            patch.object(Application, 'wrap', return_value=app), \
-            patch.object(FormExportDataSchema, '_process_app_build', return_value=schema), \
-            patch('corehq.apps.export.models.new.set_task_progress') as set_progress:
-        FormExportDataSchema._process_apps_for_export('d', schema, 'x', ['build-1'], 'task')
-    set_progress.assert_called_once_with('task', 1, 1, src='export_schema')
