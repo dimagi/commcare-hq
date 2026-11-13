@@ -1,0 +1,20 @@
+{% load i18n %}
+
+<script type="text/html" id="fetch_value-entry-ko-template">
+  <button
+    type="button"
+    class="btn btn-outline-primary"
+    data-bind="click: onClick, attr: {id: entryId}, disable: isLoading"
+  >
+    <span
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+      data-bind="visible: isLoading"
+    ></span>
+    <span data-bind="html: buttonLabel()"></span>
+  </button>
+  <span class="text-danger small ms-1" data-bind="visible: generationFailed()"
+    >{% trans "Generation Failed" %}</span
+  >
+</script>

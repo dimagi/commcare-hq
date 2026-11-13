@@ -269,6 +269,13 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         return cls.get_by_hash(file_hash)
 
     @classmethod
+    def get_for_domain(cls, domain, doc_id):
+        media = cls.get(doc_id)
+        if domain not in media.valid_domains:
+            raise ResourceNotFound(doc_id)
+        return media
+
+    @classmethod
     def get_doc_types(cls):
         return ('CommCareImage', 'CommCareAudio', 'CommCareVideo')
 
@@ -373,11 +380,18 @@ class CommCareImage(CommCareMultimedia):
                 return "{} x {} px".format(width, height)
 
     @classmethod
-    def get_image_object(cls, data):
+    def get_image_object(cls, data, formats=None):
+        """
+        :param formats: if given, the Pillow formats to accept, e.g. ``('PNG', 'JPEG')``
+        """
         try:
-            return Image.open(BytesIO(data))
-        except IOError:
+            image = Image.open(BytesIO(data))
+        except (IOError, Image.DecompressionBombError):
             raise BadMediaFileException(_('Upload is not a valid image file.'))
+        if formats and image.format not in formats:
+            raise BadMediaFileException(
+                _('Only {formats} images can be used.').format(formats=', '.join(formats)))
+        return image
 
     @classmethod
     def _get_resized_image(cls, image, size):
