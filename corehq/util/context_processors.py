@@ -3,7 +3,6 @@ import datetime
 from django.conf import settings
 from django.http import Http404
 from django.urls import resolve, reverse
-from django.utils.translation import gettext as _
 from django_prbac.utils import has_privilege
 
 from corehq import feature_previews, privileges, toggles
@@ -13,6 +12,7 @@ from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_reques
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils import bootstrap
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -24,31 +24,11 @@ def base_template(request):
     return {
         'base_template': settings.BASE_TEMPLATE,
         'login_template': settings.LOGIN_TEMPLATE,
+        'login_template_b3': settings.LOGIN_TEMPLATE_B3,
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
         'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
-    }
-
-
-def chat_widget_config(request):
-    """Global chat widget configuration with translated strings"""
-    return {
-        'chat_widget_config': {
-            'button_text': _("Need Help?"),
-            'welcome_message': _(
-                "Hi there! I'm CommCare Companion, your personal guide to CommCare! "
-                "What can I help you with today?"
-            ),
-            'starter_questions': [
-                _("I need help with building my CommCare application."),
-                _("I need help troubleshooting my mobile application."),
-                _("I need help with exporting or understanding my data.")
-            ],
-            'typing_indicator_text': _("Finding the best answer"),
-            'new_chat_confirmation_message': _("Starting a new chat will clear your current conversation. "
-                                               "Continue?"),
-        }
     }
 
 
@@ -128,6 +108,7 @@ def js_api_keys(request):
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         'IS_ANALYTICS_ENVIRONMENT': settings.SERVER_ENVIRONMENT in ('production', 'staging', 'india', 'eu'),
+        'USERFLOW_TOKEN': settings.USERFLOW_TOKEN,
     }
     if (
         getattr(request, 'project', None)
@@ -186,6 +167,14 @@ def enterprise_mode(request):
         'enterprise_mode': settings.ENTERPRISE_MODE,
         'is_saas_environment': settings.IS_SAAS_ENVIRONMENT,
         'is_dimagi_environment': settings.IS_DIMAGI_ENVIRONMENT,
+        'server_environment': settings.SERVER_ENVIRONMENT,
+    }
+
+
+def ai_chat_widget(request):
+    return {
+        'CHATBOT_ID': settings.AI_CHATBOT_ID,
+        'CHATBOT_TOKEN': settings.AI_CHATBOT_TOKEN,
     }
 
 
@@ -201,8 +190,9 @@ def commcare_hq_names(request=None):
 def server_location_display(request):
     context = {}
     current_env = settings.SERVER_ENVIRONMENT
-    if current_env in ServerLocation.ENVS:
-        server = ServerLocation.ENVS.get(current_env)
+    envs = ServerLocation.get_envs()
+    if current_env in envs:
+        server = envs.get(current_env)
         context = {
             'server_display': {
                 'country_code': server['country_code'],
@@ -274,6 +264,25 @@ def subscription_banners(request):
             'show_free_edition_banner': True,
         })
     return context
+
+
+def lockout_banner(request):
+    """
+    Flags an authenticated web user whose account is locked after too many
+    failed password attempts. The lock only blocks password-based logins
+    (login form, Basic-auth APIs such as OData), so a user with an existing
+    session would otherwise never find out about it.
+    """
+    couch_user = getattr(request, 'couch_user', None)
+    is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
+    if not (is_logged_in_user and couch_user and couch_user.is_web_user()):
+        return {}
+    if not couch_user.is_locked_out():
+        return {}
+    return {
+        'show_lockout_banner': True,
+        'lockout_banner_can_change_password': not is_request_using_sso(request),
+    }
 
 
 def get_demo(request):

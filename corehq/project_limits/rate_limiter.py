@@ -50,13 +50,22 @@ class RateLimiter(object):
         allowed = False
         # allow usage if any scope has capacity
         for _limit_scope, rates in self.iter_rates(scope):
-            allow = all(current_rate < limit
-                        for _rate_counter, current_rate, limit in rates)
+            exceeded_windows = [
+                rate_counter.key
+                for rate_counter, current_rate, limit in rates
+                if current_rate >= limit
+            ]
             # for each scope all counters must be below threshold
-            if allow:
+            if not exceeded_windows:
                 allowed = True
             else:
-                metrics_counter('commcare.rate_limit_exceeded', tags={'key': self.feature_key, 'scope': scope})
+                for window in exceeded_windows:
+                    metrics_counter('commcare.rate_limit_exceeded', tags={
+                        'key': self.feature_key,
+                        'scope': scope,
+                        'limit_scope': _limit_scope,
+                        'window': window,
+                    })
         return allowed
 
     def get_retry_after(self, scope):
@@ -129,7 +138,7 @@ def get_n_users_in_domain(domain):
     from corehq.apps.accounting.models import Subscription
     total = CommCareUser.total_by_domain(domain, is_active=True)
     subscription = Subscription.get_active_subscription_by_domain(domain)
-    if subscription and subscription.account.bill_web_user:
+    if subscription and subscription.plan_version.has_web_user_feature:
         total += WebUser.total_by_domain(domain, is_active=True)
     return total
 

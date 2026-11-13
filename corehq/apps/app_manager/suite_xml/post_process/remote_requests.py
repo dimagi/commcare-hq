@@ -15,9 +15,10 @@ Case search and claim is typically an optional part of a workflow.
 In this use case, the remote request is accessed via an action, and the
 `rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct
 is used to go back to the main flow.
-However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
-using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
-available after the search, rather than having them destroyed by rewinding.
+However, the flag ``CASE_SEARCH_ADVANCED`` supports remote requests being made in the main flow of a session. When
+using this flag and the setting ("Make search input available after search") is checked,
+a ``<post>`` and query datums are added to a normal form ``<entry>``.
+This makes search inputs available after the search, rather than having them destroyed by rewinding.
 
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
 endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link,
@@ -61,6 +62,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 from corehq.apps.app_manager.util import (
     is_linked_app,
     module_offers_search,
+    module_uses_case_search_endpoint,
     module_uses_smart_links,
     module_offers_registry_search,
     module_uses_inline_search,
@@ -68,6 +70,7 @@ from corehq.apps.app_manager.util import (
     module_uses_inline_search_with_parent_relationship_parent_select,
 )
 from corehq.apps.app_manager.xpath import (
+    all_cases_xpath,
     CaseClaimXpath,
     CaseIDXPath,
     SearchSelectedCasesInstanceXpath,
@@ -81,6 +84,7 @@ from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASE
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
+    CASE_SEARCH_ENDPOINT_ID_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
     CASE_SEARCH_SORT_KEY,
@@ -217,9 +221,8 @@ class RemoteRequestFactory(object):
             "prompts": self.build_query_prompts(),
             "prompt_groups": self.build_query_prompt_groups(),
             "default_search": self.module.search_config.default_search,
-            "dynamic_search": self.app.split_screen_dynamic_search and not self.module.is_auto_select()
         }
-        if self.module.search_config.search_on_clear and toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(self.app.domain):
+        if self.module.search_config.search_on_clear and toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
             kwargs["search_on_clear"] = (self.module.search_config.search_on_clear
                 and not self.module.is_auto_select())
         return [
@@ -234,26 +237,28 @@ class RemoteRequestFactory(object):
             short_detail_id = 'search_short'
             long_detail_id = 'search_long'
 
-        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
-        if toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain):
-            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
-            if additional_types:
-                nodeset = CaseTypeXpath(self.module.case_type).cases(
-                    additional_types, instance_name=self.storage_instance)
-            if self.module.search_config.search_filter and toggles.USH_SEARCH_FILTER.enabled(self.app.domain):
-                nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
-        nodeset += EXCLUDE_RELATED_CASES_FILTER
-
         datum_cls = InstanceDatum if self.module.is_multi_select() else SessionDatum
         return [datum_cls(
             id=self.case_session_var,
-            nodeset=nodeset,
+            nodeset=self._build_datum_nodeset(),
             value='./@case_id',
             detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
             autoselect=self.module.is_auto_select(),
             max_select_value=self.module.max_select_value,
         )]
+
+    def _build_datum_nodeset(self):
+        if module_uses_case_search_endpoint(self.module):
+            return all_cases_xpath(instance_name=self.storage_instance)
+
+        nodeset = CaseTypeXpath(self.module.case_type).case(instance_name=self.storage_instance)
+        if toggles.CASE_SEARCH_ADVANCED.enabled(self.app.domain):
+            additional_types = list(set(self.module.additional_case_types) - {self.module.case_type})
+            if additional_types:
+                nodeset = CaseTypeXpath(self.module.case_type).cases(
+                    additional_types, instance_name=self.storage_instance)
+        return nodeset + EXCLUDE_RELATED_CASES_FILTER
 
     @cached_property
     def _remote_request_query_datums(self):
@@ -304,6 +309,13 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_SORT_KEY,
                     ref=f"'{','.join(refs)}'",
+                )
+            )
+        if module_uses_case_search_endpoint(self.module):
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_ENDPOINT_ID_KEY,
+                    ref=f"'{self.module.search_config.case_search_endpoint_id}'",
                 )
             )
         if module_uses_inline_search_with_parent_relationship_parent_select(self.module):

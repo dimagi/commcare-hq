@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, SYSTEM_FORM_XMLNS_MAP
 
-from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.display import FormDisplay, xmlns_to_name
 from corehq.util.test_utils import generate_cases
 
 UNKNOWN_XMLNS = "http://demo.co/form"
@@ -25,3 +25,15 @@ class TestXmlnsToName(SimpleTestCase):
     def test_xmlns_to_name(self, expected, xmlns, form_name=None, separator=None):
         name = xmlns_to_name("domain", xmlns, "123", separator=separator, form_name=form_name)
         self.assertEqual(name, expected)
+
+
+def test_username_for_public_user():
+    form = {
+        'form': {
+            'meta': {
+                'userID': '_public_',
+                'username': '_public_abc123@domain.commcarehq.org',
+            }
+        }
+    }
+    assert FormDisplay(form, report=None).username == 'public user'

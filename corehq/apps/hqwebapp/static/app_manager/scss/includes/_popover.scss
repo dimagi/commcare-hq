@@ -1,0 +1,65 @@
+.popover-additem {
+  background-color: $cc-light-cool-accent-low;
+  max-width: 730px;
+  border-radius: 0;
+  color: $cc-light-cool-accent-hi;
+  border: 0;
+  border-color: $cc-light-cool-accent-low;
+
+  .popover-header {
+    background-color: transparent;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    border-bottom: 1px solid darken($cc-light-cool-accent-low, 2);
+  }
+  &.bs-popover-auto > .popover-arrow::after {
+    border-right-color: $cc-light-cool-accent-low;
+  }
+}
+
+.popover-additem-option {
+  width: 116px;
+  box-sizing: border-box;
+  color: $cc-light-cool-accent-hi;
+  border: none;
+  background-color: transparent;
+  margin-bottom: 10px;
+
+  text-transform: uppercase;
+  display: block;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  text-align: center;
+  transition: background 0.5s;
+  font-size: 0.75rem;
+  &:focus {
+    color: $cc-light-cool-accent-hi;
+  }
+
+  &:hover {
+    text-decoration: none;
+    color: $cc-light-cool-accent-hi;
+    background-color: darken($cc-light-cool-accent-low, 10);
+  }
+
+  > [class*="fa-"],
+  > .fcc {
+    font-size: 2.8125rem;
+    display: block;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  > .fcc {
+    font-size: 3.2188rem;
+    margin-top: -5px;
+  }
+
+  p {
+    text-transform: none;
+    font-size: 13px;
+    line-height: 14px;
+    margin: 10px 5px 0;
+  }
+}

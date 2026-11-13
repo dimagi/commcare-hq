@@ -8,6 +8,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.reminders.util import get_combined_id
 from corehq.apps.reports.analytics.esaccessors import get_groups_by_querystring
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
+from corehq.apps.users.models import ConnectIDUserLink
 from corehq.util.quickcache import quickcache
 from django.utils.translation import gettext as _
 
@@ -48,12 +49,28 @@ class MessagingRecipientHandler(BaseAsyncHandler):
     def schedule_user_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
+        content = self.data.get('content')
         users = get_search_users_in_domain_es_query(domain, query, 10, 0)
-        users = users.mobile_users().source(('_id', 'base_username')).run().hits
-        ret = [
-            {'id': user['_id'], 'text': user['base_username']}
-            for user in users
-        ]
+        users = users.mobile_users().source(('_id', 'base_username', 'username')).run().hits
+
+        if content in ('connect_message', 'connect_survey'):
+            valid_usernames = set(
+                ConnectIDUserLink.objects.filter(
+                    domain=domain,
+                    is_active=True
+                ).values_list('commcare_user__username', flat=True)
+            )
+            ret = [
+                {'id': user['_id'], 'text': user['base_username']}
+                for user in users
+                if user['username'] in valid_usernames
+            ]
+        else:
+            ret = [
+                {'id': user['_id'], 'text': user['base_username']}
+                for user in users
+            ]
+
         return ret
 
     @property

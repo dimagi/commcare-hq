@@ -1,13 +1,14 @@
 import logging
+from collections import defaultdict
+
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from django.db import InternalError, models, transaction
 from django.db.models import Q
 
 from jsonfield.fields import JSONField
-from lxml import etree
 from memoized import memoized
 
 from couchforms import const
@@ -19,6 +20,8 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.cleanup.utils import get_cutoff_date_for_data_deletion
+from corehq.apps.tombstones.models import Tombstone, build_tombstone
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -31,9 +34,11 @@ from corehq.sql_db.util import (
     paginate_query_across_partitioned_databases,
     split_list_by_db_partition,
 )
+from corehq.util.xml_utils import safe_fromstring
 
 from ..exceptions import (
     AttachmentNotFound,
+    CannotModifyDeletedForm,
     MissingFormXml,
     XFormNotFound,
     XFormSaveError,
@@ -48,6 +53,7 @@ from .util import attach_prefetch_models, fetchall_as_namedtuple, sort_with_id_l
 log = logging.getLogger(__name__)
 
 ARCHIVE_FORM = "archive_form"
+BATCH_SIZE = 2000
 
 
 class XFormInstanceManager(RequireDBManager):
@@ -73,10 +79,9 @@ class XFormInstanceManager(RequireDBManager):
             query = query.filter(domain=domain)
         return query.exists()
 
-    def get_forms(self, form_ids, domain=None, ordered=False):
+    def get_forms(self, form_ids, ordered=False):
         """
         :param form_ids: list of form_ids to fetch
-        :param domain: Currently unused, may be enforced in the future.
         :param ordered:  True if the list of returned forms should have the
                          same order as the list of form_ids passed in
         """
@@ -88,13 +93,12 @@ class XFormInstanceManager(RequireDBManager):
             sort_with_id_list(forms, form_ids, 'form_id')
         return forms
 
-    def iter_forms(self, form_ids, domain=None):
+    def iter_forms(self, form_ids):
         """
         :param form_ids: list of form_ids.
-        :param domain: See the same parameter of `get_forms`.
         """
         for chunk in chunked(form_ids, 100):
-            yield from self.get_forms([_f for _f in chunk if _f], domain)
+            yield from self.get_forms([_f for _f in chunk if _f])
 
     @staticmethod
     def get_attachments(form_id):
@@ -193,24 +197,17 @@ class XFormInstanceManager(RequireDBManager):
             )
         return result
 
-    def hard_delete_forms_before_cutoff(self, cutoff, dry_run=True):
-        """
-        Permanently deletes forms with deleted_on set to a datetime earlier than
-        the specified cutoff datetime
-        :param cutoff: datetime used to obtain the forms to be hard deleted
-        :param dry_run: if True, no changes will be committed to the database
-        and this method is effectively read-only
-        :return: dictionary of count of deleted objects per table
-        """
-        counts = {}
-        for db_name in get_db_aliases_for_partitioned_query():
-            queryset = self.using(db_name).filter(deleted_on__lt=cutoff)
-            if dry_run:
-                deleted_counts = {'form_processor.XFormInstance': queryset.count()}
-            else:
-                deleted_counts = queryset.delete()[1]
-            counts.update(deleted_counts)
-        return counts
+    def get_deleted_form_ids(self, domain, form_ids):
+        """Return the subset of ``form_ids`` that are soft deleted in ``domain``"""
+        deleted_ids = []
+        for db_name, db_form_ids in split_list_by_db_partition(form_ids):
+            deleted_ids.extend(
+                self.using(db_name)
+                .filter(domain=domain, form_id__in=db_form_ids,
+                        deleted_on__isnull=False)
+                .values_list('form_id', flat=True)
+            )
+        return deleted_ids
 
     def iter_form_ids_by_xmlns(self, domain, xmlns=None):
         q_expr = Q(domain=domain) & Q(state=self.model.NORMAL)
@@ -389,45 +386,96 @@ class XFormInstanceManager(RequireDBManager):
 
         return count
 
-    def hard_delete_forms(
-            self, domain, form_ids, return_ids=False, delete_attachments=True, *, publish_changes=True):
+    def hard_delete_expired_forms(self, commit=False):
+        """
+        Permanently deletes forms that were soft deleted outside of
+        the DATA_RETENTION_WINDOW, meaning the ``deleted_on`` field is
+        older than the current time - the DATA_RETENTION_WINDOW.
+        :param commit: defaults to False. If True, will delete expired forms
+        :return: dictionary of count of deleted forms
+        """
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
+
+        expiration_date = get_cutoff_date_for_data_deletion()
+        total_count = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            queryset = (
+                self.using(db_name)
+                .filter(deleted_on__lt=expiration_date)
+                .values_list('form_id', flat=True)
+            )
+            if commit:
+                deleted_count = self.hard_delete_forms(
+                    ALL_DOMAINS_SENTINEL, list(queryset)
+                )
+            else:
+                deleted_count = queryset.count()
+            total_count += deleted_count
+        return total_count
+
+    def hard_delete_forms(self, domain, form_ids, *, publish_changes=True, leave_tombstones=True):
         """Delete forms permanently
 
+        :param domain: only delete forms in the specified domain.
         :param publish_changes: Flag for change feed publication.
             Documents in Elasticsearch will not be deleted if this is false.
+        :param leave_tombstones: If adding a new usage, DO NOT SET THIS TO FALSE.
+            The user location mapping case and domain deletion are the only valid
+            use cases for not leaving tombstones.
         """
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
         assert isinstance(form_ids, list)
 
+        domain_filter = Q() if domain == ALL_DOMAINS_SENTINEL else Q(domain=domain)
+
         deleted_count = 0
-        deleted_ids = []
         for db_name, split_form_ids in split_list_by_db_partition(form_ids):
-            # cascade should delete the operations
-            query = self.using(db_name).filter(domain=domain, form_id__in=split_form_ids)
-            with transaction.atomic():
-                if return_ids:
-                    found_forms = list(query.values_list('form_id', flat=True))
-                _, deleted_models = query.delete()
-            deleted_count += deleted_models.get(self.model._meta.label, 0)
-            if return_ids:
-                deleted_ids.extend(found_forms)
+            shard_count = 0
+            for chunked_form_ids in chunked(split_form_ids, BATCH_SIZE):
+                chunked_queryset = (
+                    self.using(db_name)
+                    .filter(domain_filter, form_id__in=chunked_form_ids)
+                    .values_list('form_id', 'deleted_on', 'domain')
+                )
+                hard_deletion_date = datetime.now(tz=UTC)
+                form_ids_to_delete = []
+                form_ids_by_domain = defaultdict(list)
+                tombstones = []
+                for form_id, soft_deleted_on, form_domain in chunked_queryset:
+                    form_ids_by_domain[form_domain].append(form_id)
+                    form_ids_to_delete.append(form_id)
+                    if leave_tombstones:
+                        tombstones.append(
+                            build_tombstone(
+                                XFormInstance,
+                                form_id,
+                                form_domain,
+                                soft_deleted_on,
+                                hard_deletion_date,
+                            )
+                        )
 
-        if delete_attachments and deleted_count:
-            if deleted_count != len(form_ids):
-                # in the unlikely event that we didn't delete all forms (because they weren't all
-                # in the specified domain), only delete attachments for forms that were deleted.
-                deleted_forms = [
-                    form_id for form_id in form_ids
-                    if not self.form_exists(form_id)
-                ]
-            else:
-                deleted_forms = form_ids
-            metas = get_blob_db().metadb.get_for_parents(deleted_forms)
-            get_blob_db().bulk_delete(metas=metas)
+                with transaction.atomic(using=db_name):
+                    Tombstone.objects.using(db_name).bulk_create(
+                        tombstones, ignore_conflicts=True
+                    )
+                    _, chunk_count = (
+                        self.using(db_name)
+                        .filter(domain_filter, form_id__in=form_ids_to_delete)
+                        .delete()
+                    )
+                if form_ids_to_delete:
+                    metas = BlobMeta.objects.using(db_name).filter(
+                        domain_filter, parent_id__in=form_ids_to_delete
+                    )
+                    get_blob_db().bulk_delete(metas=metas)
+                if publish_changes:
+                    for _domain, form_ids_in_domain in form_ids_by_domain.items():
+                        self.publish_deleted_forms(_domain, form_ids_in_domain)
 
-        if publish_changes:
-            self.publish_deleted_forms(domain, form_ids)
-
-        return deleted_ids if return_ids else deleted_count
+                shard_count += chunk_count.get(self.model._meta.label, 0)
+            deleted_count += shard_count
+        return deleted_count
 
     @staticmethod
     def publish_deleted_forms(domain, form_ids):
@@ -618,20 +666,23 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         }
 
     @property
-    @memoized
     def form_data(self):
         """Returns the JSON representation of the form XML"""
-        from couchforms import XMLSyntaxError
-        from ..utils import convert_xform_to_json, adjust_datetimes
-        from corehq.form_processor.utils.metadata import scrub_form_meta
-        xml = self.get_xml()
-        try:
-            form_json = convert_xform_to_json(xml)
-        except XMLSyntaxError:
-            return {}
-        adjust_datetimes(form_json)
+        form_json = getattr(self, '_form_json', None)
+        if form_json is None:
+            from couchforms import XMLSyntaxError
+            from ..utils import convert_xform_to_json, adjust_datetimes
+            from corehq.form_processor.utils.metadata import scrub_form_meta
 
-        scrub_form_meta(self.form_id, form_json)
+            xml = self.get_xml()
+            try:
+                form_json = convert_xform_to_json(xml)
+            except XMLSyntaxError:
+                return {}
+            adjust_datetimes(form_json)
+
+            scrub_form_meta(self.form_id, form_json)
+            self._form_json = form_json
         return form_json
 
     @property
@@ -701,7 +752,7 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
         xml = self.get_xml()
         if not xml:
             return None
-        return etree.fromstring(xml)
+        return safe_fromstring(xml)
 
     def get_data(self, path):
         """
@@ -725,12 +776,21 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
             raise MissingFormXml(self.form_id)
 
     def archive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if not self.is_archived:
             type(self).objects.do_archive(self, True, user_id, trigger_signals)
 
     def unarchive(self, user_id=None, trigger_signals=True):
+        self._assert_not_deleted()
         if self.is_archived:
             type(self).objects.do_archive(self, False, user_id, trigger_signals)
+
+    def _assert_not_deleted(self):
+        """Without this, unarchiving a soft deleted form would
+        rebuild its cases from a form no longer visible.
+        """
+        if self.is_deleted:
+            raise CannotModifyDeletedForm(self.form_id)
 
     def __str__(self):
         return (
@@ -744,11 +804,9 @@ class XFormInstance(PartitionedModel, models.Model, RedisLockableMixIn,
     class Meta(object):
         db_table = "form_processor_xforminstancesql"
         app_label = "form_processor"
-        index_together = [
-            ('domain', 'state'),
-            ('domain', 'user_id'),
-        ]
         indexes = [
+            models.Index(fields=['domain', 'state']),
+            models.Index(fields=['domain', 'user_id']),
             models.Index(fields=['xmlns']),
             models.Index(fields=['deleted_on'],
                          name=create_unique_index_name('form_processor',
@@ -777,8 +835,8 @@ class DeprecatedXFormAttachmentSQL(models.Model):
     class Meta(object):
         db_table = "form_processor_xformattachmentsql"
         app_label = "form_processor"
-        index_together = [
-            ("form_id", "name"),
+        indexes = [
+            models.Index(fields=["form_id", "name"]),
         ]
 
 

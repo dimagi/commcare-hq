@@ -15,6 +15,7 @@ from corehq.apps.case_importer.tests.test_importer import (
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.tracking.dbaccessors import (
     get_case_ids_for_case_upload,
+    get_case_upload_record_count,
     get_case_upload_records,
 )
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta, CaseUploadRecord
@@ -100,6 +101,33 @@ class DbaccessorsTest(TestCase):
             get_case_upload_records(self.domain, self.user, limit=10, query='one'),
             [self.case_upload_1])
 
+    def test_hidden_uploads_excluded_from_list(self):
+        self._make_hidden_upload()
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, self.user, limit=10),
+            [self.case_upload_2, self.case_upload_1])
+        # also excluded when it would otherwise match the search query
+        self.assert_model_lists_equal(
+            get_case_upload_records(self.domain, self.user, limit=10, query='hidden'),
+            [])
+
+    def test_hidden_uploads_excluded_from_count(self):
+        assert get_case_upload_record_count(self.domain, self.user) == 2
+        self._make_hidden_upload()
+        assert get_case_upload_record_count(self.domain, self.user) == 2
+
+    def _make_hidden_upload(self):
+        hidden_upload = CaseUploadRecord(
+            upload_id=uuid.uuid4(),
+            task_id=uuid.uuid4(),
+            domain=self.domain,
+            comment='This is a hidden upload',
+            is_hidden=True,
+        )
+        hidden_upload.save()
+        self.addCleanup(hidden_upload.delete)
+        return hidden_upload
+
 
 class FormAndCaseIdsTest(TestCase):
     case_type = 'test_case_ids'
@@ -156,7 +184,7 @@ class FormAndCaseIdsTest(TestCase):
         ]
         case_upload_record = self._import_rows(data)
         case_ids = list(get_case_ids_for_case_upload(case_upload_record))
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids, ordered=True)
         self.assertEqual(case_ids, [case.case_id for case in cases])
         should_match_original_data_order = [['name']] + [[case.name] for case in cases]
         self.assertEqual(should_match_original_data_order, data)

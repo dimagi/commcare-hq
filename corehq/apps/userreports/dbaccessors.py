@@ -73,7 +73,7 @@ def get_report_and_registry_report_configs_for_domain(domain):
     )
 
 
-def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False, include_aggregate=False):
+def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False):
     from corehq.apps.userreports.models import (
         DataSourceConfiguration,
         RegistryDataSourceConfiguration,
@@ -101,9 +101,6 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             static_ds = [ds for ds in static_ds if ds.referenced_doc_type == referenced_doc_type]
         datasources.extend(sorted(static_ds, key=lambda config: config.display_name))
 
-    if include_aggregate:
-        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-        datasources.extend(AggregateTableDefinition.objects.filter(domain=domain).all())
     return datasources
 
 

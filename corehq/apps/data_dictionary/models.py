@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from django.db import models
@@ -6,10 +7,16 @@ from django.utils.translation import gettext as _, gettext_lazy
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.case_properties import expire_case_properties_caches
 from corehq.apps.case_importer import exceptions
+
+
+def sync_project_db(domain):
+    if toggles.PROJECT_DB.enabled(domain):
+        from corehq.apps.project_db.tasks import schedule_project_db_sync
+        schedule_project_db_sync(domain)
 
 
 class CaseType(models.Model):
@@ -44,7 +51,9 @@ class CaseType(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_cache(self.domain)
-        return super(CaseType, self).save(*args, **kwargs)
+        result = super(CaseType, self).save(*args, **kwargs)
+        sync_project_db(self.domain)
+        return result
 
     def delete(self, *args, **kwargs):
         self.clear_cache(self.domain)
@@ -159,21 +168,72 @@ class CaseProperty(models.Model):
 
     def save(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)
-        return super(CaseProperty, self).save(*args, **kwargs)
+        result = super(CaseProperty, self).save(*args, **kwargs)
+        sync_project_db(self.case_type.domain)
+        return result
 
     def delete(self, *args, **kwargs):
         self.clear_caches(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).delete(*args, **kwargs)
 
     def check_validity(self, value):
-        if value and self.data_type == 'date':
-            try:
-                datetime.strptime(value, ISO_DATE_FORMAT)
-            except ValueError:
-                raise exceptions.InvalidDate(sample=value)
-        elif value and self.data_type == 'select' and self.allowed_values.exists():
-            if not self.allowed_values.filter(allowed_value=value).exists():
-                raise exceptions.InvalidSelectValue(sample=value, message=self.valid_values_message)
+        if value is None or value == '':
+            return
+        validation_methods = {
+            self.DataType.DATE: self._validate_date,
+            self.DataType.NUMBER: self._validate_number,
+            self.DataType.SELECT: self._validate_select,
+            self.DataType.GPS: self._validate_gps,
+            self.DataType.PHONE_NUMBER: self._validate_phone_number,
+        }
+        method = validation_methods.get(
+            self.data_type,
+            lambda x: None
+        )
+        method(value)  # Raises CaseRowError subclass if `value` is invalid
+
+    @staticmethod
+    def _validate_date(value):
+        try:
+            datetime.strptime(value, ISO_DATE_FORMAT)
+        except ValueError:
+            raise exceptions.InvalidDate(sample=value)
+
+    @staticmethod
+    def _validate_number(value):
+        try:
+            float(value)
+        except ValueError:
+            raise exceptions.InvalidNumber(sample=value)
+
+    def _validate_select(self, value):
+        if not self.allowed_values.exists():
+            return
+        if not self.allowed_values.filter(allowed_value=value).exists():
+            raise exceptions.InvalidSelectValue(
+                sample=value,
+                message=self.valid_values_message,
+            )
+
+    @staticmethod
+    def _validate_gps(value):
+        gps_pattern = (
+            r'^-?\d+\.?\d*\s+'  # Latitude
+            r'-?\d+\.?\d*'  # Longitude
+            r'(?:\s+-?\d+\.?\d*)?'  # Elevation (optional)
+            r'(?:\s+\d+\.?\d*)?$'  # Precision (optional)
+        )
+        if not re.match(gps_pattern, value):
+            raise exceptions.InvalidGPS(sample=value)
+
+    @staticmethod
+    def _validate_phone_number(value):
+        phone_number_pattern = r'^[0-9\.\(\)\+\-\ ]+$'
+        if not re.match(phone_number_pattern, value):
+            raise exceptions.InvalidPhoneNumber(sample=value)
+        digit_count = sum(1 for char in value if char.isdigit())
+        if digit_count < 5:
+            raise exceptions.InvalidPhoneNumber(sample=value)
 
     @property
     def valid_values_message(self):

@@ -24,16 +24,9 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.aggregate_ucrs.models import (
-    AggregateTableDefinition,
-    PrimaryColumn,
-    SecondaryColumn,
-    SecondaryTableDefinition,
-)
 from corehq.apps.app_manager.models import (
     AppReleaseByLocation,
     GlobalAppConfig,
-    LatestEnabledBuildProfiles,
 )
 from corehq.apps.app_manager.suite_xml.post_process.resources import (
     ResourceOverride,
@@ -63,6 +56,7 @@ from corehq.apps.data_dictionary.models import (
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
+    BulkAsyncJob,
     CaseRuleAction,
     CaseRuleCriteria,
     CaseRuleSubmission,
@@ -74,7 +68,7 @@ from corehq.apps.domain.dbaccessors import (
     domain_or_deleted_domain_exists,
 )
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
-from corehq.apps.domain.models import Domain, TransferDomainRequest
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import case_adapter, case_search_adapter, form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
@@ -116,7 +110,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackendMapping,
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
+from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import (
@@ -146,13 +140,14 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     RepeatRecordAttempt,
 )
+from corehq.tests.pytest_plugins.patches import suspend
 from corehq.toggles import NAMESPACE_DOMAIN, set_toggle
 from corehq.toggles.shortcuts import toggle_enabled
 from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
-from .test_utils import delete_es_docs_patch, domain_tombstone_patch, suspend
+from .test_utils import delete_es_docs_patch, domain_tombstone_patch
 
 
 class TestDeleteDomain(TestCase):
@@ -374,47 +369,6 @@ class TestDeleteDomain(TestCase):
         for queryset in queryset_list:
             self.assertEqual(queryset.count(), count, queryset.query)
 
-    def _assert_aggregate_ucr_count(self, domain_name, count):
-        self._assert_queryset_count([
-            AggregateTableDefinition.objects.filter(domain=domain_name),
-            PrimaryColumn.objects.filter(table_definition__domain=domain_name),
-            SecondaryTableDefinition.objects.filter(table_definition__domain=domain_name),
-            SecondaryColumn.objects.filter(table_definition__table_definition__domain=domain_name),
-        ], count)
-
-    def test_aggregate_ucr_delete(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            aggregate_table_definition = AggregateTableDefinition.objects.create(
-                domain=domain_name,
-                primary_data_source_id=uuid.uuid4(),
-                table_id=uuid.uuid4().hex,
-            )
-            secondary_table_definition = SecondaryTableDefinition.objects.create(
-                table_definition=aggregate_table_definition,
-                data_source_id=uuid.uuid4(),
-            )
-            PrimaryColumn.objects.create(table_definition=aggregate_table_definition)
-            SecondaryColumn.objects.create(table_definition=secondary_table_definition)
-            self._assert_aggregate_ucr_count(domain_name, 1)
-
-        self.domain.delete()
-
-        self._assert_aggregate_ucr_count(self.domain.name, 0)
-        self._assert_aggregate_ucr_count(self.domain2.name, 1)
-
-        self.assertEqual(SecondaryTableDefinition.objects.count(), 1)
-        self.assertEqual(
-            SecondaryTableDefinition.objects.filter(table_definition__domain=self.domain2.name).count(),
-            1
-        )
-        self.assertEqual(PrimaryColumn.objects.count(), 1)
-        self.assertEqual(PrimaryColumn.objects.filter(table_definition__domain=self.domain2.name).count(), 1)
-        self.assertEqual(SecondaryColumn.objects.count(), 1)
-        self.assertEqual(
-            SecondaryColumn.objects.filter(table_definition__table_definition__domain=self.domain2.name).count(),
-            1
-        )
-
     def _assert_case_importer_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseUploadFormRecord.objects.filter(case_upload_record__domain=domain_name),
@@ -448,7 +402,6 @@ class TestDeleteDomain(TestCase):
     def _assert_app_manager_counts(self, domain_name, count):
         self._assert_queryset_count([
             AppReleaseByLocation.objects.filter(domain=domain_name),
-            LatestEnabledBuildProfiles.objects.filter(domain=domain_name),
             GlobalAppConfig.objects.filter(domain=domain_name),
             ResourceOverride.objects.filter(domain=domain_name),
         ], count)
@@ -464,9 +417,6 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
-                LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
-                                                          version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
@@ -505,6 +455,7 @@ class TestDeleteDomain(TestCase):
 
     def test_cloudcare(self):
         for domain_name in [self.domain.name, self.domain2.name]:
+            get_application_access_for_domain.clear(domain_name)
             get_application_access_for_domain(domain_name)
 
         self.domain.delete()
@@ -634,21 +585,6 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(CaseRuleCriteria.objects.count(), 1)
         self.assertEqual(CaseRuleCriteria.objects.filter(rule__domain=self.domain2.name).count(), 1)
 
-    def _assert_domain_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            TransferDomainRequest.objects.filter(domain=domain_name),
-        ], count)
-
-    def test_delete_domain(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            TransferDomainRequest.objects.create(domain=domain_name, to_username='to', from_username='from')
-            self._assert_domain_counts(domain_name, 1)
-
-        self.domain.delete()
-
-        self._assert_domain_counts(self.domain.name, 0)
-        self._assert_domain_counts(self.domain2.name, 1)
-
     def _assert_export_counts(self, domain_name, count):
         self._assert_queryset_count([
             DataFile.meta_query(domain_name),
@@ -680,6 +616,50 @@ class TestDeleteDomain(TestCase):
 
         self._assert_export_counts(self.domain.name, 0)
         self._assert_export_counts(self.domain2.name, 1)
+
+    def test_bulk_async_job_blobs_delete(self):
+        from corehq.blobs.models import BlobMeta
+        blobdb = get_blob_db()
+        keys = {}
+        parent_ids = {}
+        for domain_name in [self.domain.name, self.domain2.name]:
+            obj = BulkAsyncJob(
+                domain=domain_name,
+                model=XFormInstance,
+                action=BulkAsyncJob.Action.ARCHIVE,
+                requested_by='user@example.com',
+            )
+            obj.set_requested_ids(['a', 'b', 'c'])
+            obj.set_skipped({"skipped": ['a', 'b', 'c']})
+            obj.save()
+            keys[domain_name] = [obj.requested_ids_blob_key, obj.skipped_ids_blob_key]
+            parent_ids[domain_name] = obj.id.hex
+
+        self.domain.delete()
+
+        deleted_requested_key, deleted_skipped_key = keys[self.domain.name]
+        deleted_parent_id = parent_ids[self.domain.name]
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            blobdb.metadb.get(key=deleted_requested_key, parent_id=deleted_parent_id)
+
+        with self.assertRaises(BlobMeta.DoesNotExist):
+            blobdb.metadb.get(key=deleted_skipped_key, parent_id=deleted_parent_id)
+        assert not blobdb.exists(deleted_requested_key)
+        assert not blobdb.exists(deleted_skipped_key)
+
+        remaining_requested_key, remaining_skipped_key = keys[self.domain2.name]
+        remaining_parent_id = parent_ids[self.domain2.name]
+        requested_meta = blobdb.metadb.get(key=remaining_requested_key, parent_id=remaining_parent_id)
+        skipped_meta = blobdb.metadb.get(key=remaining_skipped_key, parent_id=remaining_parent_id)
+        with blobdb.get(meta=requested_meta) as f:
+            self.assertEqual(f.read(), b'["a", "b", "c"]')
+        with blobdb.get(meta=skipped_meta) as f:
+            self.assertEqual(f.read(), b'{"skipped": ["a", "b", "c"]}')
+
+        self.assertEqual(
+            BulkAsyncJob.objects.filter(domain=self.domain.name).count(), 0)
+        self.assertEqual(
+            BulkAsyncJob.objects.filter(domain=self.domain2.name).count(), 1)
 
     def _assert_location_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -848,13 +828,11 @@ class TestDeleteDomain(TestCase):
     def _assert_translations_count(self, domain_name, count):
         self._assert_queryset_count([
             SMSTranslations.objects.filter(domain=domain_name),
-            TransifexBlacklist.objects.filter(domain=domain_name),
         ], count)
 
     def test_translations_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             SMSTranslations.objects.create(domain=domain_name, langs=['en'], translations={'a': 'a'})
-            TransifexBlacklist.objects.create(domain=domain_name, app_id='123', field_name='xyz')
             self._assert_translations_count(domain_name, 1)
 
         self.domain.delete()
@@ -1197,8 +1175,6 @@ class TestDeleteElasticFormsAndCases(TestCase):
         forms = [create_form_for_test(self.domain.name) for i in range(3)]
         form_ids = [f.form_id for f in forms]
         other_form = create_form_for_test(self.other_domain.name)
-        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.domain.name, form_ids)
-        self.addCleanup(XFormInstance.objects.hard_delete_forms, self.other_domain.name, [other_form.form_id])
         form_adapter.bulk_index(forms + [other_form], refresh=True)
 
         mod.delete_all_forms(self.domain.name)
@@ -1213,8 +1189,6 @@ class TestDeleteElasticFormsAndCases(TestCase):
     def test_delete_all_cases_deletes_es_documents(self):
         case1 = create_case(self.domain.name, save=True)
         case2 = create_case(self.other_domain.name, save=True)
-        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.domain.name, [case1.case_id])
-        self.addCleanup(CommCareCase.objects.hard_delete_cases, self.other_domain.name, [case2.case_id])
         case_adapter.bulk_index([case1, case2], refresh=True)
         case_search_adapter.bulk_index([case1, case2], refresh=True)
 

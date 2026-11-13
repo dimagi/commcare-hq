@@ -1,11 +1,11 @@
 {% load i18n phonenumber %}
 
 {% block focus-content %}
-  <h2 class="text-center">
+  <h2 class="text-center mt-3">
     {{ current_page.page_name }}
   </h2>
   {% if server_display %}
-    <h3 class="text-center">
+    <h3 class="text-center mt-3">
       <span class="fi fi-{{ server_display.country_code }}"></span>
       {% blocktrans with server_display.hr_name as server_location %}
         {{ server_location }} Cloud

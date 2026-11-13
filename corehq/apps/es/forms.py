@@ -89,7 +89,7 @@ class ElasticForm(ElasticDocumentAdapter):
 
         from corehq.apps.receiverwrapper.util import get_app_version_info
         from corehq.pillows.utils import format_form_meta_for_es, get_user_type
-        from corehq.pillows.xform import is_valid_date
+        from corehq.pillows.xform import is_valid_date, normalize_date_for_es
 
         # create shallow copy of form object and case objects
         # that will be modified in tranformation
@@ -107,8 +107,12 @@ class ElasticForm(ElasticDocumentAdapter):
             form_meta = form['meta'] = copy(form['meta'])
             if not is_valid_date(form_meta.get('timeEnd', None)):
                 form_meta['timeEnd'] = None
+            else:
+                form_meta['timeEnd'] = normalize_date_for_es(form_meta.get('timeEnd'))
             if not is_valid_date(form_meta.get('timeStart', None)):
                 form_meta['timeStart'] = None
+            else:
+                form_meta['timeStart'] = normalize_date_for_es(form_meta.get('timeStart'))
 
             # Some docs have their @xmlns and #text here
             if isinstance(form_meta.get('appVersion'), dict):
@@ -146,6 +150,10 @@ class ElasticForm(ElasticDocumentAdapter):
                             case_dict[date_modified_key] = None
                         else:
                             case_dict.pop(date_modified_key, None)
+                    else:
+                        case_dict[date_modified_key] = normalize_date_for_es(
+                            case_dict.get(date_modified_key)
+                        )
 
                 # convert all mapped dict properties to nulls if they are empty strings
                 for object_key in ['index', 'attachment', 'create', 'update']:

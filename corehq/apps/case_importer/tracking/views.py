@@ -148,6 +148,9 @@ def _get_case_upload_record(domain, upload_id, user):
     kwargs = {
         'domain': domain,
         'upload_id': upload_id,
+        # Hidden records are treated as if they do not exist, so the per-upload
+        # endpoints (file download, status, form/case IDs, comment) return 404.
+        'is_hidden': False,
     }
     if not user.has_permission(domain, 'access_all_locations'):
         kwargs['couch_user_id'] = user._id

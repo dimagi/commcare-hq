@@ -102,9 +102,15 @@ class Command(makemigrations.Command):
         return lines
 
     def write_migrations_lock(self):
-        """Write a new migrations.lock file."""
+        """Write a new migrations.lock file.
+
+        The migrations list is generated *before* the lock file is opened so
+        that a failure during generation (e.g. the database is unavailable)
+        does not clobber the existing lock file by truncating it.
+        """
+        content = "".join(self.get_migrations_list())
         with open(self.lock_path, "w") as file:
-            file.write("".join(self.get_migrations_list()))
+            file.write(content)
 
     def check_migrations_lock(self):
         """Check if the current migrations list matches the migrations.lock."""

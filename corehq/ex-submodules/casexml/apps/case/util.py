@@ -187,7 +187,7 @@ def get_case_history(case):
     from corehq.apps.reports.standard.cases.utils import get_user_type
 
     changes = defaultdict(dict)
-    for form in XFormInstance.objects.get_forms(case.xform_ids, case.domain):
+    for form in XFormInstance.objects.get_forms(case.xform_ids):
         name = xmlns_to_name(case.domain, form.xmlns, form.app_id, form_name=form.form_data.get('@name'))
         defaults = {
             'Form ID': form.form_id,

@@ -1,29 +1,27 @@
 from datetime import date, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from django.test import SimpleTestCase, TestCase
+import pytest
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting.const import (
-    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
     PAY_ANNUALLY_SUBSCRIPTION_MONTHS,
+    SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
 )
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     SoftwarePlanEdition,
     Subscription,
+    SubscriptionAdjustment,
+    SubscriptionAdjustmentMethod,
+    SubscriptionAdjustmentReason,
     WirePrepaymentInvoice,
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.utils import clear_plan_version_cache
-from corehq.apps.domain.models import (
-    Domain,
-    OperatorCallLimitSettings,
-    SMSAccountConfirmationSettings,
-)
-from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
-from corehq.toggles.shortcuts import set_toggle
+from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
 
 from .. import forms
 from ..forms import (
@@ -89,65 +87,6 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.domain_obj.save()
         self.call_settings = OperatorCallLimitSettings(domain=self.domain)
         self.call_settings.save()
-        self.account_confirmation_settings = SMSAccountConfirmationSettings.get_settings(self.domain)
-
-    def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form()
-        self.assertTrue('confirmation_link_expiry' not in form.fields)
-
-    def test_confirmation_link_expiry_default_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(
-            confirmation_link_expiry=self.account_confirmation_settings.confirmation_link_expiry_time,
-            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
-        form.full_clean()
-        form.save(Mock(), self.domain_obj)
-        self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(14, self.account_confirmation_settings.confirmation_link_expiry_time)
-
-    def test_confirmation_link_expiry_custom_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(
-            confirmation_link_expiry=25,
-            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
-        form.full_clean()
-        form.save(Mock(), self.domain_obj)
-        self.assertTrue('confirmation_link_expiry' in form.fields)
-        settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
-        self.assertEqual(25, settings_obj.confirmation_link_expiry_time)
-
-    def test_confirmation_link_expiry_error_when_invalid_value(self):
-        OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(
-            confirmation_link_expiry='abc',
-            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
-        form.full_clean()
-        self.assertEqual(1, len(form.errors))
-        self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
-
-    def test_confirmation_link_expiry_error_when_value_less_than_lower_limit(self):
-        OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(
-            confirmation_link_expiry='-1',
-            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
-        form.full_clean()
-        self.assertEqual(1, len(form.errors))
-        self.assertEqual(["Ensure this value is greater than or equal to 1."],
-                         form.errors.get("confirmation_link_expiry"))
-
-    def test_confirmation_link_expiry_error_when_value_more_than_upper_limit(self):
-        OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(
-            confirmation_link_expiry='31',
-            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
-        form.full_clean()
-        self.assertEqual(1, len(form.errors))
-        self.assertEqual(["Ensure this value is less than or equal to 30."],
-                         form.errors.get("confirmation_link_expiry"))
 
     def test_operator_call_limit_not_present_when_domain_not_eligible(self):
         OperatorCallLimitSettings.objects.all().delete()
@@ -219,10 +158,8 @@ class TestDomainGlobalSettingsForm(TestCase):
         return DomainGlobalSettingsForm(data, domain=domain)
 
     def tearDown(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
         self.domain_obj.delete()
         OperatorCallLimitSettings.objects.all().delete()
-        SMSAccountConfirmationSettings.objects.all().delete()
         super().tearDown()
 
 
@@ -282,15 +219,17 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
             self.account, self.domain, date.today(), None,
             plan_version=DefaultProductPlan.get_default_plan_version(), is_active=True,
         )
+        self.account.auto_pay_user = self.user.name
+        self.account.save()
 
     def create_form(self, new_plan_version, **kwargs):
-        args = (self.account, self.domain.name, self.user, new_plan_version, self.subscription)
+        args = (self.account, self.domain.name, self.user.username, new_plan_version, self.subscription)
         return ConfirmNewSubscriptionForm(*args, **kwargs)
 
     def test_form_initial_values(self):
         plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
         form = self.create_form(plan_version)
-        self.assertEqual(form['plan_edition'].value(), plan_version.plan.edition)
+        assert form['plan_edition'].value() == plan_version.plan.edition
 
     def test_pay_monthly_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -298,13 +237,13 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, date.today())
+        assert form.is_valid()
+        assert self.subscription.date_end == date.today()
 
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(new_subscription.plan_version, new_plan_version)
-        self.assertEqual(new_subscription.date_start, date.today())
-        self.assertIsNone(new_subscription.date_end)
+        assert new_subscription.plan_version == new_plan_version
+        assert new_subscription.date_start == date.today()
+        assert new_subscription.date_end is None
 
     def test_pay_annually_subscription(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -312,13 +251,13 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, date.today())
+        assert form.is_valid()
+        assert self.subscription.date_end == date.today()
 
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(new_subscription.plan_version, new_plan_version)
-        self.assertEqual(new_subscription.date_start, date.today())
-        self.assertEqual(new_subscription.date_end, new_subscription.date_start + relativedelta(years=1))
+        assert new_subscription.plan_version == new_plan_version
+        assert new_subscription.date_start == date.today()
+        assert new_subscription.date_end == new_subscription.date_start + relativedelta(years=1)
 
     def test_pay_annually_creates_prepayment_invoice(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
@@ -326,16 +265,15 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         )
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
+        assert form.is_valid()
 
         prepayment_invoice = WirePrepaymentInvoice.objects.get(domain=self.domain.name)
         new_subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        self.assertEqual(prepayment_invoice.date_start, new_subscription.date_start)
-        self.assertEqual(prepayment_invoice.date_end, new_subscription.date_end)
-        self.assertEqual(prepayment_invoice.date_due,
-                         date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE))
-        self.assertEqual(prepayment_invoice.balance,
-                         new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
+        assert prepayment_invoice.date_start == new_subscription.date_start
+        assert prepayment_invoice.date_end == new_subscription.date_end
+        assert prepayment_invoice.date_due == date.today() + timedelta(days=SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE)
+        assert (prepayment_invoice.balance
+                == new_plan_version.product_rate.monthly_fee * PAY_ANNUALLY_SUBSCRIPTION_MONTHS)
 
     def test_downgrade_minimum_subscription_length(self):
         self.subscription.delete()
@@ -348,12 +286,53 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
         new_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
         form = self.create_form_for_submission(new_plan_version)
         form.save()
-        self.assertTrue(form.is_valid())
-        self.assertEqual(self.subscription.date_end, old_date_start + timedelta(days=30))
+        assert form.is_valid()
+        self.subscription.refresh_from_db()
+        assert self.subscription.date_end == old_date_start + timedelta(days=30)
+        assert self.subscription.is_active
 
         next_subscription = self.subscription.next_subscription
-        self.assertEqual(next_subscription.plan_version, new_plan_version)
-        self.assertEqual(next_subscription.date_start, old_date_start + timedelta(days=30))
+        assert next_subscription.plan_version == new_plan_version
+        assert next_subscription.date_start == old_date_start + timedelta(days=30)
+        assert not next_subscription.is_active
+
+        old_adjustment = SubscriptionAdjustment.objects.get(subscription=self.subscription)
+        assert old_adjustment.reason == SubscriptionAdjustmentReason.DOWNGRADE
+        assert old_adjustment.method == SubscriptionAdjustmentMethod.USER
+        assert old_adjustment.related_subscription == next_subscription
+
+        new_adjustment = SubscriptionAdjustment.objects.get(subscription=next_subscription)
+        assert new_adjustment.reason == SubscriptionAdjustmentReason.CREATE
+
+    def test_autopay_required_for_monthly_plan(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=False
+        )
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        self.account.save()
+        form.full_clean()
+        assert form.is_valid()
+
+    def test_autopay_required_if_set_on_account(self):
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.STANDARD, is_annual_plan=True
+        )
+        self.account.require_auto_pay = True
+        self.account.auto_pay_user = None
+        self.account.save()
+        form = self.create_form_for_submission(new_plan_version)
+        form.full_clean()
+        assert not form.is_valid()
+
+        self.account.auto_pay_user = 'someone@example.com'
+        form.full_clean()
+        assert form.is_valid()
 
 
 class TestConfirmSubscriptionRenewalForm(BaseTestSubscriptionForm):
@@ -642,20 +621,32 @@ class TestExtractAppInfoForm(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
 
+    def test_staging_is_invalid_for_prod_environments(self):
+        url = 'https://staging.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertFalse(form.is_valid())
+        self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+    @override_settings(DEBUG=True)
+    def test_staging_is_valid_for_debug_environments(self):
+        url = 'https://staging.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
+        form = forms.ExtractAppInfoForm(data={'app_url': url})
+        self.assertTrue(form.is_valid())
+
     def test_clean_app_url_with_non_commcare_domain(self):
         url = 'https://india.foo.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
 
-    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'production')
+    @override_settings(SERVER_ENVIRONMENT='production')
     def test_clean_app_url_same_server_validation(self):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The source app url matches the current server', str(form.errors['app_url']))
 
-    @patch('corehq.apps.domain.forms.settings.SERVER_ENVIRONMENT', 'india')
+    @override_settings(SERVER_ENVIRONMENT='india')
     def test_clean_app_url_different_server_validation(self):
         url = 'https://www.commcarehq.org/a/test-domain/apps/view/62891a383516c656850cc9c7e7b8d459/'
         form = forms.ExtractAppInfoForm(data={'app_url': url})
@@ -722,3 +713,33 @@ class TestExtractAppInfoForm(SimpleTestCase):
         form = forms.ExtractAppInfoForm(data={'app_url': url})
         self.assertFalse(form.is_valid())
         self.assertIn('The URL must be from a valid CommCare server', str(form.errors['app_url']))
+
+
+def test_multiple_args_values():
+    """
+    Demonstrates ``TypeError`` when `*args` is not empty and a positional
+    argument is passed as a keyword argument.
+    """
+    def called_func(foo, *args, **kwargs):
+        return True
+
+    def good_calling_func(*args, **kwargs):
+        # 'bar' passed as the first positional arg
+        return called_func('bar', *args, **kwargs)
+
+    def bad_calling_func(*args, **kwargs):
+        # Both 'bar' and args[0] assigned to param `foo`
+        return called_func(foo='bar', *args, **kwargs)
+
+    # No problem when `*args` is empty
+    assert good_calling_func()
+    assert bad_calling_func()
+    assert good_calling_func(world='world')
+    assert bad_calling_func(world='world')
+
+    assert good_calling_func('hello', world='world')
+
+    # Python raises TypeError when `*args` value conflicts
+    with pytest.raises(TypeError) as exc:
+        bad_calling_func('hello', world='world')
+    assert "called_func() got multiple values for argument 'foo'" in str(exc)

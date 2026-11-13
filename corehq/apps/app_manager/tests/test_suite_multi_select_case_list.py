@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase
 
-import lxml
 from memoized import memoized
 
 from corehq.apps.app_manager.app_schemas.session_schema import (
@@ -18,7 +17,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     ConditionalCaseUpdate,
     FormDatum,
@@ -35,6 +33,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_get_xform_resource_overrides,
 )
 from corehq.util.test_utils import flag_enabled
+from corehq.util.xml_utils import XML
 
 from .util import patch_validate_xform
 
@@ -42,7 +41,6 @@ from .util import patch_validate_xform
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite', 'multi_select_case_list')
 
@@ -56,7 +54,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
 
         self.module.case_details.short.multi_select = True
         self.module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
         )
         self.module.assign_references()
@@ -154,7 +151,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
 
-    def test_session_schema(self):
+    @patch('corehq.apps.app_manager.app_schemas.session_schema.domain_has_usercase_access', return_value=False)
+    def test_session_schema(self, _mock):
         # Session schema should not contain case
         self.assertEqual(get_session_schema(self.form), {
             'id': 'commcaresession',
@@ -170,7 +168,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         self.assertTrue(shadow_module.is_multi_select())
         del self.factory.app.modules[shadow_module.id]
 
-    @flag_enabled('USH_CASE_CLAIM_UPDATES')
     def test_multi_select_case_list_auto_launch(self):
         self.module.search_config.auto_launch = True
         suite = self.factory.app.create_suite()
@@ -197,33 +194,10 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./detail[@id='m0_case_short']/action",
         )
 
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-              <action auto_launch="false()" redo_last="true">
-                <display>
-                  <text>
-                    <locale id="case_search.m0.again"/>
-                  </text>
-                </display>
-                <stack>
-                  <push>
-                    <mark/>
-                    <command value="'search_command.m0'"/>
-                  </push>
-                </stack>
-              </action>
-            </partial>
-            """,
-            suite,
-            "./detail[@id='m0_search_short']/action",
-        )
-
 
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.factory = AppFactory(domain="multiple-referrals")
@@ -280,7 +254,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
             "./entry",
         )
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
     def test_select_parent_first_parent_not_allowed(self, *args):
         self.module.parent_select.active = True
@@ -347,7 +321,6 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
 @patch('corehq.util.view_utils.get_url_base', new=lambda: "https://www.example.com")
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
     MAIN_CASE_TYPE = 'beneficiary'
     OTHER_CASE_TYPE = 'household'
@@ -405,7 +378,7 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
         )
         form.actions.update_case.condition.type = 'always'
 
-        xml = lxml.etree.XML(form.render_xform())
+        xml = XML(form.render_xform())
         model_children = xml.getchildren()[0].getchildren()[1].getchildren()
         calculate_expr = [child.attrib['calculate'] for child in model_children
                           if child.attrib.get('nodeset') == '/data/case/@case_id'][0]
@@ -540,7 +513,6 @@ class MultiSelectChildModuleDatumIDTests(SimpleTestCase, SuiteMixin):
 @patch.object(Application, 'enable_practice_users', return_value=False)
 @patch_validate_xform()
 @patch_get_xform_resource_overrides()
-@flag_enabled('USH_CASE_LIST_MULTI_SELECT')
 class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
     CASE_TYPE = 'noun'
 

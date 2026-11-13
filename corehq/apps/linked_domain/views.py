@@ -60,11 +60,8 @@ from corehq.apps.linked_domain.local_accessors import (
     get_auto_update_rules,
     get_custom_data_models,
     get_data_dictionary,
-    get_dialer_settings,
     get_enabled_toggles_and_previews,
     get_fixture,
-    get_hmac_callout_settings,
-    get_otp_settings,
     get_tableau_server_and_visualizations,
     get_user_roles,
 )
@@ -96,6 +93,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_fixtures,
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
+    get_upstream_and_downstream_case_search_endpoints,
     get_upstream_and_downstream_ucr_expressions,
     get_upstream_and_downstream_update_rules
 )
@@ -231,24 +229,6 @@ def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
 
 
-@login_or_api_key
-@require_access_to_linked_domains
-def dialer_settings(request, domain):
-    return JsonResponse(get_dialer_settings(domain))
-
-
-@login_or_api_key
-@require_access_to_linked_domains
-def otp_settings(request, domain):
-    return JsonResponse(get_otp_settings(domain))
-
-
-@login_or_api_key
-@require_access_to_linked_domains
-def hmac_callout_settings(request, domain):
-    return JsonResponse(get_hmac_callout_settings(domain))
-
-
 @require_can_edit_apps
 def pull_missing_multimedia(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
@@ -286,6 +266,7 @@ class DomainLinkView(BaseProjectSettingsView):
             self.domain
         )
 
+        upstream_endpoints, downstream_endpoints = get_upstream_and_downstream_case_search_endpoints(self.domain)
         upstream_rules, downstream_rules = get_upstream_and_downstream_update_rules(self.domain, upstream_link)
 
         is_superuser = self.request.couch_user.is_superuser
@@ -299,6 +280,7 @@ class DomainLinkView(BaseProjectSettingsView):
             downstream_keywords,
             downstream_ucr_expressions,
             downstream_rules,
+            downstream_endpoints,
             timezone,
             is_superuser=is_superuser
         )
@@ -311,6 +293,7 @@ class DomainLinkView(BaseProjectSettingsView):
             upstream_keywords,
             upstream_ucr_expressions,
             upstream_rules,
+            upstream_endpoints,
             is_superuser=is_superuser
         )
 

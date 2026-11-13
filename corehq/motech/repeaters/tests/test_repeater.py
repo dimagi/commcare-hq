@@ -18,7 +18,10 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.accounting.utils import (
+    clear_plan_version_cache,
+    domain_has_privilege,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -27,10 +30,6 @@ from corehq.apps.receiverwrapper.exceptions import (
     IgnoreDocument,
 )
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.userreports.pillow import (
-    ConfigurableReportPillowProcessor,
-    ConfigurableReportTableManager,
-)
 from corehq.apps.userreports.tests.utils import (
     bootstrap_pillow,
     get_sample_data_source,
@@ -42,6 +41,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.pillows.case import get_case_pillow
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
@@ -52,6 +52,7 @@ from ..const import (
     MIN_RETRY_WAIT,
     State,
 )
+from ..exceptions import PayloadNotFoundError
 from ..models import (
     HTTP_STATUS_BACK_OFF,
     CaseRepeater,
@@ -135,6 +136,10 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
         cls.addClassCleanup(cls.teardown_subscriptions)
+        # An earlier test may have cached "no privilege" for this domain
+        # before it had a subscription.
+        for privilege in (DATA_FORWARDING, ZAPIER_INTEGRATION):
+            domain_has_privilege.clear(cls.domain, privilege)
 
     def enqueued_repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.
@@ -254,7 +259,7 @@ class RepeaterTest(BaseRepeaterTest):
         )
         assert len(repeat_records) == 2
 
-    def test_bad_payload_invalid(self):
+    def test_bad_payload_rejected(self):
         with patch(
             'corehq.motech.repeaters.models.simple_request',
             return_value=MockResponse(status_code=401, reason='Unauthorized')
@@ -263,7 +268,19 @@ class RepeaterTest(BaseRepeaterTest):
                 repeat_record.fire()
 
         for repeat_record in self.enqueued_repeat_records():
-            assert repeat_record.state == State.InvalidPayload
+            assert repeat_record.state == State.PayloadRejected
+
+    def test_error_generating_payload(self):
+        for repeat_record in RepeatRecord.objects.all():
+            with patch.object(
+                repeat_record.repeater.generator,
+                'get_payload',
+                side_effect=ValueError()
+            ):
+                repeat_record.fire()
+
+        for repeat_record in RepeatRecord.objects.all():
+            self.assertEqual(repeat_record.state, State.ErrorGeneratingPayload)
 
     def test_bad_request_fail(self):
         with patch(
@@ -714,6 +731,81 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         ]
 
 
+class DeletedPayloadTest(BaseRepeaterTest):
+    domain = "deleted-payload"
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.form_repeater = cls._make_repeater(FormRepeater, 'form_xml', 'form-url')
+        cls.case_repeater = cls._make_repeater(CaseRepeater, 'case_json', 'case-url')
+
+    def setUp(self):
+        super().setUp()
+        submit_form_locally(self.xform_xml, self.domain)
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super().tearDown()
+
+    @classmethod
+    def _make_repeater(self, repeater_class, format, url):
+        connx = ConnectionSettings.objects.create(domain=self.domain, url=url)
+        repeater = repeater_class(
+            domain=self.domain,
+            connection_settings_id=connx.id,
+            format=format,
+        )
+        repeater.save()
+        return repeater
+
+    def _get_record(self, repeater, payload_id):
+        return RepeatRecord.objects.get(
+            domain=self.domain, repeater_id=repeater.id, payload_id=payload_id)
+
+    def test_payload_doc_returns_live_form(self):
+        record = self._get_record(self.form_repeater, self.instance_id)
+
+        form = self.form_repeater.payload_doc(record)
+
+        assert form.form_id == self.instance_id
+
+    def test_payload_doc_raises_for_soft_deleted_form(self):
+        XFormInstance.objects.soft_delete_forms(self.domain, [self.instance_id])
+        record = self._get_record(self.form_repeater, self.instance_id)
+
+        with pytest.raises(PayloadNotFoundError):
+            self.form_repeater.payload_doc(record)
+
+    def test_payload_doc_raises_for_missing_form(self):
+        record = self._get_record(self.form_repeater, self.instance_id)
+        XFormInstance.objects.hard_delete_forms(self.domain, [self.instance_id])
+
+        with pytest.raises(PayloadNotFoundError):
+            self.form_repeater.payload_doc(record)
+
+    def test_payload_doc_returns_live_case(self):
+        record = self._get_record(self.case_repeater, CASE_ID)
+
+        case = self.case_repeater.payload_doc(record)
+
+        assert case.case_id == CASE_ID
+
+    def test_payload_doc_raises_for_soft_deleted_case(self):
+        CommCareCase.objects.soft_delete_cases(self.domain, [CASE_ID])
+        record = self._get_record(self.case_repeater, CASE_ID)
+
+        with pytest.raises(PayloadNotFoundError):
+            self.case_repeater.payload_doc(record)
+
+    def test_payload_doc_raises_for_missing_case(self):
+        record = self._get_record(self.case_repeater, CASE_ID)
+        CommCareCase.objects.hard_delete_cases(self.domain, [CASE_ID])
+
+        with pytest.raises(PayloadNotFoundError):
+            self.case_repeater.payload_doc(record)
+
+
 class RepeaterFailureTest(BaseRepeaterTest):
     domain = 'repeat-fail'
 
@@ -747,11 +839,11 @@ class RepeaterFailureTest(BaseRepeaterTest):
             self.repeater.register(case)
             rr = self.repeater.repeat_records.last()
         with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
-            state_or_none = rr.fire()
+            state = rr.fire()
 
-        assert state_or_none is None
+        assert state == State.ErrorGeneratingPayload
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == 'Boom!'
 
     def test_payload_exception_on_register(self):
@@ -761,7 +853,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             rr = self.repeater.repeat_records.last()
 
         repeat_record = RepeatRecord.objects.get(id=rr.id)
-        assert repeat_record.state == State.InvalidPayload
+        assert repeat_record.state == State.ErrorGeneratingPayload
         assert repeat_record.failure_reason == "Payload error"
 
     def test_failure(self):
@@ -1012,6 +1104,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             'resource_uri': '/a/user-repeater/api/user/v1/{}/'.format(user._id),
             'locations': [],
             'primary_location': None,
+            'language': None,
+            'role': 'Mobile Worker Default',
         }
 
 
@@ -1329,7 +1423,8 @@ class DataSourceRepeaterTest(BaseRepeaterTest):
         cls.adapter = get_indicator_adapter(cls.data_source)
         cls.adapter.build_table()
         cls.addClassCleanup(cls.adapter.drop_table)
-        cls.pillow = _get_pillow([cls.data_source], processor_chunk_size=100)
+        cls.pillow = get_case_pillow(processor_chunk_size=100)
+        bootstrap_pillow(cls.pillow, cls.data_source)
 
         cls.connx = ConnectionSettings.objects.create(
             domain=cls.domain,
@@ -1586,8 +1681,8 @@ class TestRepeatRecordsReady(TestCase):
                 repeater=self.repeater,
                 registered_at=now,
                 next_check=None,
-                state=State.InvalidPayload,
-                payload_id='invalid payload',
+                state=State.PayloadRejected,
+                payload_id='payload rejected',
             ),
         ))
         payload_ids = {rr.payload_id for rr in self.repeater.repeat_records_ready.all()}
@@ -1679,13 +1774,3 @@ class TestBackoffCodes(TestCase):
 
 def str_seconds(dt):
     return dt.isoformat(timespec='seconds')
-
-
-def _get_pillow(configs, processor_chunk_size=0):
-    pillow = get_case_pillow(processor_chunk_size=processor_chunk_size)
-    # overwrite processors since we're only concerned with UCR here
-    table_manager = ConfigurableReportTableManager(data_source_providers=[])
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    pillow.processors = [ucr_processor]
-    bootstrap_pillow(pillow, *configs)
-    return pillow

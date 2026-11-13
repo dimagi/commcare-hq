@@ -14,11 +14,12 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.builds.fixtures import commcare_build_config
-from corehq.blobs import CODES as BLOB_CODES
-from corehq.blobs.mixin import BlobMixin
 from corehq.util.quickcache import quickcache
 
 
@@ -38,77 +39,48 @@ class SemanticVersionProperty(StringProperty):
         return value
 
 
-class CommCareBuild(BlobMixin, Document):
-    build_number = IntegerProperty()
-    version = SemanticVersionProperty()
-    time = DateTimeProperty()
-    _blobdb_type_code = BLOB_CODES.commcarebuild
+def validate_semantic_version(value):
+    try:
+        major, minor, point = value.split('.')
+        int(major)
+        int(minor)
+        int(point)
+    except Exception:
+        raise ValidationError(
+            _("Build version %(value)s does not comply with the x.y.z schema"),
+            params={"value": value},
+            code="invalid",
+        )
 
-    def fetch_file(self, path, filename=None):
-        if filename:
-            path = '/'.join([path, filename])
-        attachment = self.fetch_attachment(path)
+
+class CommCareMobileBuild(models.Model):
+    version = models.CharField(max_length=11, null=False, validators=[validate_semantic_version])
+    build_number = models.IntegerField(null=True, blank=True)
+    time = models.DateTimeField(null=False)
+
+    def save(self, *args, **kwargs):
+        # TODO: replace with auto_now_add=True after couch2sql migration is complete
+        if not self.time:
+            self.time = datetime.utcnow()
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_build(cls, version, build_number=None):
         try:
-            return attachment.decode('utf-8')
-        except UnicodeDecodeError:
-            return attachment
-
-    @classmethod
-    def create_without_artifacts(cls, version, build_number):
-        self = cls(build_number=build_number, version=version,
-                   time=datetime.utcnow())
-        self.save()
-        return self
-
-    def minor_release(self):
-        major, minor, _ = self.version.split('.')
-        return int(major), int(minor)
-
-    def major_release(self):
-        major, _, _ = self.version.split('.')
-        return int(major)
-
-    @classmethod
-    def get_build(cls, version, build_number=None, latest=False):
-        """
-        Call as either
-            CommCareBuild.get_build(version, build_number)
-        or
-            CommCareBuild.get_build(version, latest=True)
-        """
-
-        if latest:
-            startkey = [version]
-        else:
-            build_number = int(build_number)
-            startkey = [version, build_number]
-
-        self = cls.view('builds/all',
-                        startkey=startkey + [{}],
-                        endkey=startkey,
-                        descending=True,
-                        limit=1,
-                        include_docs=True,
-                        reduce=False,
-                        ).one()
-
-        if not self:
+            if build_number is None:
+                build = cls.objects.filter(version=version).order_by('-time').first()
+                if build is None:
+                    raise cls.DoesNotExist()
+                return build
+            return cls.objects.get(version=version, build_number=build_number)
+        except cls.DoesNotExist:
+            label = BuildSpec(version=version, build_number=build_number)
             raise KeyError(
-                "Can't find build {label}. For instructions on how to add it, see "
+                f"Can't find build {label}. For instructions on how to add it, see "
                 "https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/builds/"
-                "README.rst#adding-commcare-builds-to-commcare-hq".format(
-                    label=BuildSpec(
-                        version=version,
-                        build_number=build_number,
-                        latest=latest
-                    )
-                )
+                "README.rst#adding-commcare-builds-to-commcare-hq"
             )
-        return self
-
-    @classmethod
-    def all_builds(cls):
-        return cls.view('builds/all', include_docs=True, reduce=False)
 
 
 class BuildSpec(DocumentSchema):
@@ -118,9 +90,9 @@ class BuildSpec(DocumentSchema):
 
     def get_build(self):
         if self.latest:
-            return CommCareBuild.get_build(self.version, latest=True)
+            return CommCareMobileBuild.get_build(self.version)
         else:
-            return CommCareBuild.get_build(self.version, self.build_number)
+            return CommCareMobileBuild.get_build(self.version, self.build_number)
 
     def is_null(self):
         return not (self.version and (self.build_number or self.latest))

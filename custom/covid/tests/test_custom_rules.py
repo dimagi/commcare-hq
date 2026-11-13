@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from dimagi.utils.parsing import ISO_DATE_FORMAT
@@ -33,6 +34,9 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
         super().setUp()
         delete_all_users()
 
+        self._priv_patcher = patch('corehq.apps.callcenter.sync_usercase.domain_has_privilege', return_value=True)
+        self._priv_patcher.start()
+        self.addCleanup(self._priv_patcher.stop)
         self.domain_obj = create_domain(self.domain)
         enable_usercase(self.domain)
 

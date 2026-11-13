@@ -8,9 +8,6 @@
     - hq.use_custom_suite
     - hq.custom_suite
     - hq.custom_base_url
-    # RemoteApp
-    - hq.profile_url
-    - hq.manage_urls
 
 - title: Build Settings
   id: app-settings-general
@@ -69,7 +66,6 @@
     - hq.translation_strategy
     - hq.mobile_ucr_restore_version
     - hq.location_fixture_restore
-    - hq.split_screen_dynamic_search
     - features.credentials
 
 - title: 'Disabled'

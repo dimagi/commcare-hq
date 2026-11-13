@@ -6,7 +6,7 @@
 <script type="text/html" id="CommcareSettings.widgets.select">
   <span>
     <span data-bind="if: valueIsLegal()">
-      <select class="col-sm-3 form-control" data-bind="
+      <select class="col-md-3 form-select" data-bind="
           options: options,
           value: selectedOption,
           optionsText: 'label',
@@ -14,7 +14,7 @@
       "></select>
     </span>
     <span data-bind="if: !valueIsLegal()" >
-      <select class="col-sm-3 form-control error" data-bind="
+      <select class="col-md-3 form-select error" data-bind="
           options: options,
           value: writeSelectedOption,
           optionsText: 'label',
@@ -29,7 +29,7 @@
   <span>
     <span data-bind="if: valueIsLegal()">
       <select multiple="multiple"
-              class="col-sm-3 form-control"
+              class="col-md-3 form-select"
               data-bind="options: options,
                          selectedOptions: selectedOptions,
                          optionsText: 'label',
@@ -40,7 +40,7 @@
     </span>
     <span data-bind="if: !valueIsLegal()" >
       <select multiple="multiple"
-              class="col-sm-3 form-control error"
+              class="col-md-3 form-select error"
               data-bind="options: options,
                          selectedOptions: writeSelectedOptions,
                          optionsText: 'label',
@@ -54,13 +54,16 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-  <div class="checkbox-app-settings">
-    <input type="checkbox"
-           data-bind="checked: boolValue,
-                      attr: {
-                        disabled: !enabled() || showDisabledCheckbox(),
-                        id: inputId
-                      }"/>
+  <div class="form-check checkbox-app-settings">
+    <input
+      type="checkbox"
+      class="form-check-input"
+      data-bind="checked: boolValue,
+        attr: {
+          disabled: !enabled() || showDisabledCheckbox(),
+          id: inputId
+        }"
+    />
   </div>
   <!-- ko if: showUncheckWarning -->
   <div class="alert alert-warning alert-small">
@@ -75,17 +78,17 @@
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
   <div class="row">
-    <div class="col-sm-5">
+    <div class="col-md-5">
       <input placeholder="Key" type="text" data-bind="value: key" class="form-control" autocomplete="off"/>
     </div>
-    <div class="col-sm-1 text-center">
+    <div class="col-md-1 text-center">
       <i class="fa fa-arrow-right"></i>
     </div>
-    <div class="col-sm-5">
+    <div class="col-md-5">
       <input placeholder="Value" type="text" data-bind="value: value" class="form-control" autocomplete="off"/>
     </div>
-    <div class="col-sm-1">
-      <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
+    <div class="col-md-1">
+      <button class="btn btn-outline-danger" data-bind="click: $parent.onDestroyCustomProperty">
         <i class="fa-regular fa-trash-can"></i>
       </button>
     </div>
@@ -100,8 +103,8 @@
             }
         "/>
   </a>
-  <a data-toggle="modal"
-     class="btn btn-default"
+  <a data-bs-toggle="modal"
+     class="btn btn-outline-primary"
      data-bind="
         attr: {
             'data-hqmediapath': path,
@@ -120,7 +123,7 @@
             {% trans "Upload Logo" %}
         </span>
   </a>
-  <a class="btn btn-danger"
+  <a class="btn btn-outline-danger"
      data-bind="
            visible: url(),
            click: removeLogo
@@ -131,7 +134,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.text">
   <span>
-        <input type="text" class="col-sm-6 form-control" autocomplete="off" data-bind="
+        <input type="text" class="col-md-6 form-control" autocomplete="off" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -141,7 +144,7 @@
 
 <script type="text/html" id="CommcareSettings.widgets.number">
   <span>
-        <input type="number" class="col-sm-3 form-control" data-bind="
+        <input type="number" class="col-md-3 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
             attr: {disabled: !enabled(), id: inputId}
@@ -158,33 +161,73 @@
 <div class="tabbable">
   <ul class="nav nav-tabs sticky-tabs">
     {% if is_linked_app %}
-      <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
-      <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-      <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+      <li class="nav-item">
+        <a href="#linked-app" data-bs-toggle="tab" class="nav-link">
+          {% trans "Linked Application" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#languages" data-bs-toggle="tab" class="nav-link">
+          {% trans "Languages" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#multimedia-tab" data-bs-toggle="tab" class="nav-link">
+          {% trans "Multimedia" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#actions" data-bs-toggle="tab" class="nav-link">
+          {% trans "Actions" %}
+        </a>
+      </li>
     {% else %}
-      <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+      <li class="nav-item">
+        <a href="#languages" data-bs-toggle="tab" class="nav-link">
+          {% trans "Languages" %}
+        </a>
+      </li>
       {% if not is_remote_app %}
-        <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+        <li class="nav-item">
+          <a href="#multimedia-tab" data-bs-toggle="tab" class="nav-link">
+            {% trans "Multimedia" %}
+          </a>
+        </li>
       {% endif %}
-      <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-      <li><a href="#add-ons" data-toggle="tab">{% trans "Add-ons" %}</a></li>
+      <li class="nav-item">
+        <a href="#actions" data-bs-toggle="tab" class="nav-link">
+          {% trans "Actions" %}
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#add-ons" data-bs-toggle="tab" class="nav-link">
+          {% trans "Add-ons" %}
+        </a>
+      </li>
     {% endif %}
-    <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+    <li class="nav-item">
+      <a href="#commcare-settings" data-bs-toggle="tab" class="nav-link">
+        {% trans "Advanced Settings" %}
+      </a>
+    </li>
     {% if not is_linked_app and not is_remote_app and app.supports_module_assertions %}
-      <li><a href="#custom-assertions-tab" data-toggle="tab">{% trans "Custom Assertions" %}</a></li>
+      <li class="nav-item">
+        <a href="#custom-assertions-tab" data-bs-toggle="tab" class="nav-link">
+          {% trans "Custom Assertions" %}
+        </a>
+      </li>
     {% endif %}
   </ul>
-  <div class="tab-content appmanager-tab-content">
+  <div class="tab-content mt-3">
     {% if is_linked_app %}
       <div class="tab-pane" id="linked-app">
-        <div class="panel panel-appmanager panel-appmanager-form">
+        <div class="card">
           <form action="{% url "pull_upstream_app" domain app.id %}" method="POST">
             {% csrf_token %}
-            <legend>
+            <legend class="card-header fs-5 py-3 lh-sm">
               {% trans "Update from upstream application" %}
             </legend>
-            <div class="panel-body">
+            <div class="card-body">
               <p>
                 {% if upstream_url %}
                   {% blocktrans with upstream_name=upstream_brief.name upstream_version=app.upstream_version %}
@@ -198,41 +241,45 @@
                   {% endblocktrans %}
                 {% endif %}
               </p>
-              <div class="form-horizontal">
-                {% if multiple_upstreams %}
-                  <div class="form-group">
-                    <div class="{% css_field_class %}">
-                      <select name="upstream_app_id" class="form-control hqwebapp-select2"
-                              data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
-                        <option value="">{% trans "Select an upstream app to pull" %}</option>
-                        {% for brief in upstream_briefs %}
-                          {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
-                          <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                  </div>
-                {% else %}
-                  <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
-                {% endif %}
-                <div class="form-group">
-                  <div class="{% css_field_class %}">
-                    <div class="checkbox">
-                      <label>
-                        <input type="checkbox" name="notify">
-                        {% trans "Email when finished (recommended for large applications)" %}
-                      </label>
-                    </div>
+              {% if multiple_upstreams %}
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <select name="upstream_app_id" class="form-select hqwebapp-select2"
+                            data-placeholder="{% trans_html_attr "Select an upstream app to pull" %}">
+                      <option value="">{% trans "Select an upstream app to pull" %}</option>
+                      {% for brief in upstream_briefs %}
+                        {# Poor readability because any whitespace within the option will also appear in the title attribute and therefore on hover #}
+                        <option value="{{ brief.id }}">{{ brief.name }}{% for id, version in upstream_versions_by_id.items %}{% if id == brief.id %} ({% blocktrans with v=version %}version {{ v }}{% endblocktrans %}){% endif %}{% endfor %}</option>
+                      {% endfor %}
+                    </select>
                   </div>
                 </div>
-                <div class="form-group">
-                  <div class="{% css_field_class %}">
-                    <button type="submit" class="btn btn-primary">
-                      <i class="fa fa-arrow-up"></i>
-                      {% trans "Update" %}
-                    </button>
+              {% else %}
+                <input name="upstream_app_id" type="hidden" value="{{ upstream_brief.get_id }}" />
+              {% endif %}
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <div class="form-check">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      id="email-when-finished-checkbox"
+                      name="notify"
+                    />
+                    <label
+                      for="email-when-finished-checkbox"
+                      class="form-check-label"
+                    >
+                      {% trans "Email when finished (recommended for large applications)" %}
+                    </label>
                   </div>
                 </div>
+              </div>
+              <div class="ms-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-arrow-up"></i>
+                  {% trans "Update" %}
+                </button>
               </div>
             </div>
           </form>
@@ -247,7 +294,7 @@
         </div>
         <div data-bind="html: multimedia_page_html"></div>
         <div data-bind="if: load_state() === 'error'">
-          <button class="btn btn-default"
+          <button class="btn btn-outline-primary"
                   data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
         </div>
       </div>
@@ -257,16 +304,16 @@
     </div>
     <div class="tab-pane" id="actions">
       {% if copy_app_form %}
-        <div class="panel panel-appmanager panel-appmanager-form" id="copy-app-form">
-          <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+        <div class="card mb-3" id="copy-app-form">
+          <form method="post" action="{% url "copy_app" domain %}">
             {% crispy copy_app_form %}
           </form>
         </div>
       {% endif %}
-      <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-        <legend>{% trans "Delete Application" %}</legend>
-        <div class="panel-body">
-          <a href="#delete-app-modal" class="btn btn-danger" data-toggle="modal">
+      <div class="card">
+        <legend class="card-header fs-5 py-3 lh-sm">{% trans "Delete Application" %}</legend>
+        <div class="card-body">
+          <a href="#delete-app-modal" class="btn btn-outline-danger" data-bs-toggle="modal">
             <i class="fa-regular fa-trash-can"></i>
             {% trans "Delete this application" %}
           </a>
@@ -286,7 +333,7 @@
               id="custom-assertions-form"
               method="POST">{% csrf_token %}
           <div id="custom-assertions-save-btn"></div>
-          {% include "app_manager/partials/forms/custom_assertions.html" %}
+          {% include "app_manager/partials/forms/bootstrap5/custom_assertions.html" %}
         </form>
       </div>
     {% endif %}

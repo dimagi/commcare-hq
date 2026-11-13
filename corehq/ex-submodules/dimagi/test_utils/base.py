@@ -1,5 +1,4 @@
 from django.conf import settings
-from six.moves import range
 
 if not settings.configured:
     settings.configure(DEBUG=True)

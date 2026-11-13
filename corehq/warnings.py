@@ -2,7 +2,7 @@ import os
 import re
 import warnings
 
-from django.utils.deprecation import RemovedInDjango50Warning, RemovedInDjango51Warning
+from django.utils.deprecation import RemovedInDjango60Warning
 
 from sqlalchemy.exc import SAWarning
 
@@ -25,8 +25,8 @@ WHITELIST = [
     ("eulxml", "pkg_resources is deprecated as an API"),
     ("pkg_resources", "pkg_resources.declare_namespace"),
 
-    ("tastypie.compat", "The django.utils.datetime_safe module is deprecated.", RemovedInDjango50Warning),
-    ("django.db.models.options", "'index_together' is deprecated", RemovedInDjango51Warning),
+    ("django.conf", "FORMS_URLFIELD_ASSUME_HTTPS", RemovedInDjango60Warning),
+    ("field_audit", "CheckConstraint.check is deprecated", RemovedInDjango60Warning),
 
     # warnings that can be resolved with HQ code changes
     ("", "datetime.datetime.utcnow() is deprecated"),
@@ -41,16 +41,6 @@ WHITELIST = [
         "corehq.apps.es.index.settings",
         re.compile(r"Invalid index settings key .+, expected one of \["),
         UserWarning,
-    ),
-    (
-        # Should be removed  after es5 references are removed
-        "elasticsearch5.connection.http_urllib3",
-        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
-    ),
-    (
-        # This should be tested on a newer version(>6.8) of ES.Should be removed if fixed
-        "elasticsearch6.connection.http_urllib3",
-        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
     ),
     # Open files are leaked all over the place, it will probably take a long time to fix all of them
     ("", "unclosed file", ResourceWarning),

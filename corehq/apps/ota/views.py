@@ -37,7 +37,6 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
 from corehq import toggles
-from corehq.toggles import deterministic_random
 from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
@@ -46,7 +45,11 @@ from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.exceptions import CaseSearchUserError
-from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY, CASE_SEARCH_TAGS_MAPPING
+from corehq.apps.case_search.models import (
+    CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_TAGS_MAPPING,
+    case_search_enabled_for_domain,
+)
 from corehq.apps.case_search.utils import get_case_search_results_from_request
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import check_domain_mobile_access
@@ -55,25 +58,37 @@ from corehq.apps.locations.permissions import (
     location_safe,
     location_safe_bypass,
 )
-from corehq.apps.ota.decorators import mobile_auth, mobile_auth_or_formplayer
+from corehq.apps.ota.decorators import (
+    mobile_auth,
+    mobile_auth_or_public_form_session,
+)
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.users.device_rate_limiter import device_rate_limiter, DEVICE_RATE_LIMIT_MESSAGE
+from corehq.apps.users.device_rate_limiter import (
+    DEVICE_RATE_LIMIT_MESSAGE,
+    device_rate_limiter,
+)
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.util.metrics import limit_domains, metrics_histogram, limit_tags
+from corehq.toggles import deterministic_random
+from corehq.util.metrics import limit_domains, limit_tags, metrics_histogram
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import set_request_duration_reporting_threshold
 
 from .case_restore import get_case_restore_response
-from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket, IntegritySamplePercentage
+from .models import (
+    DeviceLogRequest,
+    IntegritySamplePercentage,
+    MobileRecoveryMeasure,
+    SerialIdBucket,
+)
 from .rate_limiter import rate_limit_restore
 from .utils import (
     demo_user_restore_response,
@@ -82,6 +97,7 @@ from .utils import (
     is_permitted_to_restore,
 )
 
+CASE_SEARCH_DISABLED_MSG = "Case search is not enabled for this project"
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
@@ -90,7 +106,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @tracer.wrap(name="ota.restore")
 @location_safe
 @handle_401_response
-@mobile_auth_or_formplayer
+@mobile_auth_or_public_form_session
 @check_domain_mobile_access
 @set_request_duration_reporting_threshold(seconds=300)
 def restore(request, domain, app_id=None):
@@ -101,8 +117,16 @@ def restore(request, domain, app_id=None):
     if rate_limit_restore(domain):
         return HttpTooManyRequests()
 
+    params = get_restore_params(request, domain)
+    session = getattr(request, 'public_form_session', None)
+    if session:
+        # restore the build the link is pinned to, as this session's own device,
+        # so respondents get their own reports and their own cache entry
+        app_id = session.public_webform.app_build_id
+        params['device_id'] = session.restore_device_id
+
     response, timing_context = get_restore_response(
-        domain, request.couch_user, app_id, **get_restore_params(request, domain))
+        domain, request.couch_user, app_id, **params)
     if timing_context:
         timing_context.add_to_sentry_breadcrumbs()
     return response
@@ -123,7 +147,7 @@ def search(request, domain):
 @csrf_exempt
 @mobile_auth
 @check_domain_mobile_access
-@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
+@toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator(plain_message=CASE_SEARCH_DISABLED_MSG)
 def app_aware_search(request, domain, app_id):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -132,6 +156,9 @@ def app_aware_search(request, domain, app_id):
 
     Returns results as a fixture with the same structure as a casedb instance.
     """
+    if not case_search_enabled_for_domain(domain):
+        return HttpResponse(CASE_SEARCH_DISABLED_MSG, status=404)
+
     start_time = datetime.now()
     request_dict = dict((request.GET if request.method == 'GET' else request.POST).lists())
 
@@ -303,8 +330,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
         # user was created with the same username and password
-        from couchforms.openrosa_response import get_simple_response_xml
-        from couchforms.openrosa_response import ResponseNature
+        from couchforms.openrosa_response import (
+            ResponseNature,
+            get_simple_response_xml,
+        )
         response = get_simple_response_xml(
             'Attempt to sync with invalid user.',
             ResponseNature.OTA_RESTORE_ERROR
@@ -402,13 +431,13 @@ def heartbeat(request, domain, app_build_id):
     build_profile_id = request.GET.get('build_profile_id', '')
     master_app_id = app_id
     try:
-        info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         app = get_app_cached(domain, app_build_id)
         notify_exception(request, 'Received an invalid heartbeat request')
         master_app_id = app.origin_id if app else None
-        info = GlobalAppConfig.get_latest_version_info(domain, app.origin_id, build_profile_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app.origin_id)
 
     info["app_id"] = app_id
     if master_app_id:
@@ -439,9 +468,6 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
-    fcm_token = ''
-    if toggles.FCM_NOTIFICATION.enabled(request.domain):
-        fcm_token = request.GET.get('fcm_token', '')
     # if mobile cannot determine app version it sends -1
     if app_version == -1:
         app_version = None
@@ -456,14 +482,14 @@ def update_user_reporting_data(app_build_id, app_id, build_profile_id, couch_use
     if settings.USER_REPORTING_METADATA_BATCH_ENABLED:
         UserReportingMetadataStaging.add_heartbeat(
             request.domain, couch_user._id, app_id, app_build_id, last_sync, device_id,
-            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id, fcm_token
+            app_version, num_unsent_forms, num_quarantined_forms, commcare_version, build_profile_id
         )
     else:
         record = UserReportingMetadataStaging(domain=request.domain, user_id=couch_user._id, app_id=app_id,
             build_id=app_build_id, sync_date=last_sync, device_id=device_id, app_version=app_version,
             num_unsent_forms=num_unsent_forms, num_quarantined_forms=num_quarantined_forms,
             commcare_version=commcare_version, build_profile_id=build_profile_id,
-            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow(), fcm_token=fcm_token)
+            last_heartbeat=datetime.utcnow(), modified_on=datetime.utcnow())
         try:
             record.process_record(couch_user)
         except ResourceConflict:

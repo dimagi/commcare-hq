@@ -46,7 +46,6 @@ from corehq.apps.app_manager.views import (
     edit_report_module,
     edit_schedule_phases,
     edit_visit_schedule,
-    enable_usercase,
     form_source,
     form_source_legacy,
     get_app_ui_translations,
@@ -57,7 +56,6 @@ from corehq.apps.app_manager.views import (
     get_xform_source,
     list_apps,
     multimedia_ajax,
-    new_app,
     new_form,
     new_module,
     odk_install,
@@ -73,7 +71,6 @@ from corehq.apps.app_manager.views import (
     revert_to_copy,
     save_copy,
     short_odk_url,
-    toggle_build_profile,
     undo_delete_app,
     undo_delete_form,
     undo_delete_module,
@@ -87,14 +84,22 @@ from corehq.apps.app_manager.views import (
     view_module,
     view_module_legacy,
 )
+from corehq.apps.app_manager.views.app_import_api import (
+    import_app_api,
+    multimedia_status_api,
+    upload_multimedia_api,
+)
 from corehq.apps.app_manager.views.apps import move_child_modules_after_parents
 from corehq.apps.app_manager.views.modules import ExistingCaseTypesView, AllCaseTypesView
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 from corehq.apps.linked_domain.views import pull_missing_multimedia
 from corehq.apps.translations.views import (
+    ai_translation_failed_labels,
+    ai_translation_status,
     download_bulk_app_translations,
     download_bulk_ui_translations,
+    start_ai_translation,
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
 )
@@ -109,6 +114,12 @@ app_urls = [
         name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations,
         name='upload_bulk_app_translations'),
+    url(r'^languages/ai_translation/start/$', start_ai_translation,
+        name='start_ai_translation'),
+    url(r'^languages/ai_translation/status/$', ai_translation_status,
+        name='ai_translation_status'),
+    url(r'^languages/ai_translation/failed_labels/$', ai_translation_failed_labels,
+        name='ai_translation_failed_labels'),
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
     url(r'^multimedia_sizes/$', get_multimedia_sizes, name='get_multimedia_sizes'),
     url(r'^multimedia_sizes/(?P<build_profile_id>[\w-]+)/$', get_multimedia_sizes,
@@ -160,7 +171,6 @@ urlpatterns = [
         get_xform_source, name='get_xform_source'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
     url(r'^app_exchange/$', app_exchange, name='app_exchange'),
-    url(r'^enable_usercase/$', enable_usercase, name="enable_usercase"),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
     url(r'^view/(?P<app_id>[\w-]+)/', include(app_urls)),
@@ -169,7 +179,6 @@ urlpatterns = [
     url(r'^schema/(?P<app_id>[\w-]+)/form/(?P<form_unique_id>[\w-]+)/$',
         get_form_data_schema, name='get_form_data_schema'),
     url(r'^new_module/(?P<app_id>[\w-]+)/$', new_module, name='new_module'),
-    url(r'^new_app/$', new_app, name='new_app'),
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         new_form, name='new_form'),
@@ -258,9 +267,11 @@ urlpatterns = [
 
     url(r'^api/list_apps/$', list_apps, name='list_apps'),
     url(r'^api/download_ccz/$', direct_ccz, name='direct_ccz'),
+    url(r'^api/import_app/$', import_app_api, name='import_app_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/$', upload_multimedia_api, name='upload_multimedia_api'),
+    url(r'^api/(?P<app_id>[\w-]+)/multimedia/status/(?P<processing_id>[\w-]+)/$',
+        multimedia_status_api, name='multimedia_status_api'),
     url(r'^download/(?P<app_id>[\w-]+)/$', download_index, name='download_index'),
-    url(r'^build_profile/(?P<build_id>[\w-]+)/toggle/(?P<build_profile_id>[\w-]+)$', toggle_build_profile,
-        name='toggle_build_profile'),
     # the order of these download urls is important
     url(r'^download/(?P<app_id>[\w-]+)/CommCare.ccz$', DownloadCCZ.as_view(),
         name=DownloadCCZ.name),

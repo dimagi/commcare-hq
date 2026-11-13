@@ -2,11 +2,12 @@ from django.urls import include, re_path as url
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
+from corehq.apps.hqadmin.offboarding.views import ExternalPlatformOffboardingView
+from corehq.apps.hqadmin.manage_template_apps.views import ManageTemplateAppsView, TemplateAppSectorsView
 from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
     ReprocessMessagingCaseUpdatesView,
-    mass_email,
 )
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
@@ -29,6 +30,7 @@ from corehq.apps.hqadmin.views.users import (
     OffboardingUserList,
     WebUserDataView,
     email_status,
+    offboard_staff_user,
     superuser_table,
     web_user_lookup,
 )
@@ -42,11 +44,14 @@ urlpatterns = [
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
     url(r'^global_thresholds/$', GlobalThresholds.as_view(), name=GlobalThresholds.urlname),
-    url(r'^mass_email/$', mass_email, name="mass_email"),
+    # Disabled until https://dimagi.atlassian.net/browse/SAAS-19006 is addressed
+    # url(r'^mass_email/$', mass_email, name="mass_email"),
     # Same view supported with three possible urls to support tracking
     # username and domain in the url via audit
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^get_offboarding_list/$', OffboardingUserList.as_view(), name=OffboardingUserList.urlname),
+    url(r'^offboarding/external_platforms/$', ExternalPlatformOffboardingView.as_view(),
+        name=ExternalPlatformOffboardingView.urlname),
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
     url(r'^email_status/$', email_status, name='email_status'),
@@ -56,6 +61,7 @@ urlpatterns = [
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),
+    url(r'^offboard_staff_user/$', offboard_staff_user, name='offboard_staff_user'),
     url(r'^disable_two_factor/$', DisableTwoFactorView.as_view(), name=DisableTwoFactorView.urlname),
     url(r'^disable_account/$', DisableUserView.as_view(), name=DisableUserView.urlname),
     url(r'^doc_in_es/$', doc_in_es, name='doc_in_es'),
@@ -70,5 +76,7 @@ urlpatterns = [
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
+    url(r'^manage_template_apps/$', ManageTemplateAppsView.as_view(), name=ManageTemplateAppsView.urlname),
+    url(r'^manage_template_apps/sectors/$', TemplateAppSectorsView.as_view(), name=TemplateAppSectorsView.urlname),
     AdminReportDispatcher.url_pattern(),
 ]

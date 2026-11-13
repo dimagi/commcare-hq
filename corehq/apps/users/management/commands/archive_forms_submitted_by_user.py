@@ -20,6 +20,6 @@ class Command(BaseCommand):
             with open("archived_forms_for_user_%s.txt" % user_id, 'wb') as log:
                 for ids in chunked(with_progress_bar(form_ids), 100):
                     ids = list([f for f in ids if f])
-                    for form in get_forms(ids, domain):
+                    for form in get_forms(ids):
                         log.write(form.form_id + '\n')
                         form.archive()

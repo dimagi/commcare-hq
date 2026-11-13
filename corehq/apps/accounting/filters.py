@@ -19,11 +19,13 @@ from corehq.apps.accounting.async_handlers import (
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     CustomerInvoiceNumberAsyncHandler,
+    WireInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.models import (
     BillingAccountType,
     EntryPoint,
     ProBonoStatus,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
     SubscriptionAdjustmentMethod,
@@ -86,7 +88,7 @@ class IdPServiceTypeFilter(BaseSingleOptionFilter):
 
 class CreditAdjustmentLinkFilter(BaseSingleOptionFilter):
     slug = 'credit_adjustment_link'
-    label = _("Credit Adjustment Reason")
+    label = _("Credit Adjustment Link")
     default_text = _("Linked to Any Transaction")
     options = (
         ('invoice', "Linked to Invoice"),
@@ -212,6 +214,13 @@ class IsHiddenFilter(BaseSingleOptionFilter):
     ]
 
 
+class ScheduledInvoiceStatusFilter(BaseSingleOptionFilter):
+    slug = 'scheduled_invoice_status'
+    label = _('Status')
+    default_text = _('All')
+    options = ScheduledPrepaymentInvoiceStatus.CHOICES
+
+
 class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
     """
     For filtering whether the initial subscription adjustment was
@@ -220,14 +229,7 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
     slug = "sub_adj_method"
     label = _("Created By")
     default_text = _("Anyone")
-    options = (
-        (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
-        (SubscriptionAdjustmentMethod.USER, "User Created"),
-        (SubscriptionAdjustmentMethod.INVOICING, "Created During Invoicing"),
-        (SubscriptionAdjustmentMethod.TASK, "[Deprecated] Created During Invoicing"),
-        (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
-        (SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, "Defaulted to Community"),
-    )
+    options = SubscriptionAdjustmentMethod.CHOICES
 
 
 class DateRangeFilter(BaseReportFilter):
@@ -448,6 +450,14 @@ class CustomerInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
     default_text = 'All'
     async_handler = CustomerInvoiceNumberAsyncHandler
     async_action = 'customer_invoice_number'
+
+
+class WireInvoiceNumberFilter(BaseAccountingSingleOptionFilter):
+    slug = 'wire_invoice_number'
+    label = 'Invoice Number'
+    default_text = 'All'
+    async_handler = WireInvoiceNumberAsyncHandler
+    async_action = 'wire_invoice_number'
 
 
 class InvoiceBalanceFilter(BaseAccountingSingleOptionFilter):

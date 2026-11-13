@@ -14,6 +14,9 @@
   {% if show_free_edition_banner %}
     {% include "hqwebapp/partials/free_edition_banner.html" %}
   {% endif %}
+  {% if show_lockout_banner %}
+    {% include "hqwebapp/partials/lockout_banner.html" %}
+  {% endif %}
 {% endblock pre_navigation_content %}
 
 {% block navigation %}
@@ -53,7 +56,7 @@
 
       {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
         <div class="collapse navbar-collapse ms-2" id="hq-full-menu">
-          <div class="nav-settings-bar">
+          <div class="nav-settings-bar pe-2">
             {% include 'hqwebapp/includes/bootstrap5/global_navigation_bar.html' %}
           </div>
           {% block tabs %}
@@ -65,34 +68,8 @@
       {% if not request.user.is_authenticated %}
         <nav class="navbar-signin ms-2" role="navigation">
           <div class="nav-settings-bar">
-            <div class="navbar-btn dropdown d-inline-block">
-              <button
-                class="dropdown-toggle btn btn-outline-primary"
-                data-bs-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false"
-              >
-                {{ LANGUAGE_CODE|language_name_local }}
-              </button>
-              <ul class="dropdown-menu">
-                {% for lang_code, name in LANGUAGES %}
-                  <li>
-                    <form action="{% url 'set_language' %}" method="post">
-                      {% csrf_token %}
-                      <button
-                        class="dropdown-item"
-                        type="submit"
-                        name="language"
-                        value="{{ lang_code }}"
-                      >
-                        {{ lang_code|language_name_local }}
-                      </button>
-                    </form>
-                  </li>
-                {% endfor %}
-              </ul>
-            </div>
-            <a href="{% url "login" %}" class="btn btn-primary navbar-btn"
+            {% include "hqwebapp/partials/bootstrap5/language_dropdown.html" %}
+            <a href="{% url "login" %}" class="btn btn-primary me-2"
               >{% trans 'Sign In' %}</a
             >
             {% if ANALYTICS_IDS.HUBSPOT_API_ID %}
@@ -100,7 +77,7 @@
                 href="#cta-form-get-demo"
                 data-bs-toggle="modal"
                 id="cta-form-get-demo-button-header"
-                class="btn btn-purple navbar-btn"
+                class="btn btn-purple me-2"
               >
                 {% trans 'Schedule a Demo' %}
               </a>

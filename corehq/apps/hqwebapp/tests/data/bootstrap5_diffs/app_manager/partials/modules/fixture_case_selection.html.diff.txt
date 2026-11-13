@@ -1,0 +1,104 @@
+--- 
++++ 
+@@ -3,27 +3,27 @@
+ {% load xforms_extras %}
+ 
+ <div data-bind="with: fixtureSelect, DetailScreenConfig_notifyShortScreenOnChange: $root"
+-     class="panel panel-appmanager">
+-  <div class="panel-heading">
+-    <h4 class="panel-title panel-title-nolink">
++     class="card panel-appmanager">  {# todo B5: css-panel #}
++  <div class="card-header">
++    <h4 class="card-title card-title-nolink">
+       {% trans "Lookup Table Case Selection" %}
+     </h4>
+   </div>
+-  <div class="panel-body">
++  <div class="card-body">
+     <form class="form form-horizontal">
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">{% trans "Enable Lookup Table Filtering" %}
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">{% trans "Enable Lookup Table Filtering" %}
+           <span class="hq-help-template"
+                 data-title="{% trans "Lookup Table Case Selection" %}"
+                 data-content="{% trans "Enabling this allows you to filter the case list based on a lookup table selection and an xpath expression that consumes that selection" %}"
+           ></span>
+         </label>
+         <div class="{% css_field_class %}">
+-          <input type="checkbox" data-bind="checked: active"/>
++          <input type="checkbox" data-bind="checked: active"/>  {# todo B5: css-checkbox #}
+         </div>
+       </div>
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">
+           {% trans "Lookup Table Type" %}
+           <span class="hq-help-template"
+                 data-title="{% trans "Lookup Table Type" %}"
+@@ -31,7 +31,7 @@
+           ></span>
+         </label>
+         <div class="{% css_field_class %}">
+-          <select class="form-control" name="fixture_type" data-bind="value: fixtureType">
++          <select class="form-select" name="fixture_type" data-bind="value: fixtureType">
+             <option value="">{% trans "Select One" %}</option>
+             {% for fixture_type in js_options.fixture_columns_by_type %}
+               <option value="{{ fixture_type }}">{{ fixture_type }}</option>
+@@ -39,43 +39,43 @@
+           </select>
+         </div>
+       </div>
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">
+           {% trans "Display Column" %}
+           <span class="hq-help-template" data-title="{% trans "Display Column" %}"
+                 data-content="{% trans "This Column will be displayed as the choice for the user to select from" %}">
+                     </span>
+         </label>
+         <div class="{% css_field_class %}">
+-          <select class="form-control" name="display_column" data-bind="value: displayColumn, options: fixture_columns">
++          <select class="form-select" name="display_column" data-bind="value: displayColumn, options: fixture_columns">
+           </select>
+         </div>
+       </div>
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">{% trans "Localize Display Column" %}
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">{% trans "Localize Display Column" %}
+           <span class="hq-help-template"
+                 data-title="{% trans "Localize Display Column" %}"
+-                data-content="{% trans "Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string" %}"
++                data-content="{% trans "Set this checkbox to indicate that the lookup table does not contain the display string, but a reference to the localization string" %}"  {# todo B5: css-checkbox #}
+           ></span>
+         </label>
+         <div class="{% css_field_class %}">
+-          <input type="checkbox" data-bind="checked: localize"/>
++          <input type="checkbox" data-bind="checked: localize"/>  {# todo B5: css-checkbox #}
+         </div>
+       </div>
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">
+           {% trans "Variable Column" %}
+           <span class="hq-help-template" data-title="{% trans "Variable Column" %}"
+                 data-content="{% trans "This column will be used as the variable which is input into the xpath expression below" %}">
+                     </span>
+         </label>
+         <div class="{% css_field_class %}">
+-          <select class="form-control" name="variable_column" data-bind="value: variableColumn, options: fixture_columns">
++          <select class="form-select" name="variable_column" data-bind="value: variableColumn, options: fixture_columns">
+           </select>
+         </div>
+       </div>
+-      <div class="form-group">
+-        <label class="control-label {% css_label_class %}">{% trans "XPath filtering expression" %}
++      <div class="form-group">  {# todo B5: css-form-group #}
++        <label class="form-label {% css_label_class %}">{% trans "XPath filtering expression" %}
+           <span class="hq-help-template"
+                 data-title="{% trans "Lookup Table Type" %}"
+                 data-content="{% trans "The XPath filtering expression will be added to the list of conditions that filter the case list" %}"

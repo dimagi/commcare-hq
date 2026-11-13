@@ -3,7 +3,7 @@ import uuid
 from django.test.testcases import SimpleTestCase
 
 from unittest.mock import MagicMock, patch
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.models import (
@@ -28,7 +28,9 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'case_meta')
 
     def setUp(self):
-        self.is_usercase_in_use_patch = patch('corehq.apps.app_manager.models.is_usercase_in_use')
+        self.is_usercase_in_use_patch = patch(
+            'corehq.apps.app_manager.models.applications.domain_has_usercase_access'
+        )
         self.is_usercase_in_use_mock = self.is_usercase_in_use_patch.start()
 
     def tearDown(self):

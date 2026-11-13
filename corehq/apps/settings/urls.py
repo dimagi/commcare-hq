@@ -1,4 +1,5 @@
-from django.urls import include, re_path as url
+from django.urls import include
+from django.urls import re_path as url
 
 from corehq.apps.cloudcare.urls import settings_urls as cloudcare_settings
 from corehq.apps.commtrack.urls import settings_urls as commtrack_settings
@@ -38,7 +39,6 @@ domain_specific = [
     url(r'^programs/', include(program_settings)),
     url(r'^locations/', include(location_settings)),
     url(r'^api/id_mapping/$', project_id_mapping, name="project_id_mapping"),
-    url(r'^events/', include('corehq.apps.events.urls')),
 ]
 
 users_redirect = [

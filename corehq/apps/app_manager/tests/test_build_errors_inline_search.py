@@ -6,14 +6,13 @@ from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK, WORKFLOW
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled
 
 
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
 @patch.object(Application, 'enable_practice_users', return_value=False)
 class BuildErrorsInlineSearchTest(SimpleTestCase):
@@ -25,7 +24,6 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
         m1, _ = factory.new_basic_module('second', 'case', parent_module=m0)
 
         m0.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             auto_launch=True,
             inline_search=True,
@@ -46,7 +44,6 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
         factory.form_requires_case(form, 'person')
 
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             data_registry="so_many_cases",
             data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
@@ -63,7 +60,6 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
         m0.put_in_root = True
 
         m0.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             auto_launch=True,
             inline_search=True,
@@ -77,7 +73,6 @@ class BuildErrorsInlineSearchTest(SimpleTestCase):
         factory.form_requires_case(m0f0)
 
         m0.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             auto_launch=True,
             inline_search=True,

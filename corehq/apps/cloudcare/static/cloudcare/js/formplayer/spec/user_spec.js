@@ -58,6 +58,7 @@ describe('User', function () {
             assert.deepEqual(user.displayOptions, {
                 phoneMode: undefined, // we don't store this option
                 singleAppMode: undefined,
+                publicFormMode: undefined,
                 oneQuestionPerScreen: true,
                 language: 'sindarin',
             });

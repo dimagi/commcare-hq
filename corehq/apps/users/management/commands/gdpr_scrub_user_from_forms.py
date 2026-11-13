@@ -1,6 +1,5 @@
 import logging
 import sys
-from io import StringIO
 
 from django.core.management.base import BaseCommand
 
@@ -8,6 +7,7 @@ from lxml import etree
 
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.models import XFormInstance
+from corehq.util.xml_utils import safe_fromstring
 
 logger = logging.getLogger(__name__)
 NEW_USERNAME = "Redacted User (GDPR)"
@@ -30,7 +30,7 @@ class Command(BaseCommand):
         input_response = input(
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
-            for form_data in XFormInstance.objects.iter_forms(form_ids, domain):
+            for form_data in XFormInstance.objects.iter_forms(form_ids):
                 form_attachment_xml_new = self.update_form_data(form_data, NEW_USERNAME)
                 XFormInstance.objects.modify_attachment_xml_and_metadata(
                     form_data, form_attachment_xml_new)
@@ -43,7 +43,7 @@ class Command(BaseCommand):
     @staticmethod
     def update_form_data(form_data, new_username):
         form_attachment_xml = form_data.get_attachment("form.xml").decode('utf-8')
-        xml_elem = etree.parse(StringIO(form_attachment_xml))
+        xml_elem = safe_fromstring(form_attachment_xml)
         id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
             "{http://openrosa.org/jr/xforms}username")
         id_elem.text = new_username

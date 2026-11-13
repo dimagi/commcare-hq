@@ -30,6 +30,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import CASE_LIST_FILTER_LOCATIONS_FIXTURE, USERCASE_ID, USERCASE_TYPE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
+    ModuleNotFoundException,
     ParentModuleReferenceError,
     SuiteValidationError,
 )
@@ -37,6 +38,7 @@ from corehq.apps.app_manager.util import (
     actions_use_usercase,
     module_loads_registry_case,
     module_offers_search,
+    module_uses_case_search_endpoint,
     module_uses_inline_search,
     module_uses_inline_search_with_parent_relationship_parent_select,
 )
@@ -61,7 +63,6 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_REGISTRY_ID_KEY,
     case_search_sync_cases_on_form_entry_enabled_for_domain,
 )
-from corehq.toggles import USH_SEARCH_FILTER
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
 
@@ -205,14 +206,14 @@ class EntriesHelper(object):
         return f"instance('{instance_name}')/{root_element}/case[{case_type_filter}][@status='open']{filter_xpath}"
 
     @staticmethod
-    def get_parent_filter(relationship, parent_id):
-        if relationship is None:
+    def get_parent_filter(parent_id):
+        return f"[index/*[not(@relationship='extension')]={session_var(parent_id)}]"
+
+    @staticmethod
+    def get_parent_filter_by_ref_id(reference_id, parent_id):
+        if reference_id is None:
             return ""
-        else:
-            return "[index/{relationship}=instance('commcaresession')/session/data/{parent_id}]".format(
-                relationship=relationship,
-                parent_id=parent_id,
-            )
+        return f"[index/{reference_id}={session_var(parent_id)}]"
 
     @staticmethod
     def get_userdata_autoselect(key, session_id, mode):
@@ -573,10 +574,8 @@ class EntriesHelper(object):
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
-            if parent_id:
-                parent_filter = EntriesHelper.get_parent_filter(
-                    datum['module'].parent_select.relationship, parent_id
-                )
+            if parent_id and datum['module'].parent_select.relationship == 'parent':
+                parent_filter = EntriesHelper.get_parent_filter(parent_id)
             else:
                 parent_filter = ''
 
@@ -639,16 +638,18 @@ class EntriesHelper(object):
                     root_element = "results"
                 elif loads_registry_case:
                     instance_name, root_element = "results", "results"
-                if detail_module.search_config.search_filter and USH_SEARCH_FILTER.enabled(self.app.domain):
-                    filter_xpath += f"[{interpolate_xpath(detail_module.search_config.search_filter)}]"
                 filter_xpath += EXCLUDE_RELATED_CASES_FILTER
 
-            nodeset = EntriesHelper._get_nodeset_xpath(
-                instance_name, root_element,
-                datum['case_type'],
-                filter_xpath=filter_xpath,
-                additional_types=datum['module'].additional_case_types
-            )
+            if uses_inline_search and module_uses_case_search_endpoint(detail_module):
+                # Don't apply any post-facto filtering to case search endpoint results
+                nodeset = f"instance('{instance_name}')/{root_element}/case"
+            else:
+                nodeset = EntriesHelper._get_nodeset_xpath(
+                    instance_name, root_element,
+                    datum['case_type'],
+                    filter_xpath=filter_xpath,
+                    additional_types=datum['module'].additional_case_types
+                )
 
             datum_cls = InstanceDatum if datum['module'].is_multi_select() else SessionDatum
             datums.append(FormDatumMeta(
@@ -819,7 +820,7 @@ class EntriesHelper(object):
         if action.case_tag:
             if action.case_index.tag:
                 parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
-                parent_filter = EntriesHelper.get_parent_filter(
+                parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
                     action.case_index.reference_id,
                     parent_action.case_session_var
                 )
@@ -870,9 +871,6 @@ class EntriesHelper(object):
                 if module_id == module.unique_id:
                     return module
 
-                from corehq.apps.app_manager.models import (
-                    ModuleNotFoundException,
-                )
                 try:
                     target = module.get_app().get_module_by_unique_id(module_id,
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
@@ -954,7 +952,7 @@ class EntriesHelper(object):
             else:
                 if action.case_index.tag:
                     parent_action = form.actions.actions_meta_by_tag[action.case_index.tag]['action']
-                    parent_filter = EntriesHelper.get_parent_filter(
+                    parent_filter = EntriesHelper.get_parent_filter_by_ref_id(
                         action.case_index.reference_id,
                         parent_action.case_session_var
                     )

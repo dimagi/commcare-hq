@@ -1,0 +1,24 @@
+--- 
++++ 
+@@ -38,8 +38,8 @@
+ _private.isFormdesigner = false;
+ 
+ _private.showAppPreview = function (triggerAnalytics) {
+-    $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
+-    $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
++    $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('d-none');
++    $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('d-none');
+ 
+     if (triggerAnalytics) {
+         noopMetrics.track.event("[app-preview] Clicked Show App Preview");
+@@ -54,8 +54,8 @@
+ };
+ 
+ _private.hideAppPreview = function (triggerAnalytics) {
+-    $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
+-    $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
++    $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('d-none');
++    $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('d-none');
+ 
+     var $offsetContainer = (_private.isFormdesigner) ? $(module.SELECTORS.FORMDESIGNER) : $(module.SELECTORS.APP_MANAGER_BODY);
+     $offsetContainer.removeClass('offset-for-preview');

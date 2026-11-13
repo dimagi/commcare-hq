@@ -1,6 +1,9 @@
-from django.test import SimpleTestCase
+import tempfile
+from pathlib import Path
+from unittest.mock import PropertyMock, patch
 
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from django.test import SimpleTestCase
+from corehq.apps.app_manager.exceptions import CaseTileMisconfigurationError, SuiteValidationError
 from corehq.apps.app_manager.models import (
     Application,
     CaseSearch,
@@ -10,7 +13,15 @@ from corehq.apps.app_manager.models import (
     Module,
     SortElement,
 )
-from corehq.apps.app_manager.suite_xml.features.case_tiles import CaseTileTemplates, case_tile_template_config
+from corehq.apps.app_manager.suite_xml.features.case_tiles import (
+    CUSTOM,
+    CaseTileHelper,
+    CaseTileTemplates,
+    case_tile_template_config
+)
+from corehq.apps.app_manager.suite_xml.sections.details import get_detail_column_infos
+from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.suite_xml.xml_models import Detail
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -63,50 +74,79 @@ def add_columns_for_case_details(_module):
     ]
 
 
-def add_columns_for_one_one_two_case_details(_module):
+def add_columns_for_icon_text_grid_details(_module):
     _module.case_details.short.columns = [
         DetailColumn(
             header={'en': 'a'},
             model='case',
             field='a',
             format='plain',
-            case_tile_field='title'
+            case_tile_field='top_left_image'
         ),
         DetailColumn(
             header={'en': 'b'},
             model='case',
             field='b',
             format='plain',
-            case_tile_field='top'
+            case_tile_field='top_left_text'
         ),
         DetailColumn(
             header={'en': 'c'},
             model='case',
             field='c',
             format='address',
-            case_tile_field='bottom_left'
+            case_tile_field='top_right_image'
         ),
         DetailColumn(
             header={'en': 'd'},
             model='case',
             field='d',
             format='date',
-            case_tile_field='bottom_right'
+            case_tile_field='top_right_text'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address',
-            case_tile_field='map'
+            case_tile_field='middle_left_image'
         ),
         DetailColumn(
             header={'en': 'e'},
             model='case',
             field='e',
             format='address-popup',
-            case_tile_field='map_popup'
+            case_tile_field='middle_left_text'
         ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='middle_right_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='middle_right_text'
+        ),
+        DetailColumn(
+            header={'en': 'a'},
+            model='case',
+            field='a',
+            format='plain',
+            case_tile_field='bottom_left_image'
+        ),
+        DetailColumn(
+            header={'en': 'b'},
+            model='case',
+            field='b',
+            format='plain',
+            case_tile_field='bottom_left_text'
+        ),
+
     ]
 
 
@@ -126,6 +166,18 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
                     message = "Number of columns in template '{}' " \
                         "exceeds the limit of 12".format(template_name)
                     raise AssertionError(message)
+
+    def test_case_tile_template_does_not_exist(self):
+        with self.assertRaises(CaseTileMisconfigurationError):
+            case_tile_template_config("unknow")
+
+    def test_case_tile_template_custom(self):
+        self.assertEqual([], case_tile_template_config(CUSTOM).fields)
+
+    # only passes if the person simple file is renamed
+    # def test_case_tile_template_file_does_not_exist(self):
+    #     with self.assertRaises(FileNotFoundError):
+    #         case_tile_template_config(CaseTileTemplates.PERSON_SIMPLE.value)
 
     def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
         suite = factory.app.create_suite()
@@ -190,6 +242,40 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             app.create_suite(),
             "./detail[@id='m0_case_short']/field[5]/template"
         )
+
+    def test_case_tile_template_blocks_xxe(self, *args):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = 'patient'
+        module.case_details.short.case_tile_template = CaseTileTemplates.PERSON_SIMPLE.value
+        add_columns_for_case_details(module)
+
+        detail = module.case_details.short
+        detail_column_infos = get_detail_column_infos('case_short', detail, include_sort=True)
+        helper = CaseTileHelper(
+            app, module, detail, 'm0_case_short', 'case_short', None,
+            detail_column_infos, EntriesHelper(app),
+        )
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.dtd') as secret_file:
+            secret_file.write('<!ENTITY leaked "SECRET">')
+            secret_file.flush()
+            path = Path(secret_file.name).as_posix()
+            malicious_template = (
+                '<?xml version="1.0"?>'
+                f'<!DOCTYPE detail [<!ENTITY % xxe SYSTEM "file://{path}"> %xxe;]>'
+                '<detail id="m0_case_short">&leaked;</detail>'
+            )
+            with patch.object(
+                CaseTileHelper, '_case_tile_template_string',
+                new_callable=PropertyMock, return_value=malicious_template,
+            ):
+                result = helper.build_case_tile_detail(
+                    Detail(id='m0_case_short'), 0, len(detail_column_infos)
+                )
+
+        self.assertNotIn(b'SECRET', bytes(result.serialize()))
 
     def test_inline_case_detail_from_another_module(self, *args):
         factory = AppFactory()
@@ -445,6 +531,21 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
 
+    def test_custom_xml_blocks_xxe(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_advanced_module("my_module", "person")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.dtd') as secret_file:
+            secret_file.write('<!ENTITY leaked "SECRET">')
+            secret_file.flush()
+            path = Path(secret_file.name).as_posix()
+            module.case_details.short.custom_xml = (
+                '<?xml version="1.0"?>'
+                f'<!DOCTYPE detail [<!ENTITY % xxe SYSTEM "file://{path}"> %xxe;]>'
+                '<detail id="m0_case_short">&leaked;</detail>'
+            )
+            suite = factory.app.create_suite()
+        self.assertNotIn(b'SECRET', suite)
+
     @flag_enabled('CASE_LIST_TILE')
     @flag_enabled('USH_EMPTY_CASE_LIST_TEXT')
     def test_case_tile_no_items_text(self, *args):
@@ -467,7 +568,6 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "detail[@id='m0_case_short']/no_items_text[1]",
         )
 
-    @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_case_tile_with_case_search(self, *args):
         app = Application.new_app('domain', 'Untitled Application')
 
@@ -513,36 +613,12 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
             "detail[@id='m0_case_short']/action[2]",
         )
 
-        # case search detail
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-              <action redo_last="true" auto_launch="false()">
-                <display>
-                  <text>
-                    <locale id="case_search.m0.again"/>
-                  </text>
-                </display>
-                <stack>
-                  <push>
-                    <mark/>
-                    <command value="'search_command.m0'"/>
-                  </push>
-                </stack>
-              </action>
-            </partial>
-            """,
-            app.create_suite(),
-            # action[1] is the reg from case list action hard-coded into the default template
-            "detail[@id='m0_search_short']/action[2]",
-        )
-
     def test_case_tile_with_sorting(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
         sort_elements = [
             SortElement(field='b', direction='ascending', type='plain'),
             SortElement(field='a', direction='ascending', type='plain')
@@ -595,9 +671,9 @@ class SuiteCaseTilesTest(SimpleTestCase, SuiteMixin):
     def test_case_tile_with_register_from_case_list(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module("my_module", "person")
-        module.case_details.short.case_tile_template = CaseTileTemplates.ONE_ONE_TWO.value
+        module.case_details.short.case_tile_template = CaseTileTemplates.ICON_TEXT_GRID.value
         module.case_details.short.display = 'short'
-        add_columns_for_one_one_two_case_details(module)
+        add_columns_for_icon_text_grid_details(module)
 
         reg_form = factory.new_form(module)
         reg_form.actions.open_case.condition.type = 'always'

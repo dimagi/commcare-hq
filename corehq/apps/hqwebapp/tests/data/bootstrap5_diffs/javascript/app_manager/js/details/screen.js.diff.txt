@@ -1,0 +1,23 @@
+--- 
++++ 
+@@ -15,15 +15,15 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import Utils from "app_manager/js/details/utils";
+-import ColumnModel from "app_manager/js/details/bootstrap3/column";
++import ColumnModel from "app_manager/js/details/bootstrap5/column";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import uiMapList from "hqwebapp/js/ui_elements/bootstrap3/ui-element-key-val-list";
+-import main from "hqwebapp/js/bootstrap3/main";
++import uiMapList from "hqwebapp/js/ui_elements/bootstrap5/ui-element-key-val-list";
++import main from "hqwebapp/js/bootstrap5/main";
+ import toggles from "hqwebapp/js/toggles";
+-import appManager from "app_manager/js/bootstrap3/app_manager";
++import appManager from "app_manager/js/bootstrap5/app_manager";
+ import google from "analytix/js/google";
+ import "hqwebapp/js/components/select_toggle";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // sortable binding
+ 
+ const getPropertyTitle = function (property) {
+     // Strip "<prefix>:" before converting to title case.

@@ -14,7 +14,7 @@
      }
  }
  
-@@ -23,9 +23,9 @@
+@@ -23,14 +23,14 @@
    width: 100%;
    line-height: 30px;
    text-align: center;
@@ -26,3 +26,9 @@
    }
  }
  
+ // Make accordion icons display down/left depending on collapsed status
+-a[data-toggle="collapse"].collapsed {
++a[data-bs-toggle="collapse"].collapsed {
+   .fa-angle-double-down::before {
+     content: "\f101" !important;
+   }

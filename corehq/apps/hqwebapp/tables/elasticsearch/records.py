@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy
 from corehq.apps.case_search.const import INDEXED_METADATA_BY_KEY
 from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
+from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone
 
 
@@ -107,3 +108,39 @@ class CaseSearchElasticRecord(BaseElasticRecord):
             except KeyError:
                 query = query.sort_by_case_property(accessor.bare, desc=accessor.is_descending)
         return query
+
+
+class UserElasticRecord(BaseElasticRecord):
+    verbose_name = gettext_lazy("user")
+    verbose_name_plural = gettext_lazy("users")
+
+    def __init__(self, record, request, **kwargs):
+        data = record.get("_source", record)
+        record = CouchUser.wrap_correctly(data)
+        super().__init__(record, request, **kwargs)
+
+    def __getitem__(self, item):
+        return self.record.get(item)
+
+    @property
+    def name(self):
+        """
+        Used to populate the name attribute of an input (checkbox) in the table.
+        Used by the built-in CheckBoxColumn from django_tables2.
+        """
+        return "selected_user"
+
+    @property
+    def record_id(self):
+        """
+        Return the primary id of the record
+
+        :return: string
+        """
+        return self.record.get_id
+
+    @staticmethod
+    def get_sorted_query(query, accessors):
+        # Sorting is not supported for all fields in User ES.
+        # Update this method if sorting is required for fields that do support it.
+        raise NotImplementedError("UserElasticRecord does not support sorting.")

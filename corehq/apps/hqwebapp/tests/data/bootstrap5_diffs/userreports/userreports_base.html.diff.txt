@@ -53,12 +53,3 @@
              {% endif %}
            </a>
          </li>
-@@ -140,7 +140,7 @@
-   </ul>
-   {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
-     <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>
--    <ul class="nav nav-hq-sidebar">
-+    <ul class="nav nav-hq-sidebar">  {# todo B5: css-nav #}
-       {% with aggregate_table as selected_aggregate_ucr %}
-         {% for aggregate_ucr in aggregate_data_sources %}
-           <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>

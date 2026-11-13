@@ -1,0 +1,23 @@
+.savebtn-bar {
+  display: block;
+  text-align: right;
+  float: none !important; // todo eventually move pull-right from SaveButton ui when this is global
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  transition: background-color 1s;
+  @include clearfix();
+
+  .btn {
+    transition: all 1s;
+  }
+  &.savebtn-bar-save {
+    background-color: $cc-att-pos-extra-hi;
+  }
+  &.savebtn-bar-retry {
+    background-color: $cc-light-warm-accent-hi;
+  }
+  .section-changer {
+    float: right;
+    margin-left: 5px;
+  }
+}

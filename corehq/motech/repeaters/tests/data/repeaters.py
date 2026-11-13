@@ -1,4 +1,4 @@
-# flake8: noqa: E501
+# ruff: noqa: E501
 openmrs_repeater = {
     "include_app_id_param": False,
     "location_id": "581fe9d38a2c4eaf8e1fee1420800118",

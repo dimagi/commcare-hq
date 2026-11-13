@@ -1,4 +1,5 @@
 import collections
+import copy
 import itertools
 import logging
 import re
@@ -32,6 +33,7 @@ from corehq.apps.app_manager.xpath import XPath
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
 from corehq.toggles import DONT_INDEX_SAME_CASETYPE, NAMESPACE_DOMAIN, SAVE_ONLY_EDITED_FORM_FIELDS
 from corehq.util.view_utils import get_request
+from corehq.util.xml_utils import get_safe_xml_parser, safe_fromstring
 
 from .exceptions import (
     BindNotFound,
@@ -47,14 +49,8 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
-    # Work around: ValueError: Unicode strings with encoding
-    # declaration are not supported.
-    if isinstance(string, str):
-        string = string.encode("utf-8")
-
-    parser = ET.XMLParser(encoding="utf-8", remove_comments=True, resolve_entities=False)
     try:
-        parsed = ET.fromstring(string, parser=parser)
+        parsed = safe_fromstring(string, encoding="utf-8", remove_comments=True)
     except ET.ParseError as e:
         raise XFormException(_("Error parsing XML: {}").format(e))
 
@@ -89,6 +85,19 @@ HashtagReplacement = collections.namedtuple('HashtagReplacement', 'hashtag repla
 hashtag_replacements = [
     HashtagReplacement(hashtag='#form/', replaces=r'^/data\/'),
 ]
+
+
+_ITEXT_REF_RE = re.compile(r"""jr:itext\(['"]([^'"]+)['"]\)""")
+
+
+def _itext_refs_in(elem):
+    """Itext IDs referenced from any descendant ``@ref`` of ``elem``."""
+    return {
+        m.group(1)
+        for ref in elem.xpath(".//@ref")
+        for m in [_ITEXT_REF_RE.match(str(ref))]
+        if m is not None
+    }
 
 
 def _make_elem(tag, attr=None):
@@ -701,6 +710,172 @@ class XForm(WrappedNode):
         return self.model_node.findall('{f}bind')
 
     @property
+    def has_locked_questions(self):
+        """Whether any questions in this form are locked (``vellum:lock="all"``).
+
+        A lock may be declared on a ``<bind>`` or directly on a data node.
+        """
+        return bool(self.locked_question_paths)
+
+    @property
+    def locked_question_paths(self):
+        """Set of paths for questions locked with ``vellum:lock="all"``.
+
+        Locks may be declared on a ``<bind>`` (via its ``nodeset``) or directly
+        on a data-instance node.
+        """
+        if not self.exists():
+            return set()
+        return self._locked_bind_paths() | self._locked_data_node_paths()
+
+    def _locked_bind_paths(self):
+        """``nodeset`` paths for binds with ``vellum:lock="all"``."""
+        try:
+            binds = self.bind_nodes
+        except XFormException:
+            return set()
+        return {
+            bind.attrib['nodeset']
+            for bind in binds
+            if bind.attrib.get('{v}lock') == 'all' and bind.attrib.get('nodeset')
+        }
+
+    def _locked_data_node_paths(self):
+        """Paths for data-instance nodes with ``vellum:lock="all"``."""
+        return {
+            path
+            for path, node in self._get_flattened_data_nodes().items()
+            if node.attrib.get('{v}lock') == 'all'
+        }
+
+    def get_question_signature(self, path):
+        """Representation of the question at ``path`` for equality comparison.
+
+        Includes the bind element(s), the control element, the data instance
+        node, and any itext entries referenced from the control's
+        labels/hints/help/items. Callers should not rely on the absence or
+        presence of any particular item within this set.
+
+        SaveToCase question are handled specially: all path descendants are
+        included. For any other node with children, notably a group or repeat,
+        the descendants under ``path`` are separate, independently editable
+        questions, so they are excluded.
+
+        Returns an empty ``set`` if the path isn't present in the form.
+        """
+        if not self.exists():
+            return set()
+
+        include_descendants = self._is_save_to_case(path)
+        parts = set()
+
+        # Remove leading and trailing whitespace in XML elements; it's not relevant here
+        parser = get_safe_xml_parser(remove_blank_text=True)
+
+        def reparse_to_string(xml):
+            return ET.tostring(ET.XML(ET.tostring(xml), parser))
+
+        for bind in self._binds_for_path(path, include_descendants):
+            parts.add(reparse_to_string(bind.xml))
+
+        for control in self._controls_for_path(path):
+            if not include_descendants:
+                control = self._without_descendant_questions(control, path)
+            parts.add(reparse_to_string(control))
+            for itext_id in _itext_refs_in(control):
+                for text_node in self._itext_text_nodes(itext_id):
+                    parts.add(reparse_to_string(text_node))
+
+        for data_node in self._data_instance_nodes_for_path(path):
+            if not include_descendants:
+                data_node = self._without_child_elements(data_node)
+            parts.add(reparse_to_string(data_node))
+
+        return parts
+
+    def _is_save_to_case(self, path):
+        role_attr = '{v}role'.format(**self.namespaces)
+        return any(
+            node.attrib.get(role_attr) == 'SaveToCase'
+            for node in self._data_instance_nodes_for_path(path)
+        )
+
+    def _binds_for_path(self, path, include_descendants):
+        """Binds that define the question at ``path``.
+
+        The exact ``nodeset == path`` bind is always included. When
+        ``include_descendants`` is true, binds on the subtree are also included.
+        The trailing ``/`` in the prefix avoids matching siblings that merely
+        share a prefix (e.g. ``/data/q1`` must not match ``/data/q123``).
+        """
+        prefix = path + '/'
+        return [
+            bind for bind in self.bind_nodes
+            if (nodeset := bind.attrib.get('nodeset'))
+            and (nodeset == path or (include_descendants and nodeset.startswith(prefix)))
+        ]
+
+    def _without_descendant_questions(self, control, path):
+        """Copy of a control with the controls of child questions removed.
+
+        A group/repeat control nests the controls of its child questions,
+        whose ``ref``/``nodeset`` is a descendant of ``path``. Those belong to
+        other questions, so they are dropped, leaving the node's own
+        label/hint/etc.
+        """
+        pruned = copy.deepcopy(control)
+        prefix = path + '/'
+        for node in pruned.xpath('.//*[@ref or @nodeset]'):
+            ref = node.get('ref') or node.get('nodeset') or ''
+            if ref.startswith(prefix):
+                parent = node.getparent()
+                if parent is not None:
+                    parent.remove(node)
+        return pruned
+
+    def _without_child_elements(self, node):
+        """Copy of a data node with element children removed (attributes kept)."""
+        shallow = copy.deepcopy(node)
+        for child in list(shallow):
+            shallow.remove(child)
+        # Drop the indentation left where the children were: an emptied node
+        # would otherwise carry whitespace-only text.
+        if shallow.text is not None and not shallow.text.strip():
+            shallow.text = None
+        return shallow
+
+    def _controls_for_path(self, path):
+        """Body elements with ``ref`` or ``nodeset`` matching ``path``."""
+        if self.xml is None:
+            return []
+        return self.xml.xpath(
+            ".//*[@ref=$path or @nodeset=$path]", path=path,
+        )
+
+    def _itext_text_nodes(self, itext_id):
+        """All ``<text id="itext_id">`` elements across translations."""
+        return self.itext_node.xml.xpath(
+            ".//*[local-name()='text' and @id=$id]", id=itext_id,
+        )
+
+    def _data_instance_nodes_for_path(self, path):
+        """Data-instance descendants addressed by ``path`` (e.g. ``/data/q``).
+
+        The data instance lives in the form's own xmlns (registered as
+        ``x`` in :class:`XForm.__init__`); each path step is namespaced.
+        """
+        data = self.data_node
+        steps = [s for s in path.split('/') if s]
+        if not steps or steps[0] != data.tag_name:
+            return []
+        node = data
+        for step in steps[1:]:
+            node = node.find('{x}' + step)
+            if not node.exists():
+                return []
+        return [node.xml]
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.
@@ -1048,9 +1223,16 @@ class XForm(WrappedNode):
                 instance_dict[instance_id] = src
         return instance_dict
 
-    def get_questions(self, langs, include_triggers=False,
-                      include_groups=False, include_translations=False,
-                      exclude_select_with_itemsets=False, include_fixtures=False):
+    def get_questions(
+            self,
+            langs,
+            include_triggers=False,
+            include_groups=False,
+            include_translations=False,
+            exclude_select_with_itemsets=False,
+            include_fixtures=False,
+            include_locked_status=False,
+        ):
         """
         parses out the questions from the xform, into the format:
         [{"label": label, "tag": tag, "value": value}, ...]
@@ -1140,6 +1322,10 @@ class XForm(WrappedNode):
                 "setvalue": self._get_setvalue(path),
                 "is_group": is_group,
             }
+
+            if include_locked_status:
+                question["locked"] = bool(cnode.bind_node) and cnode.bind_node.attrib.get('{v}lock') == 'all'
+
             if include_translations:
                 question["translations"] = self._get_label_translations(node, langs)
 

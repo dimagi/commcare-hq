@@ -41,7 +41,7 @@ These are the filter parameters that the API call can use. Examples of how to us
      - Filters On
      - Example
    * - limit
-     - Number of records to return (Defaults to 20, maximum 5000)
+     - Number of records to return (Defaults to 20, maximum 1000)
      -
      - ``limit=100``
    * - cursor
@@ -77,7 +77,7 @@ These are the filter parameters that the API call can use. Examples of how to us
      - event.status
      - ``status=error``
    * - error_code
-     - Filter on the event error code (e.g. NO_PHONE_NUMBER, NO_RECIPIENT, NO_MESSAGE-sent )
+     - Filter on the event error code (e.g. NO_PHONE_NUMBER, NO_RECIPIENT, NO_MESSAGE)
      - event.error_code
      - ``error_code=NO_MESSAGE``
    * - phone_number
@@ -103,10 +103,6 @@ These sorting parameters can be applied to the existing search results alongside
 
    * - Sort Parameter
      - Description
-   * - order_by=date
-     - Order data by ``event.date`` (ascending)
-   * - order_by=-date
-     - Order data by ``event.date`` (descending)
    * - order_by=date_last_activity
      - Order data by ``event.date_last_activity`` (ascending)
    * - order_by=-date_last_activity
@@ -239,11 +235,11 @@ API Fields and Data Structure
    * - domain
      - The Project Space this event belongs to.
    * - content_type
-     - Type of the event (e.g. sms, email, sms_survey)
+     - Type of the event (e.g. sms, email, sms-survey)
    * - case_id
      - ID of the case if this event is related to one.
    * - status
-     - Status of this event (e.g. error, completed, in_progress)
+     - Status of this event (e.g. error, completed, in-progress)
 
 .. list-table:: **Source (Nested Object)**
    :widths: 20 40
@@ -265,7 +261,7 @@ API Fields and Data Structure
    * - Field
      - Note
    * - type
-     - Recipient type (web_user, case, or mobile_user)
+     - Recipient type (case, mobile-worker, or web-user)
    * - recipient_id
      - Case ID / User ID
    * - name

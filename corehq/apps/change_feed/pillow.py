@@ -39,17 +39,13 @@ class KafkaProcessor(PillowProcessor):
             doc_type = _get_doc_type_from_change(change)
             # The default topic is used in case a doc_type cannot be found (e.g., a hard deletion might result
             # in a missing doc_type)
-            topic = get_topic_for_doc_type(doc_type, self._data_source_type, self._default_topic)
+            topic = get_topic_for_doc_type(doc_type, self._default_topic)
             self._producer.send_change(topic, change.metadata)
 
             # soft deletion
             if change.metadata.is_deletion and doc_type is not None:
                 deleted_on = change.metadata.original_publication_datetime
                 _create_deleted_couch_doc(change.id, doc_type, deleted_on)
-
-
-def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
-    return get_change_feed_pillow_for_db(pillow_id, couch_config.get_db(None))
 
 
 def get_user_groups_db_kafka_pillow(pillow_id, **kwargs):

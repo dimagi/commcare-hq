@@ -5,6 +5,7 @@ from unittest import mock
 from urllib.parse import urlencode
 
 from django.http import HttpResponse
+import pytest
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -15,6 +16,8 @@ from couchforms import openrosa_response
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.receiverwrapper import auth
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.receiverwrapper.views import (
     _has_mobile_access,
@@ -27,10 +30,21 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
-from corehq.apps.users.util import normalize_username
+from corehq.apps.public_webforms.decorators import (
+    PUBLIC_FORM_SESSION_COOKIE_NAME,
+    PUBLIC_FORM_SESSION_HEADER,
+)
+from corehq.apps.public_webforms.models import (
+    PublicFormSession,
+    PublicWebform,
+)
+from corehq.apps.public_webforms.tests.utils import formplayer_origin_headers
+from corehq.apps.users.util import PUBLIC_USER_ID, normalize_username
 from corehq.form_processor.models import XFormInstance
+from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.tests.utils import sharded
-from corehq.util.test_utils import flag_enabled
+from corehq.privileges import PUBLIC_WEBFORMS
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 class FakeFile(object):
@@ -71,6 +85,12 @@ class AuthTestMixin(object):
         )
 
     @property
+    def public_form(self):
+        return os.path.join(
+            os.path.dirname(__file__), "data", 'public_form.xml'
+        )
+
+    @property
     def simple_form(self):
         return os.path.join(
             os.path.dirname(__file__), "data", 'simple_form.xml'
@@ -96,7 +116,8 @@ class AuthTestMixin(object):
 
     def _test_post(self, file_path, authtype=None, client=None,
                    expected_status=201, expected_auth_context=None,
-                   submit_mode=None, expected_response=None):
+                   submit_mode=None, expected_response=None, user_id=None,
+                   username=None):
         if not client:
             client = django_digest.test.Client()
 
@@ -114,7 +135,8 @@ class AuthTestMixin(object):
         with open(file_path, "r", encoding='utf-8') as f:
             fileobj = FakeFile(
                 f.read().format(
-                    userID=self.user.user_id,
+                    userID=user_id or self.user.user_id,
+                    username=username or self.user.username,
                     instanceID=uuid.uuid4().hex,
                     case_id=uuid.uuid4().hex,
                 ),
@@ -264,6 +286,45 @@ class _AuthTestsBothBackends(object):
             }
         )
 
+    @flag_enabled('PUBLIC_WEBFORMS')
+    @privilege_enabled(PUBLIC_WEBFORMS)
+    def test_public_form_session(self):
+        webform = PublicWebform.objects.create(
+            domain=self.domain,
+            label='Antenatal visit',
+            app_id=self.app.get_id,
+            app_build_id=self.app.get_id,
+            form_unique_id='form',
+            endpoint_id='endpoint',
+            session_type='survey',
+            allow_sms=False,
+            allow_email=True,
+            expires_at=datetime.utcnow() + timedelta(days=30),
+        )
+        session = PublicFormSession.objects.create(
+            public_webform=webform,
+            expires_at=datetime.utcnow() + timedelta(hours=1),
+        )
+        client = Client(headers={
+            PUBLIC_FORM_SESSION_HEADER: 'true',
+            **formplayer_origin_headers(),
+        })
+        client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = str(session.session_key)
+
+        self._test_post(
+            file_path=self.public_form,
+            client=client,
+            user_id=PUBLIC_USER_ID,
+            username=session.session_username,
+            expected_status=201,
+            expected_auth_context={
+                'doc_type': 'AuthContext',
+                'domain': self.domain,
+                'authenticated': True,
+                'user_id': PUBLIC_USER_ID,
+            },
+        )
+
     def test_oauth2_good_scope(self):
         client = Client(HTTP_AUTHORIZATION="bearer mytoken")
         token_model = get_access_token_model()
@@ -302,6 +363,46 @@ class _AuthTestsBothBackends(object):
             client=client,
             authtype='oauth2',
             expected_status=401
+        )
+
+    def test_oauth2_token_scoped_to_this_project_space(self):
+        client = Client(HTTP_AUTHORIZATION="bearer scopedtoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.now() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='scopedtoken',
+            scope=f'sync domain:{self.domain}',
+            expires=one_hour
+        )
+        expected_auth_context = {
+            'doc_type': 'AuthContext',
+            'domain': self.domain,
+            'authenticated': True,
+            'user_id': self.user.get_id,
+        }
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_auth_context=expected_auth_context
+        )
+
+    def test_oauth2_token_scoped_to_another_project_space(self):
+        client = Client(HTTP_AUTHORIZATION="bearer othertoken")
+        token_model = get_access_token_model()
+        one_hour = datetime.now() + timedelta(hours=1)
+        token_model.objects.create(
+            user=self.user.get_django_user(),
+            token='othertoken',
+            scope='sync domain:some-other-domain',
+            expires=one_hour
+        )
+        self._test_post(
+            file_path=self.bare_form,
+            client=client,
+            authtype='oauth2',
+            expected_status=403
         )
 
 
@@ -358,6 +459,22 @@ class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
     def tearDown(self):
         self.user.delete(self.domain, deleted_by=None)
         super(AuthTest, self).tearDown()
+
+    def test_the_processor_refuses_an_unauthenticated_submission(self):
+        with open(self.bare_form, encoding='utf-8') as f:
+            instance = f.read().format(
+                userID=self.user.user_id,
+                username=self.user.username,
+                instanceID=uuid.uuid4().hex,
+                case_id=uuid.uuid4().hex,
+            )
+        result = SubmissionPost(
+            instance=instance.encode('utf-8'),
+            domain=self.domain,
+            auth_context=AuthContext(domain=self.domain, user_id=None, authenticated=False),
+        ).run()
+
+        assert result.response.status_code == 403
 
 
 @sharded
@@ -430,8 +547,6 @@ class TestAPIEndpoint(TestCase):
 
 
 @mock.patch('corehq.apps.receiverwrapper.views.is_from_formplayer')
-@mock.patch('corehq.apps.receiverwrapper.views.cache.get', mock.MagicMock(return_value=None))
-@mock.patch('corehq.apps.receiverwrapper.views.cache.set', mock.MagicMock)
 class TestHasMobileAccess(TestCase):
     domain = "test-has-mobile-access"
 
@@ -464,11 +579,18 @@ class TestHasMobileAccess(TestCase):
         is_from_formplayer.return_value = True
         self.assertTrue(self._has_mobile_access(self.user_without_permission))
 
-    def test_no_permission_but_whitelisted(self, is_from_formplayer):
-        is_from_formplayer.return_value = False
-        with flag_enabled('OPEN_SUBMISSION_ENDPOINT'):
-            self.assertTrue(self._has_mobile_access(self.user_without_permission))
-
-    def test_no_permission_no_toggle(self, is_from_formplayer):
+    def test_no_permission(self, is_from_formplayer):
         is_from_formplayer.return_value = False
         self.assertFalse(self._has_mobile_access(self.user_without_permission))
+
+
+@pytest.mark.parametrize('requires_auth, authenticated, expected', [
+    (True, True, True),
+    (True, False, False),
+    (False, True, True),
+    (False, False, True),
+])
+def test_auth_context_is_valid(requires_auth, authenticated, expected):
+    with mock.patch.object(auth, 'domain_requires_auth', return_value=requires_auth):
+        context = AuthContext(domain='some-domain', authenticated=authenticated)
+        assert context.is_valid() is expected

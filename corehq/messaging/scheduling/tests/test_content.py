@@ -1,34 +1,38 @@
-import datetime
-from unittest.mock import Mock
+import uuid
+from datetime import datetime
+from unittest.mock import Mock, patch
 
+import requests
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sms.forms import (
+    LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_NONE,
     LANGUAGE_FALLBACK_SCHEDULE,
-    LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
-from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.users.models import CommCareUser
-from corehq.messaging.fcm.exceptions import FCMTokenValidationException
-from corehq.messaging.scheduling.exceptions import EmailValidationException
-from corehq.messaging.scheduling.models import (
-    Content as AbstractContent,
-    CustomContent,
-    Schedule as AbstractSchedule,
-    EmailContent,
-    FCMNotificationContent,
+from corehq.apps.sms.models import (
+    ConnectMessage,
+    MessagingEvent,
+    MessagingSubEvent,
 )
+from corehq.apps.users.models import CommCareUser, ConnectIDUserLink
+from corehq.messaging.scheduling.exceptions import EmailValidationException
+from corehq.messaging.scheduling.models import Content as AbstractContent
+from corehq.messaging.scheduling.models import (
+    ConnectMessageContent,
+    CustomContent,
+    EmailContent,
+)
+from corehq.messaging.scheduling.models import Schedule as AbstractSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
-    TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    TimedScheduleInstance,
 )
 from corehq.util.test_utils import unregistered_django_model
-
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
     'TEST': ['corehq.messaging.scheduling.tests.test_content.custom_content_handler', "Test"]
@@ -51,7 +55,6 @@ class TestContent(TestCase):
         cls.sms_translations = get_or_create_sms_translations(cls.domain)
         cls.sms_translations.set_translations('es', {})
         cls.sms_translations.save()
-        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None, device_id='test_dev')
 
     @classmethod
     def tearDownClass(cls):
@@ -242,36 +245,91 @@ class TestContent(TestCase):
             EmailContent().get_recipient_email(recipient)
         self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS)
 
-    def _reset_user_fcm_tokens(self):
-        for device in self.mobile_user.devices:
-            device.fcm_token = None
-            device.fcm_token_timestamp = None
-            device.save()
 
-    def test_fcm_recipient_token_absent(self):
-        self._reset_user_fcm_tokens()
-        with self.assertRaises(FCMTokenValidationException) as e:
-            FCMNotificationContent().get_recipient_devices_fcm_tokens(self.mobile_user)
-        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_FCM_TOKENS)
+class TestConnectMessageContentSend(TestCase):
+    domain = uuid.uuid4().hex
 
-    def test_fcm_recipient_token_present(self):
-        self._reset_user_fcm_tokens()
-        self.mobile_user.update_device_id_last_used(self.mobile_user.device_ids[0], fcm_token='abcd',
-                                                    fcm_token_timestamp=datetime.datetime.utcnow())
-        devices_token = FCMNotificationContent().get_recipient_devices_fcm_tokens(self.mobile_user)
-        self.assertEqual(devices_token, ['abcd'])
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.recipient = CommCareUser.create(cls.domain, f'connect-user-{cls.domain}', 'foobar', None, None)
+        cls.addClassCleanup(cls.recipient.delete, cls.domain, deleted_by=None)
 
-    def test_fcm_content_data_field_action_absent(self):
-        fcm_content = FCMNotificationContent()
-        data = fcm_content.build_fcm_data_field(self.mobile_user)
-        self.assertEqual(data, {})
+    def setUp(self):
+        super().setUp()
+        ConnectIDUserLink.objects.create(
+            connectid_username='connect-user',
+            commcare_user=self.recipient.get_django_user(),
+            domain=self.domain,
+            messaging_consent=True,
+            channel_id='channel-1',
+        )
 
-    def test_fcm_content_data_field_action_present(self):
-        fcm_content = FCMNotificationContent(action='SYNC')
-        data = fcm_content.build_fcm_data_field(self.mobile_user)
-        self.assertEqual(data['action'], 'SYNC')
-        self.assertEqual(data['domain'], self.mobile_user.domain)
-        self.assertEqual(data['username'], self.mobile_user.raw_username)
+    def test_successful_send_completes_the_subevent(self):
+        subevent = self.send_message(status_code=200)
+
+        assert subevent.status == MessagingEvent.STATUS_COMPLETED
+        assert subevent.error_code is None
+        message = ConnectMessage.objects.get(domain=self.domain)
+        assert message.text == 'Hello'
+
+    def test_message_log_is_linked_to_the_subevent(self):
+        subevent = self.send_message(status_code=200)
+
+        message = ConnectMessage.objects.get(domain=self.domain)
+        assert message.messaging_subevent_id == subevent.pk
+
+    def test_subevent_records_the_case(self):
+        subevent = self.send_message(status_code=200, case=Mock(case_id='case-1'))
+
+        assert subevent.case_id == 'case-1'
+
+    def test_failed_send_errors_the_subevent(self):
+        subevent = self.send_message(status_code=400, text='{"errors": "CHANNEL_DOES_NOT_EXIST"}')
+
+        assert subevent.status == MessagingEvent.STATUS_ERROR
+        assert subevent.error_code == MessagingEvent.ERROR_CONNECT_GATEWAY
+        assert subevent.additional_error_text == 'HTTP 400: CHANNEL_DOES_NOT_EXIST'
+        # the parent event is errored by MessagingSubEvent.save()
+        assert subevent.parent.refresh().status == MessagingEvent.STATUS_ERROR
+
+    def test_request_error_errors_the_subevent(self):
+        subevent = self.send_message(error=requests.ConnectionError('connection refused'))
+
+        assert subevent.status == MessagingEvent.STATUS_ERROR
+        assert subevent.error_code == MessagingEvent.ERROR_CONNECT_GATEWAY
+        assert subevent.additional_error_text == 'Request failed: connection refused'
+
+    def test_recipient_without_connect_link_errors_the_subevent(self):
+        ConnectIDUserLink.objects.filter(commcare_user=self.recipient.get_django_user()).delete()
+
+        subevent = self.send_message(status_code=200)
+
+        assert subevent.status == MessagingEvent.STATUS_ERROR
+        assert subevent.error_code == MessagingEvent.ERROR_CONNECT_USER_NOT_FOUND
+        assert not ConnectMessage.objects.filter(domain=self.domain).exists()
+
+    def send_message(self, status_code=200, text='', case=None, error=None):
+        logged_event = MessagingEvent.objects.create(
+            domain=self.domain,
+            date=datetime.utcnow(),
+            source=MessagingEvent.SOURCE_OTHER,
+            content_type=MessagingEvent.CONTENT_CONNECT,
+            status=MessagingEvent.STATUS_IN_PROGRESS,
+            recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
+            recipient_id=self.recipient.get_id,
+        )
+        content = ConnectMessageContent(message={'*': 'Hello'})
+        content.set_context(case=case)
+        response = requests.Response()
+        response.status_code = status_code
+        response._content = text.encode()
+        post = {'side_effect': error} if error else {'return_value': response}
+        with patch('corehq.messaging.smsbackends.connectid.backend.requests.post', **post):
+            content.send(self.recipient, logged_event)
+        return MessagingSubEvent.objects.get(parent=logged_event)
 
 
 @unregistered_django_model

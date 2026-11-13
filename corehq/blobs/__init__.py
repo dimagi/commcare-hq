@@ -75,7 +75,7 @@ class CODES:
     domain = 4          # Domain
     application = 5     # Application, Application-Deleted, LinkedApplication
     multimedia = 6      # CommCareMultimedia
-    commcarebuild = 7   # CommCareBuild
+    commcarebuild = 7   # CommCareBuild - No longer in use
     data_import = 8     # case_importer
 
     data_export = 9     # FormExportInstance, CaseExportInstance
@@ -88,6 +88,8 @@ class CODES:
     data_file = 15      # domain data file (see DataFile class)
     form_multimedia = 16     # form submission multimedia zip
     email_multimedia = 17    # email images and attachments
+    bulk_async_job = 18  # requested/skipped ids payload for a BulkAsyncJob
+    ai_translation_failed_labels = 19  # labels an AI translation run couldn't translate
 
 
 CODES.name_of = {code: name

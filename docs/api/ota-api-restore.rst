@@ -62,6 +62,6 @@ using HTTP basic authentication with the CHW's username and password.
     https://www.commcarehq.org/a/DEMO_DOMAIN/phone/restore/?version=2.0
 
 In this example, we are on domain "DEMO_DOMAIN", our CHW's username is ``jason``, and his password is 1988.
-You'll note that the username, instead of being just ``jason`` is the much longer ``jason@demo.commcarehq.org``. This is to distinguish him from any other ``jason``'s on any other domain.
+You'll note that the username, instead of being just ``jason`` is the much longer ``jason@DEMO_DOMAIN.commcarehq.org``. This is to distinguish him from any other ``jason``'s on any other domain.
 
 The format for the full-length username is:   ``{username}@{domain}.commcarehq.org``

@@ -65,6 +65,17 @@ class EnterprisePermissions(models.Model):
         return list(set(config.domains) - {config.source_domain})
 
     @classmethod
+    def expand_domains(cls, domains):
+        """
+        Each of ``domains``, plus any domain it controls through enterprise
+        permissions.
+        """
+        expanded = set(domains)
+        for domain in domains:
+            expanded.update(cls.get_domains(domain))
+        return sorted(expanded)
+
+    @classmethod
     @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
     def is_source_domain(cls, domain):
         """

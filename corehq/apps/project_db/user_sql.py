@@ -1,0 +1,768 @@
+"""Translate user-supplied SQL into SQLAlchemy Core expressions.
+
+Only an explicitly articulated subset of SQL is supported, all else errors. The
+goal of this tool is safety, not correctness - it parses, interprets, and
+rewrites queries, but correctness is the responsibility of the author. Queries
+must always be tested against PostgreSQL - it is not generally UserSQL's job to
+anticipate possible errors at parse time.
+
+describe.py should be kept up-to-date with this file - it describes what SQL
+constructs are supported.
+"""
+import operator
+import re
+import time
+from collections import namedtuple
+from contextlib import contextmanager
+from functools import cached_property
+
+import sqlglot
+from psycopg2 import errorcodes
+from sqlalchemy import (
+    ARRAY,
+    Float,
+    Text,
+    and_,
+    bindparam,
+    cast,
+    column,
+    distinct,
+    func,
+    literal_column,
+    not_,
+    nullsfirst,
+    nullslast,
+    or_,
+    select,
+    text,
+    union,
+    union_all,
+)
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import (
+    CompileError,
+    DataError,
+    OperationalError,
+    ProgrammingError,
+)
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.base import Executable
+from sqlalchemy.sql.expression import ClauseElement
+from sqlglot import exp
+from sqlglot.errors import SqlglotError
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.project_db.table_ddl import (
+    Earth,
+    get_domain_tables,
+    get_domain_query_engine,
+)
+
+
+class UserSQLValidationError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+
+class UnsupportedSQL(UserSQLValidationError):
+    """Raised when the input uses SQL that the translator does not support."""
+
+
+class BadParameters(UserSQLValidationError):
+    """The parameters don't match the query"""
+
+
+class UserSQLProgrammingError(UserSQLValidationError):
+    """The SQL was found to be invalid at runtime"""
+
+
+class UserSQLTimeout(UserSQLProgrammingError):
+    """The query exceeded the statement timeout"""
+
+
+LITERAL_PARAM_PREFIX = 'hq_'  # Our reserved namespace for parameters
+STATEMENT_TIMEOUT = '5s'
+
+# A query parameter's name is interpolated into the compiled SQL, so it is
+# restricted to characters that cannot close the placeholder and inject SQL.
+PARAM_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*\Z')
+
+NESTED_TOO_DEEPLY = "SQL is nested too deeply"
+
+
+def _bind_literal(name, value):
+    """Bind a value as a uniquely named parameter"""
+    # name is just there to make the query more readable
+    return bindparam(f'{LITERAL_PARAM_PREFIX}{name}', value, unique=True)
+
+
+def _literal_value(node, py_type=None):
+    """Unpack a SQL literal, requiring and coercing to py_type if provided"""
+    if isinstance(node, exp.Literal) and (
+            py_type is None or node.is_string == (py_type is str)):
+        _unpack(node, 'this', 'is_string')
+        return py_type(node.to_py()) if py_type else node.to_py()
+    expected = f'{py_type.__name__} ' if py_type else ''
+    raise UnsupportedSQL(f'expected a {expected}literal value, got {str(node)}')
+
+
+QueryInfo = namedtuple('QueryInfo', 'translated_sql bound_literals parameters')
+QueryResult = namedtuple('QueryResult', 'columns rows duration timezone')
+
+
+class UserSQL:
+    def __init__(self, domain, raw_sql, max_rows=100):
+        """Set max_rows to None to prevent a limit from being applied"""
+        self.domain = domain
+        self.raw_sql = raw_sql
+        self.max_rows = max_rows
+
+    @cached_property
+    def query(self):
+        q = translate(self.raw_sql, get_domain_tables(self.domain))
+        if self.max_rows is not None:
+            q = q.limit(_bind_literal('max_rows', self.max_rows))
+        return q
+
+    @cached_property
+    def _compiled(self):
+        return self.query.compile(dialect=postgresql.dialect(paramstyle='named'))
+
+    def get_info(self):
+        return QueryInfo(
+            translated_sql=sqlglot.transpile(
+                str(self._compiled), read='postgres', write='postgres', pretty=True
+            )[0],
+            bound_literals={
+                name: value for name, value in self._compiled.params.items()
+                if name not in self.parameters
+            },
+            parameters=self.parameters,
+        )
+
+    def validate(self):
+        """Raise ``UserSQLValidationError`` if the statement cannot be translated"""
+        self.query
+
+    @property
+    def parameters(self):
+        """Return the parameters a translated query leaves for the caller to supply"""
+        return [name for name, bind in self._compiled.binds.items() if bind.required]
+
+    def run(self, parameter_values):
+        params = self._clean_parameters(parameter_values)
+        with self._connect() as conn:
+            start = time.perf_counter()
+            result = conn.execute(self.query, params)
+            rows = result.fetchall()
+            return QueryResult(
+                columns=list(result.keys()),
+                rows=rows,
+                duration=time.perf_counter() - start,
+                timezone=self.timezone,
+            )
+
+    def explain_analyze(self, parameter_values):
+        params = self._clean_parameters(parameter_values)
+        with self._connect() as conn:
+            result = conn.execute(ExplainAnalyze(self.query), params)
+            lines = [line for line, in result.cursor.fetchall()]
+            result.close()
+        return '\n'.join(lines)
+
+    @contextmanager
+    def _connect(self):
+        with get_domain_query_engine(self.domain).begin() as conn:
+            conn.execute(text(f"SET LOCAL statement_timeout = '{STATEMENT_TIMEOUT}'"))
+            _set_timezone(conn, self.timezone)
+            try:
+                yield conn
+            except (DataError, ProgrammingError) as e:
+                raise UserSQLProgrammingError(str(e.orig)) from e
+            except OperationalError as e:
+                if e.orig.pgcode == errorcodes.QUERY_CANCELED:
+                    msg = f"query cancelled after exceeding the {STATEMENT_TIMEOUT} time limit"
+                    raise UserSQLTimeout(msg) from e
+                raise
+
+    def _clean_parameters(self, raw_parameters):
+        unexpected_parameters = set(raw_parameters) - set(self.parameters)
+        if unexpected_parameters:
+            raise BadParameters(f"Unexpected params {unexpected_parameters} not defined in query")
+
+        return {name: raw_parameters.get(name, None) for name in self.parameters}
+
+    @cached_property
+    def timezone(self):
+        return Domain.get_by_name(self.domain).default_timezone
+
+
+class ExplainAnalyze(Executable, ClauseElement):
+    def __init__(self, statement):
+        self.statement = statement
+
+
+@compiles(ExplainAnalyze, 'postgresql')
+def _compile_explain_analyze(element, compiler, **kw):
+    return f"EXPLAIN ANALYZE {compiler.process(element.statement, **kw)}"
+
+
+def _set_timezone(conn, timezone):
+    """Resolve naive dates and times in ``timezone`` for the current transaction"""
+    is_local = True
+    conn.execute(select([func.set_config('TimeZone', timezone, is_local)]))
+
+
+def translate(sql, tables):
+    """Translate a SQL string into a SQLAlchemy Core selectable.
+
+    :param sql: the user-supplied SQL statement
+    :param tables: mapping of table name to SQLAlchemy ``Table``
+    """
+    try:
+        query = _translate(sql, tables)
+        query.compile(dialect=postgresql.dialect())  # Ensure it compiles
+        return query
+    except SqlglotError:
+        raise UnsupportedSQL("could not parse SQL")
+    except CompileError as e:
+        raise UnsupportedSQL(str(e))
+    except RecursionError:
+        raise UnsupportedSQL(NESTED_TOO_DEEPLY)
+
+
+def _translate(sql, tables):
+    if not sql:
+        raise UnsupportedSQL("SQL is required")
+    statements = [s for s in sqlglot.parse(sql, read='postgres') if s]
+    if len(statements) != 1:
+        raise UnsupportedSQL("this only supports a single statement")
+    statement, = statements
+
+    tables = _add_ctes(statement.args.pop('with_', None), dict(tables))
+    return _convert_query(statement, tables)
+
+
+def _add_ctes(node, tables):
+    """Return ``tables`` plus the CTEs defined in a WITH clause"""
+    if node is None:
+        return tables
+    ctes, = _unpack(node, 'expressions')
+    for cte in ctes:
+        query, alias = _unpack(cte, 'this', 'alias')
+        identifier, = _unpack(alias, 'this')
+        if identifier.name in tables:
+            raise UnsupportedSQL(f"CTE name already in use: {identifier.name}")
+        tables[identifier.name] = _convert_query(query, tables).cte(identifier.name)
+    return tables
+
+
+def _convert_query(node, tables):
+    """Convert a SELECT, or a UNION of them, to a SQLAlchemy ``Selectable``"""
+    if isinstance(node, exp.Select):
+        return _convert_select(node, tables)
+    if isinstance(node, exp.Union):
+        # INTERSECT and EXCEPT are other node types, so they are not supported
+        this, expression, distinct = _unpack(node, 'this', 'expression', 'distinct')
+        left = _convert_query(this, tables)
+        right = _convert_query(expression, tables)
+        if len(left.c) != len(right.c):
+            raise UnsupportedSQL(
+                "each side of a UNION must select the same number of columns, "
+                f"got {len(left.c)} and {len(right.c)}")
+        return union(left, right) if distinct else union_all(left, right)
+    raise UnsupportedSQL(f"unsupported statement: {type(node).__name__}")
+
+
+def _unpack(node, *args):
+    """Yield expected args from node, erroring on all others"""
+    for key, value in node.args.items():
+        if key not in args and value:
+            raise UnsupportedSQL(f"unsupported clause in {node} - {key}: {value}")
+    return [node.args.get(arg, None) for arg in args]
+
+
+class Scope:
+    """The things one SELECT can reference"""
+
+    def __init__(self, tables):
+        self.tables = tables
+        self._table_refs = {}
+        self.aliases = set()
+
+    def add_table_ref(self, name, selectable):
+        if name in self._table_refs:
+            raise UnsupportedSQL(f"table name used more than once: {name}")
+        self._table_refs[name] = selectable
+
+    def get_column(self, name, qualifier=None):
+        candidates = [table_ref.c[name]
+                      for ref_name, table_ref in self._table_refs.items()
+                      if qualifier in (None, ref_name) and name in table_ref.c]
+        reference = f"{qualifier}.{name}" if qualifier else name
+        if not candidates:
+            raise UnsupportedSQL(f"unknown column: {reference}")
+        if len(candidates) > 1:
+            raise UnsupportedSQL(f"ambiguous column: {reference}")
+        return candidates[0]
+
+    @property
+    def all_columns(self):
+        return [col for table_ref in self._table_refs.values() for col in table_ref.c]
+
+
+def _convert_select(node, tables):
+    expressions, from_, joins, where, group, having, distinct, order = _unpack(
+        node, 'expressions', 'from_', 'joins', 'where', 'group', 'having', 'distinct', 'order')
+    if from_ is None:
+        raise UnsupportedSQL("a FROM clause is required")
+    scope = Scope(tables)
+    selectable = _convert_table_ref(from_.this, scope)
+    for join in joins or []:
+        selectable = _convert_join(join, selectable, scope)
+    projection = _convert_projection(expressions, scope)
+    query = select(projection).select_from(selectable)
+    if distinct is not None:
+        query = query.distinct(*_convert_distinct_on(distinct, scope))
+    if where is not None:
+        predicate, = _unpack(where, 'this')
+        query = query.where(_convert_predicate(predicate, scope))
+    if group is not None:
+        query = query.group_by(*_convert_group(group, scope))
+    if having is not None:
+        predicate, = _unpack(having, 'this')
+        query = query.having(_convert_predicate(predicate, scope))
+    if order is not None:
+        query = query.order_by(*_convert_order(order, scope))
+    return query
+
+
+def _convert_distinct_on(node, scope):
+    """Resolve the columns of a ``DISTINCT ON``, or none for a plain ``DISTINCT``"""
+    on, = _unpack(node, 'on')
+    if on is None:
+        return []
+    on_expressions, = _unpack(on, 'expressions')
+    if not on_expressions:
+        raise UnsupportedSQL("DISTINCT ON requires at least one column")
+    return [_convert_column(e, scope, allow_alias=True) for e in on_expressions]
+
+
+def _convert_group(node, scope):
+    """Convert a GROUP BY clause to a list of columns"""
+    group_expressions, = _unpack(node, 'expressions')
+    return [_convert_column(e, scope, allow_alias=True) for e in group_expressions]
+
+
+def _convert_order(node, scope):
+    """Convert an ORDER BY clause to yield sort keys"""
+    order_expressions, = _unpack(node, 'expressions')
+    for e in order_expressions:
+        expression, desc, nulls_first = _unpack(e, 'this', 'desc', 'nulls_first')
+        value = _convert_column(expression, scope, allow_alias=True)
+        sort_key = value.desc() if desc else value.asc()
+        yield nullsfirst(sort_key) if nulls_first else nullslast(sort_key)
+
+
+def _convert_join(node, selectable, scope):
+    """Join another table onto ``selectable``"""
+    table_ref, on, side, kind = _unpack(node, 'this', 'on', 'side', 'kind')
+    table = _convert_table_ref(table_ref, scope)
+    predicate = _convert_predicate(on, scope)
+
+    if not side and kind in (None, 'INNER'):
+        return selectable.join(table, predicate)
+    if side == 'LEFT' and kind in (None, 'OUTER'):
+        return selectable.outerjoin(table, predicate)
+    join_type = ' '.join(filter(None, [side, kind]))
+    raise UnsupportedSQL(f"{join_type} JOIN not supported")
+
+
+def _convert_projection(expressions, scope):
+    """Resolve a SELECT's projection list against the columns in the query"""
+    if not expressions:
+        raise UnsupportedSQL("a projection is required")
+    if all(e == exp.Star() for e in expressions):
+        return scope.all_columns
+    return [_convert_projected_column(e, scope) for e in expressions]
+
+
+def _convert_projected_column(node, scope):
+    if isinstance(node, exp.Alias):
+        expression, alias = _unpack(node, 'this', 'alias')
+        scope.aliases.add(alias.name)
+        return _convert_value(expression, scope).label(alias.name)
+    return _convert_value(node, scope)
+
+
+AGGREGATES = {
+    exp.Count: func.count,
+    exp.Sum: func.sum,
+    exp.Avg: func.avg,
+    exp.Min: func.min,
+    exp.Max: func.max,
+    exp.GroupConcat: func.string_agg,
+    exp.ArrayAgg: func.array_agg,
+}
+
+
+def _convert_aggregate(node, scope):
+    if isinstance(node, exp.Filter):
+        agg, where = _unpack(node, 'this', 'expression')
+        if type(agg) not in AGGREGATES:
+            raise UnsupportedSQL(f"FILTER requires an aggregate, got {str(agg)}")
+        predicate, = _unpack(where, 'this')
+        return (_convert_aggregate(agg, scope)
+                .filter(_convert_predicate(predicate, scope)))
+    aggregate = AGGREGATES[type(node)]
+    if isinstance(node, exp.GroupConcat):
+        expression, separator = _unpack(node, 'this', 'separator')
+        return aggregate(_convert_aggregated_value(expression, scope),
+                         _convert_value(separator, scope))
+    expression, _ = _unpack(node, 'this', 'big_int')
+    if expression is None or expression == exp.Star():
+        return aggregate()
+    return aggregate(_convert_aggregated_value(expression, scope))
+
+
+def _convert_aggregated_value(node, scope):
+    """Convert the value an aggregate is over, optionally prefixed by DISTINCT"""
+    if isinstance(node, exp.Distinct):
+        expressions, = _unpack(node, 'expressions')
+        if len(expressions) != 1:
+            raise UnsupportedSQL("DISTINCT in an aggregate takes exactly one value")
+        return distinct(_convert_value(expressions[0], scope))
+    return _convert_value(node, scope)
+
+
+def _convert_column(node, scope, allow_alias=False):
+    """Resolve a SQL column reference against the columns in the query"""
+    if not isinstance(node, exp.Column):
+        raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
+    identifier, qualifier = _unpack(node, 'this', 'table')
+    # Postgres allows alias references in ORDER BY, GROUP BY, and DISTINCT ON
+    if allow_alias and qualifier is None and identifier.name in scope.aliases:
+        return column(identifier.name)
+    return scope.get_column(identifier.name, qualifier and qualifier.name)
+
+
+BOOLEAN_OPS = {
+    exp.And: and_,
+    exp.Or: or_,
+}
+
+COMPARISONS = {
+    exp.EQ: operator.eq,
+    exp.NEQ: operator.ne,
+    exp.GT: operator.gt,
+    exp.GTE: operator.ge,
+    exp.LT: operator.lt,
+    exp.LTE: operator.le,
+}
+
+ARRAY_OPS = {
+    exp.ArrayContainsAll: '@>',
+    exp.ArrayContainedBy: '<@',
+    exp.ArrayOverlaps: '&&',
+}
+
+
+def _convert_predicate(node, scope):
+    """Convert a boolean-valued SQL expression to a ``ColumnElement``"""
+    if isinstance(node, exp.Paren):
+        inner, = _unpack(node, 'this')
+        return _convert_predicate(inner, scope)
+    if isinstance(node, exp.Not):
+        inner, = _unpack(node, 'this')
+        return not_(_convert_predicate(inner, scope))
+    if isinstance(node, exp.Is):
+        expression, operand, negate = _unpack(node, 'this', 'expression', 'negate')
+        if not isinstance(operand, (exp.Null, exp.Boolean)):
+            raise UnsupportedSQL("IS only supports NULL, TRUE, and FALSE")
+        target, = _unpack(operand, 'this')
+        value = _convert_value(expression, scope)
+        return value.isnot(target) if negate else value.is_(target)
+    if isinstance(node, exp.In):
+        return _convert_in(node, scope)
+    if isinstance(node, (exp.Like, exp.ILike)):
+        left, right, negate = _unpack(node, 'this', 'expression', 'negate')
+        value = _convert_value(left, scope)
+        pattern = _convert_value(right, scope)
+        match = value.ilike(pattern) if isinstance(node, exp.ILike) else value.like(pattern)
+        return not_(match) if negate else match
+    if combine := BOOLEAN_OPS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        return combine(_convert_predicate(left, scope),
+                       _convert_predicate(right, scope))
+    if array_op := ARRAY_OPS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        contains = _convert_value(left, scope).bool_op(array_op)
+        return contains(_convert_value(right, scope))
+    if compare := COMPARISONS.get(type(node)):
+        left, right = _unpack(node, 'this', 'expression')
+        return compare(_convert_value(left, scope),
+                       _convert_value(right, scope))
+    if isinstance(node, exp.Anonymous):
+        return _convert_predicate_function(node, scope)
+    if isinstance(node, exp.Column):
+        return _convert_column(node, scope)
+    raise UnsupportedSQL(f"unsupported predicate: {type(node).__name__}")
+
+
+def _convert_in(node, scope):
+    value, values, field, query = _unpack(node, 'this', 'expressions', 'field', 'query')
+    operand = _convert_value(value, scope)
+    if query is not None:
+        subquery, = _unpack(query, 'this')
+        return operand.in_(_convert_query(subquery, scope.tables))
+    if field is not None:
+        if not isinstance(field, exp.Placeholder):
+            raise UnsupportedSQL(f"unsupported IN expression: {str(field)}")
+        return operand.in_(_convert_placeholder(field, expanding=True))
+    if not values:
+        raise UnsupportedSQL("IN requires at least one value")
+    return operand.in_([_convert_value(v, scope) for v in values])
+
+
+def _convert_predicate_function(node, scope):
+    """Convert a call to one of the boolean-valued functions we support"""
+    name, args = _unpack(node, 'this', 'expressions')
+    convert = PREDICATE_FUNCTIONS.get(name.lower())
+    if convert is None:
+        raise UnsupportedSQL(f"unsupported function: {name}")
+    return convert(args or [], scope)
+
+
+METERS_PER_UNIT = {
+    'meters': 1,
+    'kilometers': 1000,
+    'miles': 1609.344,
+    'yards': 0.9144,
+    'feet': 0.3048,
+    'nauticalmiles': 1852,
+}
+
+
+def _convert_within_distance(args, scope):
+    """Convert ``within_distance`` to bounding box and exact distance filters"""
+    if len(args) not in (3, 4):
+        raise UnsupportedSQL(
+            "within_distance takes 3 or 4 arguments: a GPS column, coordinates, "
+            f"a distance, and optionally a unit. Got {len(args)}")
+    column, coordinates, distance, *unit = args
+    location = _convert_column(column, scope)
+    if not isinstance(location.type, Earth):
+        raise UnsupportedSQL(
+            f"within_distance must be given a GPS column, got {str(column)}"
+        )
+    center = _convert_coordinates(coordinates)
+    distance = _convert_distance_to_meters(distance, *unit)
+    return and_(
+        # earth_box provides a pre-filter that is indexable and more performant
+        func.earth_box(center, distance).bool_op('@>')(location),
+        func.earth_distance(center, location) < distance,
+    )
+
+
+def _convert_coordinates(node):
+    """Build an ``earth`` value from a ``'<latitude> <longitude>'`` string"""
+    # The string is split in the database so it can accept params
+    if isinstance(node, exp.Placeholder):
+        coordinates = _convert_placeholder(node, Text)
+    else:
+        coordinates = _bind_literal('coordinates', _literal_value(node, str))
+    latitude, longitude = (
+        cast(
+            func.split_part(coordinates, literal_column("' '"), literal_column(i)),
+            Float
+        )
+        for i in ('1', '2')
+    )
+    return func.ll_to_earth(latitude, longitude)
+
+
+def _convert_distance_to_meters(node, unit_node=None):
+    if isinstance(node, exp.Placeholder):
+        distance = _convert_placeholder(node, Float)
+    else:
+        distance = _bind_literal('distance', _literal_value(node, float))
+    if unit_node is None:
+        return distance
+    unit = _literal_value(unit_node, str)
+    if unit not in METERS_PER_UNIT:
+        raise UnsupportedSQL(
+            f"within_distance unit must be one of {', '.join(METERS_PER_UNIT)}, "
+            f"got {unit!r}")
+    return distance * _bind_literal('meters_per_unit', METERS_PER_UNIT[unit])
+
+
+def _convert_sounds_like(args, scope):
+    """Compare two values by phonetic code"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"sounds_like takes 2 args. Got {len(args)}")
+    left, right = (_convert_value(arg, scope) for arg in args)
+    return func.dmetaphone(left) == func.dmetaphone(right)
+
+
+def _convert_fuzzy_match(args, scope):
+    """Compare two values by trigram similarity"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"fuzzy_match takes 2 args. Got {len(args)}")
+    left, right = (_convert_value(arg, scope) for arg in args)
+    return left % right
+
+
+def _convert_similar_name(args, scope):
+    """Compare two values that could have typos or misspellings"""
+    if len(args) != 2:
+        raise UnsupportedSQL(f"similar_name takes 2 args. Got {len(args)}")
+    return or_(_convert_fuzzy_match(args, scope),
+               _convert_sounds_like(args, scope))
+
+
+PREDICATE_FUNCTIONS = {
+    'within_distance': _convert_within_distance,
+    'sounds_like': _convert_sounds_like,
+    'fuzzy_match': _convert_fuzzy_match,
+    'similar_name': _convert_similar_name,
+}
+
+
+def _convert_value(node, scope):
+    """Convert a SQL value expression to a ``ColumnElement``"""
+    if isinstance(node, exp.Paren):
+        inner, = _unpack(node, 'this')
+        return _convert_value(inner, scope)
+    if isinstance(node, exp.Literal):
+        return _bind_literal('literal', _literal_value(node))
+    if isinstance(node, exp.Boolean):
+        value, = _unpack(node, 'this')
+        return _bind_literal('bool', bool(value))
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node)
+    if isinstance(node, (exp.Add, exp.Sub)):
+        return _convert_arithmetic(node, scope)
+    if type(node) in AGGREGATES or isinstance(node, exp.Filter):
+        return _convert_aggregate(node, scope)
+    if isinstance(node, exp.Func):
+        return _convert_value_function(node, scope)
+    return _convert_column(node, scope)
+
+
+def _convert_arithmetic(node, scope):
+    left, right = _unpack(node, 'this', 'expression')
+    if isinstance(right, exp.MakeInterval):  # Datetime interval
+        operand = _convert_value(left, scope)
+        interval = _convert_value(right, scope)
+        return operand - interval if isinstance(node, exp.Sub) else operand + interval
+    raise UnsupportedSQL(f"unsupported expression: {type(node).__name__}")
+
+
+DATETIME_INTERVALS = {'years', 'months', 'weeks', 'days', 'hours', 'mins', 'secs'}
+
+
+def _convert_make_interval(node, scope):
+    """Convert make_interval(<unit> => <count>)"""
+    args = []
+    for argument in node.args.values():
+        if not isinstance(argument, exp.Kwarg):
+            raise UnsupportedSQL('make_interval args must be named, as in '
+                                 f'make_interval(days => 30), got {str(argument)}')
+        unit, count = _unpack(argument, 'this', 'expression')
+        if unit.name.lower() not in DATETIME_INTERVALS:
+            raise UnsupportedSQL(f'unsupported interval unit: {unit.name}')
+        args.append(literal_column(unit.name.lower())
+                    .op('=>')
+                    (_convert_interval_count(count)))
+    if not args:
+        raise UnsupportedSQL('make_interval needs a unit, as in "days => 30"')
+    return func.make_interval(*args)
+
+
+def _convert_interval_count(node):
+    """Convert how many of a unit an interval covers"""
+    if isinstance(node, exp.Placeholder):
+        return _convert_placeholder(node)
+    count = _literal_value(node)
+    if not isinstance(count, int):
+        raise UnsupportedSQL(f"an interval's count must be a whole number, got {str(node)}")
+    return _bind_literal('datetime_intervals', count)
+
+
+def _convert_value_function(node, scope):
+    """Convert a call to one of the value-producing functions we support"""
+    name = node.name if isinstance(node, exp.Anonymous) else node.sql_name()
+    if convert := VALUE_FUNCTIONS.get(name.lower()):
+        return convert(node, scope)
+    raise UnsupportedSQL(f"unsupported function: {name}")
+
+
+def _convert_string_to_array(node, scope):
+    value, delimiter = _unpack(node, 'this', 'expression')
+    return func.string_to_array(
+        _convert_value(value, scope),
+        _bind_literal('delimiter', _literal_value(delimiter, str)),
+        type_=ARRAY(Text),
+    )
+
+
+def _convert_placeholder(node, db_type=None, expanding=False):
+    """Convert a ``:name`` placeholder to a parameter for the caller to bind"""
+    name, = _unpack(node, 'this')
+    if not isinstance(name, str) or not PARAM_NAME.match(name):
+        raise UnsupportedSQL("query parameters must be written as `:name`")
+    if name.startswith(LITERAL_PARAM_PREFIX):
+        raise UnsupportedSQL(f"query parameter names may not begin with '{LITERAL_PARAM_PREFIX}'")
+    return bindparam(name, expanding=expanding, type_=db_type)
+
+
+def _convert_array(node, scope):
+    """Convert an ``ARRAY[...]`` literal into a single bound parameter"""
+    elements, = _unpack(node, 'expressions')
+    return _bind_literal('array', [_literal_value(element) for element in elements])
+
+
+def _convert_now(node, scope):
+    _no_arguments(node)
+    return func.now()
+
+
+def _convert_today(node, scope):
+    _no_arguments(node)
+    return func.current_date()
+
+
+def _no_arguments(node):
+    """Reject any argument to a function that takes none"""
+    if isinstance(node, exp.Anonymous):
+        _unpack(node, 'this')  # an Anonymous node holds its name in 'this'
+    else:
+        _unpack(node)
+
+
+VALUE_FUNCTIONS = {
+    'array': _convert_array,
+    'make_interval': _convert_make_interval,
+    'string_to_array': _convert_string_to_array,
+    'current_timestamp': _convert_now,  # now() also resolves here
+    'current_date': _convert_today,
+    'today': _convert_today,
+}
+
+
+def _convert_table_ref(node, scope):
+    """Resolve table reference and add to the query's scope"""
+    if not (isinstance(node, exp.Table) and isinstance(node.this, exp.Identifier)):
+        raise UnsupportedSQL(f"expected table, got {str(node)}")
+    identifier, alias = _unpack(node, 'this', 'alias')
+    name = identifier.name
+    try:
+        selectable = scope.tables[name]
+    except KeyError:
+        raise UnsupportedSQL(f"unknown table: {name}")
+    if alias is not None:
+        alias_identifier, = _unpack(alias, 'this')
+        name = alias_identifier.name
+        selectable = selectable.alias(name)
+    scope.add_table_ref(name, selectable)
+    return selectable

@@ -40,7 +40,11 @@ from corehq.apps.api.serializers import (
     CommCareCaseSerializer,
     XFormInstanceSerializer,
 )
-from corehq.apps.api.util import get_obj, get_object_or_not_exist
+from corehq.apps.api.util import (
+    get_obj,
+    get_object_or_not_exist,
+    object_does_not_exist,
+)
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
 )
@@ -176,7 +180,7 @@ def _cases_referenced_by_xform(esxform):
     """
     assert esxform.domain, esxform.form_id
     case_ids = set(cu.id for cu in get_case_updates(esxform))
-    return CommCareCase.objects.get_cases(list(case_ids), esxform.domain)
+    return CommCareCase.objects.get_cases(list(case_ids))
 
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
@@ -214,8 +218,10 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     closed_by = fields.CharField(attribute='closed_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
-        case_id = kwargs['pk']
         domain = kwargs['domain']
+        case_id = kwargs['pk']
+        if not case_id:
+            raise object_does_not_exist('CommCareCase', '')
         return self.case_es(domain).get_document(case_id)
 
     class Meta(v0_3.CommCareCaseResource.Meta):
@@ -258,6 +264,13 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
     just the authenticated user, if the credentials and domain
     are correct.
     """
+
+    username = fields.CharField(
+        help_text="Username to authenticate.",
+    )
+    password = fields.CharField(
+        help_text="Password for the given username.",
+    )
 
     def post_list(self, request, **kwargs):
         domain = kwargs.get('domain')
@@ -331,9 +344,14 @@ class ApplicationResource(BaseApplicationResource):
     is_released = fields.BooleanField(attribute='is_released', null=True)
     built_on = fields.DateTimeField(attribute='built_on', null=True)
     build_comment = fields.CharField(attribute='build_comment', null=True)
-    built_from_app_id = fields.CharField(attribute='copy_of', null=True)
+    built_from_app_id = fields.CharField(null=True)
     modules = fields.ListField()
     versions = fields.ListField()
+
+    @staticmethod
+    def dehydrate_built_from_app_id(bundle):
+        app = bundle.obj
+        return app.origin_id if app.copy_of else None
 
     @staticmethod
     def dehydrate_versions(bundle):

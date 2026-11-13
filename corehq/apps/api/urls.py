@@ -51,7 +51,12 @@ from corehq.apps.api.resources.v0_5 import (
     DomainUsernames,
     UserDomainsResource,
 )
+from corehq.apps.zapier.api.v0_5 import ZapierUserDomains
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
+from corehq.apps.data_interfaces.api.views import (
+    bulk_form_action,
+    bulk_form_action_status,
+)
 from corehq.apps.fixtures import resources as fixtures
 from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -138,11 +143,19 @@ urlpatterns = [
         messaging_events, name="api_messaging_event_list"),
     url(r'messaging-event/(?P<api_version>v1)/(?P<event_id>\d+)/$',
         messaging_events, name="api_messaging_event_detail"),
+
+    # Case API v0.6 endpoints
     url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch),
+    # Trailing slash optional: https://github.com/dimagi/commcare-hq/pull/29939
+    url(r'v0.6/case/?$', case_api, name='case_api_v0.6'),
+    url(r'v0\.6/case/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_v0.6_detail'),
+    path('v0.6/case/ext/<path:external_id>/', case_api),
+    # Case API v2 endpoints
     url(r'case/v2/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch'),
-    # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
-    url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api),
-    url(r'case/v2(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api'),
+    url(r'case/v2/?$', case_api, name='case_api'),
+    url(r'case/v2/(?P<case_id>[\w\-,]+)/?$', case_api, name='case_api_detail'),
+    path('case/v2/ext/<path:external_id>/', case_api, name='case_api_detail_ext'),
+
     path('', include(list(versioned_apis(_OLD_API_LIST)))),
     url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view()),
     url(r'^case_attachment/v1/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
@@ -155,6 +168,11 @@ urlpatterns = [
     url(r'ucr/(?P<api_version>v1)/', v0_5.get_ucr_data, name="api_get_ucr_data"),
     v0_4.ApplicationResource.get_urlpattern('v1'),
     v0_4.CommCareCaseResource.get_urlpattern('v1'),
+    # Must be defined before XFormInstanceResource URLs since
+    # form/v1/bulk-action would match form/v1/<form-id>
+    url(r'form/v1/bulk-action/?$', bulk_form_action, name='bulk_form_action'),
+    url(r'form/v1/bulk-action/(?P<job_id>[\w-]+)/?$', bulk_form_action_status,
+        name='bulk_form_action_status'),
     v0_4.XFormInstanceResource.get_urlpattern('v1'),
     v0_4.SingleSignOnResource.get_urlpattern('v1'),
     v0_5.CommCareUserResource.get_urlpattern('v1'),
@@ -183,6 +201,7 @@ urlpatterns = [
     v0_5.NavigationEventAuditResource.get_urlpattern('v1'),
     v1_0.CommCareAnalyticsUserResource.get_urlpattern('v1'),
     v1_0.InvitationResource.get_urlpattern('v1'),
+    v1_0.DETExportInstanceResource.get_urlpattern('v1'),
 ]
 
 
@@ -212,7 +231,7 @@ ADMIN_API_LIST = (
     accounting.BillingRecordResource,
     MaltResource,
     GIRResource,
-    UserDomainsResource,
+    ZapierUserDomains,
 )
 
 

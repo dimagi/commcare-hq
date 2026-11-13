@@ -95,8 +95,11 @@ class S3BlobDB(AbstractBlobDB):
     def get(self, key=None, type_code=None, meta=None):
         key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)
+        # Use the botocore client directly rather than the boto3 resource API
+        # (``bucket.Object(key).get()``): the resource layer rebuilds resource
+        # objects per call, which dominates CPU when fetching many blobs.
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
-            resp = self._s3_bucket().Object(key).get()
+            resp = self.db.meta.client.get_object(Bucket=self.s3_bucket_name, Key=key)
         reported_content_length = resp['ContentLength']
 
         body = resp["Body"]

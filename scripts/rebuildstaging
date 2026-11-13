@@ -68,4 +68,5 @@ if rebuildstaging $args ; then
 else
     echo "You can edit the branch build configuration here:"
     echo "  https://github.com/dimagi/staging-branches/blob/main/commcare-hq-staging.yml"
+    exit 1
 fi

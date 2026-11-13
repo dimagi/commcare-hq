@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.es.groups import group_adapter
@@ -77,8 +78,8 @@ class TestGroupResource(APIResourceTest):
             "reporting": True,
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
-                                    json.dumps(group_json),
-                                    content_type='application/json')
+                                                   json.dumps(group_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [group_back] = Group.by_domain(self.domain.name)
         self.addCleanup(group_back.delete)
@@ -86,6 +87,33 @@ class TestGroupResource(APIResourceTest):
         self.assertTrue(group_back.reporting)
         self.assertTrue(group_back.case_sharing)
         self.assertEqual(group_back.metadata["localization"], "Ghana")
+
+    def test_create_multiple(self):
+        group_json = {"objects": [
+            {
+                "case_sharing": True,
+                "metadata": {"localization": "Ghana"},
+                "name": "test group",
+                "reporting": True,
+            }, {
+                "case_sharing": True,
+                "metadata": {"localization": "Mali"},
+                "name": "test group 2",
+                "reporting": True,
+            }
+        ]}
+
+        response = self._assert_auth_post_resource(self.list_endpoint,
+                                                   json.dumps(group_json),
+                                                   content_type='application/json',
+                                                   method='PATCH')
+        self.assertEqual(response.status_code, 202, response.content)
+        groups = Group.by_domain(self.domain.name)
+        for group in groups:
+            self.addCleanup(group.delete)
+        self.assertEqual({g._id for g in groups}, set(json.loads(response.content)))
+        self.assertEqual({g.name for g in groups}, {"test group", "test group 2"})
+        self.assertEqual({g.metadata["localization"] for g in groups}, {"Ghana", "Mali"})
 
     def test_update(self):
 
@@ -121,6 +149,130 @@ class TestGroupResource(APIResourceTest):
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_already_exists(self):
+        self._add_group(Group({"name": "test group", "domain": self.domain.name}))
+
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("already exists", response_body["error_message"])
+        self.assertEqual(1, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_empty(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"name": ""}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_create_rejects_name_missing(self):
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("is required", response_body["error_message"])
+        self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def test_update_rejects_name_already_exists(self):
+        group_a = self._add_group(Group({"name": "test a", "domain": self.domain.name}))
+        self._add_group(Group({"name": "test b", "domain": self.domain.name}))
+
+        backend_id = group_a._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"name": "test b"}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("already exists", response_body["error"])
+
+        group_a = Group.get(backend_id)
+        self.assertEqual(group_a.name, "test a")
+
+    def test_update_rejects_name_empty(self):
+        original_group = self._add_group(Group({"name": "test group", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"name": ""}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+        response_body = json.loads(response.content)
+        self.assertIn("must not be blank", response_body["error"])
+
+        modified_group = Group.get(backend_id)
+        self.assertEqual(modified_group.name, "test group")
+
+    def test_update_allows_name_missing(self):
+        original_group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
+
+        backend_id = original_group._id
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(backend_id),
+            json.dumps({"case_sharing": True}),
+            content_type='application/json',
+            method='PUT',
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        modified_group = Group.get(backend_id)
+        self.assertTrue(modified_group.case_sharing)
+
+    def test_cant_update_missing_group(self):
+        missing_id = uuid.uuid4().hex
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(missing_id),
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+            method='PUT',
+        )
+
+        assert response.status_code == 404, response.content
+        assert not Group.by_domain(self.domain.name)
+
+    def test_cant_update_group_in_another_domain(self):
+        not_my_group = self._add_group(Group({"name": "test", "domain": 'not-my-project'}))
+
+        response = self._assert_auth_post_resource(
+            self.single_endpoint(not_my_group._id),
+            json.dumps({"name": "test group"}),
+            content_type='application/json',
+            method='PUT',
+        )
+
+        assert response.status_code == 404, response.content
+        assert Group.get(not_my_group._id).name == "test"
+
+    def test_cant_move_group_into_another_domain(self):
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
+
+        with self.assertRaises(AssertionError):
+            self._assert_auth_post_resource(
+                self.single_endpoint(group._id),
+                json.dumps({"domain": "somewhere-else"}),
+                content_type='application/json',
+                method='PUT',
+            )
+
+        assert Group.get(group._id).domain == self.domain.name
 
     def _add_group(self, group, send_to_es=False):
         group.save()

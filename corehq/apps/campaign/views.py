@@ -193,7 +193,7 @@ class PaginatedCasesWithGPSView(BaseDomainView, CaseListMixin):
         case_ids_page = list(paginator.get_page(page))
 
         return (
-            CommCareCase.objects.get_cases(case_ids_page, self.domain, ordered=True),
+            CommCareCase.objects.get_cases(case_ids_page, ordered=True),
             paginator.count,
         )
 

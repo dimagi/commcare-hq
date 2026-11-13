@@ -1,0 +1,57 @@
+--- 
++++ 
+@@ -1,10 +1,11 @@
+ /* eslint-env mocha */
++
+ import $ from "jquery";
+ import _ from "underscore";
+ import sinon from "sinon";
+ 
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import releasesModels from "app_manager/js/releases/bootstrap3/releases";
++import releasesModels from "app_manager/js/releases/bootstrap5/releases";
+ 
+ import "commcarehq";
+ 
+@@ -41,7 +42,7 @@
+             urls: urls,
+             currentAppVersion: -1,
+             recipient_contacts: [],
+-            download_modal_id: '#download-zip-modal-test',
++            downloadModalId: '#download-zip-modal-test',
+         };
+     describe('SavedApp', function () {
+         var releases = null,
+@@ -65,20 +66,20 @@
+ 
+         it('should only make one request when downloading zip', function () {
+             var app = releases.savedApps()[0];
+-            app.download_application_zip();
++            app.downloadApplicationZip();
+             assert.equal($.ajax.callCount, 1);
+         });
+ 
+         it('should use the correct URL for downloading ccz', function () {
+             var app = releases.savedApps()[0];
+-            app.download_application_zip();
++            app.downloadApplicationZip();
+             assert.equal($.ajax.callCount, 1);
+             assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
+         });
+ 
+         it('should use the correct URL for downloading multimedia', function () {
+             var app = releases.savedApps()[0];
+-            app.download_application_zip(true);
++            app.downloadApplicationZip(true);
+             assert.equal($.ajax.callCount, 1);
+             assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_multimedia_zip', app.id()));
+         });
+@@ -92,7 +93,7 @@
+                 });
+                 ajaxStub.onSecondCall().yieldsTo("success", 'ready_123' + app.id());
+ 
+-                app.download_application_zip();
++                app.downloadApplicationZip();
+                 assert.equal($.ajax.callCount, 2);
+                 assert.equal(ajaxStub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
+             });

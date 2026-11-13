@@ -5,7 +5,7 @@ import caseConfigUtils from "app_manager/js/case_config_utils";
 import caseProperties from "app_manager/js/forms/advanced/case_properties";
 import toggles from "hqwebapp/js/toggles";
 import privileges from "hqwebapp/js/privileges";
-import main from "hqwebapp/js/bootstrap3/main";
+import main from "hqwebapp/js/bootstrap5/main";
 import "app_manager/js/forms/case_knockout_bindings";  // withPrevious
 
 var caseIndex = {
@@ -107,12 +107,12 @@ var actionBase = {
     header: function (action) {
         var nameSnip = "<i class=\"fa fa-tag\"></i> <%- action.case_tag() %> (<%- action.case_type() %>)";
         var closeSnip = "<% if (action.close_case()) { %> : close<% }%>";
-        var spanSnip = '<span class="text-muted" style="font-weight: normal;">';
+        var spanSnip = '<span class="action-header-secondary fw-normal">';
         if (action.actionType === 'open') {
             return _.template(
                 nameSnip + spanSnip +
                 '<% if (action.parent_tags()) { %> : ' +
-                gettext('subcase of') + '<span style="font-weight: bold;"><%- action.parent_tags() %></span>' +
+                gettext('subcase of') + '<span class="fw-bold"><%- action.parent_tags() %></span>' +
                 '<% } %>' + closeSnip + "</span>")({
                 action: action,
             });
@@ -462,6 +462,13 @@ var loadUpdateAction = {
             return false;
         });
 
+        self.hasLockedMappings = ko.observable(function () {
+            if (self.hasCaseProperties() && _.some(self.case_properties(), property => property.isLocked())) {
+                return true;
+            }
+            return self.hasPreload() && _.some(self.preload(), property => property.isLocked());
+        });
+
         return self;
     },
     unwrap: function (self) {
@@ -596,7 +603,7 @@ var openCaseAction = {
                 return _(self.case_properties()).find(function (p) {
                     return p.key() === 'name' && p.required();
                 }).path();
-            } catch (e) {
+            } catch {
                 return null;
             }
         });
@@ -680,6 +687,13 @@ var openCaseAction = {
                 }
             }
             return false;
+        });
+
+        self.hasLockedMappings = ko.observable(function () {
+            return (
+                self.hasCaseProperties()
+                && _.some(self.case_properties(), property => property.isLocked())
+            );
         });
 
         return self;

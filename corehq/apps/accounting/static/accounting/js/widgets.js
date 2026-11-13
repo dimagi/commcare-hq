@@ -13,8 +13,8 @@ var asyncSelect2Handler = function (field, multiple, handlerSlug) {
     self.handlerSlug = handlerSlug || 'select2_billing';
 
     self.init = function (initial) {
-        var $field = $('form [name="' + self.fieldName + '"]');
-        if ($field.attr('type') !== 'hidden') {
+        var $field = $('form [name="' + self.fieldName + '"]').not('[type="hidden"]');
+        if ($field.length) {
             if (initial) {
                 if (!_.isArray(initial)) {
                     initial = [{id: initial, text: initial}];
@@ -48,6 +48,10 @@ var asyncSelect2Handler = function (field, multiple, handlerSlug) {
                     },
                 },
                 multiple: self.multiple,
+            }).on('change', function () {
+                $field.get(0).dispatchEvent(new CustomEvent('select2change', {
+                    detail: $(this).val(),
+                }));
             });
         }
     };
@@ -102,6 +106,10 @@ var emailSelect2Handler = function (field) {
                     return self.validEmailText;
                 },
             },
+        }).on('change', function () {
+            $field.get(0).dispatchEvent(new CustomEvent('select2change', {
+                detail: $(this).val(),
+            }));
         });
     };
 

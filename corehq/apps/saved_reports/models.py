@@ -29,7 +29,7 @@ from couchdbkit.ext.django.schema import (
 )
 from django_prbac.exceptions import PermissionDenied
 from memoized import memoized
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from sqlalchemy.util import immutabledict
 
 from dimagi.ext.couchdbkit import Document

@@ -120,6 +120,13 @@ DOMAIN_MAPPING = {
             "format": DATE_FORMATS_STRING,
             "type": "date"
         },
+        # Legacy: cp_-prefixed fields were historically set on the CouchDB
+        # Domain document and indexed to ES via the domain pillow.  That
+        # mechanism was removed in 2016 (PR #10195), so these fields are
+        # only populated for domains whose CouchDB docs still carry them.
+        # Domains created after 2016 will not have these values in ES.
+        # Metrics are now stored in the PostgreSQL DomainMetrics table and
+        # served through the Domain API at request time.
         "cp_has_app": {
             "type": "boolean"
         },

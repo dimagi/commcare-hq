@@ -11,12 +11,12 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 @task
-def fixture_upload_async(domain, download_id, replace, skip_orm, user_email=None):
+def fixture_upload_async(domain, download_id, replace, user_email=None):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
     download_ref = DownloadBase.get(download_id)
     time_start = datetime.datetime.now()
-    result = upload_fixture_file(domain, download_ref.get_filename(), replace, task, skip_orm)
+    result = upload_fixture_file(domain, download_ref.get_filename(), replace, task)
     time_end = datetime.datetime.now()
     DownloadBase.set_progress(task, 100, 100)
     messages = {

@@ -18,5 +18,9 @@ class SpreadsheetFileEncrypted(SpreadsheetFileError):
     pass
 
 
+class SpreadsheetFileExternalLinks(SpreadsheetFileError):
+    pass
+
+
 class CellValueError(Exception):
     pass

@@ -4,5 +4,5 @@ class BulkAppTranslationsException(Exception):
     pass
 
 
-class TransifexProjectMigrationInvalidUpload(Exception):
+class AppChangedDuringTranslation(Exception):
     pass

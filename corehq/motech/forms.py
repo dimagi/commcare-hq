@@ -19,7 +19,7 @@ from corehq.motech.const import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import validate_user_input_url_for_repeaters
 from corehq.motech.utils import api_setting_matches_preset, get_endpoint_url
-from corehq.toggles import MTN_MOBILE_WORKER_VERIFICATION
+from corehq.toggles import MOBILE_MONEY_INTEGRATION
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import PossibleSSRFAttempt
 from corehq.apps.userreports.ui.fields import JsonField
@@ -199,7 +199,7 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     @staticmethod
     def custom_headers_supported(domain):
-        return MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
+        return MOBILE_MONEY_INTEGRATION.enabled(domain)
 
     @property
     def test_connection_button(self):

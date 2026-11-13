@@ -1,7 +1,7 @@
-from django.urls import include, re_path as url
 from django.conf import settings
+from django.urls import include
+from django.urls import re_path as url
 from django.utils.translation import gettext_lazy as _
-
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from two_factor.urls import urlpatterns as tf_urls
 
@@ -9,19 +9,27 @@ from corehq.apps.cloudcare.views import session_endpoint
 from corehq.apps.domain.forms import ConfidentialDomainPasswordResetForm
 from corehq.apps.domain.views.settings import DomainPasswordResetView
 from corehq.apps.domain.views.sms import PublicSMSRatesView
+from corehq.apps.hqwebapp.chat_auth import chat_token
+from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.hqwebapp.oauth_views import (
+    HQAuthorizationView,
+    OauthApplicationRegistration,
+)
 from corehq.apps.hqwebapp.session_details_endpoint.views import (
     SessionDetailsView,
 )
 from corehq.apps.hqwebapp.views import (
     BugReportView,
-    SolutionsFeatureRequestView,
     MaintenanceAlertsView,
+    SolutionsFeatureRequestView,
+    chat_quota,
+    check_sso_login_status,
     create_alert,
     debug_notify,
     domain_login,
+    domain_login_new_window,
     dropbox_upload,
     iframe_domain_login,
-    domain_login_new_window,
     iframe_sso_login_pending,
     jserror,
     log_email_event,
@@ -35,12 +43,10 @@ from corehq.apps.hqwebapp.views import (
     quick_find,
     redirect_to_default,
     redirect_to_dimagi,
-    OauthApplicationRegistration,
     retrieve_download,
     server_up,
     set_language,
     temporary_google_verify,
-    check_sso_login_status,
 )
 from corehq.apps.settings.views import (
     TwoFactorBackupTokensView,
@@ -54,7 +60,7 @@ from corehq.apps.settings.views import (
 )
 
 PASSWORD_RESET_KWARGS = {
-    'template_name': 'login_and_password/bootstrap3/password_reset_form.html',
+    'template_name': 'login_and_password/password_reset_form.html',
     'form_class': ConfidentialDomainPasswordResetForm,
     'from_email': settings.DEFAULT_FROM_EMAIL,
     'extra_context': {'current_page': {'page_name': _('Password Reset')},
@@ -112,14 +118,17 @@ urlpatterns = [
         name='log_domain_email_event'),
     url(
         r'^oauth/applications/register/',
-        OauthApplicationRegistration.as_view(),
+        waf_allow('EC2MetaDataSSRF_BODY')(OauthApplicationRegistration.as_view()),
         name=OauthApplicationRegistration.urlname
     ),
+    url(r'^oauth/authorize/$', HQAuthorizationView.as_view(), name=HQAuthorizationView.urlname),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
 ]
 
 domain_specific = [
+    url(r'^chat_token/$', chat_token, name='chat_token'),
+    url(r'^chat_quota/$', chat_quota, name='chat_quota'),
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),

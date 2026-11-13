@@ -5,7 +5,6 @@ import uuid
 from datetime import date, datetime, time
 from decimal import Decimal
 
-import six
 import sqlalchemy
 from django.db import DEFAULT_DB_ALIAS
 from unittest.mock import patch
@@ -19,10 +18,12 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
 )
+from corehq.apps.userreports.pillow import _SHARED_ADAPTER_CACHES
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
 
 from ..data_source_providers import MockDataSourceProvider
+from ..pillow import ConfigurableReportPillowProcessor
 
 
 def get_sample_report_config():
@@ -40,12 +41,14 @@ def get_sample_registry_data_source(**kwargs):
 
 
 def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
+    """Configure UCR processors and discard other pillow processors"""
     configs_by_domain = {}
     for config in configs:
         configs_by_domain.setdefault(config.domain, []).append(config)
 
-    for proc in pillow.processors:
-        if hasattr(proc, 'table_manager'):
+    _SHARED_ADAPTER_CACHES.clear()
+    for proc in list(pillow.processors):
+        if isinstance(proc, ConfigurableReportPillowProcessor):
             proc.table_manager.data_source_providers = [
                 MockDataSourceProvider(configs_by_domain)
             ]
@@ -54,6 +57,8 @@ def bootstrap_pillow(pillow, *configs, rebuild_adapters=False):
                     for config in configs:
                         proc.table_manager.rebuild_coordinator.reset(config._id)
                 proc.table_manager.get_adapters(domain)  # bootstrap
+        else:
+            pillow.processors.remove(proc)
 
 
 def cleanup_ucr(data_source):
@@ -167,7 +172,7 @@ def load_data_from_db(table_name):
 
     engine = connection_manager.get_session_helper(DEFAULT_DB_ALIAS).engine
     metadata = sqlalchemy.MetaData(bind=engine)
-    metadata.reflect(bind=engine)
+    metadata.reflect(bind=engine, only=[table_name])
     table = metadata.tables[table_name]
     columns = [
         column.name
@@ -181,7 +186,7 @@ def load_data_from_db(table_name):
                     row[idx] = value.strftime('%Y-%m-%d')
                 elif isinstance(value, time):
                     row[idx] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
-                elif isinstance(value, six.integer_types):
+                elif isinstance(value, int):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
                     row[idx] = _convert_decimal_to_string(row[idx])

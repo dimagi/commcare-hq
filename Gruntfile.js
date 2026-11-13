@@ -26,7 +26,9 @@ module.exports = function (grunt) {
      *  - Test in the browser at http://localhost:8000/mocha/<app>/<section>
      */
     var apps = [
-        'app_manager',
+        'app_manager/bootstrap3',
+        'app_manager/bootstrap5',
+        'app_manager/form_designer_context',
         'export',
         'notifications/bootstrap3',
         'notifications/bootstrap5',
@@ -34,6 +36,7 @@ module.exports = function (grunt) {
         'locations',
         'userreports/bootstrap3',
         'userreports/bootstrap5',
+        'case_search',
         'cloudcare',
         'cloudcare/form_entry',
         'hqwebapp/bootstrap3',
@@ -73,7 +76,7 @@ module.exports = function (grunt) {
 
         // For running in docker
         if (process.env.PUPPETEER_SKIP_DOWNLOAD) {
-            runnerOptions.executablePath = 'google-chrome-stable';
+            runnerOptions.executablePath = '/usr/bin/google-chrome-stable';
         }
 
         grunt.log.writeln("\n");

@@ -1,0 +1,44 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+            <div class="row mb-3">
+                <label class="field-label">
+                    {% trans 'Session Endpoint ID' %}
+                    <span class="hq-help-template"
+                        data-title="{% trans 'Session Endpoint ID' %}"
+                        data-content="{% blocktrans %}A session endpoint ID allows Android apps to call in to
+                                        CommCare at this position.{% endblocktrans %}"></span>
+                </label>
+                <div id="session-endpoint-id"
+                    class="field-control commcare-feature"
+                    data-since-version="2.51">
+                    <input class="code form-control"
+                        type="text"
+                        id="session_endpoint_id"
+                        name="session_endpoint_id"
+                        value="{{ form.session_endpoint_id|default:'' }}" />
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label class="field-label pt-0">
+                    {% trans 'Allow endpoint to access hidden forms' %}
+                    <span class="hq-help-template"
+                        data-title="{% trans 'Allow access to hidden forms' %}"
+                        data-content="{% blocktrans %}Turn this setting on to allow this endpoint to access
+                                        hidden forms.{% endblocktrans %}"></span>
+                </label>
+                <div id="access-hidden-forms"
+                    class="field-control commcare-feature"
+                    data-since-version="2.51">
+                    <input type="checkbox"
+                        class="form-check-input"
+                        id="access_hidden_forms"
+                        name="access_hidden_forms"
+                        value="true"
+                        {% comment %} respect_relevancy is an inverse condition of allowing access to hidden forms
+                        {% endcomment %}
+                        {% if form.respect_relevancy is False %} checked {% endif %}
+                    />
+                    <input type="hidden" name="access_hidden_forms" value="false"/>
+                </div>
+            </div>

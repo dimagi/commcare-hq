@@ -26,7 +26,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from memoized import memoized
-import six
 
 
 class BlobMetaRef(DocumentSchema):
@@ -72,7 +71,7 @@ class BlobMixin(Document):
     @classmethod
     def wrap(cls, data):
         if data.get("external_blobs"):
-            doc_id = safe_id(data["_id"])
+            safe_id(data["_id"])
             dbname = _get_couchdb_name(cls)
             normalize = BlobMetaRef._normalize_json
             blobs = {}
@@ -255,7 +254,8 @@ class BlobMixin(Document):
                 yield
                 (self.save if save is None else save)()
                 success = True
-            except:
+            except BaseException:
+                # BaseException cleans up on any exit including GeneratorExit/KeyboardInterrupt
                 typ, exc, tb = sys.exc_info()
                 # delete new blobs that were not saved
                 for name, meta in self.external_blobs.items():
@@ -265,7 +265,7 @@ class BlobMixin(Document):
                 self.external_blobs = old_external_blobs
                 if self._migrating_blobs_from_couch:
                     self._attachments = old_attachments
-                six.reraise(typ, exc, tb)
+                raise exc.with_traceback(tb)
             finally:
                 self._atomic_blobs = atomicity
             if success:
@@ -381,7 +381,8 @@ class BlobHelper(object):
                 try:
                     with BlobMixin.atomic_blobs(self, save):
                         yield
-                except:
+                except BaseException:
+                    # BaseException cleans up on any exit including GeneratorExit/KeyboardInterrupt
                     self.doc["_attachments"] = self._attachments
                     self.doc["external_blobs"] = {name: meta.to_json()
                         for name, meta in self.external_blobs.items()}

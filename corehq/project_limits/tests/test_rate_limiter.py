@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 from testil import eq
 
+from corehq.apps.api.resources.meta import api_rate_limiter
 from corehq.project_limits.rate_counter.presets import (
     second_rate_counter,
     week_rate_counter,
@@ -69,3 +70,18 @@ def test_get_window_of_first_exceeded_limit_priority():
     expected_window = 'week'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
     eq(actual_window, expected_window)
+
+
+@patch('corehq.project_limits.rate_limiter.get_n_users_in_domain', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter.get_n_users_in_subscription', lambda domain: 10)
+@patch('corehq.project_limits.rate_limiter._get_account_name', lambda domain: 'my_account')
+def test_api_rate_limiter_windows():
+    rate_limits = api_rate_limiter.get_rate_limits('my_domain')
+    windows_by_scope = {
+        scope: [rate_counter.key for rate_counter, __ in limits]
+        for scope, limits in rate_limits
+    }
+    assert windows_by_scope == {
+        'my_domain': ['day', 'hour', 'minute', 'second'],
+        'my_account': ['day', 'hour', 'minute', 'second'],
+    }

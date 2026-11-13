@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.models import import_app_from_doc as import_app_util
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.forms import ExtractAppInfoForm, ImportAppForm
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -74,7 +74,8 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
             file = form.cleaned_data.get('app_file')
             file.seek(0)  # rewind to the beginning becaues the file has already been read once when validating
             source = json.load(file)
-            app = import_app_util(source, self.domain, {'name': name}, request=request)
+            extra = {'name': name, 'created_from_template': 'import_app'}
+            app = import_app_util(source, self.domain, extra, request=request)
             source_server = form.cleaned_data.get('source_server')
             source_domain = form.cleaned_data.get('source_domain')
             source_app_id = form.cleaned_data.get('app_id')
@@ -100,8 +101,9 @@ class ImportAppStepsView(LoginAndDomainMixin, DomainViewMixin, HqHtmxActionMixin
     def render_import_multimedia_instructions(self, request, source_server, source_domain, source_app_id,
                                               new_app_id):
         from corehq.apps.app_manager.views.utils import back_to_main
+        subdomain = ServerLocation.get_subdomains()[source_server]
         source_multimedia_url = (
-            f"https://{ServerLocation.SUBDOMAINS[source_server]}.commcarehq.org/a/"
+            f"https://{subdomain}.commcarehq.org/a/"
             f"{source_domain}/apps/view/{source_app_id}/settings/#multimedia-tab"
         )
         current_multimedia_url = reverse(BulkUploadMultimediaView.urlname, args=[self.domain, new_app_id])

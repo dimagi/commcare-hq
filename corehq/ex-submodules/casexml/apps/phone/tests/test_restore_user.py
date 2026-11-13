@@ -1,7 +1,6 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from nose.tools import assert_equal
 from unmagic import use
 
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
@@ -23,7 +22,7 @@ def test_get_commtrack_location_id():
         domain=DOMAIN, location_id='1', assigned_location_ids=['1']
     ))
     loc_id = user.to_ota_restore_user(DOMAIN).get_commtrack_location_id()
-    assert_equal(loc_id, '1')
+    assert loc_id == '1'
 
 
 @pytest.mark.parametrize("user, expected_type", [
@@ -32,8 +31,8 @@ def test_get_commtrack_location_id():
 ])
 @patch('corehq.apps.users.models._AuthorizableMixin.get_domain_membership',
        Mock(return_value=DomainMembership(domain=DOMAIN)))
+@patch_user_data_db_layer
 @use("db")
 def test_user_types(user, expected_type):
-    with patch_user_data_db_layer():
-        user_type = user.to_ota_restore_user(DOMAIN).user_session_data['commcare_user_type']
-        assert_equal(user_type, expected_type)
+    user_type = user.to_ota_restore_user(DOMAIN).user_session_data['commcare_user_type']
+    assert user_type == expected_type

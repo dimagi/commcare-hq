@@ -1,0 +1,331 @@
+from unittest.mock import MagicMock, patch
+
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
+
+from corehq.apps.app_manager.models import AdvancedModule, LinkedApplication, Module
+from corehq.apps.app_manager.tests.test_get_questions import AppFormTestCase
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.public_webforms.tests.utils import DOMAIN, create_session, create_webform
+
+from ..feature_calcs import (
+    calc_bulk_case_editing_sessions,
+    calc_has_app_profiles,
+    calc_has_case_management,
+    calc_has_custom_branding,
+    calc_has_eof_navigation,
+    calc_has_multimedia,
+    calc_has_save_to_case,
+    calc_has_web_apps,
+    calc_public_webforms,
+    calc_public_webform_submissions,
+    calc_questions_locked,
+)
+from ..metric_registry import DomainContext
+
+
+def _make_domain_context(apps=None, **domain_attrs):
+    domain_obj = MagicMock()
+    domain_obj.name = 'test'
+    domain_obj.full_applications.return_value = apps or []
+    domain_obj.has_custom_logo = False
+    for k, v in domain_attrs.items():
+        setattr(domain_obj, k, v)
+    return DomainContext(domain_obj)
+
+
+def _make_app_with_modules(modules):
+    app = MagicMock()
+    app.is_remote_app.return_value = False
+    app.get_modules.return_value = modules
+    app.get_forms.return_value = [
+        form for module in modules for form in module.get_forms()
+    ]
+    app.multimedia_map = {}
+    app.cloudcare_enabled = False
+    app.build_profiles = {}
+    app.logo_refs = {}
+    return app
+
+
+def _make_module(case_type='', forms=None):
+    module = MagicMock()
+    module.case_type = case_type
+    module.get_forms.return_value = forms or []
+    return module
+
+
+class TestCalcHasMultimedia(SimpleTestCase):
+
+    def test_true_when_app_has_multimedia(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.multimedia_map = {'image.png': {'path': '/img.png'}}
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_multimedia(ctx) is True
+
+    def test_false_when_no_multimedia(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.multimedia_map = {}
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_multimedia(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_multimedia(ctx) is False
+
+
+class TestCalcHasCaseManagement(SimpleTestCase):
+
+    def test_true_when_module_has_case_type(self):
+        module = _make_module(case_type='patient')
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_case_management(ctx) is True
+
+    def test_false_when_no_case_type(self):
+        module = _make_module(case_type='')
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_case_management(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_case_management(ctx) is False
+
+    def test_true_with_multiple_modules(self):
+        mod_no_case = _make_module(case_type='')
+        mod_with_case = _make_module(case_type='household')
+        app = _make_app_with_modules([mod_no_case, mod_with_case])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_case_management(ctx) is True
+
+
+class TestCalcHasEofNavigation(SimpleTestCase):
+
+    def test_true_when_form_has_non_default_workflow(self):
+        form = MagicMock()
+        form.post_form_workflow = 'module_default'
+        module = _make_module(forms=[form])
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_eof_navigation(ctx) is True
+
+    def test_false_when_all_default_workflow(self):
+        form = MagicMock()
+        form.post_form_workflow = 'default'
+        module = _make_module(forms=[form])
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_eof_navigation(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_eof_navigation(ctx) is False
+
+    def test_false_when_no_forms(self):
+        module = _make_module(forms=[])
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_eof_navigation(ctx) is False
+
+
+class TestCalcHasWebApps(SimpleTestCase):
+
+    def test_true_when_cloudcare_enabled(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.cloudcare_enabled = True
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_web_apps(ctx) is True
+
+    def test_false_when_cloudcare_disabled(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.cloudcare_enabled = False
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_web_apps(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_web_apps(ctx) is False
+
+
+class TestCalcHasAppProfiles(SimpleTestCase):
+
+    def test_true_when_build_profiles_exist(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.build_profiles = {'profile1': {'langs': ['en']}}
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_app_profiles(ctx) is True
+
+    def test_false_when_no_build_profiles(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.build_profiles = {}
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_app_profiles(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_app_profiles(ctx) is False
+
+
+class TestCalcHasSaveToCase(SimpleTestCase):
+    """Save To Case is a Vellum question type that writes data to a case
+    from inside a repeat group. It is detected via
+    form.get_save_to_case_updates(), which returns a non-empty dict
+    when Save To Case questions are present.
+    """
+
+    def test_true_when_form_has_save_to_case(self):
+        form = MagicMock()
+        form.get_save_to_case_updates.return_value = {'patient': {'name', 'dob'}}
+        module = _make_module(forms=[form])
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_save_to_case(ctx) is True
+
+    def test_false_when_save_to_case_updates_empty(self):
+        form = MagicMock()
+        form.get_save_to_case_updates.return_value = {}
+        module = _make_module(forms=[form])
+        app = _make_app_with_modules([module])
+        ctx = _make_domain_context(apps=[app])
+        assert calc_has_save_to_case(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[])
+        assert calc_has_save_to_case(ctx) is False
+
+
+class TestCalcQuestionsLocked(AppFormTestCase):
+
+    def test_counts_locked_questions_in_every_form(self):
+        self.add_form('case_in_form')
+        self.add_form('locked_questions')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 3
+
+    def test_zero_when_no_questions_are_locked(self):
+        self.add_form('form_with_repeats')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 0
+
+    def test_shadow_form_does_not_count_its_parent_again(self):
+        parent = self.add_form('locked_questions')
+        module = self.app.add_module(AdvancedModule.new_module('Advanced', 'en'))
+        shadow = module.new_shadow_form('Shadow', 'en')
+        shadow.shadow_parent_form_id = parent.unique_id
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 2
+
+    def test_malformed_form_counts_zero(self):
+        self.add_form('case_in_form')
+        self.app.new_form(self.module.id, 'Broken', 'en', attachment='<data><unclosed>')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 1
+
+    def test_form_with_entities_counts_zero(self):
+        self.add_form('case_in_form')
+        self.app.new_form(
+            self.module.id, 'Entities', 'en',
+            attachment='<!DOCTYPE data [<!ENTITY e "x">]><data>&e;</data>',
+        )
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 1
+
+
+@es_test(requires=[app_adapter], setup_class=True)
+class TestCalcQuestionsLockedInLinkedApp(TestCase):
+    domain = 'locked-questions-downstream'
+
+    def test_counts_locked_questions_pulled_from_upstream(self):
+        project = create_domain(self.domain)
+        self.addCleanup(project.delete)
+        app = LinkedApplication.new_app(self.domain, 'Linked')
+        module = app.add_module(Module.new_module('Module', 'en'))
+        app.new_form(
+            module.id, 'Form', 'en',
+            attachment=AppFormTestCase.get_xml('locked_questions').decode('utf-8'),
+        )
+        app.save()
+        self.addCleanup(app.delete_app)
+        ctx = DomainContext(Domain.get_by_name(self.domain))
+        assert calc_questions_locked(ctx) == 2
+
+
+class TestCalcBulkCaseEditingSessions(SimpleTestCase):
+
+    @patch('corehq.apps.data_cleaning.models.BulkEditSession.objects')
+    def test_counts_sessions(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 5
+        ctx = _make_domain_context()
+        assert calc_bulk_case_editing_sessions(ctx) == 5
+
+    @patch('corehq.apps.data_cleaning.models.BulkEditSession.objects')
+    def test_zero_when_no_sessions(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 0
+        ctx = _make_domain_context()
+        assert calc_bulk_case_editing_sessions(ctx) == 0
+
+
+class TestCalcHasCustomBranding(SimpleTestCase):
+
+    def test_true_when_domain_has_custom_logo(self):
+        ctx = _make_domain_context(apps=[], has_custom_logo=True)
+        assert calc_has_custom_branding(ctx) is True
+
+    def test_true_when_app_has_logo_refs(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.logo_refs = {'hq_logo_android_home': 'path/to/logo.png'}
+        ctx = _make_domain_context(apps=[app], has_custom_logo=False)
+        assert calc_has_custom_branding(ctx) is True
+
+    def test_false_when_no_branding(self):
+        app = MagicMock()
+        app.is_remote_app.return_value = False
+        app.logo_refs = {}
+        ctx = _make_domain_context(apps=[app], has_custom_logo=False)
+        assert calc_has_custom_branding(ctx) is False
+
+    def test_false_when_no_apps(self):
+        ctx = _make_domain_context(apps=[], has_custom_logo=False)
+        assert calc_has_custom_branding(ctx) is False
+
+
+class TestCalcPublicWebforms(SimpleTestCase):
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_counts_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 5
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 5
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_zero_when_no_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 0
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 0
+
+
+class TestPublicWebformSubmissions(TestCase):
+
+    def test_counts_only_submitted_sessions(self):
+        webform = create_webform()
+        for _ in range(3):
+            create_session(webform, submitted_at=timezone.now())
+        for _ in range(2):
+            create_session(webform)
+        ctx = _make_domain_context(name=DOMAIN)
+        assert calc_public_webform_submissions(ctx) == 3
+
+    def test_zero_when_no_submissions(self):
+        ctx = _make_domain_context()
+        assert calc_public_webform_submissions(ctx) == 0

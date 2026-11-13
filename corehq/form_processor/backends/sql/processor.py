@@ -62,7 +62,7 @@ class FormProcessorSQL(object):
     @classmethod
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         form_ids = [xform.form_id for xform in xforms]
-        XFormInstance.objects.hard_delete_forms(domain, form_ids)
+        XFormInstance.objects.hard_delete_forms(domain, form_ids, leave_tombstones=False)
         CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
     @classmethod
@@ -75,6 +75,7 @@ class FormProcessorSQL(object):
         new_form.user_id = user_id
         new_form.domain = existing_form.domain
         new_form.app_id = existing_form.app_id
+        new_form.build_id = existing_form.build_id
         cls.store_attachments(new_form, [Attachment(
             name=ATTACHMENT_NAME,
             raw_content=new_xml,

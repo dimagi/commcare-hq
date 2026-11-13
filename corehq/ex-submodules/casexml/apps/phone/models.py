@@ -7,10 +7,8 @@ from datetime import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
 
 import architect
-import six
 from memoized import memoized
 
 from casexml.apps.case import const
@@ -37,10 +35,9 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.logging import notify_exception
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
-from corehq.util.global_request import get_request_domain
 from corehq.util.soft_assert import soft_assert
 from toposort import toposort_flatten
 
@@ -319,34 +316,9 @@ def delete_synclogs(current_synclog):
             user_id=current_synclog.user_id,
             date__lt=current_synclog.date,
         )
-        device_id_filter = Q(device_id=current_synclog.device_id)
-        if toggles.CLEAN_OLD_FORMPLAYER_SYNCS.enabled(
-                current_synclog.user_id,
-                toggles.NAMESPACE_OTHER
-        ):
-            # see comment in get_alt_device_id about the purpose of this short-lived code
-            alt_device_id = get_alt_device_id(current_synclog.device_id)
-            device_id_filter = device_id_filter | Q(device_id=alt_device_id)
-        query.filter(device_id_filter).delete()
+        query.filter(device_id=current_synclog.device_id).delete()
     elif current_synclog.previous_log_id:
         SyncLogSQL.objects.filter(synclog_id=current_synclog.previous_log_id).delete()
-
-
-def get_alt_device_id(device_id):
-    # this function and its usage can be deleted on or after March 31
-    # https://github.com/dimagi/formplayer/pull/808 changed the device_id format
-    # and this logic helps us purge both old and new format device_ids
-    try:
-        parts = device_id.split('*')
-        if len(parts) == 4:
-            return '*'.join([parts[0], parts[1].replace('.', '_'), parts[2], parts[3]])
-        else:
-            return device_id
-    # this is a short lived piece of code and an optimization
-    # and it's more important to us that it never causes an error
-    # than it is that it works
-    except Exception:
-        return device_id
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -561,14 +533,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     lists from the SyncLog class.
     """
     log_format = StringProperty(default=LOG_FORMAT_SIMPLIFIED)
-    case_ids_on_phone = SetProperty(six.text_type)
+    case_ids_on_phone = SetProperty(str)
     # this is a subset of case_ids_on_phone used to flag that a case is only around because it has dependencies
     # this allows us to purge it if possible from other actions
-    dependent_case_ids_on_phone = SetProperty(six.text_type)
-    owner_ids_on_phone = SetProperty(six.text_type)
+    dependent_case_ids_on_phone = SetProperty(str)
+    owner_ids_on_phone = SetProperty(str)
     index_tree = SchemaProperty(IndexTree)  # index tree of subcases / children
     extension_index_tree = SchemaProperty(IndexTree)  # index tree of extensions
-    closed_cases = SetProperty(six.text_type)
+    closed_cases = SetProperty(str)
     extensions_checked = BooleanProperty(default=False)
     device_id = StringProperty()
     auth_type = StringProperty()
@@ -737,10 +709,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
-            should_fail_softly = not xform_id or _domain_has_legacy_toggle_set()
-            if should_fail_softly:
-                pass
-            else:
+            if xform_id:
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
@@ -979,13 +948,6 @@ ShortIndex = namedtuple(
     'ShortIndex',
     ['case_id', 'identifier', 'referenced_id', 'relationship'],
 )
-
-
-def _domain_has_legacy_toggle_set():
-    # old versions of commcare (< 2.10ish) didn't purge on form completion
-    # so can still modify cases that should no longer be on the phone.
-    domain = get_request_domain()
-    return toggles.LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
 def get_properly_wrapped_sync_log(doc_id):

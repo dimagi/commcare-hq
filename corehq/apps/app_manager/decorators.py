@@ -17,15 +17,11 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     BuildConflictException,
     CaseError,
 )
-from corehq.apps.app_manager.models import AppEditingError
-from corehq.apps.app_manager.util import (
-    get_latest_app_release_by_location,
-    get_latest_enabled_build_for_profile,
-)
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.app_manager.util import get_latest_app_release_by_location
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, HqPermissions
@@ -77,11 +73,6 @@ def _get_latest_enabled_build(domain, username, app_id, profile_id, location_fla
                 user.location_id,
                 parent_app_id,
             )
-    if not latest_enabled_build:
-        # Fall back to the old logic to support migration
-        # ToDo: Remove this block once migration is complete
-        if profile_id and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_enabled_build = get_latest_enabled_build_for_profile(domain, profile_id)
     return latest_enabled_build
 
 
@@ -239,4 +230,3 @@ require_can_edit_apps = require_permission(HqPermissions.edit_apps)
 require_can_edit_or_view_apps = require_permission(
     'edit_apps', view_only_permission='view_apps'
 )
-require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported

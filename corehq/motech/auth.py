@@ -277,7 +277,7 @@ class OAuth2ClientGrantManager(AuthManager):
         return session
 
     def _check_last_token(self, domain_name):
-        if toggles.MTN_MOBILE_WORKER_VERIFICATION.enabled(domain_name):
+        if toggles.MOBILE_MONEY_INTEGRATION.enabled(domain_name):
             # This is a workaround for a presumed issue with the MTN MoMo API sandbox where
             # the token type is not set to 'Bearer' as expected, but rather 'access_token'.
             # This is a temporary fix until more clarity can be gained around this.

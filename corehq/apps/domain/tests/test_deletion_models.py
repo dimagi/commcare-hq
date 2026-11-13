@@ -13,6 +13,7 @@ IGNORE_APPS = {
     'admin',
     'auditcare',
     'captcha',
+    'celery',
     'contenttypes',
     'django_celery_results',
     'django_digest',
@@ -43,16 +44,15 @@ IGNORE_APPS = {
 
 IGNORE_MODELS = {
     'api.ApiUser',
-    'app_execution.AppWorkflowConfig',
-    'app_execution.AppExecutionLog',
     'app_manager.ExchangeApplication',
+    'app_manager.TemplateAppSector',
     'auth.Group',
     'auth.Permission',
+    'builds.CommCareMobileBuild',
     'blobs.BlobMeta',
     'blobs.BlobMigrationState',
     'blobs.DeletedBlobMeta',
     'cleanup.DeletedCouchDoc',
-    'cleanup.DeletedSQLDoc',
     'domain.DomainAuditRecordEntry',
     'domain.SuperuserProjectEntryRecord',
     'dropbox.DropboxUploadHelper',
@@ -62,11 +62,13 @@ IGNORE_MODELS = {
     'fixtures.UserLookupTableStatus',
     'fixtures.LookupTableRow',          # handled by cascading delete
     'fixtures.LookupTableRowOwner',     # handled by cascading delete
+    'public_webforms.PublicFormSession',  # handled by cascading delete of PublicWebform
     'registration.AsyncSignupRequest',
     'registration.SelfSignupWorkflow',
     'repeaters.RepeatRecord',         # handled by cascading delete
     'repeaters.RepeatRecordAttempt',  # handled by cascading delete
     'sms.MigrationStatus',
+    'tombstones.Tombstone',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
     'util.PermanentBounceMeta',

@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -30,11 +32,22 @@ class AppEditingError(AppManagerException):
     pass
 
 
+class RemoteAppsUnsupported(AppEditingError):
+
+    def __init__(self):
+        super().__init__(_("RemoteApps are no longer supported"))
+
+
 class ModuleIdMissingException(AppManagerException):
     pass
 
 
 class RearrangeError(AppEditingError):
+    pass
+
+
+class LockedQuestionError(AppEditingError):
+    """An attempt to modify a locked question in a disallowed way"""
     pass
 
 
@@ -195,6 +208,10 @@ class AppMisconfigurationError(AppManagerException):
     """Errors in app configuration that are the user's responsibility"""
 
 
+class CaseTileMisconfigurationError(AppManagerException):
+    pass
+
+
 class CannotRestoreException(Exception):
     """Errors that inherit from this exception will always fail hard in restores"""
 
@@ -212,30 +229,3 @@ class AppInDifferentDomainException(AppManagerException):
     If the returned app is not in the targeted domain, we raise this exception.
     """
     pass
-
-
-class InvalidPropertyException(Exception):
-    def __init__(self, invalid_property):
-        self.invalid_property = invalid_property
-        message = f"Invalid key found: {self.invalid_property}"
-        super().__init__(message)
-
-
-class MissingPropertyException(Exception):
-    def __init__(self, *missing_properties):
-        self.missing_properties = missing_properties
-        if self.missing_properties:
-            message = f"The following properties were not found: {', '.join(self.missing_properties)}"
-        else:
-            message = "No missing properties specified"
-        super().__init__(message)
-
-
-class DiffConflictException(Exception):
-    def __init__(self, *conflicting_keys):
-        self.conflicting_keys = conflicting_keys
-        if self.conflicting_keys:
-            message = f"The following keys were affected by multiple actions: {', '.join(self.conflicting_keys)}"
-        else:
-            message = "No conflicting keys specified"
-        super().__init__(message)

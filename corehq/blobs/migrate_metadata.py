@@ -13,7 +13,6 @@ from corehq.util.doc_processor.sql import SqlDocumentProvider
 import corehq.apps.accounting.models as acct
 import corehq.apps.app_manager.models as apps
 import corehq.apps.hqmedia.models as hqmedia
-from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta, CaseUploadRecord
 from corehq.apps.domain.models import Domain
 from corehq.apps.export import models as exports
@@ -281,7 +280,6 @@ def get_invoice_domain(doc):
 
 DOMAIN_MAP = {
     "InvoicePdf": get_invoice_domain,
-    "CommCareBuild": get_shared_domain,
     "CommCareAudio": get_shared_domain,
     "CommCareImage": get_shared_domain,
     "CommCareVideo": get_shared_domain,
@@ -297,7 +295,6 @@ migrate_metadata = lambda: MultiDbMigrator("migrate_metadata",
         ("Application-Deleted", apps.Application),
         ("RemoteApp-Deleted", apps.RemoteApp),
         apps.SavedAppBuild,
-        CommCareBuild,
         Domain,
         acct.InvoicePdf,
         hqmedia.CommCareAudio,

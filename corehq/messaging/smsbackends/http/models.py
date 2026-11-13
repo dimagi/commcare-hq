@@ -2,7 +2,6 @@ import sys
 
 from django.conf import settings
 
-import six
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -92,7 +91,7 @@ class SQLHttpBackend(SQLSMSBackend):
                 ).read()
         except Exception as e:
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
-            six.reraise(BackendProcessingException, BackendProcessingException(msg), sys.exc_info()[2])
+            raise BackendProcessingException(msg).with_traceback(sys.exc_info()[2])
 
     @staticmethod
     def _encode_http_message(text):

@@ -105,7 +105,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
 
     def test_all_cards_raise_authentication_error_when_stripe_key_is_wrong(self):
         stripe.api_key = "12345678"
-        with self.assertRaises(stripe.error.AuthenticationError):
+        with self.assertRaises(stripe.AuthenticationError):
             self.payment_method.all_cards
 
     def test_all_cards_return_the_correct_collection_of_cards_for_a_customer(self):
@@ -182,7 +182,7 @@ class TestStripePaymentMethod(BaseAccountingTest):
         self.assertFalse(self.billing_account.auto_pay_enabled)
 
     def test_remove_card_non_existent(self):
-        with self.assertRaises(stripe.error.InvalidRequestError):
+        with self.assertRaises(stripe.InvalidRequestError):
             self.payment_method.remove_card("non_existent_card_id")
 
     def test_create_card_creates_card(self):

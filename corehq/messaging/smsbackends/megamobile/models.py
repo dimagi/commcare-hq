@@ -1,5 +1,5 @@
-from six.moves.urllib.parse import urlencode, quote
-from six.moves.urllib.request import urlopen
+from urllib.parse import urlencode, quote
+from urllib.request import urlopen
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.megamobile.forms import MegamobileBackendForm

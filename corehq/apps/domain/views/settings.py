@@ -18,7 +18,6 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
-from couchdbkit import ResourceNotFound
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.utils import has_privilege
 from memoized import memoized
@@ -72,7 +71,7 @@ from corehq.apps.users.decorators import require_can_manage_domain_alerts
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN, GA_OCS_CHATBOT
 from corehq.toggles.models import Toggle
 from corehq.util.timezones.conversions import UserTime, ServerTime
 from corehq.apps.app_manager.models import CredentialApplication
@@ -440,7 +439,28 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         )
         unneeded_fuzzies.delete()
 
-        ignore_patterns = request_json.get('ignore_patterns')
+        if enable:
+            enable_case_search(self.domain)
+        else:
+            disable_case_search(self.domain)
+
+        advanced_enabled = toggles.CASE_SEARCH_ADVANCED.enabled(self.domain)
+        config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+            'enabled': request_json.get('enable'),
+            'synchronous_web_apps': request_json.get('synchronous_web_apps') if advanced_enabled else False,
+            'sync_cases_on_form_entry': (
+                request_json.get('sync_cases_on_form_entry')
+                if advanced_enabled else False
+            )
+        })
+        case_search_synchronous_web_apps_for_domain.clear(self.domain)
+        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
+        config.fuzzy_properties.set(updated_fuzzies)
+        if advanced_enabled:
+            self.set_ignore_patterns(config, request_json.get('ignore_patterns'))
+        return json_response(self.page_context)
+
+    def set_ignore_patterns(self, config, ignore_patterns):
         updated_ignore_patterns = []
         update_ignore_pattern_ids = []
         for ignore_pattern_regex in ignore_patterns:
@@ -457,22 +477,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             pk__in=update_ignore_pattern_ids
         )
         unneeded_ignore_patterns.delete()
-
-        if enable:
-            enable_case_search(self.domain)
-        else:
-            disable_case_search(self.domain)
-
-        config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request_json.get('enable'),
-            'synchronous_web_apps': request_json.get('synchronous_web_apps'),
-            'sync_cases_on_form_entry': request_json.get('sync_cases_on_form_entry'),
-        })
-        case_search_synchronous_web_apps_for_domain.clear(self.domain)
-        case_search_sync_cases_on_form_entry_enabled_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
-        config.fuzzy_properties.set(updated_fuzzies)
-        return json_response(self.page_context)
 
     @property
     def page_context(self):
@@ -511,7 +516,10 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     @memoized
     def features(self):
         features = []
+        chatbot_released = GA_OCS_CHATBOT.enabled(self.domain, namespace=NAMESPACE_DOMAIN)
         for preview_name in dir(feature_previews):
+            if preview_name == 'OCS_CHATBOT' and chatbot_released:
+                continue
             if not preview_name.startswith('__'):
                 preview = getattr(feature_previews, preview_name)
                 if isinstance(preview, feature_previews.FeaturePreview) and preview.has_privilege(self.request):
@@ -522,10 +530,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def get_toggle(self, slug):
         if slug not in [f.slug for f, _ in self.features()]:
             raise Http404()
-        try:
-            return Toggle.get(slug)
-        except ResourceNotFound:
-            return Toggle(slug=slug)
+        return Toggle.get_or_create(slug)
 
     @property
     def page_context(self):
@@ -554,6 +559,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class DomainPasswordResetView(PasswordResetView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -561,6 +567,7 @@ class DomainPasswordResetView(PasswordResetView):
         return kwargs
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
 

@@ -1,8 +1,10 @@
-<p>Two-Factor authentication for your account on CommCare has been reset.</p>
+<p>Two-Factor authentication for your account on CommCare has been reset. Your previous
+  two-factor device has been removed.</p>
 
 <p>
   {% if until %}
-    You have until <b>{{ until }}</b> to re-enable Two-Factor Authentication
+    You can log in to two-factor-required projects without a token until <b>{{ until }}</b>.
+    Please set up Two-Factor Authentication again before then.
   {% else %}
     You will need to reconfigure Two-Factor Authentication before you can start using CommCare again.
   {% endif %}

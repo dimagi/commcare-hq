@@ -8,9 +8,9 @@ Be cautious of adding new dependencies, which introduce an indefinite maintenanc
 Do **not** add packages via script tags. An external package's documentation may show
 how to include it via script tags, for the sake of getting up and running quickly.
 This is fine to do in development. However, when added to production,
-packages should be installed via yarn. Virtually any package that would be added to HQ 
-will be on `NPM <https://www.npmjs.com/>`_. In rare cases, we also include packages 
-directly from GitHub, as described below. Using yarn enables tooling to do things like 
+packages should be installed via yarn. Virtually any package that would be added to HQ
+will be on `NPM <https://www.npmjs.com/>`_. In rare cases, we also include packages
+directly from GitHub, as described below. Using yarn enables tooling to do things like
 scan for outdated versions and for packages with recently discovered CVEs.
 
 Yarn
@@ -101,13 +101,3 @@ In ESM modules:
 ::
 
     import DOMPurify from "dompurify";
-
-In modules using AMD style:
-
-::
-
-    define("my_app/js/my_module", [
-        "dompurify",
-    ], function (
-        DOMPurify,
-    ) {

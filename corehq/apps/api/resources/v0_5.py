@@ -10,8 +10,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from django.urls import re_path as url
 from django.contrib.auth.models import User
-from django.contrib.auth.tokens import default_token_generator
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import Max, Min, Q
 from django.db.models.functions import TruncDate
 from django.http import (
@@ -69,6 +68,7 @@ from corehq.apps.api.util import (
     django_date_filter,
     get_obj,
     make_date_filter,
+    not_found,
     parse_str_to_date,
     cursor_based_query_for_datasource
 )
@@ -134,7 +134,7 @@ from corehq.apps.users.util import (
     log_user_change,
     verify_modify_user_conditions,
 )
-from corehq.apps.users.validation import validate_profile_required
+from corehq.apps.users.validation import validate_profile_id
 from corehq.apps.domain.forms import send_password_reset_email
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
@@ -152,7 +152,12 @@ from . import (
     v0_1,
     v0_4,
 )
-from .pagination import DoesNothingPaginator, NoCountingPaginator, response_for_cursor_based_pagination
+from .pagination import (
+    DoesNothingPaginator,
+    NoCountingPaginator,
+    PreSlicedPaginator,
+    response_for_cursor_based_pagination,
+)
 
 MOCK_BULK_USER_ES = None
 EXPORT_DATASOURCE_DEFAULT_PAGINATION_LIMIT = 1000
@@ -166,7 +171,7 @@ def user_es_call(domain, q, fields, size, start_at):
              .size(size)
              .start(start_at))
     if q is not None:
-        query.set_query({"query_string": {"query": q}})
+        query = query.set_query({"query_string": {"query": q}})
     return query.run().hits
 
 
@@ -198,6 +203,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         detail_allowed_methods = ['get']
         object_class = object
         resource_name = 'bulk-user'
+        paginator_class = PreSlicedPaginator
 
     def dehydrate(self, bundle):
         fields = bundle.request.GET.getlist('fields')
@@ -223,13 +229,19 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         fields = list(self.fields)
         fields.remove('id')
         fields.append('_id')
+        # The paginator resolves (and validates) 'limit' and 'offset' the same
+        # way it will when building the response meta, so the page reported
+        # there always matches the page fetched from Elasticsearch.
+        paginator = self._meta.paginator_class(
+            params, [], limit=self._meta.limit, max_limit=self._meta.max_limit,
+        )
         fn = MOCK_BULK_USER_ES or user_es_call
         users = fn(
             domain=kwargs['domain'],
             q=param('q'),
             fields=fields,
-            size=param('limit'),
-            start_at=param('offset'),
+            size=paginator.get_limit(),
+            start_at=paginator.get_offset(),
         )
         return list(map(self.to_obj, users))
 
@@ -244,6 +256,32 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     locations = fields.ListField()
     require_account_confirmation = fields.BooleanField(default=False)
     send_confirmation_email_now = fields.BooleanField(default=False)
+    password = fields.CharField(
+        null=True,
+        help_text="Sets the user's password. Required on create unless "
+                  "`connect_username` is given.",
+    )
+    connect_username = fields.CharField(
+        null=True,
+        help_text="Links the user to a ConnectID account. Requires the "
+                  "COMMCARE_CONNECT feature flag.",
+    )
+    language = fields.CharField(
+        attribute='language',
+        null=True,
+        help_text="The user's preferred language code, e.g. `en`.",
+    )
+    role = fields.CharField(
+        null=True,
+        help_text="Name of an existing user role in the project space.",
+    )
+
+    WRITE_ONLY_FIELDS = (
+        'require_account_confirmation',
+        'send_confirmation_email_now',
+        'password',
+        'connect_username',
+    )
 
     class Meta(v0_1.CommCareUserResource.Meta):
         detail_allowed_methods = ['get', 'put', 'delete']
@@ -281,7 +319,10 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if connect_username and not toggles.COMMCARE_CONNECT.enabled(kwargs['domain']):
             raise BadRequest(_("You don't have permission to use connect_username field"))
         try:
-            validate_profile_required(bundle.data.get('user_profile'), kwargs['domain'])
+            validate_profile_id(
+                bundle.data.get('user_data', {}).get('commcare_profile'),
+                kwargs['domain'],
+            )
         except ValidationError as e:
             raise BadRequest(e.message)
         try:
@@ -371,10 +412,12 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         return bundle
 
     def obj_delete(self, bundle, **kwargs):
-        user = CommCareUser.get(kwargs['pk'])
+        user = CommCareUser.get_by_user_id(kwargs['pk'], kwargs['domain'])
         if user:
             user.retire(bundle.request.domain, deleted_by=bundle.request.couch_user,
                         deleted_via=USER_CHANGE_VIA_API)
+        else:
+            raise NotFound(f"Could not find user for id: {kwargs['pk']}")
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
     def dehydrate_primary_location(self, bundle):
@@ -383,9 +426,13 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def dehydrate_locations(self, bundle):
         return bundle.obj.get_location_ids(bundle.obj.domain)
 
+    def dehydrate_role(self, bundle):
+        role = bundle.obj.get_role(bundle.obj.domain)
+        return role.name if role else ''
+
     def dehydrate(self, bundle):
-        bundle.data.pop('require_account_confirmation', None)
-        bundle.data.pop('send_confirmation_email_now', None)
+        for field_name in self.WRITE_ONLY_FIELDS:
+            bundle.data.pop(field_name, None)
         return super(v0_1.CommCareUserResource, self).dehydrate(bundle)
 
     @classmethod
@@ -438,16 +485,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if not dj_user.is_active:
             raise BadRequest(_("This user is inactive and cannot reset their password."))
 
-        send_password_reset_email(
-            [dj_user],
-            domain_override=None,
-            subject_template_name='registration/password_reset_subject.txt',
-            email_template_name='registration/password_reset_email.html',
-            use_https=request.is_secure(),
-            token_generator=default_token_generator,
-            request=request,
-        )
-
+        send_password_reset_email([dj_user])
         self.log_throttled_access(request)
         return self.create_response(request, {}, response_class=http.HttpAccepted)
 
@@ -665,12 +703,15 @@ class GroupResource(v0_4.GroupResource):
         always_return_data = True
 
     def serialize(self, request, data, format, options=None):
-        if not isinstance(data, dict):
+        if not isinstance(data, dict) and not self._is_list(request, data):
             if 'error_message' in data.data:
                 data = {'error_message': data.data['error_message']}
             elif request.method == 'POST':
                 data = {'id': data.obj._id}
         return self._meta.serializer.serialize(data, format, options)
+
+    def _is_list(self, request, data):
+        return request.method == 'PATCH' and isinstance(data, list)
 
     def patch_list(self, request=None, **kwargs):
         return super().patch_list_replica(self.obj_create, request, **kwargs)
@@ -704,10 +745,12 @@ class GroupResource(v0_4.GroupResource):
         for key, value in bundle.data.items():
             if key == 'name' and getattr(bundle.obj, key, None) != value:
                 if not Group.by_name(bundle.obj.domain, value):
-                    setattr(bundle.obj, key, value or '')
+                    if not value:
+                        raise BadRequest(_("Name must not be blank"))
+                    setattr(bundle.obj, key, value)
                     should_save = True
                 else:
-                    raise Exception("A group with this name already exists")
+                    raise BadRequest(_("A group with name %s already exists") % value)
             if key == 'users' and getattr(bundle.obj, key, None) != value:
                 users_to_add = set(value) - set(bundle.obj.users)
                 users_to_remove = set(bundle.obj.users) - set(value)
@@ -749,18 +792,21 @@ class GroupResource(v0_4.GroupResource):
     def obj_create(self, bundle, request=None, **kwargs):
         if not Group.by_name(kwargs['domain'], bundle.data.get("name")):
             bundle.obj = Group(bundle.data)
-            bundle.obj.name = bundle.obj.name or ''
+            if not bundle.obj.name:
+                raise AssertionError(_("Name is required"))
             bundle.obj.domain = kwargs['domain']
             bundle.obj.save()
             for user in bundle.obj.users:
                 CommCareUser.get(user).set_groups([bundle.obj._id])
         else:
-            raise AssertionError("A group with name %s already exists" % bundle.data.get("name"))
+            raise AssertionError(_("A group with name %s already exists") % bundle.data.get("name"))
         return bundle
 
     def obj_update(self, bundle, **kwargs):
-        bundle.obj = Group.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
+        try:
+            bundle.obj = self.obj_get(bundle, **kwargs)
+        except ObjectDoesNotExist:
+            raise not_found('Group not found')
         if self._update(bundle):
             assert bundle.obj.domain == kwargs['domain']
             bundle.obj.save()
@@ -1096,6 +1142,7 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         authentication = LoginAuthentication(allow_session_auth=True)
         object_class = UserDomain
         include_resource_uri = False
+        paginator_class = DoesNothingPaginator
 
     def dispatch_list(self, request, **kwargs):
         try:
@@ -1121,10 +1168,20 @@ class UserDomainsResource(ApiVersioningMixin, CorsResourceMixin, Resource):
         can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
         username = request.user.username
+
+        api_key = getattr(request, 'api_key', None)  # HQApiKey set by HQApiKeyAuthentication
+        api_key_domain = getattr(api_key, 'domain', '')
+        oauth_domains = getattr(request, 'oauth_token_domains', None)
+
         results = []
-        for domain in couch_user.get_domains():
-            if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
-                continue
+        if api_key_domain:
+            domains = [api_key_domain]
+        elif oauth_domains:
+            domains = [domain for domain in couch_user.get_domains() if domain in oauth_domains]
+        else:
+            domains = couch_user.get_domains()
+
+        for domain in domains:
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
                 continue

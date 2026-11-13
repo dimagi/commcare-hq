@@ -4,7 +4,6 @@ A collection of functions which test the most basic operations of various servic
 
 import datetime
 import logging
-import re
 import uuid
 from io import BytesIO
 
@@ -12,7 +11,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import cache
 from django.db import connections
-from django.db.utils import OperationalError
 
 import requests
 import urllib3
@@ -65,42 +63,6 @@ def check_redis():
         return ServiceStatus(result, "Redis is up and using {} memory".format(memory))
     else:
         return ServiceStatus(False, "Redis is not configured on this system!")
-
-
-def check_all_rabbitmq():
-    unwell_rabbits = []
-    ip_regex = re.compile(r'[0-9]+.[0-9]+.[0-9]+.[0-9]+')
-
-    for broker_url in settings.CELERY_BROKER_URL.split(';'):
-        check_status, failure = check_rabbitmq(broker_url)
-        if not check_status:
-            failed_rabbit_ip = ip_regex.search(broker_url).group()
-            unwell_rabbits.append((failed_rabbit_ip, failure))
-
-    if not unwell_rabbits:
-        return ServiceStatus(True, 'RabbitMQ OK')
-
-    else:
-        return ServiceStatus(False, "; ".join(["{}:{}".format(rabbit[0], rabbit[1]) for rabbit in unwell_rabbits]))
-
-
-def check_rabbitmq(broker_url):
-    if broker_url.startswith('amqp'):
-        amqp_parts = broker_url.replace('amqp://', '').split('/')
-        mq_management_url = amqp_parts[0].replace('5672', '15672')
-        vhost = amqp_parts[1]
-        try:
-            vhost_dict = requests.get('http://%s/api/vhosts' % mq_management_url, timeout=2).json()
-            for d in vhost_dict:
-                if d['name'] == vhost:
-                    return True, 'RabbitMQ OK'
-            return False, 'RabbitMQ Offline'
-        except Exception as e:
-            return False, "RabbitMQ Error: %s" % e
-    elif settings.CELERY_BROKER_URL.startswith('redis'):
-        return True, "RabbitMQ Not configured, but not needed"
-    else:
-        return False, "RabbitMQ Not configured"
 
 
 @change_log_level('kafka.client', logging.WARNING)
@@ -162,6 +124,18 @@ def check_blobdb():
     return ServiceStatus(False, "Failed to save a file to the blobdb")
 
 
+def check_celery_broker():
+    import redis
+    broker_url = settings.CELERY_BROKER_URL
+    try:
+        client = redis.Redis.from_url(broker_url, socket_connect_timeout=5, socket_timeout=5)
+        client.ping()
+        memory = client.info()['used_memory_human']
+    except Exception as e:
+        return ServiceStatus(False, f"Could not connect to celery broker: {e}")
+    return ServiceStatus(True, f"Celery broker is up and using {memory} memory")
+
+
 def check_celery():
     bad_queues = []
 
@@ -203,7 +177,8 @@ def check_postgres():
         try:
             db_conn.cursor()
             c_status = 'OK'
-        except OperationalError:
+        except Exception:
+            notify_exception(None, message=f"check_postgres failed for {settings.DATABASES[db]['NAME']}")
             c_status = 'FAIL'
             connected = False
         status_str += "%s:%s:%s " % (db, settings.DATABASES[db]['NAME'], c_status)
@@ -287,6 +262,10 @@ CHECKS = {
         "always_check": False,
         "check_func": check_celery,
     },
+    'celery_broker': {
+        "always_check": True,
+        "check_func": check_celery_broker,
+    },
     'elasticsearch': {
         "always_check": True,
         "check_func": check_elasticsearch,
@@ -298,9 +277,5 @@ CHECKS = {
     'formplayer': {
         "always_check": True,
         "check_func": check_formplayer,
-    },
-    'rabbitmq': {
-        "always_check": True,
-        "check_func": check_all_rabbitmq,
     },
 }

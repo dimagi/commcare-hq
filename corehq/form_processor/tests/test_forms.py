@@ -1,21 +1,34 @@
+import pytest
 import uuid
 from datetime import datetime
+from time_machine import travel
+from unittest import mock
 
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
+from corehq.apps.tombstones.models import Tombstone
 from corehq.blobs import NotFound as BlobNotFound, get_blob_db
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, TemporaryS3BlobDB
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 from ..backends.sql.processor import FormProcessorSQL
-from ..exceptions import AttachmentNotFound, XFormNotFound
+from ..exceptions import (
+    AttachmentNotFound,
+    CannotModifyDeletedForm,
+    XFormNotFound,
+)
 from ..interfaces.processor import ProcessedForms
 from ..models import CaseTransaction, XFormInstance, XFormOperation
-from ..tests.utils import FormProcessorTestUtils, create_form_for_test, sharded
+from ..tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
+    leave_tombstones_on_form_deletion,
+    sharded,
+)
 from ..parsers.form import apply_deprecation
 from ..utils import get_simple_form_xml, get_simple_wrapped_form
 from ..utils.xform import TestFormMetadata
@@ -340,35 +353,25 @@ class XFormInstanceManagerTest(TestCase):
         form = manager.get_form('f3')
         self.assertFalse(form.is_deleted)
 
-    def test_hard_delete_forms(self):
-        forms = [create_form_for_test(DOMAIN) for i in range(3)]
-        form_ids = [form.form_id for form in forms]
-        other_form = create_form_for_test('other_domain')
-        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
-        forms = XFormInstance.objects.get_forms(form_ids)
-        self.assertEqual(3, len(forms))
+    def test_get_deleted_form_ids(self):
+        meta = TestFormMetadata(domain=DOMAIN)
+        for form_id in ['d1', 'd2', 'not-deleted']:
+            get_simple_wrapped_form(form_id, metadata=meta)
+        other_domain = 'other-forms-manager'
+        get_simple_wrapped_form(
+            'other-domain', metadata=TestFormMetadata(domain=other_domain))
+        self.addCleanup(FormProcessorTestUtils.delete_all_sql_forms, other_domain)
+        manager = XFormInstance.objects
+        manager.soft_delete_forms(DOMAIN, ['d1', 'd2'])
+        manager.soft_delete_forms(other_domain, ['other-domain'])
 
-        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids[1:] + [other_form.form_id])
-        self.assertEqual(2, deleted)
-        forms = XFormInstance.objects.get_forms(form_ids)
-        self.assertEqual(1, len(forms))
-        self.assertEqual(form_ids[0], forms[0].form_id)
+        deleted_ids = manager.get_deleted_form_ids(
+            DOMAIN, ['d1', 'd2', 'not-deleted', 'other-domain', 'missing'])
 
-    def test_hard_delete_forms_returns_forms_found(self):
-        for i in range(3):
-            create_form_for_test(DOMAIN, form_id=str(i))
+        self.assertEqual(sorted(deleted_ids), ['d1', 'd2'])
 
-        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(DOMAIN, ['0', '1', '2'], return_ids=True))
-
-        self.assertEqual(deleted_form_ids, {'0', '1', '2'})
-
-    def test_hard_delete_forms_does_not_include_missing_form_ids(self):
-        create_form_for_test(DOMAIN, form_id='1')
-        create_form_for_test(DOMAIN, form_id='3')
-
-        deleted_form_ids = set(XFormInstance.objects.hard_delete_forms(DOMAIN, ['1', '2', '3'], return_ids=True))
-
-        self.assertEqual(deleted_form_ids, {'1', '3'})
+    def test_get_deleted_form_ids_of_empty_list(self):
+        self.assertEqual(XFormInstance.objects.get_deleted_form_ids(DOMAIN, []), [])
 
     def assert_form_xml_attachment(self, form):
         attachments = XFormInstance.objects.get_attachments(form.form_id)
@@ -390,63 +393,158 @@ class XFormInstanceManagerTest(TestCase):
         return form
 
 
-class TestHardDeleteFormsBeforeCutoff(TestCase):
+@sharded
+class TestDeletedFormsCannotBeArchived(TestCase):
+    """A deleted form keeps its ``ARCHIVED`` state, so without a guard
+    ``unarchive`` would rebuild its cases from a form the project space
+    can no longer see.
+    """
 
-    def test_form_is_hard_deleted_if_deleted_on_is_before_cutoff(self):
-        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
+    def test_deleted_form_is_still_archived(self):
+        form = self._deleted_form()
+        assert form.is_deleted
+        assert form.is_archived
 
-        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
+    def test_archive_raises(self):
+        form = self._deleted_form()
+        with pytest.raises(CannotModifyDeletedForm):
+            form.archive(user_id='user1')
+        with pytest.raises(CannotModifyDeletedForm):
+            form.unarchive(user_id='user1')
 
-        with self.assertRaises(XFormNotFound):
-            XFormInstance.objects.get_form(form.form_id)
+    def test_unarchive_raises(self):
+        form = self._deleted_form()
+        with pytest.raises(CannotModifyDeletedForm):
+            form.unarchive(user_id='user1')
+        # ensure form is still archived
+        assert XFormInstance.objects.get_form(form.form_id).is_archived
 
-    def test_form_is_not_hard_deleted_if_deleted_on_is_cutoff(self):
-        form = create_form_for_test(self.domain, deleted_on=self.cutoff)
+    def _deleted_form(self):
+        form = create_form_for_test(DOMAIN, state=XFormInstance.ARCHIVED)
+        XFormInstance.objects.soft_delete_forms(DOMAIN, [form.form_id])
+        return XFormInstance.objects.get_form(form.form_id)
 
-        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
 
-        fetched_form = XFormInstance.objects.get_form(form.form_id)
-        self.assertIsNotNone(fetched_form)
-
-    def test_form_is_not_hard_deleted_if_deleted_on_is_after_cutoff(self):
-        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 31))
-
-        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-
-        fetched_form = XFormInstance.objects.get_form(form.form_id)
-        self.assertIsNotNone(fetched_form)
-
-    def test_form_is_not_hard_deleted_if_deleted_on_is_null(self):
-        form = create_form_for_test(self.domain, deleted_on=None)
-
-        XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-
-        fetched_form = XFormInstance.objects.get_form(form.form_id)
-        self.assertIsNotNone(fetched_form)
-
-    def test_returns_deleted_counts(self):
-        expected_count = 5
-        for _ in range(expected_count):
-            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
-
-        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff, dry_run=False)
-
-        self.assertEqual(counts, {'form_processor.XFormInstance': 5})
-
-    def test_nothing_is_deleted_if_dry_run_is_true(self):
-        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1, 12, 29))
-
-        # dry_run defaults to True
-        counts = XFormInstance.objects.hard_delete_forms_before_cutoff(self.cutoff)
-
-        # should not raise XFormNotFound
-        XFormInstance.objects.get_form(form.form_id)
-        # still returns accurate count
-        self.assertEqual(counts, {'form_processor.XFormInstance': 1})
+@sharded
+class TestHardDeleteExpiredForms(TestCase):
 
     def setUp(self):
-        self.domain = 'test_hard_delete_forms_before_cutoff'
-        self.cutoff = datetime(2020, 1, 1, 12, 30)
+        self.domain = 'test_hard_delete_expired_forms'
+
+    def tearDown(self):
+        if settings.USE_PARTITIONED_DATABASE:
+            FormProcessorTestUtils.delete_all_sql_forms(self.domain)
+            FormProcessorTestUtils.delete_all_sql_cases(self.domain)
+        super().tearDown()
+
+    @travel('2020-01-10')
+    def test_only_deletes_expired_form(self):
+        expired_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
+        soft_deleted_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 9))
+        valid_form = create_form_for_test(self.domain)
+
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            count = XFormInstance.objects.hard_delete_expired_forms(commit=True)
+
+        assert count == 1
+        assert XFormInstance.objects.partitioned_get(valid_form.form_id)
+        assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
+        with pytest.raises(XFormInstance.DoesNotExist):
+            assert XFormInstance.objects.partitioned_get(expired_form.form_id)
+
+    @travel('2020-01-10')
+    def test_commit_set_to_false_prevents_deletion(self):
+        expired_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
+        soft_deleted_form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 9))
+        valid_form = create_form_for_test(self.domain)
+
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            count = XFormInstance.objects.hard_delete_expired_forms()
+
+        assert count == 1
+        assert XFormInstance.objects.partitioned_get(valid_form.form_id)
+        assert XFormInstance.objects.partitioned_get(soft_deleted_form.form_id)
+        assert XFormInstance.objects.partitioned_get(expired_form.form_id)
+
+    @travel('2020-01-10')
+    def test_returned_counts(self):
+        for _ in range(5):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 1))
+        for _ in range(3):
+            create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 5))
+        for _ in range(2):
+            create_form_for_test(self.domain)
+
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            dry_run_counts = XFormInstance.objects.hard_delete_expired_forms()
+            actual_counts = XFormInstance.objects.hard_delete_expired_forms(commit=True)
+
+        assert dry_run_counts == 5
+        assert actual_counts == 5
+
+
+@sharded
+@leave_tombstones_on_form_deletion
+class TestHardDeleteForms(TestCase):
+
+    def tearDown(self):
+        if settings.USE_PARTITIONED_DATABASE:
+            FormProcessorTestUtils.delete_all_sql_forms(DOMAIN)
+            FormProcessorTestUtils.delete_all_sql_cases(DOMAIN)
+        super().tearDown()
+
+    def test_only_specified_forms_in_domain_are_deleted(self):
+        form = create_form_for_test(DOMAIN)
+        form_to_keep = create_form_for_test(DOMAIN)
+        other_form = create_form_for_test('other_domain')
+        deleted = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id, other_form.form_id])
+        assert deleted == 1
+        forms = XFormInstance.objects.get_forms([form.form_id, form_to_keep.form_id, other_form.form_id])
+        assert {f.form_id for f in forms} == {form_to_keep.form_id, other_form.form_id}
+
+    def test_tombstone_is_created(self):
+        form = create_form_for_test(DOMAIN)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=True)
+        tombstone = Tombstone.objects.partitioned_get(form.form_id)
+        assert tombstone.doc_id == form.form_id
+        assert tombstone.domain == DOMAIN
+
+    def test_tombstones_are_not_created(self):
+        form = create_form_for_test(DOMAIN)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id], leave_tombstones=False)
+        with pytest.raises(Tombstone.DoesNotExist):
+            Tombstone.objects.partitioned_get(form.form_id)
+
+    def test_returned_count_is_accurate_across_chunks(self):
+        forms = [create_form_for_test(DOMAIN) for _ in range(10)]
+        form_ids = [f.form_id for f in forms]
+
+        with mock.patch('corehq.form_processor.models.forms.BATCH_SIZE', 1):
+            count = XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)
+
+        assert count == 10
+
+    def test_returned_count_is_accurate_with_cascaded_deletes(self):
+        form = create_form_for_test(DOMAIN)
+        XFormOperation.objects.using(form.db).create(
+            form=form, user_id='abc123', operation='test', date=datetime(2026, 6, 1)
+        )
+
+        count = XFormInstance.objects.hard_delete_forms(DOMAIN, [form.form_id])
+
+        assert count == 1
+
+    def test_sentinel_value_deletes_across_domains_and_creates_tombstones(self):
+        from corehq.apps.cleanup.tasks import ALL_DOMAINS_SENTINEL
+        form = create_form_for_test(DOMAIN)
+        other_form = create_form_for_test('other_domain')
+        deleted = XFormInstance.objects.hard_delete_forms(ALL_DOMAINS_SENTINEL, [form.form_id, other_form.form_id])
+        assert deleted == 2
+        for f in [form, other_form]:
+            # should not raise errors
+            Tombstone.objects.partitioned_query(f.form_id).get(
+                doc_id=f.form_id, domain=f.domain, model=XFormInstance
+            )
 
 
 class DeleteAttachmentsFSDBTests(TestCase):
@@ -465,7 +563,6 @@ class DeleteAttachmentsFSDBTests(TestCase):
         self.assertEqual(3, len(forms))
 
         other_form = create_form_for_test('other_domain')
-        self.addCleanup(lambda: XFormInstance.objects.hard_delete_forms('other_domain', [other_form.form_id]))
 
         attachments = sorted(
             get_blob_db().metadb.get_for_parents(form_ids),

@@ -1,0 +1,31 @@
+{% extends "hqwebapp/bootstrap5/two_column.html" %}
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% block title %}{% trans "App no longer supported" %}{% endblock %}
+{% block breadcrumbs %}
+  {% if app %}
+    <li>
+      <a href="{% url "view_app" domain app.id %}">
+        <span>{{ app.name|html_name }}</span>
+      </a>
+    </li>
+  {% endif %}
+{% endblock %}
+{% block page_navigation %}
+  <nav class="appmanager-content">
+    <ul class="nav nav-hq-sidebar"></ul>  {# todo B5: css-nav #}
+  </nav>
+{% endblock %}
+{% block page_content %}
+  <h1>
+    {% blocktrans %}
+      This app is no longer supported
+    {% endblocktrans %}
+  </h1>
+  <p>
+    {% blocktrans %}
+      If you believe this to be in error, please contact support.
+    {% endblocktrans %}
+  </p>
+{% endblock %}

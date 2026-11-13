@@ -106,6 +106,7 @@
                 {% if toggle.help_link %}
                   (<a href="{{ toggle.help_link }}" target="_blank">docs</a>)
                 {% endif %}
+                <br /><code class="text-muted">{{ toggle.slug }}</code>
               </td>
               {% if show_usage %}
                 <td>{{ domain_counts|dict_lookup:toggle.slug }}</td>

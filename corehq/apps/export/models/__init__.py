@@ -1,4 +1,4 @@
-# flake8: noqa
+# ruff: noqa
 from .new import (
     CASE_HISTORY_TABLE,
     MAIN_TABLE,

@@ -17,12 +17,12 @@ dependencies = [
     "bleach", # USH - used for rich text messaging emails
     "bleach[css]", # USH - used for rich text messaging emails
     "boto3",
-    "celery",
+    "celery[redis]",
     "CommcareTranslationChecker>=0.9.7",
-    "cryptography>=43.0.1",
+    "cryptography>=50.0.0",
     "csiphash",
     "datadog",
-    "ddtrace>=2.21.0",
+    "ddtrace>=4.15.6",
     "decorator==5.1.1", # required by django-digest
     "defusedxml",
     "diff-match-patch",
@@ -41,17 +41,15 @@ dependencies = [
     "django-otp",
     "django-phonenumber-field",
     "django-prbac",
-    "django-redis-sessions",
     "django-redis",
     "django-recaptcha",
     "django-statici18n",
     "django-tables2",
     "django-tastypie",
     "django-transfer",
-    "django-two-factor-auth @ git+https://github.com/jazzband/django-two-factor-auth.git@16f688bf329526d897a33594ab598bcd3fc8eaae", # waiting for next release after 1.16.0
+    "django-two-factor-auth",
     "django-user-agents",
-    "django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl",
-    "django>=4.2.16,<5.0",
+    "django~=5.2.17",
     "djangorestframework",
     "dropbox",
     "elasticsearch6>=6.0.0,<7.0.0",
@@ -78,6 +76,7 @@ dependencies = [
     "lxml",
     "markdown",
     "oic",
+    "openai",
     "pulp", # Used in Geospatial features to solve routing problems - SolTech
     "openpyxl",
     "packaging",
@@ -89,7 +88,6 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pycryptodome>=3.6.6", # security update
     "python-dateutil",
-    "python-imap",
     "pyphonetics",
     "python-magic",
     "pytz",
@@ -109,19 +107,15 @@ dependencies = [
     "sh",
     "simpleeval",
     "simplejson",
-    "six",
-    "socketpool",
     "sqlagg",
     "SQLAlchemy",
+    "sqlglot",
     "stripe",
-    "suds-py3",
     "text-unidecode",
     "toposort",
-    "transifex-python",
     "tropo-webapi-python",
     "turn-python",
     "twilio",
-    "werkzeug",
     "xlrd",
     "xlwt",
 ]
@@ -139,15 +133,12 @@ default-groups = ["dev", "sso"]
 dev = [
     'dependency-metrics',
     'django-extensions',
-    'fixture',
     'git-build-branch',
     'gnureadline',
     'ipython', # for nicer django shell experience
     'psutil>5.1.3', # for memory profiling
     'wheel',
-    'flake8>=6.0', # linting/formatting
-    'isort',
-    'yapf',
+    'ruff', # linting, formatting, and import sorting
     {include-group = "test"},
 ]
 docs = [
@@ -156,12 +147,10 @@ docs = [
     "Sphinx",
     "sphinxcontrib-django",
     "sphinx-rtd-theme",
-    "pyOpenSSL", # CI builds fail without OpenSSL
-    "urllib3<=1.26.20", # fix doc tests AssertionError: Current app already created
 ]
 prod = [
     "flower",
-    "setproctitle",
+    "setproctitle", # for gunicorn integration with datadog
     "ipython", # for nicer django shell experience
     "idna",
     "certifi",
@@ -176,7 +165,7 @@ test = [
     'requests-mock',
     'Faker',
     'flaky>=3.8', # required for pytest 8.2 (and possibly earlier versions)
-    'radon>=5.0', # v5 no longer depends on flake8-polyfill
+    'radon>=5.0',
     'time-machine',
     'pytest-django',
     'pytest-unmagic',
@@ -235,3 +224,28 @@ pythonpath = [
 ]
 required_plugins = 'pytest-django'
 DJANGO_SETTINGS_MODULE = 'testsettings'
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 115
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["F403"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501", "E303"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"corehq/apps/hqwebapp/tests/data/bootstrap5_diffs/**" = ["E", "F", "W"]
+
+[tool.pyright]
+typeCheckingMode = "off"
+extraPaths = [
+    "corehq/ex-submodules",
+]

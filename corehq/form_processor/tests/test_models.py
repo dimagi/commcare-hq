@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
-from nose.tools import assert_equal
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -209,7 +208,7 @@ def test_case_to_json():
         ]
     )
     case_dict = case.to_json()
-    assert_equal(case_dict, {
+    assert case_dict == {
         '_id': case_id,
         'actions': [],  # Not replaced by case_json
         'backend_id': 'sql',
@@ -250,7 +249,7 @@ def test_case_to_json():
         'type': 'case',
         'user_id': '',
         'xform_ids': [],
-    })
+    }
 
 
 def test_case_index_to_json():
@@ -264,10 +263,10 @@ def test_case_index_to_json():
         relationship_id=CommCareCaseIndex.EXTENSION,
     )
     index_dict = index.to_json()
-    assert_equal(index_dict, {
+    assert index_dict == {
         'case_id': case_id,
         'identifier': 'host',
         'referenced_type': 'person',
         'referenced_id': 'abc123',
         'relationship': 'extension',
-    })
+    }

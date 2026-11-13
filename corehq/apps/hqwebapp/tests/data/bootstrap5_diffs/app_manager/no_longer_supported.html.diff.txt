@@ -1,0 +1,17 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "hqwebapp/bootstrap3/two_column.html" %}
++{% extends "hqwebapp/bootstrap5/two_column.html" %}
+ {% load i18n %}
+ {% load xforms_extras %}
+ {% load hq_shared_tags %}
+@@ -14,7 +14,7 @@
+ {% endblock %}
+ {% block page_navigation %}
+   <nav class="appmanager-content">
+-    <ul class="nav nav-hq-sidebar"></ul>
++    <ul class="nav nav-hq-sidebar"></ul>  {# todo B5: css-nav #}
+   </nav>
+ {% endblock %}
+ {% block page_content %}

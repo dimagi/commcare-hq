@@ -267,10 +267,8 @@ class CaseCopier:
         if not self.to_owner:
             return [], [_('Must copy cases to valid new owner')]
 
-        original_cases = CommCareCase.objects.get_cases(
-            case_ids,
-            self.domain,
-        )
+        original_cases = [case for case in CommCareCase.objects.get_cases(case_ids)
+                          if case.domain == self.domain]
         if not original_cases:
             return [], []
         self.original_cases = {c.case_id: c for c in original_cases}

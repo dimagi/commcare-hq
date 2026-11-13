@@ -1,0 +1,361 @@
+@import "../../hqwebapp/scss/commcarehq/variables";
+@import "../../hqwebapp/scss/commcarehq/mixins";
+
+$toggle-switch-height: 34px;
+$toggle-switch-width: 60px;
+$slider-padding: 4px;
+$slider-height: $toggle-switch-height - $slider-padding * 2;
+
+.switch {
+  display: inline-block;
+  height: $toggle-switch-height;
+  position: relative;
+  width: $toggle-switch-width;
+
+  input {
+    display: none;
+  }
+}
+
+.slider {
+  background-color: $cc-brand-mid;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
+  transition: 0.4s;
+
+  &::before {
+    background-color: #ffffff;
+    bottom: $slider-padding;
+    content: "";
+    height: $slider-height;
+    left: $slider-padding;
+    position: absolute;
+    transition: 0.4s;
+    width: $slider-height;
+  }
+}
+
+input:checked + .slider {
+  background-color: $cc-brand-mid;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #6c7980;
+}
+
+input:checked + .slider:before {
+  transform: translateX($slider-height);
+}
+
+.slider.round {
+  border-radius: $toggle-switch-height;
+  &::before {
+    border-radius: 50%;
+  }
+}
+
+.switch-label {
+  vertical-align: top;
+  line-height: $toggle-switch-height;
+  font-weight: bold;
+
+  .switch {
+    margin-bottom: -$slider-height * 0.45;
+    margin-left: $slider-padding * 2;
+    margin-right: $slider-padding * 2;
+  }
+}
+
+.refund-text {
+  color: $cc-brand-mid;
+}
+
+.tile {
+  padding: 20px 20px 30px;
+  display: block;
+  position: relative;
+  color: $cc-text;
+  border-radius: 5px;
+  text-align: center;
+
+  .pricing-type {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    height: 1.75em;
+    padding: 1px 4px;
+    border: 1px solid transparent;
+    display: inline-block;
+    transition: all 0.4 ease-in-out;
+  }
+
+  .pricing-type-annual {
+    background-color: $cc-text;
+    color: white !important;
+  }
+
+  .pricing-type-monthly {
+    color: $cc-text;
+    border-color: $cc-text;
+  }
+
+  .btn {
+    text-transform: uppercase;
+    font-weight: bold;
+  }
+
+  .btn-current {
+    border: 1px solid transparent;
+  }
+
+  &:before {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: inherit;
+    bottom: 0;
+    content: " ";
+    display: block;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 99;
+    transition: border 0.4s ease-in-out;
+  }
+
+  &:after { // scss-lint:disable PropertyCount
+    border: 4px solid $cc-brand-mid;
+    border-radius: inherit;
+    bottom: 0;
+    content: " ";
+    display: block;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 99;
+    transition: opacity 0.4s ease-in-out;
+  }
+
+  &:hover,
+  &:focus,
+  *:hover {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.tile:hover:after,
+.tile:focus:after {
+  opacity: 1;
+}
+
+.tile.selected-plan {
+  &:before {
+    border-width: 8px;
+  }
+}
+
+.tile h3 {
+  text-transform: uppercase;
+}
+
+.plan-price {
+  font-weight: bold;
+  font-size: 20px;
+  margin-bottom: 0;
+  margin-top: 10px;
+}
+
+.plan-monthly-label {
+  margin-bottom: 20px;
+}
+
+@mixin _make-color-tile($color-tile) {
+  width: 230px;
+  height: 370px;
+  position: relative;
+
+  &:not(.tile-paused) {
+    @media (max-width: 1199px) {
+      width: 95%;
+    }
+
+    @media (max-width: 939px) {
+      height: 400px;
+    }
+  }
+
+  h3 {
+    color: $color-tile !important;
+  }
+
+  .btn {
+    color: $color-tile !important;
+    position: absolute;
+    bottom: 30px;
+    width: 76%;
+    left: 12%;
+  }
+
+  .btn-current {
+    border-color: $color-tile;
+  }
+
+  .pricing-type-monthly {
+    border-color: $color-tile;
+    color: $color-tile !important;
+  }
+
+  .pricing-type-annual {
+    background-color: $color-tile;
+  }
+
+  .plan-desc {
+    text-align: left;
+  }
+
+  &:before,
+  &:after {
+    border-color: $color-tile;
+  }
+
+  .btn-current {
+    color: $color-tile !important;
+  }
+}
+
+.tile-free {
+  @include _make-color-tile($cc-neutral-mid);
+  .pricing-type {
+    opacity: 0;
+  }
+  .plan-monthly-label {
+    opacity: 0;
+  }
+}
+
+.tile-standard {
+  @include _make-color-tile($cc-att-pos-mid);
+}
+
+.tile-pro {
+  @include _make-color-tile($cc-light-cool-accent-mid);
+}
+
+.tile-advanced {
+  @include _make-color-tile($cc-dark-cool-accent-mid);
+}
+
+.tile-enterprise {
+  @include _make-color-tile($cc-brand-mid);
+}
+
+.select-plan-row {
+  margin-bottom: 20px;
+  margin-top: 20px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.select-plan-col {
+  display: inline-block;
+  width: 240px;
+  text-align: center;
+  vertical-align: top;
+
+  @media (max-width: 1199px) {
+    width: 24%;
+  }
+
+  .tile {
+    margin: 0 auto;
+  }
+}
+
+.plan-next {
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+
+.tile-paused {
+  @include _make-color-tile($cc-neutral-mid);
+
+  width: 475px;
+  height: auto;
+  text-align: left;
+  margin: 0 auto;
+  padding-bottom: 15px;
+  padding-top: 20px;
+
+  h4 {
+    margin-top: 0;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: $cc-neutral-mid;
+
+    &:hover {
+      color: $cc-neutral-mid;
+    }
+  }
+
+  p {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  ul {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+.select-plan-header {
+  text-align: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.confirm-plan-summary {
+  text-align: center;
+
+  .tile {
+    width: 320px;
+    height: auto;
+    margin: 0 auto;
+
+    .plan-included {
+      text-align: left;
+
+      dl {
+        margin-bottom: 0;
+      }
+    }
+
+    &:after {
+      border-color: transparent;
+    }
+  }
+}
+
+.alert-subscription {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.alert-downgrade {
+  width: 505px;
+  margin: 10px auto;
+}
+
+.alert-subscription-text {
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
+}

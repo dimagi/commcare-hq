@@ -3,62 +3,67 @@ from django.core.management.base import BaseCommand
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.linked_domain.const import MODEL_APP
 from corehq.apps.linked_domain.models import DomainLink, DomainLinkHistory
 
 
 class Command(BaseCommand):
-    help = "Unlinks linked project spaces and converts the downstream app into a standalone app."
+    help = "Unlinks applications in a downstream project space"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'linked_app_id',
+            'downstream_app_id',
             help='The ID of the downstream app'
         )
         parser.add_argument(
-            'linked_domain',
+            'downstream_domain',
             help='The name of the downstream project space'
         )
         parser.add_argument(
-            'master_domain',
-            help='The name of the master project space'
+            'upstream_domain',
+            help='The name of the upstream project space'
         )
 
-    def handle(self, linked_app_id, linked_domain, master_domain, **options):
+    def handle(self, downstream_app_id, downstream_domain, upstream_domain, **options):
         try:
-            linked_app = Application.get(linked_app_id)
+            downstream_app = Application.get(downstream_app_id)
         except ResourceNotFound:
-            print('No downstream app found for ID {} '.format(linked_app_id))
+            print('No downstream app found for ID {} '.format(downstream_app_id))
             return
 
-        if linked_app.domain != linked_domain:
-            print("Project space in the app found from ID {} does not match the linked project space "
-                  "that was given.".format(linked_app_id))
+        if not is_linked_app(downstream_app):
+            print(f'App {downstream_app_id} is not a linked app. No changes necessary.')
+            return
+
+        if downstream_app.domain != downstream_domain:
+            print("Project space in the app found from ID {} does not match the downstream project space "
+                  "that was given.".format(downstream_app_id))
             return
 
         confirm = input(
             """
-            Found {} in project space {} linked to project space {}.
+            Found {} in the downstream domain {} linked to {}.
             Are you sure you want to un-link these apps? [y/n]
-            """.format(linked_app.name, linked_domain, master_domain)
+            """.format(downstream_app.name, downstream_domain, upstream_domain)
         )
         if confirm.lower() != 'y':
             return
 
         print('Unlinking apps')
-        linked_app = linked_app.convert_to_application()
-        linked_app.save()
-        self.hide_domain_link_history(linked_domain, linked_app_id, master_domain)
+        downstream_app = downstream_app.convert_to_application()
+        downstream_app.save()
+        self.hide_domain_link_history(downstream_domain, downstream_app_id, upstream_domain)
         print('Operation completed')
 
     @staticmethod
-    def hide_domain_link_history(linked_domain, linked_app_id, master_domain):
-        domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
+    def hide_domain_link_history(downstream_domain, downstream_app_id, upstream_domain):
+        domain_link = DomainLink.all_objects.get(linked_domain=downstream_domain, master_domain=upstream_domain)
         for history in DomainLinkHistory.objects.filter(
             link=domain_link,
             model=MODEL_APP,
         ):
-            if history.model_detail['app_id'] == linked_app_id:
+            if history.model_detail['app_id'] == downstream_app_id:
                 history.hidden = True
                 history.save()
         if not DomainLinkHistory.objects.filter(link=domain_link).exists():

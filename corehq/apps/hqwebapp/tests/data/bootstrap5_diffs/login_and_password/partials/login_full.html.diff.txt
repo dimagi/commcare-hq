@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,13 +1,13 @@
+@@ -1,43 +1,45 @@
  {% load i18n %}
  <div class="container-fluid">
    <div class="row">
@@ -13,7 +13,64 @@
          </div>
          {% if not restrict_domain_creation %}
 -          <div class="well sign-up-bubble form-bubble-purple">
-+          <div class="card sign-up-bubble form-bubble-purple">  {# todo B5: css-well #}
-             <h2>
-               {% blocktrans %}
-                 No account? Sign up today, it's free!
+-            <h2>
+-              {% blocktrans %}
+-                No account? Get started for free.
+-              {% endblocktrans %}
+-            </h2>
+-            {% if not allow_domain_requests %}
+-              <p class="lead">
+-                 {% blocktrans %}
++          <div class="card sign-up-bubble form-bubble-cta">
++            <div class="card-body mt-3">
++              <h2>
++                {% blocktrans %}
++                  No account? Get started for free.
++                {% endblocktrans %}
++              </h2>
++              {% if not allow_domain_requests %}
++                <p class="lead">
++                  {% blocktrans %}
+                     Data collection is just the start. Equip your frontline
+                     team with powerful service delivery apps that work where
+                     you work, even offline. No coding required.
+                   {% endblocktrans %}
+-                  <a target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
++                  <a class="text-decoration-underline" target="_blank" href="https://www.dimagi.com/commcare/">{% trans "Learn more about CommCare." %}</a>
++                </p>
++              {% endif %}
++              <p class="text-center">
++                <a class="btn btn-prelogin btn-lg"
++                  {% if allow_domain_requests %}
++                  href="{% url "domain_request" domain %}"
++                  {% else %}
++                  href="{% url "register_user" %}"
++                  {% endif %}
++                >
++                  {% if allow_domain_requests %}
++                    {% blocktrans %}Request Access to {{ hr_name }}{% endblocktrans %}
++                  {% else %}
++                    {% trans "Sign Up" %}
++                  {% endif %}
++                </a>
+               </p>
+-            {% endif %}
+-            <p class="text-center">
+-              <a class="btn btn-purple btn-lg"
+-                {% if allow_domain_requests %}
+-                 href="{% url "domain_request" domain %}"
+-                {% else %}
+-                 href="{% url "register_user" %}"
+-                {% endif %}
+-              >
+-                {% if allow_domain_requests %}
+-                  {% blocktrans %}Request Access to {{ hr_name }}{% endblocktrans %}
+-                {% else %}
+-                  {% trans "Sign Up" %}
+-                {% endif %}
+-              </a>
+-            </p>
++            </div>
+           </div>
+         {% endif %}
+       </div>

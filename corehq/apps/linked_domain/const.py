@@ -13,14 +13,12 @@ MODEL_CASE_SEARCH = 'case_search_data'
 MODEL_APP = 'app'
 MODEL_REPORT = 'report'
 MODEL_DATA_DICTIONARY = 'data_dictionary'
-MODEL_DIALER_SETTINGS = 'dialer_settings'
-MODEL_OTP_SETTINGS = 'otp_settings'
-MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
 MODEL_KEYWORD = 'keyword'
 MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS = 'tableau_server_and_visualizations'
 MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
 MODEL_AUTO_UPDATE_RULE = 'auto_update_rule'
 MODEL_UCR_EXPRESSION = 'ucr_expression'
+MODEL_CASE_SEARCH_ENDPOINT = 'case_search_endpoint'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, gettext_lazy('Application')),
@@ -29,6 +27,7 @@ INDIVIDUAL_DATA_MODELS = [
     (MODEL_KEYWORD, gettext_lazy('Keyword')),
     (MODEL_UCR_EXPRESSION, gettext_lazy('Data Expressions and Filters')),
     (MODEL_AUTO_UPDATE_RULE, gettext_lazy("Automatic Update Rule")),
+    (MODEL_CASE_SEARCH_ENDPOINT, gettext_lazy('Case Search Endpoint')),
 ]
 
 DOMAIN_LEVEL_DATA_MODELS = [
@@ -46,9 +45,6 @@ SUPERUSER_DATA_MODELS = [
 
 FEATURE_FLAG_DATA_MODELS = [
     (MODEL_CASE_SEARCH, gettext_lazy('Case Search Settings')),
-    (MODEL_DIALER_SETTINGS, gettext_lazy('Dialer Settings')),
-    (MODEL_OTP_SETTINGS, gettext_lazy('OTP Pass-through Settings')),
-    (MODEL_HMAC_CALLOUT_SETTINGS, gettext_lazy('Signed Callout')),
     (MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS, gettext_lazy('Tableau Server and Visualizations')),
     (MODEL_PRODUCT_DATA, gettext_lazy('Custom Product Data Fields')),
 ]
@@ -60,9 +56,7 @@ LINKED_MODELS_MAP = dict(ALL_LINKED_MODELS)
 
 FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_CASE_SEARCH: toggles.SYNC_SEARCH_CASE_CLAIM,
-    MODEL_DIALER_SETTINGS: toggles.WIDGET_DIALER,
-    MODEL_OTP_SETTINGS: toggles.GAEN_OTP_SERVER,
-    MODEL_HMAC_CALLOUT_SETTINGS: toggles.HMAC_CALLOUT,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: toggles.EMBEDDED_TABLEAU,
     MODEL_PRODUCT_DATA: toggles.COMMTRACK,
+    MODEL_CASE_SEARCH_ENDPOINT: toggles.CASE_SEARCH_ENDPOINTS,
 }

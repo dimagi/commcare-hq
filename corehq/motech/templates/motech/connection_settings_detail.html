@@ -6,7 +6,11 @@
 {% js_entry "motech/js/connection_settings_detail" %}
 
 {% block page_content %}
-  {% registerurl "test_connection_settings" domain %}
+  {% if form.instance.pk %}
+    {% registerurl "test_connection_settings" domain form.instance.pk %}
+  {% else %}
+    {% registerurl "test_connection_settings" domain %}
+  {% endif %}
 
   <h2>{% trans "Add Connection Settings" %}</h2>
   <div class="spacer"></div>

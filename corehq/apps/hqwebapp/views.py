@@ -1,25 +1,20 @@
 import json
 import logging
 import os
-import pytz
 import re
 import sys
 import traceback
 import uuid
 from datetime import datetime
 from urllib.parse import urlparse
-from oauth2_provider.models import get_application_model
 
-import httpagentparser
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LogoutView
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.forms import modelform_factory
 from django.http import (
     Http404,
     HttpResponse,
@@ -44,23 +39,35 @@ from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
+import httpagentparser
+import pytz
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.utils import default_device
 from two_factor.views import LoginView
 
-from corehq.apps.accounting.decorators import (
-    always_allow_project_access,
-)
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
+from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.logging import notify_error, notify_exception
+from dimagi.utils.web import get_url_base
+from soil import DownloadBase
+from soil import views as soil_views
+
+from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
-from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_build_id
+from corehq.apps.app_manager.dbaccessors import (
+    get_app_cached,
+    get_latest_released_build_id,
+)
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
+    login_required,
     require_superuser,
     track_domain_request,
     two_factor_exempt,
@@ -79,22 +86,36 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
-from corehq.apps.hqwebapp.decorators import waf_allow, use_bootstrap5
+from corehq.apps.hqwebapp.chat_access import require_chatbot_enabled
+from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
+from corehq.apps.hqwebapp.chat_usage import (
+    fetch_chat_usage_from_ocs,
+    get_cached_chat_usage,
+    increment_chat_usage,
+)
+from corehq.apps.hqwebapp.decorators import use_bootstrap5, waf_allow
 from corehq.apps.hqwebapp.doc_info import get_doc_info
 from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.encoders import LazyEncoder
+from corehq.apps.hqwebapp.exceptions import ChatUsageUnavailable
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
     HQAuthenticationTokenForm,
-    HQBackupTokenForm
+    HQBackupTokenForm,
 )
-from corehq.apps.hqwebapp.models import HQOauthApplication, ServerLocation
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
+from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
-from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version
+from corehq.apps.hqwebapp.utils.bootstrap import (
+    get_bootstrap_version,
+    set_bootstrap_version5,
+)
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
@@ -108,21 +129,13 @@ from corehq.util.metrics import (
     metrics_counter,
     metrics_gauge,
 )
-from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
+from corehq.util.metrics.const import MPM_MAX, TAG_UNKNOWN
 from corehq.util.metrics.utils import sanitize_url
-from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.public_only_requests.public_only_requests import (
+    get_public_only_session,
+)
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse, set_language_cookie
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.sso.utils.domain_helpers import is_domain_using_sso
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
-from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception, notify_error
-from dimagi.utils.web import get_url_base
-from soil import DownloadBase
-from soil import views as soil_views
 
 
 def is_deploy_in_progress():
@@ -199,6 +212,29 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
+@login_and_domain_required
+@require_chatbot_enabled
+@require_http_methods(['GET', 'POST'])
+def chat_quota(request, domain):
+    couch_user = getattr(request, 'couch_user')
+
+    limit = get_chatbot_message_quota(couch_user)
+    if limit == UNLIMITED or limit == 0:
+        return JsonResponse({'limit': limit, 'used': None})
+
+    refresh = request.GET.get('refresh', 'false') == 'true'
+    try:
+        if request.method == 'POST':
+            used = increment_chat_usage(couch_user.user_id)
+        elif refresh:
+            used = fetch_chat_usage_from_ocs(couch_user.user_id)
+        else:
+            used = get_cached_chat_usage(couch_user.user_id)
+    except ChatUsageUnavailable:
+        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    return JsonResponse({'limit': limit, 'used': used})
+
+
 @require_GET
 @location_safe
 @always_allow_project_access
@@ -211,9 +247,10 @@ def redirect_to_default(req, domain=None):
         return HttpResponseRedirect(url)
 
     if domain and _two_factor_needed(domain, req):
+        set_bootstrap_version5()
         return TemplateResponse(
             request=req,
-            template='two_factor/core/bootstrap3/otp_required.html',
+            template='two_factor/core/bootstrap5/otp_required.html',
             status=403,
         )
 
@@ -276,7 +313,7 @@ def _two_factor_needed(domain_name, request):
         )
 
 
-@login_required()
+@login_required
 def password_change(req):
     user_to_edit = User.objects.get(id=req.user.id)
     if req.method == 'POST':
@@ -397,7 +434,10 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    template_name = custom_login_page if custom_login_page else 'login_and_password/bootstrap3/login.html'
+    if not custom_login_page:
+        # hold off on activating bootstrap 5 on custom login pages
+        set_bootstrap_version5()
+    template_name = custom_login_page if custom_login_page else 'login_and_password/bootstrap5/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
@@ -531,7 +571,7 @@ class HQLoginView(LoginView):
         is_domain_login = self.extra_context.get('domain')
         # also check the next param, because domain or other server-specific ids can exist there
         has_next_url = self.request.GET.get('next')
-        return (env in ServerLocation.ENVS
+        return (env in ServerLocation.get_envs()
                 and not is_domain_login
                 and not has_next_url)
 
@@ -539,6 +579,8 @@ class HQLoginView(LoginView):
         kwargs = super().get_form_kwargs(step)
         # The forms need the request to properly log authentication failures
         kwargs.setdefault('request', self.request)
+        if step == self.AUTH_STEP:
+            kwargs['can_select_server'] = self.can_select_server()
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -552,7 +594,7 @@ class HQLoginView(LoginView):
         context['can_select_server'] = self.can_select_server()
         if self.can_select_server():
             context['server_choices'] = [
-                server for env, server in ServerLocation.ENVS.items()
+                server for env, server in ServerLocation.get_envs().items()
                 if env != settings.SERVER_ENVIRONMENT
             ]
         if domain and not is_domain_using_sso(domain):
@@ -1476,65 +1518,6 @@ def log_email_event(request, secret, domain=None):
     return HttpResponse()
 
 
-@method_decorator(require_superuser, name="dispatch")
-class OauthApplicationRegistration(BasePageView):
-    urlname = 'oauth_application_registration'
-    page_title = "Oauth Application Registration"
-    template_name = "hqwebapp/bootstrap3/oauth_application_registration_form.html"
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname)
-
-    @property
-    def base_application_form(self):
-        return modelform_factory(
-            get_application_model(),
-            fields=(
-                "name",
-                "client_id",
-                "client_secret",
-                "client_type",
-                "authorization_grant_type",
-                "redirect_uris",
-            ),
-        )
-
-    @property
-    def hq_application_form(self):
-        return modelform_factory(
-            HQOauthApplication,
-            fields=(
-                "pkce_required",
-            ),
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if 'forms' not in kwargs:
-            context['forms'] = [self.base_application_form(), self.hq_application_form()]
-        return context
-
-    def post(self, request, *args, **kwargs):
-
-        base_application_form = self.base_application_form(data=self.request.POST)
-        hq_application_form = self.hq_application_form(data=self.request.POST)
-
-        if base_application_form.is_valid() and hq_application_form.is_valid():
-            base_application_form.instance.user = self.request.user
-            base_application = base_application_form.save()
-            HQOauthApplication.objects.create(
-                application=base_application,
-                **hq_application_form.cleaned_data,
-            )
-        else:
-            return self.render_to_response(self.get_context_data(
-                forms=[base_application_form, hq_application_form]
-            ))
-
-        return HttpResponseRedirect(reverse('oauth2_provider:detail', args=[str(base_application.id)]))
-
-
 @csrf_exempt
 @require_POST
 def check_sso_login_status(request):
@@ -1544,7 +1527,7 @@ def check_sso_login_status(request):
     :param request: HttpRequest
     :return: HttpResponse (as JSON)
     """
-    username = request.POST['username']
+    username = request.POST['username'].lower()
     is_sso_required = False
     sso_url = None
     continue_text = None

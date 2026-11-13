@@ -14,7 +14,7 @@ from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
-from corehq.apps.accounting.models import Subscription
+from corehq.apps.accounting.models import BillingContactInfo, Subscription
 from corehq.apps.celery import task
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
@@ -215,8 +215,12 @@ class _UsageInfo:
             info.update({
                 "domain_subscription_service_type": subscription.service_type,
                 "domain_subscription_plan": subscription.plan_version.plan.name,
-                "domain_billing_contacts": ','.join(subscription.account.billingcontactinfo.email_list),
             })
+            try:
+                contact_info = BillingContactInfo.objects.get(account=subscription.account)
+                info["domain_billing_contacts"] = ','.join(contact_info.email_list),
+            except BillingContactInfo.DoesNotExist:
+                info["domain_billing_contacts"] = ''
         return info
 
     @memoized

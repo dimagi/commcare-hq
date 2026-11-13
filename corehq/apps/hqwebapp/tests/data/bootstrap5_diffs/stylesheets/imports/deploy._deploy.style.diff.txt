@@ -1,0 +1,34 @@
+--- 
++++ 
+@@ -1,6 +1,5 @@
+ // Deploy page
+ #releases-table {
+-
+   .pending img {
+     width: 20px;
+     height: 20px;
+@@ -8,12 +7,19 @@
+ 
+   .released {
+     color: #ffff00;
+-    text-shadow: 1px 0px #ffa500, -1px 0px #ffa500, 0px 1px #ffa500, 0px -1px #ffa500;
++    text-shadow:
++      1px 0px #ffa500,
++      -1px 0px #ffa500,
++      0px 1px #ffa500,
++      0px -1px #ffa500;
+   }
+ }
+ 
+-// Icons in deploy modal panels
+-.panel-title i {
+-    width: 18px;
+-    text-align: center;
++#deploy-build-modal-template .icon-link > i {
++  width: 1rem;
++  text-align: center;
+ }
++
++#new-app-start .helpbubble {
++  max-width: 300px;
++}

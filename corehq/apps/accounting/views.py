@@ -18,6 +18,7 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.generic import View
@@ -27,23 +28,17 @@ from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Grant, Role
 from memoized import memoized
 
-from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
-from corehq.apps.accounting.utils.invoicing import (
-    get_oldest_overdue_invoice_over_threshold,
-)
-from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
-from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
-from corehq.toggles import ACCOUNTING_TESTING_TOOLS
+from dimagi.utils.web import json_response
 
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import (
     AccountFilterAsyncHandler,
     BillingContactInfoAsyncHandler,
+    CustomerInvoiceNumberAsyncHandler,
     DomainFilterAsyncHandler,
     FeatureRateAsyncHandler,
     InvoiceBalanceAsyncHandler,
     InvoiceNumberAsyncHandler,
-    CustomerInvoiceNumberAsyncHandler,
     Select2BillingInfoHandler,
     Select2CustomerInvoiceTriggerHandler,
     Select2InvoiceTriggerHandler,
@@ -52,23 +47,26 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
+    WireInvoiceNumberAsyncHandler,
 )
 from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     CreditLineError,
     InvoiceError,
     NewSubscriptionError,
-    SubscriptionAdjustmentError,
 )
 from corehq.apps.accounting.forms import (
     AdjustBalanceForm,
     BillingAccountBasicForm,
     BillingAccountContactForm,
+    BulkUpgradeToLatestVersionForm,
     CancelForm,
+    CancelScheduledInvoiceForm,
     ChangeSubscriptionForm,
     CreateAdminForm,
     CreditForm,
     FeatureRateForm,
+    GeneratePrepaymentInvoiceForm,
     HideInvoiceForm,
     InvoiceInfoForm,
     PlanInformationForm,
@@ -80,18 +78,19 @@ from corehq.apps.accounting.forms import (
     SuppressInvoiceForm,
     SuppressSubscriptionForm,
     TestReminderEmailFrom,
+    TriggerAutopaymentsForm,
+    TriggerAutoRenewalForm,
     TriggerBookkeeperEmailForm,
     TriggerCustomerInvoiceForm,
-    TriggerInvoiceForm,
     TriggerDowngradeForm,
-    TriggerAutopaymentsForm,
-    BulkUpgradeToLatestVersionForm,
+    TriggerInvoiceForm,
     TriggerRemovedSsoUserAutoDeactivationForm,
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     CustomerInvoiceInterface,
     InvoiceInterface,
+    ScheduledInvoiceInterface,
     SoftwarePlanInterface,
     SubscriptionInterface,
     WireInvoiceInterface,
@@ -104,22 +103,31 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     Invoice,
     InvoicePdf,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
     SoftwarePlan,
     SoftwarePlanVersion,
     StripePaymentMethod,
     Subscription,
     WireInvoice,
 )
+from corehq.apps.accounting.payment_handlers import (
+    AutoPayInvoicePaymentHandler,
+)
+from corehq.apps.accounting.tasks import auto_renew_subscriptions
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict,
     fmt_product_rate_dict,
     has_subscription_already_ended,
     log_accounting_error,
 )
-from corehq.apps.domain.decorators import (
-    require_superuser,
+from corehq.apps.accounting.utils.invoicing import (
+    get_oldest_overdue_invoice_over_threshold,
 )
+from corehq.apps.accounting.utils.unpaid_invoice import Downgrade
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.views.accounting import (
+    PAYMENT_ERROR_MESSAGES,
     DomainBillingStatementsView,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -127,6 +135,8 @@ from corehq.apps.hqwebapp.views import (
     BaseSectionPageView,
     CRUDPaginatedViewMixin,
 )
+from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
+from corehq.toggles import ACCOUNTING_TESTING_TOOLS
 
 
 @require_superuser
@@ -503,7 +513,7 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             self.cancel_subscription()
             messages.success(request, "The subscription has been cancelled.")
         elif SuppressSubscriptionForm.submit_kwarg in self.request.POST and self.suppress_form.is_valid():
-            self.suppress_subscription()
+            self.subscription.suppress_subscription()
             return HttpResponseRedirect(SubscriptionInterface.get_url())
         elif 'subscription_change_note' in self.request.POST and self.change_subscription_form.is_valid():
             try:
@@ -521,16 +531,6 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             web_user=self.request.user.username,
         )
         self.subscription_canceled = True
-
-    def suppress_subscription(self):
-        if self.subscription.is_active:
-            raise SubscriptionAdjustmentError(
-                "Cannot suppress active subscription, id %d"
-                % self.subscription.id
-            )
-        else:
-            self.subscription.is_hidden_to_ops = True
-            self.subscription.save()
 
 
 class NewSoftwarePlanView(AccountingSectionView):
@@ -717,6 +717,74 @@ class SoftwarePlanVersionView(AccountingSectionView):
         )
 
 
+class CancelScheduledInvoiceView(AccountingSectionView):
+    urlname = 'accounting_cancel_scheduled_invoice'
+    page_title = "Cancel Scheduled Invoice"
+    template_name = 'accounting/cancel_scheduled_invoice.html'
+
+    @property
+    @memoized
+    def scheduled_invoice(self):
+        try:
+            return ScheduledPrepaymentInvoice.objects.get(
+                id=self.kwargs['scheduled_invoice_id']
+            )
+        except ScheduledPrepaymentInvoice.DoesNotExist:
+            raise Http404()
+
+    @property
+    @memoized
+    def cancel_form(self):
+        if self.request.method == 'POST':
+            return CancelScheduledInvoiceForm(self.scheduled_invoice, self.request.POST)
+        return CancelScheduledInvoiceForm(self.scheduled_invoice)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': ScheduledInvoiceInterface.name,
+            'url': self.report_url,
+        }]
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.scheduled_invoice.id])
+
+    @property
+    def report_url(self):
+        return ScheduledInvoiceInterface.get_url()
+
+    @property
+    def page_context(self):
+        return {
+            'scheduled_invoice': self.scheduled_invoice,
+            'cancel_form': self.cancel_form,
+            'is_pending': (
+                self.scheduled_invoice.status
+                == ScheduledPrepaymentInvoiceStatus.PENDING
+            ),
+        }
+
+    def post(self, request, *args, **kwargs):
+        scheduled = self.scheduled_invoice
+        if scheduled.status != ScheduledPrepaymentInvoiceStatus.PENDING:
+            messages.error(
+                request,
+                f"That invoice is {scheduled.get_status_display().lower()}, "
+                f"so there is nothing to cancel."
+            )
+            return HttpResponseRedirect(self.report_url)
+        if self.cancel_form.is_valid():
+            self.cancel_form.cancel(cancelled_by=request.couch_user.username)
+            messages.success(
+                request,
+                f"Cancelled the prepayment invoice scheduled for "
+                f"{scheduled.domain} on {scheduled.send_date}."
+            )
+            return HttpResponseRedirect(self.report_url)
+        return self.get(request, *args, **kwargs)
+
+
 class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_invoice'
     page_title = "Trigger Invoice"
@@ -763,6 +831,54 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
             except (CreditLineError, InvoiceError, ObjectDoesNotExist) as e:
                 messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
+
+
+class GeneratePrepaymentInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+
+    urlname = 'accounting_generate_prepayment_invoice'
+    page_title = "Generate Prepayment Invoice"
+    template_name = 'accounting/generate_prepayment_invoice.html'
+    async_handlers = [
+        Select2InvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def prepayment_form(self):
+        if self.request.method == 'POST':
+            return GeneratePrepaymentInvoiceForm(self.request.POST)
+        return GeneratePrepaymentInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'prepayment_form': self.prepayment_form,
+            'payment_error_messages': PAYMENT_ERROR_MESSAGES,
+            'user_email': self.request.couch_user.username,
+            'can_schedule_prepayment_invoice': True,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+
+        form = self.prepayment_form
+        if not form.is_valid():
+            return json_response({'error': {'message': form.get_error_message()}})
+
+        try:
+            scheduled = form.save(form.cleaned_data['domain'], request.couch_user)
+        except InvoiceError as e:
+            return json_response({'error': {'message': str(e)}})
+
+        response = {'success': True}
+        if scheduled is not None:
+            response['send_date'] = scheduled.send_date.isoformat()
+        return json_response(response)
 
 
 class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
@@ -1215,6 +1331,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         SoftwarePlanAsyncHandler,
         InvoiceNumberAsyncHandler,
         CustomerInvoiceNumberAsyncHandler,
+        WireInvoiceNumberAsyncHandler,
         InvoiceBalanceAsyncHandler,
     ]
 
@@ -1320,6 +1437,32 @@ class TriggerAutopaymentsView(BaseTriggerAccountingTestView):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerAutoRenewalView(BaseTriggerAccountingTestView):
+    urlname = 'accounting_test_auto_renew'
+    page_title = "Trigger Subscription Auto-Renewal"
+
+    @property
+    @memoized
+    def trigger_form(self):
+        if self.request.method == 'POST':
+            return TriggerAutoRenewalForm(self.request.POST)
+        return TriggerAutoRenewalForm()
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_form.is_valid():
+            domain = self.trigger_form.cleaned_data['domain']
+            auto_renew_subscriptions(domain)
+            messages.success(
+                request,
+                f'Successfully triggered subscription auto-renewal for "{domain}". '
+                'Any eligible subscriptions for this project will be automatically renewed.',
+            )
+            return HttpResponseRedirect(reverse(self.urlname))
+        return self.get(request, *args, **kwargs)
+
+
 class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
     urlname = 'accounting_test_deactivation'
     page_title = "Trigger Auto Deactivation of Removed SSO Users"
@@ -1338,7 +1481,7 @@ class TriggerRemovedSsoUserAutoDeactivationView(BaseTriggerAccountingTestView):
             auto_deactivate_removed_sso_users()
             messages.success(
                 request,
-                format_html(
+                mark_safe(  # nosec: no user input
                     'Successfully triggered auto deactivation of web users'
                 )
             )

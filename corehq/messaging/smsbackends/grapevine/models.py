@@ -14,7 +14,7 @@ from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
 import logging
 import requests
-import six
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class UrlencodedDeserializer(Serializer):
     def from_urlencode(self, data, options=None):
         """ handles basic form encoded url posts """
         qs = dict((k, v if len(v) > 1 else v[0])
-            for k, v in six.moves.urllib.parse.parse_qs(data).items())
+            for k, v in urllib.parse.parse_qs(data).items())
 
         return qs
 
@@ -231,13 +231,11 @@ class GrapevineResource(Resource):
 
         root = ElementTree.fromstring(xml)
         if root.tag == 'gviSms':
-            date_string = root.find('smsDateTime').text
             phone_number = root.find('cellNumber').text
             content_text = root.find('content').text
             bundle.obj = SmsMessage(phone_number, content_text)
 
         elif root.tag == 'gviSmsResponse':
-            date_string = root.find('responseDateTime').text
             phone_number = root.find('recipient/msisdn').text
             resp_type = root.find('responseType').text  # receipt, reply or error
 

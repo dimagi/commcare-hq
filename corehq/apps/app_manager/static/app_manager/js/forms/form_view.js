@@ -3,12 +3,12 @@ import $ from "jquery";
 import ko from "knockout";
 import _ from "underscore";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import appManagerUtils from "app_manager/js/app_manager";
+import appManagerUtils from "app_manager/js/bootstrap5/app_manager";
 import noopMetrics from "analytix/js/noopMetrics";
-import formWorkflow from "app_manager/js/forms/form_workflow";
+import formWorkflow from "app_manager/js/forms/bootstrap5/form_workflow";
 import toggles from "hqwebapp/js/toggles";
 import customInstancesModule from "app_manager/js/forms/custom_instances";
-import "app_manager/js/nav_menu_media";
+import "app_manager/js/bootstrap5/nav_menu_media";
 import "app_manager/js/forms/copy_form_to_app";
 import "app_manager/js/forms/case_knockout_bindings";  // casePropertyAutocomplete and questionsSelect
 import "app_manager/js/forms/case_config_ui";  // non-advanced modules only
@@ -17,8 +17,9 @@ import "app_manager/js/xpathValidator";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/pagination";
 import "hqwebapp/js/components/search_box";
-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // sortable binding
+import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // sortable binding
 import casePropertyWarningViewModel from "data_dictionary/js/partials/case_property_warning";
+import { customIconManager } from "app_manager/js/custom_icon";
 
 appManagerUtils.setPrependedPageTitle("\u2699 ", true);
 appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
@@ -64,32 +65,8 @@ function formFilterModel() {
         return false;
     });
 
-    self.isUsercaseInUse = ko.observable(initialPageData.get('is_usercase_in_use'));
-    self.usercaseReferenceNotAllowed = ko.computed(function () {
-        return !self.isUsercaseInUse() && formFilterMatches(
-            self.formFilter(), patterns.usercase_substring,
-        );
-    });
-
-    self.enableUsercaseInProgress = ko.observable(false);
-    self.enableUsercaseError = ko.observable();
-    self.enableUsercase = function () {
-        self.enableUsercaseInProgress(true);
-        const url = initialPageData.reverse("enable_usercase");
-        $.ajax(url, {
-            method: "POST",
-            success: function () {
-                self.isUsercaseInUse(true);
-            },
-            error: function () {
-                self.enableUsercaseInProgress(false);
-                self.enableUsercaseError(gettext("Could not enable user properties, please try again later."));
-            },
-        });
-    };
-
     self.allowed = ko.computed(function () {
-        return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.usercaseReferenceNotAllowed();
+        return !self.formFilter() || !self.caseReferenceNotAllowed();
     });
 
     return self;
@@ -168,16 +145,13 @@ $(function () {
         $('#custom-instances').koApplyBindings(customInstances);
     }
 
-    // Case Management > Data dictionary descriptions for case properties
-    $('.property-description').popover();
-
-
     var $casePropertyWarning = $('#case-property-warning');
-    const initialWarningData = initialPageData.get('case_property_warning');
-    const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
-    warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
-    $casePropertyWarning.koApplyBindings(warningViewModel);
-
+    if ($casePropertyWarning.length > 0) {
+        const initialWarningData = initialPageData.get('case_property_warning');
+        const warningViewModel = new casePropertyWarningViewModel(initialWarningData.limit);
+        warningViewModel.updateViewModel(initialWarningData.type, initialWarningData.count);
+        $casePropertyWarning.koApplyBindings(warningViewModel);
+    }
 
     // Advanced > XForm > Upload
     $("#xform_file_input").change(function () {
@@ -187,4 +161,6 @@ $(function () {
             $("#xform_file_submit").hide();
         }
     }).trigger('change');
+
+    customIconManager().init();
 });

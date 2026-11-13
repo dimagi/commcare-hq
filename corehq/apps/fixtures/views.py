@@ -35,6 +35,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
+from corehq.apps.fixtures.const import LOOKUP_TABLE_TAG_MAX_LENGTH
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.download import prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
@@ -62,7 +63,6 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import HqPermissions
 from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
-from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
 
@@ -128,8 +128,10 @@ def update_tables(request, domain, data_type_id=None):
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
         validation_errors = [_(INVALID_NAME_ERROR) % repr(e) for e in validation_errors]
-        if len(data_tag) < 1 or len(data_tag) > 31:
-            validation_errors.append(_("Table ID must be between 1 and 31 characters."))
+        if len(data_tag) < 1 or len(data_tag) > LOOKUP_TABLE_TAG_MAX_LENGTH:
+            validation_errors.append(_(
+                "Table ID must be between 1 and %(max_length)s characters."
+            ) % {"max_length": LOOKUP_TABLE_TAG_MAX_LENGTH})
 
         if validation_errors:
             return json_response({
@@ -324,7 +326,6 @@ class UploadItemLists(TemplateView):
             self.domain,
             file_ref.download_id,
             replace,
-            SKIP_ORM_FIXTURE_UPLOAD.enabled(self.domain),
         )
         file_ref.set_task(task)
         return HttpResponseRedirect(
@@ -468,7 +469,7 @@ def fixture_api_upload_status(request, domain, download_id, **kwargs):
 
 def _upload_fixture_api(request, domain):
     try:
-        excel_file, replace, is_async, skip_orm, email = _get_fixture_upload_args_from_request(request, domain)
+        excel_file, replace, is_async, email = _get_fixture_upload_args_from_request(request, domain)
     except FixtureAPIRequestError as e:
         return UploadFixtureAPIResponse('fail', str(e))
 
@@ -486,7 +487,6 @@ def _upload_fixture_api(request, domain):
                     domain,
                     download_id,
                     replace,
-                    skip_orm,
                     user_email=email
                 )
                 file_ref.set_task(task)
@@ -558,11 +558,7 @@ def _get_fixture_upload_args_from_request(request, domain):
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
-    skip_orm = False
-    if request.POST.get('skip_orm') == 'true' and SKIP_ORM_FIXTURE_UPLOAD.enabled(domain):
-        skip_orm = True
-
-    return _excel_upload_file(upload_file), replace, is_async, skip_orm, user_email
+    return _excel_upload_file(upload_file), replace, is_async, user_email
 
 
 @login_and_domain_required

@@ -19,7 +19,7 @@ from corehq.util.metrics.load_counters import case_load_counter
 logger = logging.getLogger(__name__)
 
 
-@task(bind=True, queue='case_import_queue')
+@task(bind=True, queue='case_import_queue', durable=True)
 def commit_data_cleaning(self, bulk_edit_session_id):
     if not _claim_bulk_edit_session_for_task(self, bulk_edit_session_id):
         return []
@@ -120,9 +120,14 @@ def _create_case_blocks(session, records):
     blocks = []
     errored_doc_ids = []
     case_ids = [rec.doc_id for rec in records]
-    cases = {c.case_id: c for c in CommCareCase.objects.get_cases(case_ids, session.domain)}
+    cases = {c.case_id: c
+             for c in CommCareCase.objects.get_cases(case_ids)
+             if c.domain == session.domain}
     for record in records:
-        case = cases[record.doc_id]
+        try:
+            case = cases[record.doc_id]
+        except KeyError:
+            continue  # case not in domain or does not exist
         try:
             update = record.get_edited_case_properties(case)
         except Exception as error:  # todo: catch specific errors seen with case interactions

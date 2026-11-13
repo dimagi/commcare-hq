@@ -11,11 +11,10 @@ from crispy_forms.helper import FormHelper
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.linked_domain.models import DomainLink
 
+from .const import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .dbaccessors import get_all_built_app_ids_and_versions
-from .models import LATEST_APK_VALUE, LATEST_APP_VALUE
 from .util import get_commcare_builds
 from ..hqwebapp.widgets import BootstrapCheckboxInput
 from ..linked_domain.util import can_domain_access_linked_domains
@@ -61,17 +60,29 @@ class CopyApplicationForm(forms.Form):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
-        self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-md-3 col-lg-4 col-xl-2'
+        self.helper.field_class = 'col-md-9 col-lg-8 col-xl-6'
+
+        legend_text = _('Copy Application for Editing') if is_linked_app(app) else _('Copy Application')
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Copy Application for Editing') if is_linked_app(app) else _('Copy Application'),
-                *fields
+                None,
+                crispy.HTML(f'<legend class="card-header fs-5 py-3 lh-sm">{legend_text}</legend>'),
+                crispy.Div(
+                    *fields,
+                    css_class="card-body",
+                )
             ),
             crispy.Hidden('app', app.get_id),
-            hqcrispy.FormActions(
-                StrictButton(_('Copy'), type='button', css_class='btn-primary')
-            )
+            crispy.Div(
+                StrictButton(
+                    _('Copy'),
+                    type='button',
+                    css_class='btn-primary disable-on-submit',
+                ),
+                css_class="card-footer py-3",
+            ),
         )
 
     def clean_domain(self):

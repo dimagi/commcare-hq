@@ -47,10 +47,7 @@ def _get_peer_rating_cases(session_case):
         session_case.domain,
         [session_case.case_id],
     )
-    extension_cases = CommCareCase.objects.get_cases(
-        case_ids,
-        session_case.domain,
-    )
+    extension_cases = CommCareCase.objects.get_cases(case_ids)
     peer_rating_cases = [
         case for case in extension_cases
         if case.type == PEER_RATING_CASE_TYPE

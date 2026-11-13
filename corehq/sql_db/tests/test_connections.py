@@ -63,7 +63,8 @@ class ConnectionManagerTests(SimpleTestCase):
         manager = ConnectionManager()
         self.assertEqual(manager.engine_id_django_db_map, {
             'default': 'default',
-            'ucr': 'default'
+            'ucr': 'default',
+            'project_db': 'default',  # dev/test fallback
         })
 
     @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS, 'ucr': 'ucr', 'other': 'other'})
@@ -72,8 +73,24 @@ class ConnectionManagerTests(SimpleTestCase):
         self.assertEqual(manager.engine_id_django_db_map, {
             'default': 'default',
             'ucr': 'ucr',
-            'other': 'other'
+            'other': 'other',
+            'project_db': 'default',  # dev/test fallback
         })
+
+    @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS, 'project_db': 'other'})
+    def test_project_db_opt_in(self):
+        manager = ConnectionManager()
+        self.assertEqual(manager.engine_id_django_db_map, {
+            'default': 'default',
+            'ucr': 'default',
+            'project_db': 'other',
+        })
+
+    @override_settings(REPORTING_DATABASES={'default': DEFAULT_DB_ALIAS}, DEBUG=False, UNIT_TESTING=False)
+    def test_project_db_absent_without_fallback(self):
+        # Real environments (not dev/test) must configure project_db explicitly
+        manager = ConnectionManager()
+        self.assertNotIn('project_db', manager.engine_id_django_db_map)
 
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
@@ -89,6 +106,7 @@ class ConnectionManagerTests(SimpleTestCase):
             self.assertEqual(manager.engine_id_django_db_map, {
                 'default': 'default',
                 'ucr': 'ucr',
+                'project_db': 'default',  # dev/test fallback
             })
 
             # test that load balancing works with a 10% margin for randomness
@@ -125,6 +143,7 @@ class ConnectionManagerTests(SimpleTestCase):
             self.assertEqual(manager.engine_id_django_db_map, {
                 'default': 'default',
                 'ucr': 'ucr',
+                'project_db': 'default',  # dev/test fallback
             })
 
             urls = {

@@ -4,18 +4,20 @@ from django.template.defaultfilters import filesizeformat
 from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain, get_app_cached
-from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.decorators import require_can_edit_or_view_apps
 from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.views.utils import (
     get_multimedia_sizes_for_build,
     get_new_multimedia_between_builds,
 )
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq import toggles
 from corehq.util.quickcache import quickcache
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
+@use_bootstrap5
 def multimedia_ajax(request, domain, app_id):
     app = get_app(domain, app_id)
     if not is_remote_app(app):
@@ -61,7 +63,7 @@ def _update_mm_sizes(mm_sizes):
     return mm_sizes
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 @quickcache(['domain', 'app_id', 'build_profile_id'], timeout=60 * 60)
 def get_multimedia_sizes(request, domain, app_id, build_profile_id=None):
     """
@@ -78,7 +80,7 @@ def get_multimedia_sizes(request, domain, app_id, build_profile_id=None):
     return JsonResponse(mm_sizes)
 
 
-@require_deploy_apps
+@require_can_edit_or_view_apps
 @quickcache(['domain', 'app_id', 'other_build_id', 'build_profile_id'], timeout=60 * 60)
 def compare_multimedia_sizes(request, domain, app_id, other_build_id, build_profile_id=None):
     mm_sizes = get_new_multimedia_between_builds(domain, app_id, other_build_id, build_profile_id)

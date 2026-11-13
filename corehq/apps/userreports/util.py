@@ -23,7 +23,6 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
 )
-from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
 from corehq.util.metrics.load_counters import ucr_load_counter
@@ -193,15 +192,9 @@ def number_of_ucr_reports(domain):
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
     from corehq.apps.userreports.sql.adapter import (
         ErrorRaisingIndicatorSqlAdapter,
-        ErrorRaisingMultiDBAdapter,
         IndicatorSqlAdapter,
-        MultiDBSqlAdapter,
     )
-    requires_mirroring = config.mirrored_engine_ids
-    if requires_mirroring and ENABLE_UCR_MIRRORS.enabled(config.domain):
-        adapter_cls = ErrorRaisingMultiDBAdapter if raise_errors else MultiDBSqlAdapter
-    else:
-        adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    adapter_cls = ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
     adapter = adapter_cls(config)
     track_load = ucr_load_counter(config.engine_id, load_source, config.domain)
     return IndicatorAdapterLoadTracker(adapter, track_load)

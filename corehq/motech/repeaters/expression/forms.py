@@ -84,9 +84,16 @@ class BaseExpressionRepeaterForm(GenericRepeaterForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        request_method = self.cleaned_data['request_method']
+        request_method = self.cleaned_data.get('request_method')
         body_required = request_method in (REQUEST_POST, REQUEST_PUT)
-        if body_required and not self.cleaned_data['configured_expression']:
+        # 'configured_expression' may be absent from cleaned_data if its own
+        # field-level validation already failed (Django drops the key). In that
+        # case the field already has an error, so don't add a misleading one.
+        if (
+            body_required
+            and 'configured_expression' not in self.errors
+            and not self.cleaned_data.get('configured_expression')
+        ):
             raise ValidationError({
                 'configured_expression': _("This field is required for {request_method} requests.").format(
                     request_method=request_method

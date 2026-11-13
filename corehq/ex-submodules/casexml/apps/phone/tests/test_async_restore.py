@@ -1,33 +1,34 @@
-from unittest import mock
 from io import BytesIO
-from django.test import TestCase, SimpleTestCase, override_settings
-from casexml.apps.phone.models import SyncLogSQL
-from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
+from unittest import mock
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from django.test import SimpleTestCase, TestCase, override_settings
 
-from casexml.apps.case.xml import V2
 from casexml.apps.case.tests.util import (
     delete_all_cases,
     delete_all_sync_logs,
 )
-from corehq.apps.domain.models import Domain
-from corehq.form_processor.tests.utils import sharded
+from casexml.apps.case.xml import V2
+from casexml.apps.phone.models import SyncLogSQL
 from casexml.apps.phone.restore import (
+    AsyncRestoreResponse,
+    RestoreCacheSettings,
     RestoreConfig,
     RestoreParams,
-    RestoreCacheSettings,
-    AsyncRestoreResponse,
     RestoreResponse,
 )
-from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
+from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
+from casexml.apps.phone.tasks import get_async_restore_payload
 from casexml.apps.phone.tests.utils import create_restore_user
-from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.celery_monitoring.signals import CELERY_STATE_SENT
+from corehq.form_processor.tests.utils import sharded
+from corehq.util.test_utils import flag_enabled
 
 
 class BaseAsyncRestoreTest(TestCase):
@@ -124,7 +125,7 @@ class AsyncRestoreTest(BaseAsyncRestoreTest):
         # the return value).
         restore_response = mock.MagicMock(return_value=RestoreResponse(None))
         with mock.patch.object(AsyncResult, 'get', restore_response) as get_result:
-            with mock.patch.object(AsyncResult, 'status', ASYNC_RESTORE_SENT):
+            with mock.patch.object(AsyncResult, 'status', CELERY_STATE_SENT):
                 subsequent_restore = self._restore_config(is_async=True)
                 self.assertIsNotNone(async_restore_task_id_cache.get_value())
                 subsequent_restore.get_payload()

@@ -108,7 +108,7 @@ def get_direct_ccz(domain, app, langs, version=None, include_multimedia=False, r
         errors = None
 
     if errors:
-        error_html = render_to_string("app_manager/partials/build_errors.html", {
+        error_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
             'app': app,
             'build_errors': errors,
             'domain': domain,

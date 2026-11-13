@@ -178,27 +178,29 @@ class CommCareFeatureSupportMixin(object):
     def enable_default_value_expression(self):
         return (
             self._require_minimum_version('2.51')
-            and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
+            and toggles.CASE_SEARCH_ADVANCED.enabled(self.domain)
         )
 
     @property
     def supports_session_endpoints(self):
+        # _force_session_endpoints lets a build generate endpoints regardless of
+        # the domain toggle (set transiently for public webform endpoint builds).
         return (
-            toggles.SESSION_ENDPOINTS.enabled(self.domain)
-            and self._require_minimum_version('2.51')
+            (
+                getattr(self, '_force_session_endpoints', False)
+                or toggles.SESSION_ENDPOINTS.enabled(self.domain)
+            )
+            and self.can_generate_session_endpoints
         )
+
+    @property
+    def can_generate_session_endpoints(self):
+        return self._require_minimum_version('2.51')
 
     @property
     def supports_data_registry(self):
         return (
             toggles.DATA_REGISTRY.enabled(self.domain)
-            and self._require_minimum_version('2.53')
-        )
-
-    @property
-    def ush_case_claim_2_53(self):
-        return (
-            toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
             and self._require_minimum_version('2.53')
         )
 

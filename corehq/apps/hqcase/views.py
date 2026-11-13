@@ -26,8 +26,10 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 from corehq.apps.locations.permissions import user_can_access_case
 from corehq.apps.locations.permissions import location_safe
+from corehq.form_processor.models import CommCareCase
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
+from .api.field_filters import get_fields_filter_fn
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
@@ -91,16 +93,23 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 @location_safe
-def case_api(request, domain, case_id=None):
-    if request.method == 'GET' and case_id:
-        return _handle_get(request, case_id)
-    if request.method == 'GET' and not case_id:
-        return _handle_list_view(request)
-    if request.method == 'POST' and not case_id:
-        return _handle_case_update(request, is_creation=True)
-    if request.method == 'PUT':
-        return _handle_case_update(request, is_creation=False, case_id=case_id)
-    return JsonResponse({'error': "Request method not allowed"}, status=405)
+def case_api(request, domain, case_id=None, external_id=None):
+    try:
+        if request.method == 'GET' and case_id:
+            return _handle_get(request, case_id)
+        if request.method == 'GET' and external_id:
+            return _handle_ext_get(request, external_id)
+        if request.method == 'GET' and not case_id:
+            return _handle_list_view(request)
+        if request.method == 'POST' and not case_id:
+            return _handle_case_put_post(request, is_creation=True)
+        if request.method == 'PUT' and external_id:
+            return _handle_ext_put(request, external_id)
+        if request.method == 'PUT':
+            return _handle_case_put_post(request, is_creation=False, case_id=case_id)
+        return JsonResponse({'error': "Request method not allowed"}, status=405)
+    except UserError as e:
+        return JsonResponse({'error': e.message}, status=400)
 
 
 @waf_allow('XSS_BODY')
@@ -112,7 +121,10 @@ def case_api(request, domain, case_id=None):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api_bulk_fetch(request, domain):
-    return _handle_bulk_fetch(request)
+    try:
+        return _handle_bulk_fetch(request)
+    except UserError as e:
+        return JsonResponse({'error': e.message}, status=400)
 
 
 def _handle_get(request, case_id):
@@ -122,11 +134,12 @@ def _handle_get(request, case_id):
 
 
 def _get_bulk_cases(request, case_ids=None, external_ids=None):
-    try:
-        res = get_bulk(request.domain, request.couch_user, case_ids, external_ids)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
+    res = get_bulk(request.domain, request.couch_user, case_ids, external_ids)
+    filter_fields = get_fields_filter_fn(request.GET)
+    res['cases'] = [
+        filter_fields(case) if 'error' not in case else case
+        for case in res['cases']
+    ]
     return JsonResponse(res)
 
 
@@ -140,44 +153,115 @@ def _get_single_case(request, case_id):
     except NotFoundError:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     except PermissionDenied:
-        return JsonResponse({'error': f"Insufficent permission for Case '{case_id}'"}, status=403)
-    return JsonResponse(serialize_es_case(case))
+        return JsonResponse({'error': f"Insufficient permission for Case '{case_id}'"}, status=403)
+    filter_fields = get_fields_filter_fn(request.GET)
+    return JsonResponse(filter_fields(serialize_es_case(case)))
+
+
+def _handle_ext_get(request, external_id):
+    case = _get_by_external_id(request.domain, external_id)
+    if case is None:
+        return JsonResponse(
+            {'error': f"Case '{external_id}' not found"},
+            status=404,
+        )
+
+    try:
+        if case.domain != request.domain:
+            raise NotFoundError()
+        if not user_can_access_case(request.domain, request.couch_user, case):
+            raise PermissionDenied()
+    except NotFoundError:
+        return JsonResponse(
+            {'error': f"Case '{case.case_id}' not found"},
+            status=404,
+        )
+    except PermissionDenied:
+        return JsonResponse(
+            {'error': f"Insufficient permission for Case '{case.case_id}'"},
+            status=403,
+        )
+    filter_fields = get_fields_filter_fn(request.GET)
+    return JsonResponse(filter_fields(serialize_case(case)))
+
+
+def _get_by_external_id(domain, external_id):
+    try:
+        return CommCareCase.objects.get_case_by_external_id(
+            domain,
+            external_id,
+            raise_multiple=True,
+        )
+    except CommCareCase.MultipleObjectsReturned as err:
+        case_ids = [case.case_id for case in err.cases]
+        raise UserError(
+            f"Multiple cases found with external_id '{external_id}': "
+            f"{', '.join(case_ids)}"
+        )
 
 
 def _handle_bulk_fetch(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+        raise UserError("Payload must be valid JSON")
 
     case_ids = data.get('case_ids')
     external_ids = data.get('external_ids')
     if not case_ids and not external_ids:
-        return JsonResponse({'error': "Payload must include 'case_ids' or 'external_ids' fields"}, status=400)
+        raise UserError("Payload must include 'case_ids' or 'external_ids' fields")
 
     return _get_bulk_cases(request, case_ids=case_ids, external_ids=external_ids)
 
 
 def _handle_list_view(request):
-    try:
-        res = get_list(request.domain, request.couch_user, request.GET)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
-
+    res = get_list(request.domain, request.couch_user, request.GET)
     if 'next' in res:
         res['next'] = reverse('case_api', args=[request.domain], params=res['next'], absolute=True)
     return JsonResponse(res)
 
 
-def _handle_case_update(request, is_creation, case_id=None):
+def _handle_ext_put(request, external_id):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+        raise UserError("Payload must be valid JSON")
+    if not isinstance(data, dict):
+        raise UserError("Payload must be a single JSON object")
+    if 'external_id' not in data:
+        data['external_id'] = external_id
+
+    case = _get_by_external_id(request.domain, external_id)
+    if case is None:
+        is_creation = True
+    else:
+        is_creation = False
+        if 'case_id' not in data:
+            data['case_id'] = case.case_id
+        elif data['case_id'] != case.case_id:
+            raise UserError(
+                'The given value of "case_id" does not match the existing value '
+                f'for the case identified by external_id = "{external_id}". '
+                '"case_id" is read-only and cannot be modified.'
+            )
+
+    return _handle_case_update(request, data, is_creation)
+
+
+def _handle_case_put_post(request, is_creation, case_id=None):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise UserError("Payload must be valid JSON")
 
     if not is_creation and case_id and 'case_id' not in data:
         data['case_id'] = case_id
 
+    return _handle_case_update(request, data, is_creation)
+
+
+def _handle_case_update(request, data, is_creation):
+    filter_fields = get_fields_filter_fn(request.GET)
     try:
         xform, case_or_cases = handle_case_update(
             domain=request.domain,
@@ -188,8 +272,6 @@ def _handle_case_update(request, is_creation, case_id=None):
         )
     except PermissionDenied as e:
         return JsonResponse({'error': str(e)}, status=403)
-    except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
@@ -199,9 +281,9 @@ def _handle_case_update(request, is_creation, case_id=None):
     if isinstance(case_or_cases, list):
         return JsonResponse({
             'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
+            'cases': [filter_fields(serialize_case(case)) for case in case_or_cases],
         })
     return JsonResponse({
         'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
+        'case': filter_fields(serialize_case(case_or_cases)),
     })

@@ -12,11 +12,12 @@ from corehq.apps.app_manager.models import (
     Form,
     Module,
     OpenSubCaseAction,
-    XForm, ConditionalCaseUpdate,
+    ConditionalCaseUpdate,
 )
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.xform import XForm
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyGroup, CaseType
 from corehq.apps.data_dictionary.util import generate_data_dictionary
 from corehq.apps.export.const import (

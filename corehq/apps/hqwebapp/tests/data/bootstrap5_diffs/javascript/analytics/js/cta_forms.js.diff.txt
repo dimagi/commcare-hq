@@ -1,0 +1,11 @@
+--- 
++++ 
+@@ -4,7 +4,7 @@
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+ import assertProperties from "hqwebapp/js/assert_properties";
+-import "hqwebapp/js/bootstrap3/validators.ko";  // needed for validation of startDate and endDate
++import "hqwebapp/js/bootstrap5/validators.ko";  // needed for validation of startDate and endDate
+ 
+ let hubspotCtaForm = function (config) {
+     let self = {};

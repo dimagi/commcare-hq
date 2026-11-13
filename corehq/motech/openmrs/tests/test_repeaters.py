@@ -144,6 +144,7 @@ CASE_CONFIG = {
 def mock_get_cases(self, case_ids, domain=None, ordered=False):
     return [{
         '65e55473-e83b-4d78-9dde-eaf949758997': CommCareCase(
+            domain='openmrs-repeater-test',
             case_id='65e55473-e83b-4d78-9dde-eaf949758997',
             type='paciente',
             name='Elsa',

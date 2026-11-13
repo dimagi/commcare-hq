@@ -112,3 +112,40 @@ FORMATS_SUPPORTING_CASE_LIST_OPTIMIZATIONS = [
     'plain',
     'enum'
 ]
+
+CUSTOM_ICON_TYPE_TEXT = "text"
+CUSTOM_ICON_TYPE_XPATH = "xpath"
+
+ANDROID_LOGO_PROPERTY_MAPPING = {
+    'hq_logo_android_home': 'brand-banner-home',
+    'hq_logo_android_login': 'brand-banner-login',
+    'hq_logo_android_demo': 'brand-banner-home-demo',
+    'hq_logo_web_apps': 'brand-banner-web-apps',
+}
+
+LATEST_APK_VALUE = 'latest'
+LATEST_APP_VALUE = 0
+
+NON_BUILD_APP_KEYS = (
+    '_id',
+    '_rev',
+    '_attachments',
+    'external_blobs',
+    'short_odk_url',
+    'short_odk_media_url',
+    'recipients',
+)
+
+
+def get_template_app_plan_choices():
+    from corehq.apps.accounting.models import SoftwarePlanEdition
+    excluded = {
+        SoftwarePlanEdition.PAUSED,
+        SoftwarePlanEdition.ENTERPRISE,
+        SoftwarePlanEdition.RESELLER,
+        SoftwarePlanEdition.MANAGED_HOSTING,
+    }
+    return [
+        choice for choice in SoftwarePlanEdition.CHOICES
+        if choice[0] not in excluded
+    ]

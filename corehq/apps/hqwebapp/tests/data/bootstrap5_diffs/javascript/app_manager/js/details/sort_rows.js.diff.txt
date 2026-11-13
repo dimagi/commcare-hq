@@ -1,0 +1,14 @@
+--- 
++++ 
+@@ -7,9 +7,9 @@
+  */
+ import ko from "knockout";
+ import _ from "underscore";
+-import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap3/ui-element-select";
++import uiElementSelect from "hqwebapp/js/ui_elements/bootstrap5/ui-element-select";
+ import Utils from "app_manager/js/details/utils";
+-import alertUser from "hqwebapp/js/bootstrap3/alert_user";
++import alertUser from "hqwebapp/js/bootstrap5/alert_user";
+ 
+ var sortRow = function (params, useSortCalculation, saveButton) {
+     var self = {};

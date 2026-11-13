@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -22,12 +22,7 @@ from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_EXISTING_USER_INVITE_FORM,
-    HUBSPOT_NEW_USER_INVITE_FORM,
-    send_hubspot_form,
-    track_workflow_noop,
-)
+from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.views import BasePageView, logout
@@ -45,7 +40,7 @@ from corehq.const import USER_CHANGE_VIA_INVITATION
 
 class UserInvitationView(object):
     # todo cleanup this view so it properly inherits from BaseSectionPageView
-    template = "users/accept_invite.html"
+    template = "users/bootstrap3/accept_invite.html"
 
     def __call__(self, request, uuid, **kwargs):
         # add the correct parameters to this instance
@@ -60,7 +55,7 @@ class UserInvitationView(object):
             logout(request)
             return HttpResponseRedirect(request.path)
         try:
-            invitation = Invitation.objects.get(uuid=uuid)
+            invitation = Invitation.objects.get(uuid=uuid, domain=self.domain)
         except (Invitation.DoesNotExist, ValidationError):
             messages.error(request, _("Sorry, it looks like your invitation has expired. "
                                       "Please check the invitation link you received and try again, or "
@@ -76,8 +71,6 @@ class UserInvitationView(object):
                                           "If you feel this is a mistake, please ask the inviter for "
                                           "another invitation."))
             return HttpResponseRedirect(reverse("login"))
-
-        self.validate_invitation(invitation)
 
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -102,6 +95,14 @@ class UserInvitationView(object):
             context['current_page'] = {'page_name': _('Project Invitation')}
         else:
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
+
+        domain_obj = Domain.get_by_name(invitation.domain)
+        allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
+
+        idp = None
+        if settings.ENFORCE_SSO_LOGIN:
+            idp = IdentityProvider.get_required_identity_provider(invitation.email)
+
         if request.user.is_authenticated:
             if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
                 if is_invited_user:
@@ -119,6 +120,13 @@ class UserInvitationView(object):
                                                  invited=invitation.email,
                                                  current=request.couch_user.username))
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
+
+            if not is_invited_user and (allow_invite_email_only or idp):
+                context.update({
+                    'email_mismatch_blocked': True,
+                    'invited_user': invitation.email,
+                })
+                return render(request, self.template, context)
 
             if not is_invited_user:
                 messages.error(request, _("The invited user {invited} and your user {current} "
@@ -138,7 +146,6 @@ class UserInvitationView(object):
                 track_workflow_noop(request.couch_user.get_email(),
                                     "Current user accepted a project invitation",
                                     {"Current user accepted a project invitation": "yes"})
-                send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
                 return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
@@ -148,13 +155,6 @@ class UserInvitationView(object):
                 })
                 return render(request, self.template, context)
         else:
-            domain_obj = Domain.get_by_name(invitation.domain)
-            allow_invite_email_only = domain_obj and domain_obj.allow_invite_email_only
-
-            idp = None
-            if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_required_identity_provider(invitation.email)
-
             if request.method == "POST":
                 form = AcceptedWebUserInvitationForm(
                     request.POST,
@@ -198,7 +198,6 @@ class UserInvitationView(object):
                     track_workflow_noop(request.POST['email'],
                                         "New User Accepted a project invitation",
                                         {"New User Accepted a project invitation": "yes"})
-                    send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
                     return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if (CouchUser.get_by_username(invitation.email)
@@ -230,9 +229,6 @@ class UserInvitationView(object):
         context.update({"form": form})
         return render(request, self.template, context)
 
-    def validate_invitation(self, invitation):
-        assert invitation.domain == self.domain
-
     def is_invited(self, invitation, couch_user):
         return couch_user.is_member_of(invitation.domain)
 
@@ -263,7 +259,7 @@ def accept_invitation(request, domain, uuid):
 def reinvite_web_user(request, domain):
     uuid = request.POST['uuid']
     try:
-        invitation = Invitation.objects.get(uuid=uuid)
+        invitation = Invitation.objects.get(uuid=uuid, domain=domain)
     except Invitation.DoesNotExist:
         return JsonResponse({'response': _("Error while attempting resend"), 'status': 'error'})
     if not user_can_access_invite(domain, request.couch_user, invitation):
@@ -281,7 +277,7 @@ def reinvite_web_user(request, domain):
 @location_safe
 def delete_invitation(request, domain):
     uuid = request.POST['uuid']
-    invitation = Invitation.objects.get(uuid=uuid)
+    invitation = get_object_or_404(Invitation, uuid=uuid, domain=domain)
     if not user_can_access_invite(domain, request.couch_user, invitation):
         return location_restricted_response(request)
     invitation.delete(deleted_by=request.couch_user.user_id)
@@ -292,7 +288,7 @@ def delete_invitation(request, domain):
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
     page_title = gettext_lazy("Request Access")
-    template_name = "users/domain_request.html"
+    template_name = "users/bootstrap3/domain_request.html"
     request_form = None
 
     @property
@@ -329,7 +325,7 @@ class DomainRequestView(BasePageView):
                     domain_request.send_request_email()
                     domain_request.save()
                     domain_obj = Domain.get_by_name(domain_request.domain)
-                    return render(request, "users/confirmation_sent.html", {
+                    return render(request, "users/bootstrap3/confirmation_sent.html", {
                         'hr_name': domain_obj.display_name() if domain_obj else domain_request.domain,
                     })
         return self.get(request, *args, **kwargs)

@@ -1,0 +1,528 @@
+from datetime import date
+from decimal import Decimal
+
+from unmagic import fixture, use
+
+import pytest
+
+from corehq.apps.case_search.endpoint_capability import (
+    OPERATOR_INPUT_SCHEMAS,
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATERANGE,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
+    FIELD_TYPE_SELECT,
+    FIELD_TYPE_TEXT,
+    get_operations_for_field_type,
+)
+from corehq.apps.case_search.endpoint_query_spec import (
+    MAX_GROUP_WIDTH,
+    MAX_QUERY_DEPTH,
+    ComponentNode,
+    ConstantInput,
+    GroupNode,
+    Parameter,
+    bind_values,
+    parse_parameter_spec,
+    parse_query_spec,
+    validate_parameters_match_placeholders,
+    sql_placeholders,
+)
+from corehq.apps.case_search.exceptions import CaseSearchUserError
+from corehq.apps.case_search.models import SearchCriteria
+
+
+@fixture
+def sample_capability():
+    yield {
+        'case_types': {
+            'patient': {
+                'province': {
+                    'name': 'province',
+                    'type': FIELD_TYPE_TEXT,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_TEXT
+                    ),
+                },
+                'dob': {
+                    'name': 'dob',
+                    'type': FIELD_TYPE_DATE,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_DATE
+                    ),
+                },
+                'location': {
+                    'name': 'location',
+                    'type': FIELD_TYPE_GEOPOINT,
+                    'operations': get_operations_for_field_type(
+                        FIELD_TYPE_GEOPOINT
+                    ),
+                },
+            },
+        },
+        'operator_input_schemas': OPERATOR_INPUT_SCHEMAS,
+    }
+
+
+def _component_spec(field, operator, input_value):
+    return {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'component',
+                'field': field,
+                'operator': operator,
+                'inputs': {'value': input_value},
+            }
+        ],
+    }
+
+
+@use(sample_capability)
+def test_valid_simple_spec():
+    spec = {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'component',
+                'operator': 'equals',
+                'field': 'province',
+                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+            }
+        ],
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert root == GroupNode(
+        type='all',
+        children=[
+            ComponentNode(
+                field='province',
+                operator='equals',
+                inputs={'value': ConstantInput(value='ON')},
+                field_type='text',
+            )
+        ],
+    )
+    assert root.to_json() == spec
+
+
+@use(sample_capability)
+def test_valid_multi_input_spec():
+    spec = {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'location',
+        'inputs': {
+            'point': {'type': 'constant', 'value': '0 0'},
+            'distance': {'type': 'constant', 'value': '5'},
+            'unit': {'type': 'constant', 'value': 'kilometers'},
+        },
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert set(root.inputs) == {'point', 'distance', 'unit'}
+    assert root.inputs['distance'] == ConstantInput(value='5')
+
+
+def _within_distance_spec(unit_input):
+    return {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'location',
+        'inputs': {
+            'point': {'type': 'constant', 'value': '0 0'},
+            'distance': {'type': 'constant', 'value': '5'},
+            'unit': unit_input,
+        },
+    }
+
+
+@pytest.mark.parametrize("unit_input,parameters,error_fragment", [
+    ({'type': 'constant', 'value': 'parsecs'}, [], 'parsecs'),
+    (
+        {'type': 'parameter', 'value': 'my_unit'},
+        [Parameter(name='my_unit', type=FIELD_TYPE_TEXT)],
+        'must be a fixed value',
+    ),
+])
+@use(sample_capability)
+def test_choice_input_rejected(unit_input, parameters, error_fragment):
+    spec = _within_distance_spec(unit_input)
+    root, errors = parse_query_spec(spec, parameters, 'patient', sample_capability())
+    assert root is None
+    assert any(error_fragment in e for e in errors)
+
+
+@pytest.mark.parametrize("spec", [
+    {'type': 'invalid'},
+    {'type': 'all', 'children': ['not_a_dict']},
+    _component_spec('province', 'equals', {'type': 'auto_value', 'ref': 'some_ref'}),
+    _component_spec('province', 'equals', 'not_an_object'),
+])
+@use(sample_capability)
+def test_unreadable_query_rejected(spec):
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert root is None
+    assert errors == ['Invalid query']
+
+
+@pytest.mark.parametrize('field,value,operator', (
+    [('province', 'ON', op) for op in ['fuzzy', 'phonetic']]
+    + [('dob', '2020-01-01', op) for op in ['lt', 'gt', 'lte', 'gte', 'fuzzy_date']]
+))
+@use(sample_capability)
+def test_field_accepts_operator(field, value, operator):
+    spec = {
+        'type': 'component',
+        'operator': operator,
+        'field': field,
+        'inputs': {'value': {'type': 'constant', 'value': value}},
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, ComponentNode)
+    assert root.operator == operator
+
+
+@use(sample_capability)
+def test_unknown_case_type():
+    spec = {'type': 'all', 'children': []}
+    root, errors = parse_query_spec(spec, [], 'nonexistent_type', sample_capability())
+    assert root is None
+    assert any('nonexistent_type' in e for e in errors)
+
+
+@use(sample_capability)
+def test_unknown_field():
+    spec = {
+        'type': 'component',
+        'operator': 'equals',
+        'field': 'nonexistent',
+        'inputs': {'value': {'type': 'constant', 'value': 'x'}},
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert root is None
+    assert any('nonexistent' in e for e in errors)
+
+
+@use(sample_capability)
+def test_incompatible_component_for_field():
+    spec = {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'province',
+        'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
+    }
+    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert any('within_distance' in e for e in errors)
+
+
+@use(sample_capability)
+def test_missing_required_input_slot():
+    spec = {
+        'type': 'component',
+        'operator': 'within_distance',
+        'field': 'location',
+        'inputs': {'point': {'type': 'constant', 'value': '0 0'}},
+    }
+    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert any('distance' in e for e in errors)
+
+
+@use(sample_capability)
+def test_none_group_accepted():
+    spec = {
+        'type': 'none',
+        'children': [
+            {
+                'type': 'component',
+                'operator': 'equals',
+                'field': 'province',
+                'inputs': {'value': {'type': 'constant', 'value': 'ON'}},
+            }
+        ],
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert isinstance(root, GroupNode)
+    assert root.type == 'none'
+
+
+@use(sample_capability)
+def test_nested_all_any():
+    spec = {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'any',
+                'children': [
+                    {
+                        'type': 'component',
+                        'operator': 'equals',
+                        'field': 'province',
+                        'inputs': {
+                            'value': {'type': 'constant', 'value': 'ON'}
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+    root, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert errors == []
+    assert root.type == 'all'
+    inner = root.children[0]
+    assert isinstance(inner, GroupNode)
+    assert inner.type == 'any'
+
+
+@use(sample_capability)
+def test_empty_children_allowed():
+    root, errors = parse_query_spec(
+        {'type': 'all', 'children': []}, [], 'patient', sample_capability()
+    )
+    assert errors == []
+    assert root == GroupNode(type='all', children=[])
+
+
+@pytest.mark.parametrize("group_type", ["all", "none"])
+@use(sample_capability)
+def test_deeply_nested_group_returns_error(group_type):
+    node = {'type': group_type, 'children': []}
+    root = node
+    for _ in range(MAX_QUERY_DEPTH + 2):
+        child = {'type': group_type, 'children': []}
+        node['children'] = [child]
+        node = child
+    _, errors = parse_query_spec(root, [], 'patient', sample_capability())
+    assert any('nested too deeply' in e for e in errors)
+
+
+@pytest.mark.parametrize("width,expect_error", [
+    (MAX_GROUP_WIDTH, False),
+    (MAX_GROUP_WIDTH + 1, True),
+])
+@use(sample_capability)
+def test_group_width_limit(width, expect_error):
+    spec = {
+        'type': 'all',
+        'children': [{'type': 'all', 'children': []}] * width,
+    }
+    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert any('too many conditions' in e for e in errors) is expect_error
+
+
+@use(sample_capability)
+def test_total_node_limit_returns_error():
+    # Wide-but-shallow: 1 + 50 + 50*4 = 251 > MAX_TOTAL_NODES (200). No group
+    # exceeds the width limit, but the total node count does.
+    spec = {
+        'type': 'all',
+        'children': [
+            {
+                'type': 'all',
+                'children': [
+                    {'type': 'all', 'children': []} for _ in range(4)
+                ],
+            }
+            for _ in range(MAX_GROUP_WIDTH)
+        ],
+    }
+    _, errors = parse_query_spec(spec, [], 'patient', sample_capability())
+    assert any('too many nodes' in e for e in errors)
+
+
+# ── parse_parameter_spec ──────────────────────────────────────────────────────
+
+def test_parse_parameter_spec_empty_list():
+    params, errors = parse_parameter_spec([])
+    assert errors == []
+    assert params == []
+
+
+def test_parse_parameter_spec_multiple():
+    spec = [
+        {'name': 'region', 'type': FIELD_TYPE_TEXT},
+        {'name': 'age', 'type': FIELD_TYPE_NUMBER},
+    ]
+    params, errors = parse_parameter_spec(spec)
+    assert errors == []
+    assert len(params) == 2
+
+
+def test_parse_parameter_spec_strips_name_whitespace():
+    params, errors = parse_parameter_spec([{'name': '  region  ', 'type': FIELD_TYPE_TEXT}])
+    assert errors == []
+    assert params[0].name == 'region'
+
+
+def test_parse_parameter_spec_not_a_list():
+    params, errors = parse_parameter_spec({'name': 'region'})
+    assert params is None
+    assert errors == ['Parameters must be a JSON array.']
+
+
+@pytest.mark.parametrize("spec_input,error_fragment", [
+    (['not_a_dict'], 'expected object'),
+    ([{'type': FIELD_TYPE_TEXT}], 'name is required'),
+    ([{'name': '   ', 'type': FIELD_TYPE_TEXT}], 'name is required'),
+    ([{'name': 'region', 'type': FIELD_TYPE_TEXT}, {'name': 'region', 'type': FIELD_TYPE_NUMBER}], 'Duplicate'),
+    ([{'name': 'region', 'type': 'bogus'}], "invalid type 'bogus'"),
+])
+def test_parse_parameter_spec_invalid(spec_input, error_fragment):
+    _, errors = parse_parameter_spec(spec_input)
+    assert any(error_fragment in e for e in errors)
+
+
+@pytest.mark.parametrize("type_val", [FIELD_TYPE_TEXT, FIELD_TYPE_NUMBER, FIELD_TYPE_DATE])
+def test_parse_parameter_spec_all_valid_types(type_val):
+    params, errors = parse_parameter_spec([{'name': 'p', 'type': type_val}])
+    assert errors == []
+    assert params[0].type == type_val
+
+
+# ── parameter input validation in parse_query_spec ───────────────────────────
+
+@pytest.mark.parametrize("field,param_name,param_type", [
+    ('province', 'region', FIELD_TYPE_TEXT),
+    ('dob', 'cutoff', FIELD_TYPE_DATE),
+])
+@use(sample_capability)
+def test_parameter_input_valid(field, param_name, param_type):
+    params = [Parameter(name=param_name, type=param_type)]
+    _, errors = parse_query_spec(
+        _component_spec(field, 'equals', {'type': 'parameter', 'value': param_name}),
+        params, 'patient', sample_capability(),
+    )
+    assert errors == []
+
+
+@pytest.mark.parametrize("params,input_value,error_fragment", [
+    ([], {'type': 'parameter', 'value': 'nonexistent'}, 'not configured'),
+    (
+        [Parameter(name='region', type=FIELD_TYPE_TEXT)],
+        {'type': 'parameter', 'value': ''},
+        'Invalid query',
+    ),
+    (
+        [Parameter(name='my_date', type=FIELD_TYPE_DATE)],
+        {'type': 'parameter', 'value': 'my_date'},
+        "has type 'date', expected 'text'",
+    ),
+])
+@use(sample_capability)
+def test_parameter_input_error(params, input_value, error_fragment):
+    _, errors = parse_query_spec(
+        _component_spec('province', 'equals', input_value),
+        params, 'patient', sample_capability(),
+    )
+    assert any(error_fragment in e for e in errors)
+
+
+# ── binding parameters into SQL ──────────────────────────────────────────────
+
+TEXT = Parameter(name='color', type=FIELD_TYPE_TEXT)
+NUMBER = Parameter(name='weight', type=FIELD_TYPE_NUMBER)
+SELECT = Parameter(name='species', type=FIELD_TYPE_SELECT)
+RANGE = Parameter(name='dob', type=FIELD_TYPE_DATERANGE)
+DATE = Parameter(name='seen', type=FIELD_TYPE_DATE)
+GEOPOINT = Parameter(name='near', type=FIELD_TYPE_GEOPOINT)
+
+
+@pytest.mark.parametrize('parameters, expected', [
+    ([], []),
+    ([TEXT, NUMBER], ['color', 'weight']),
+    # a date range is bound as two placeholders
+    ([RANGE], ['dob_from', 'dob_to']),
+    ([TEXT, RANGE], ['color', 'dob_from', 'dob_to']),
+])
+def test_sql_placeholders(parameters, expected):
+    assert sql_placeholders(parameters) == expected
+
+
+@pytest.mark.parametrize('placeholders, parameters, expected', [
+    ([], [], []),
+    (['who'], [Parameter(name='who', type='text')], []),
+    # A daterange is used through its two derived placeholders
+    (['dob_from', 'dob_to'], [Parameter(name='dob', type='daterange')], []),
+    (['dob_from'], [Parameter(name='dob', type='daterange')],
+     ["Parameter ':dob_to' is not used by the SQL."]),
+    (['who'], [],
+     ["Undefined parameter ':who'. Add it under Parameters, or remove it from the SQL."]),
+    ([], [Parameter(name='more', type='text')],
+     ["Parameter ':more' is not used by the SQL."]),
+])
+def test_validate_parameters_match_placeholders(placeholders, parameters, expected):
+    assert list(validate_parameters_match_placeholders(parameters, placeholders)) == expected
+
+
+def test_derived_placeholder_may_not_collide():
+    _, errors = parse_parameter_spec([
+        {'name': 'dob', 'type': FIELD_TYPE_DATERANGE},
+        {'name': 'dob_from', 'type': FIELD_TYPE_TEXT},
+    ])
+    assert any("Duplicate SQL parameter name: 'dob_from'" in e for e in errors)
+
+
+@pytest.mark.parametrize('parameters, criteria, expected', [
+    # An absent criterion binds as NULL, whatever the type
+    ([TEXT], [], {'color': None}),
+    ([NUMBER], [], {'weight': None}),
+    ([DATE], [], {'seen': None}),
+    ([SELECT], [], {'species': None}),
+    ([RANGE], [], {'dob_from': None, 'dob_to': None}),
+    # For text, a blank value is one someone purposefully supplied, so it
+    # is passed through rather than read as unset
+    ([TEXT], [('color', '')], {'color': ''}),
+    # For every other type, blank means nothing was chosen
+    ([NUMBER], [('weight', '')], {'weight': None}),
+    ([DATE], [('seen', '')], {'seen': None}),
+    ([GEOPOINT], [('near', '')], {'near': None}),
+    ([RANGE], [('dob', '')], {'dob_from': None, 'dob_to': None}),
+    # Criteria the endpoint does not declare are ignored
+    ([TEXT], [('color', 'red'), ('undeclared', 'x')], {'color': 'red'}),
+    ([], [('color', 'red')], {}),
+    ([TEXT], [('color', 'red')], {'color': 'red'}),
+    ([GEOPOINT], [('near', '1.5 2.5')], {'near': '1.5 2.5'}),
+    # Numbers and dates are parsed before they reach Postgres
+    ([NUMBER], [('weight', '12')], {'weight': Decimal('12')}),
+    ([NUMBER], [('weight', '-1.25')], {'weight': Decimal('-1.25')}),
+    ([DATE], [('seen', '2026-08-03')], {'seen': date(2026, 8, 3)}),
+    # A select parameter is always a list, however many values were searched
+    ([SELECT], [('species', 'dog')], {'species': ['dog']}),
+    ([SELECT], [('species', ['dog', 'cat'])], {'species': ['dog', 'cat']}),
+    # A date range is split into its two bounds
+    ([RANGE], [('dob', '__range__2026-08-03__2026-08-20')],
+     {'dob_from': date(2026, 8, 3), 'dob_to': date(2026, 8, 20)}),
+])
+def test_bind_values(parameters, criteria, expected):
+    assert bind_values(parameters, [SearchCriteria(k, v) for k, v in criteria]) == expected
+
+
+@pytest.mark.parametrize('parameters, criteria, error_fragment', [
+    # Multiple values need a select parameter to have somewhere to go
+    ([TEXT], [('color', ['red', 'blue'])], "Only one value may be given for 'color'"),
+    ([NUMBER], [('weight', ['1', '2'])], "Only one value may be given for 'weight'"),
+    ([RANGE], [('dob', '2026-08-03')], "'dob' must be given as a date range"),
+    ([RANGE], [('dob', '__range__2026-08-03__today')], "'dob' must be a date"),
+    ([DATE], [('seen', ['2026-08-03', '2026-08-04'])], "Only one value may be given for 'seen'"),
+    # A blank alongside other values asks to also match a missing property
+    ([TEXT], [('color', ['', 'red'])], "Searching for blank values is not supported for 'color'"),
+    ([NUMBER], [('weight', ['', '1'])], "Searching for blank values is not supported for 'weight'"),
+    ([SELECT], [('species', ['dog', ''])], "Searching for blank values is not supported for 'species'"),
+    ([SELECT], [('species', ['', ''])], "Searching for blank values is not supported for 'species'"),
+    ([RANGE], [('dob', ['', '__range__2026-08-03__2026-08-20'])],
+     "Searching for blank values is not supported for 'dob'"),
+    # Postgres would accept these, but they are not ISO dates
+    ([DATE], [('seen', 'today')], "'seen' must be a date"),
+    ([DATE], [('seen', '2026-02-30')], "'seen' must be a date"),
+    ([NUMBER], [('weight', 'abc')], "'weight' must be a number"),
+    # Postgres would accept these, but they are not finite numbers
+    ([NUMBER], [('weight', 'NaN')], "'weight' must be a number"),
+    ([NUMBER], [('weight', 'Infinity')], "'weight' must be a number"),
+])
+def test_bind_values_rejects_mismatched_criteria(parameters, criteria, error_fragment):
+    with pytest.raises(CaseSearchUserError, match=error_fragment):
+        bind_values(parameters, [SearchCriteria(k, v) for k, v in criteria])

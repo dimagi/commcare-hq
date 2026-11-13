@@ -1,9 +1,16 @@
-import os
-
-import pytest
 from unittest import mock
-from deployment.gunicorn.gunicorn_conf import _child_exit, _on_starting
-from testil import eq
+
+from unmagic import fixture, use
+
+from deployment.gunicorn.gunicorn_conf import (
+    _mark_prometheus_worker_dead,
+    _remove_prometheus_metric_files,
+    child_exit,
+    on_starting,
+)
+
+monkeypatch = fixture('monkeypatch')
+tmp_path = fixture('tmp_path')
 
 
 class Logger:
@@ -19,29 +26,56 @@ class Server:
         self.log = Logger()
 
 
-def setup():
-    # ensure env var not set
-    os.environ.pop('PROMETHEUS_MULTIPROC_DIR', None)
-    # DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
-    os.environ.pop('prometheus_multiproc_dir', None)
+@use(tmp_path, monkeypatch)
+@fixture
+def prometheus_dir():
+    """Point the prometheus directory at a temporary sandbox"""
+    path = tmp_path()
+    monkeypatch().setenv('PROMETHEUS_MULTIPROC_DIR', str(path))
+    yield path
 
 
-@pytest.mark.parametrize("path", [None, '', '/not/a/real/path'])
-def test_on_starting(path):
-    _on_starting(Server(), path=path)
+@use(prometheus_dir)
+def test_remove_prometheus_metric_files_deletes_metric_files():
+    path = prometheus_dir()
+    (path / 'counter_1.db').touch()
+    (path / 'not-metrics-file.txt').touch()
+
+    _remove_prometheus_metric_files()
+
+    assert [f.name for f in path.iterdir()] == ['not-metrics-file.txt']
 
 
-def test_on_starting_error():
+@use(prometheus_dir)
+def test_mark_prometheus_worker_dead():
+    path = prometheus_dir()
+    worker = mock.Mock(pid=4321)
+
+    with mock.patch(
+        'prometheus_client.multiprocess.mark_process_dead'
+    ) as mark_process_dead:
+        _mark_prometheus_worker_dead(worker)
+
+    mark_process_dead.assert_called_once_with(4321, str(path))
+
+
+def test_on_starting_logs_errors():
     server = Server()
-    with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
-        _on_starting(server, path='anything')
+    with mock.patch(
+        'deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files',
+        side_effect=Exception,
+    ):
+        on_starting(server)
 
-    eq(len(server.log.logs), 1)
+    assert len(server.log.logs) == 1
 
 
-def test_child_exit():
+def test_child_exit_logs_errors():
     server = Server()
-    with mock.patch('deployment.gunicorn.gunicorn_conf._remove_prometheus_metric_files', side_effect=Exception):
-        _child_exit(server, None, path='anything')
+    with mock.patch(
+        'deployment.gunicorn.gunicorn_conf._mark_prometheus_worker_dead',
+        side_effect=Exception,
+    ):
+        child_exit(server, None)
 
-    eq(len(server.log.logs), 1)
+    assert len(server.log.logs) == 1

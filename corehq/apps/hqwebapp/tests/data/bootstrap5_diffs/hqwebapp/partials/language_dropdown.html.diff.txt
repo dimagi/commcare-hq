@@ -1,0 +1,34 @@
+--- 
++++ 
+@@ -1,21 +1,25 @@
+ {% load hq_shared_tags %}
+ 
+-<div class="navbar-btn dropdown" style="display: inline-block;">
++<div class="me-2 dropdown d-inline-block">
+   <button
+-    class="dropdown-toggle btn btn-default"
+-    data-toggle="dropdown"
++    class="dropdown-toggle btn btn-outline-primary"
++    data-bs-toggle="dropdown"
+     aria-haspopup="true"
+     aria-expanded="false"
+   >
+     {{ LANGUAGE_CODE|language_name_local }}
+-    <span class="caret"></span>
+   </button>
+-  <ul class="dropdown-menu dropdown-menu-right">
++  <ul class="dropdown-menu dropdown-menu-end">
+     {% for lang_code, name in LANGUAGES %}
+       <li>
+         <form action="{% url 'set_language' %}" method="post">
+           {% csrf_token %}
+-          <button type="submit" name="language" value="{{ lang_code }}">
++          <button
++            class="dropdown-item"
++            type="submit"
++            name="language"
++            value="{{ lang_code }}"
++          >
+             {{ lang_code|language_name_local }}
+           </button>
+         </form>

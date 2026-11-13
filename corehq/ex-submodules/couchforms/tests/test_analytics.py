@@ -193,10 +193,9 @@ class CouchformsESAnalyticsTest(TestCase):
         def create_forms_and_sync_to_es():
             forms = []
             with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
-                with process_pillow_changes('DefaultChangeFeedPillow'):
-                    for received_on in [cls.now, cls.now - cls._60_days]:
-                        forms.append(create_form(received_on))
-                    forms.append(create_form(cls.now, app_id=None, xmlns="system"))
+                for received_on in [cls.now, cls.now - cls._60_days]:
+                    forms.append(create_form(received_on))
+                forms.append(create_form(cls.now, app_id=None, xmlns="system"))
             return forms
 
         from casexml.apps.case.tests.util import delete_all_xforms

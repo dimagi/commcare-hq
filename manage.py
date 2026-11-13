@@ -18,8 +18,10 @@ def main():
     # gevent-patching subprocess)
     GEVENT_COMMANDS = (
         GeventCommand('run_gunicorn'),
+        GeventCommand('run_ptop', with_option='--gevent-workers'),
         GeventCommand('run_sql'),
         GeventCommand('run_blob_migration'),
+        GeventCommand('run_blob_export'),
         GeventCommand('check_blob_logs'),
         GeventCommand('preindex_everything'),
         GeventCommand('migrate', env_exclude=['SKIP_GEVENT_PATCHING']),
@@ -54,9 +56,15 @@ def main():
 @attr.s
 class GeventCommand(object):
     command = attr.ib()
-    contains = attr.ib(default=None)
+    with_option = attr.ib(default=None)
     env_exclude = attr.ib(default=None)
     http_adapter_pool_size = attr.ib(default=None)
+
+    def should_include(self, args):
+        option = self.with_option
+        if not option:
+            return True
+        return any(a == option or a.startswith(option + '=') for a in args)
 
 
 def _patch_gevent_if_required(args, gevent_commands):
@@ -64,15 +72,10 @@ def _patch_gevent_if_required(args, gevent_commands):
         return
     for gevent_command in gevent_commands:
         should_patch = args[1] == gevent_command.command
-        contains = set(gevent_command.contains or [])
         env_exclude = gevent_command.env_exclude or []
-        arg_set = set(args)
 
-        should_include = contains.issubset(arg_set)
-        should_exclude = any(
-            [os.environ.get(env_var) == '1' for env_var in env_exclude]
-        )
-
+        should_include = gevent_command.should_include(args)
+        should_exclude = any(os.environ.get(v) == '1' for v in env_exclude)
         should_patch = should_patch and should_include and not should_exclude
 
         if should_patch:
@@ -129,8 +132,53 @@ def _set_source_root(source_root):
 
 
 def run_patches():
+    patch_pkg_resources()
     patch_jsonfield()
     unpatch_sys_modules()
+
+
+def patch_pkg_resources():
+    """Patch pkg_resources for unmaintained eulxml
+
+    The most recent commit to eulxml was 5 years ago as of May 2026,
+    and pkg_resources was removed from setuptools in early 2026.
+    """
+    from importlib.abc import Loader, MetaPathFinder
+    from importlib.resources import files
+    from importlib.util import spec_from_loader
+
+    class LegacyResources:
+        @staticmethod
+        def resource_filename(package, resource):
+            sys.modules.pop('pkg_resources', None)  # force re-import
+            path = files(package).joinpath(resource)
+            assert path.is_dir() or path.is_file(), f"unknown path: {path}"
+            return str(path)
+
+        @staticmethod
+        def resource_isdir(package, resource):
+            sys.modules.pop('pkg_resources', None)  # force re-import
+            return files(package).joinpath(resource).is_dir()
+
+    class LegacyResourcesLoader(Loader):
+        def create_module(self, spec):
+            return LegacyResources
+
+        def exec_module(self, module):
+            pass
+
+    class LegacyResourcesFinder(MetaPathFinder):
+        def find_spec(self, fullname, path, target=None):
+            if fullname == 'pkg_resources':
+                frame = sys._getframe(1)
+                while frame.f_globals.get("__name__", "").startswith('importlib'):
+                    frame = frame.f_back
+                caller = frame.f_globals.get("__name__", "")
+                if caller == 'eulxml':
+                    return spec_from_loader(fullname, LegacyResourcesLoader())
+            return None
+
+    sys.meta_path.append(LegacyResourcesFinder())
 
 
 def patch_jsonfield():

@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from django.conf import settings
+from django.db import close_old_connections
+from django.db.utils import InterfaceError, OperationalError
 from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
@@ -12,7 +14,7 @@ from soil import DownloadBase
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CommCareCase
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
@@ -61,60 +63,6 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_track
         case_group.save()
 
     return response
-
-
-def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
-    response = {
-        'errors': [],
-        'success': [],
-    }
-
-    missing_forms = set(form_ids)
-    success_count = 0
-
-    if task:
-        DownloadBase.set_progress(task, 0, len(form_ids))
-
-    for xform in XFormInstance.objects.iter_forms(form_ids, domain):
-        missing_forms.discard(xform.form_id)
-
-        if xform.domain != domain:
-            response['errors'].append(_("XForm {form_id} does not belong to domain {domain}").format(
-                form_id=xform.form_id, domain=domain))
-            continue
-
-        xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
-            form_id=xform.form_id,
-            domain=xform.domain,
-            username=username)
-
-        try:
-            if archive_or_restore.is_archive_mode():
-                xform.archive(user_id=user_id)
-                message = _("Successfully archived {form}").format(form=xform_string)
-            else:
-                xform.unarchive(user_id=user_id)
-                message = _("Successfully unarchived {form}").format(form=xform_string)
-            response['success'].append(message)
-            success_count = success_count + 1
-        except Exception as e:
-            response['errors'].append(_("Could not archive {form}: {error}").format(
-                form=xform_string, error=e))
-
-        if task:
-            DownloadBase.set_progress(task, success_count, len(form_ids))
-
-    for missing_form_id in missing_forms:
-        response['errors'].append(
-            _("Could not find XForm {form_id}").format(form_id=missing_form_id))
-
-    if from_excel:
-        return response
-
-    response["success_count_msg"] = _("{success_msg} {count} form(s)".format(
-        success_msg=archive_or_restore.success_text,
-        count=success_count))
-    return {"messages": response}
 
 
 def property_references_parent(case_property):
@@ -251,13 +199,20 @@ def run_rules_for_case(case, rules, now):
 
         try:
             last_result = rule.run_rule(case, now)
-        except Exception:
+        except Exception as exc:
             last_result = CaseRuleActionResult(num_errors=1)
             notify_exception(None, "Error applying case update rule", {
                 'domain': case.domain,
                 'rule_pk': rule.pk,
                 'case_id': case.case_id,
             })
+            if isinstance(exc, (InterfaceError, OperationalError)):
+                # Django does not reconnect a connection the server has
+                # dropped, so every later query on it would fail. Call
+                # close_old_connections() so the next query reconnects.
+                # The failed rule is not retried. This only protects the
+                # rules and cases that follow.
+                close_old_connections()
 
         aggregated_result.add_result(last_result)
         if last_result.num_closes > 0:

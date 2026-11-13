@@ -14,19 +14,22 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import (
     Application,
     CaseList,
+    CaseReferences,
+    CaseSaveReference,
     CaseSearch,
-    CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
     DetailTab,
     FormLink,
     Module,
+    SortElement,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import get_simple_form
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
-@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
 @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
 class BuildErrorsTest(TestCase):
 
@@ -67,6 +70,36 @@ class BuildErrorsTest(TestCase):
         self._clean_unique_id(errors)
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
+
+    def test_save_to_case_create_requires_case_type_and_case_name(self, *args):
+        factory = AppFactory()
+        _, form = factory.new_basic_module('save_to_case', 'household')
+        # Use a minimal valid form source so validate_for_build() runs action checks.
+        # Save-to-case references are set explicitly below via case_references_data.
+        form.source = get_simple_form()
+        form.case_references_data = CaseReferences(
+            load={},
+            save={
+                '/data/save_to_case': CaseSaveReference(
+                    case_type='',
+                    properties=[],
+                    create=True,
+                    close=False,
+                )
+            },
+        )
+
+        errors = form.validate_for_build()
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_missing_case_type'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
+        self.assertTrue(any(
+            error.get('type') == 'save_to_case_missing_case_name'
+            and error.get('case_tag') == '/data/save_to_case'
+            for error in errors
+        ))
 
     def test_empty_module_errors(self, *args):
         factory = AppFactory(build_version='2.24.0')
@@ -310,7 +343,7 @@ class BuildErrorsTest(TestCase):
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.applications.domain_has_privilege', return_value=True)
     def test_training_module_as_parent(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
@@ -325,7 +358,7 @@ class BuildErrorsTest(TestCase):
             'module': {'id': 1, 'unique_id': 'child_module', 'name': {'en': 'child module'}}
         }, app.validate_app())
 
-    @patch('corehq.apps.app_manager.models.domain_has_privilege', return_value=True)
+    @patch('corehq.apps.app_manager.models.applications.domain_has_privilege', return_value=True)
     def test_training_module_as_child(self, *args):
         factory = AppFactory(build_version='2.43.0')
         app = factory.app
@@ -350,7 +383,6 @@ class BuildErrorsTest(TestCase):
 
         module.case_details.short.multi_select = True
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
             data_registry="so_many_cases",
             data_registry_workflow=REGISTRY_WORKFLOW_LOAD_CASE,
@@ -389,7 +421,6 @@ class BuildErrorsTest(TestCase):
             ))
         ])
         module.search_config = CaseSearch(
-            search_label=CaseSearchLabel(label={'en': 'Search'}),
             properties=[CaseSearchProperty(name='name')],
         )
 
@@ -509,3 +540,39 @@ class BuildErrorsTest(TestCase):
             'type': 'search on clear with auto select',
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}},
         }, errors)
+
+    def test_validate_details_for_build_valid_field_with_sort_elements(self, *args):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('basic', 'person')
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='ascending'
+            )
+        ]
+        errors = module.validate_for_build()
+        self.assertListEqual(
+            errors,
+            [{
+                'type': 'invalid sort field',
+                'field': '',
+                'module': {
+                    'id': 0,
+                    'name': {'en': 'basic module'},
+                    'unique_id': 'basic_module'
+                }
+            }]
+        )
+
+        # do not validate field if sort calculation present
+        module.case_details.short.sort_elements = [
+            SortElement(
+                field='',
+                type='string',
+                direction='ascending',
+                sort_calculation="ifcalculation"
+            )
+        ]
+        errors = module.validate_for_build()
+        self.assertListEqual(errors, [])

@@ -3,7 +3,9 @@ from unittest.mock import Mock, patch
 from django.test import TestCase
 
 from corehq.apps.data_interfaces.tasks import task_generate_ids_and_operate_on_payloads
-from corehq.apps.data_interfaces.utils import operate_on_payloads
+from corehq.apps.data_interfaces.utils import (
+    operate_on_payloads,
+)
 
 
 DOMAIN = 'test-domain'
@@ -32,7 +34,7 @@ class TestTasks(TestCase):
 
         mock_get_repeat_record_ids.assert_called_once()
         mock_get_repeat_record_ids.assert_called_with(
-            'test_domain', repeater_id='deadbeef', state=None, payload_id='c0ffee')
+            'test_domain', repeater_id='deadbeef', states=None, payload_id='c0ffee')
 
         mock_operate_on_payloads.assert_called_once()
         mock_operate_on_payloads.assert_called_with(

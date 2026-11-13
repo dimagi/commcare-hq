@@ -5,11 +5,15 @@
 {% block title %}{{ current_page.page_name }}{% endblock %}
 
 {% block page_content %}
-  <p>{% blocktrans %}You are about to temporarily disable two-factor authentication for {{ username }}. This
-    compromises their account security, are you sure?{% endblocktrans %}</p>
+  <div class="alert alert-danger">
+    <i class="fa fa-warning"></i>
+    {% blocktrans %}You are about to reset two-factor authentication for <strong>{{ username }}</strong>. This
+    permanently deletes the user's existing two-factor authentication and cannot be undone, so it compromises
+    their account security. Are you sure?{% endblocktrans %}
+  </div>
   <div class="alert alert-warning">
-    <p>When temporarily disabling and resetting Two-Factor Auth it is important to verify that the request was made by the owner of the account (and not faked by someone else).</p>
-    <p>Please follow the <a href="https://confluence.dimagi.com/pages/viewpage.action?pageId=27362739#Two-StepAuthentication(2FA)-StepsforsupporttoresetCommCareHQaccount">guidelines on the wiki</a>.</p>
+    <p>When resetting Two-Factor Auth it is important to verify that the request was made by the owner of the account (and not faked by someone else).</p>
+    <p>Please follow the <a href="https://dimagi.atlassian.net/wiki/spaces/cc/pages/2146611542/Validating+Requests+Resetting+External+Users+2FA+-+Support+Steps">guidelines on the wiki</a>.</p>
   </div>
   {% crispy form %}
 {% endblock %}

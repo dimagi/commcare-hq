@@ -78,7 +78,7 @@
                         <button class="btn btn-sm btn-outline-primary" type="button" id="collapse-all-accordion-btn">Collapse All</button>
                       </div>
                     {% endif %}
-                    <div class="panel-group" id="case-properties-accordion">
+                    <div class="panel-group" id="case-properties-accordion">  {# todo B5: css-panel-group #}
                       {% for table in case_property_tables %}
                         <div class="card panel-appmanager" id="property-table-{{ forloop.counter }}-parent">  {# todo B5: css:panel #}
                           {% if table.name is not None %}
@@ -201,7 +201,7 @@
                         <span data-bind="text: readable_name, css: { 'break-all-words': !readable_name().match(/\s/) }"></span>
                       </td>
                       <td>
-                        <span data-bind="text: username"></span>
+                        <span data-bind="text: username" class="break-all-words"></span>
                       </td>
                       <td>
                         <span data-bind="text: user_type"></span>

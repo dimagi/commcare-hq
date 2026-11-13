@@ -55,6 +55,13 @@ class TestRenewSubscriptions(BaseAccountingTest):
         self.assertEqual(self.renewed_subscription.date_end, None)
         self.assertEqual(self.renewed_subscription.date_start, self.subscription.date_end)
         self.assertEqual(self.renewed_subscription.plan_version, self.subscription.plan_version)
+        self.assertEqual(self.renewed_subscription.subscriber, self.subscription.subscriber)
+        self.assertEqual(
+            self.renewed_subscription.salesforce_contract_id,
+            self.subscription.salesforce_contract_id
+        )
+        self.assertEqual(self.renewed_subscription.service_type, self.subscription.service_type)
+        self.assertEqual(self.renewed_subscription.funding_source, self.subscription.funding_source)
 
     def test_change_plan_on_renewal(self):
         new_edition = SoftwarePlanEdition.ADVANCED

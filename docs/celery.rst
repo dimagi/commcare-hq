@@ -26,7 +26,8 @@ Best practices
 
 Do not pass objects to celery.
 Instead, IDs can be passed and the celery task can retrieve the object from the database using the ID.
-This keeps message lengths short and reduces burden on RabbitMQ as well as preventing tasks from operating on stale data.
+This keeps message lengths short and reduces burden on the broker (Redis) as well as preventing tasks
+from operating on stale data.
 
 Do not specify ``serializer='pickle'`` for new tasks.
 This is a deprecated message serializer and by default, we now use JSON.

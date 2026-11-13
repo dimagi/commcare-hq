@@ -4,8 +4,8 @@
  
  {% block title %}{% trans "Your session has expired" %}{% endblock %}
  
--{% js_entry_b3 'registration/js/login' %}
-+{% js_entry 'registration/js/login' %}
+-{% js_entry_b3 'registration/js/bootstrap3/login' %}
++{% js_entry 'registration/js/bootstrap5/login' %}
  
  {% block background_content %}
    <div class="bg-container">
@@ -15,6 +15,19 @@
      <div class="bg-overlay"></div>
    </div>
  {% endblock %}
+@@ -22,10 +21,10 @@
+         href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
+ 
+   {% compress css %}
+-    <link type="text/less"
++    <link type="text/scss"
+           rel="stylesheet"
+           media="all"
+-          href="{% static 'registration/less/registration.less' %}" />
++          href="{% static 'registration/scss/registration.scss' %}" />
+   {% endcompress %}
+   <style>
+     /* hide password reset link */
 @@ -48,7 +47,7 @@
           id="user-login-form"
           class="ko-template"

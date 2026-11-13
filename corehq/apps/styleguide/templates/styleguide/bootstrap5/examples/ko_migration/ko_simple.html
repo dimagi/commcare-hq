@@ -1,0 +1,31 @@
+<div id="simple-ko-start-example" class="ko-template">
+  <p>
+    Name:
+    <input
+      type="text"
+      class="form-control"
+      data-bind="textInput: name"
+    />
+  </p>
+  <p data-bind="text: greeting"></p>
+  <p>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      data-bind="click: incrementCount"
+    >Increment</button>
+  </p>
+  <p>
+    Count: <span class="badge bg-secondary" data-bind="text: count"></span>
+  </p>
+  <p>
+    <button
+      type="button"
+      class="btn btn-outline-primary"
+      data-bind="click: toggleVisibility"
+    >Toggle Message</button>
+  </p>
+  <div data-bind="visible: isVisible">
+    Hello there!
+  </div>
+</div>

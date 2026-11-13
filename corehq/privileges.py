@@ -27,7 +27,6 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
     REPORT_BUILDER_30,
 }
 
-ATTENDANCE_TRACKING = 'attendance_tracking'
 ROLE_BASED_ACCESS = 'role_based_access'
 RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
@@ -125,6 +124,24 @@ TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION = 'two_stage_mobile_worker_account_crea
 CASE_DEDUPE = 'case_deduplicate'
 CUSTOM_DOMAIN_ALERTS = 'custom_domain_alerts'
 APP_DEPENDENCIES = 'app_dependencies'
+DATA_DICT_TYPES = 'data_dict_types'
+GEOJSON_EXPORT = 'geojson_export'
+
+# "Enable All Application Add-Ons" in Project Settings > Basic and
+# "Enable All Add-Ons" in Application Settings > "Add-Ons"
+SHOW_ENABLE_ALL_ADD_ONS = 'show_enable_all_add_ons'
+
+CUSTOM_ICON_BADGES = 'custom_icon_badges'
+
+LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT = 'location_columns_in_user_last_activity_report'
+
+LOCKED_ADMIN_QUESTIONS = 'locked_admin_questions'
+
+VELLUM_SAVE_TO_CASE = 'save_to_case'
+
+PUBLIC_WEBFORMS = 'public_webforms'
+
+AI_APP_TRANSLATION = 'ai_app_translation'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -177,7 +194,6 @@ MAX_PRIVILEGES = [
     PHONE_APK_HEARTBEAT,
     VIEW_APP_DIFF,
     DATA_FILE_DOWNLOAD,
-    ATTENDANCE_TRACKING,
     REGEX_FIELD_VALIDATION,
     LOCATION_SAFE_CASE_IMPORTS,
     FORM_CASE_IDS_CASE_IMPORTER,
@@ -190,8 +206,17 @@ MAX_PRIVILEGES = [
     CASE_DEDUPE,
     CUSTOM_DOMAIN_ALERTS,
     APP_DEPENDENCIES,
+    SHOW_ENABLE_ALL_ADD_ONS,
     BULK_DATA_EDITING,
     TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
+    DATA_DICT_TYPES,
+    GEOJSON_EXPORT,
+    CUSTOM_ICON_BADGES,
+    LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+    LOCKED_ADMIN_QUESTIONS,
+    VELLUM_SAVE_TO_CASE,
+    PUBLIC_WEBFORMS,
+    AI_APP_TRANSLATION,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -259,7 +284,6 @@ class Titles(object):
             PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
             VIEW_APP_DIFF: _("Improved app changes view"),
             DATA_FILE_DOWNLOAD: _('File Dropzone'),
-            ATTENDANCE_TRACKING: _("Attendance Tracking"),
             REGEX_FIELD_VALIDATION: _("Regular Expression Validation for Custom Data Fields"),
             LOCATION_SAFE_CASE_IMPORTS: _("Location Safe Case Imports"),
             FORM_CASE_IDS_CASE_IMPORTER: _("Download buttons for Form- and Case IDs on Case Importer"),
@@ -272,5 +296,16 @@ class Titles(object):
             CASE_DEDUPE: _("Deduplication Rules"),
             CUSTOM_DOMAIN_ALERTS: _("Custom domain banners"),
             APP_DEPENDENCIES: _("App Dependencies"),
+            SHOW_ENABLE_ALL_ADD_ONS: _('Show "Enable All Add-Ons" button'),
             TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION: _("Two-stage Mobile Worker Account Creation"),
+            DATA_DICT_TYPES: _("Data Dictionary case properties have data types"),
+            GEOJSON_EXPORT: _("Case Export supports exporting geolocated data in GeoJSON format"),
+            CUSTOM_ICON_BADGES: _('Add text or xpath based custom icon badges to menus and forms'),
+            LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT: _(
+                "Add primary location's hierarchy to excel export in User Last Activity Report"
+            ),
+            LOCKED_ADMIN_QUESTIONS: _("Locked Admin Questions"),
+            VELLUM_SAVE_TO_CASE: _("Save to Case"),
+            PUBLIC_WEBFORMS: _("Public Webforms"),
+            AI_APP_TRANSLATION: _("AI App Translations"),
         }.get(privilege, privilege)

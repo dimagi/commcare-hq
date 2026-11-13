@@ -1,0 +1,18 @@
+--- 
++++ 
+@@ -11,13 +11,13 @@
+     <ul class="fa-ul">
+       <!-- ko if: condition -->
+       <li data-bind="visible: $root.showConditions">
+-        <i class="fa-li fa fa-sitemap text-muted"></i>
++        <i class="fa-li fa fa-sitemap text-body-secondary"></i>
+         <!-- ko text: condition.question + " " + condition.operator + " " + condition.answer --><!-- /ko -->
+       </li>
+       <!-- /ko -->
+       <!-- ko if: question.calculate -->
+       <li data-bind="visible: $root.showCalculations">
+-        <i class="fa-li fa fa-calculator text-muted"></i>
++        <i class="fa-li fa fa-calculator text-body-secondary"></i>
+         <!-- ko text: question.calculate --><!-- /ko -->
+       </li>
+       <!-- /ko -->

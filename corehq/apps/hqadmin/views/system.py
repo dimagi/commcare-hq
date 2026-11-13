@@ -59,7 +59,6 @@ class SystemInfoView(BaseAdminSectionView):
         context['self.request'] = getattr(settings, 'CELERY_FLOWER_URL', None)
 
         context['is_bigcouch'] = is_bigcouch()
-        context['rabbitmq_url'] = get_rabbitmq_management_url()
         context['hide_filters'] = True
         context['current_system'] = socket.gethostname()
         context['deploy_history'] = HqDeploy.objects.filter(environment=environment)[:5]
@@ -67,7 +66,6 @@ class SystemInfoView(BaseAdminSectionView):
         context['user_is_support'] = hasattr(self.request, 'user') and SUPPORT.enabled(self.request.user.username)
 
         context['redis'] = service_checks.check_redis()
-        context['rabbitmq'] = service_checks.check_rabbitmq(settings.CELERY_BROKER_URL)
         context['celery_stats'] = get_celery_stats()
 
         context['cluster_health'] = escheck.check_es_cluster_health()
@@ -195,15 +193,6 @@ def pillow_operation_api(request):
             return get_response(str(e))
     else:
         return get_response("No pillow found with name '{}'".format(pillow_name))
-
-
-def get_rabbitmq_management_url():
-    if settings.CELERY_BROKER_URL.startswith('amqp'):
-        amqp_parts = settings.CELERY_BROKER_URL.replace('amqp://', '').split('/')
-        mq_management_url = amqp_parts[0].replace('5672', '15672')
-        return "http://%s" % mq_management_url.split('@')[-1]
-    else:
-        return None
 
 
 @require_superuser

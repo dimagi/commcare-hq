@@ -1,0 +1,6 @@
+{% extends "hqwebapp/bootstrap5/base_section.html" %}
+{% load hq_shared_tags %}
+
+{% block page_navigation %}
+  {% include 'hqwebapp/partials/bootstrap5/navigation_left_sidebar.html' with sections=navigation_sections %}
+{% endblock page_navigation %}

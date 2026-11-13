@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.authors="Dimagi <devops@dimagi.com>"
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
     PATH=/vendor/bin:$PATH \
-    NODE_VERSION=20.11.1 \
+    NODE_VERSION=24.11.1 \
     # Compile bytecode during installation to improve startup time. Also
     # suppresses a couchdbkit syntax error that happens during bytecode
     # compilation.
@@ -50,7 +50,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   && rm -rf /tmp-project
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options
-#   executablePath: 'google-chrome-stable'
+#   executablePath: '/usr/bin/google-chrome-stable'
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 COPY package.json /vendor/

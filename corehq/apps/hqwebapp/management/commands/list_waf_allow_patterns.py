@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         resolver = get_resolver()
-        for kind, views in waf_allow.views.items():
+        for kind, views in sorted(waf_allow.views.items()):
             print(kind)
             print('--------')
             patterns = []

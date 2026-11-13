@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from field_audit.models import AuditEvent
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import HqPermissions
@@ -353,6 +353,14 @@ class HqPermissionsTest(SimpleTestCase):
         self.hq_permissions.view_reports = False
         self.hq_permissions.view_report_list = ["a"]
         self._check_normalized_permission("download_reports", expect_changed=False)
+
+    def test_edit_locked_questions_removed_when_edit_apps_false(self):
+        self.hq_permissions.edit_apps = False
+        self._check_normalized_permission("edit_locked_questions_in_apps", expect_changed=True)
+
+    def test_edit_public_webforms_removed_when_edit_apps_false(self):
+        self.hq_permissions.edit_apps = False
+        self._check_normalized_permission("edit_public_webforms", expect_changed=True)
 
     def _check_normalized_permission(self, permission, initial_value=True, expect_changed=True):
         setattr(self.hq_permissions, permission, initial_value)

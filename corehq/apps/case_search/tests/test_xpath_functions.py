@@ -2,7 +2,6 @@ import re
 
 import pytest
 from eulxml.xpath import parse as parse_xpath
-from nose.tools import assert_raises
 
 from corehq.apps.case_search.exceptions import XPathFunctionException
 from corehq.apps.case_search.filter_dsl import (
@@ -31,12 +30,15 @@ INVALID_TEST_CASES = [(
 ), (
     'within-distance("coords", "42.4402967 -71.1453275", "eight", "miles")',
     "The third argument to 'within-distance' must be a number, got 'eight'"
+), (
+    'starts-with("kpop-demon")',
+    "The 'starts-with' function accepts exactly 2 arguments, got 1"
 )]
 
 
 @pytest.mark.parametrize("xpath, error_msg", INVALID_TEST_CASES)
 def test_invalid(xpath, error_msg):
     regex = re.compile(re.escape(error_msg))
-    with assert_raises(XPathFunctionException, msg=regex):
+    with pytest.raises(XPathFunctionException, match=regex):
         parsed = parse_xpath(xpath)
         build_filter_from_ast(parsed, SearchFilterContext("mydomain"))

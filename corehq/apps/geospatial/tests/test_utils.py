@@ -67,6 +67,7 @@ class TestSetGPSProperty(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
 
         case_type = 'foobar'
 
@@ -82,15 +83,7 @@ class TestSetGPSProperty(TestCase):
         cls.user = CommCareUser.create(
             cls.DOMAIN, 'UserA', '1234', None, None
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        CommCareCase.objects.hard_delete_cases(cls.DOMAIN, [
-            cls.case_obj.case_id,
-        ])
-        cls.user.delete(cls.DOMAIN, None)
-        cls.domain_obj.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.DOMAIN, None)
 
     def test_set_case_gps_property(self):
         submit_data = {
@@ -136,9 +129,11 @@ class TestUpdateCasesOwner(TestCase):
     def setUp(self):
         super().setUp()
         self.user_a = CommCareUser.create(self.domain, 'User_A', '1234', None, None)
+        self.addCleanup(self.user_a.delete, self.domain, None)
         self.case_1 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_a.user_id)
 
         self.user_b = CommCareUser.create(self.domain, 'User_B', '1234', None, None)
+        self.addCleanup(self.user_b.delete, self.domain, None)
         self.case_2 = create_case(self.domain, case_id=uuid4().hex, save=True, owner_id=self.user_b.user_id)
         self.related_case_2 = create_case(
             self.domain,
@@ -149,15 +144,6 @@ class TestUpdateCasesOwner(TestCase):
         self._create_parent_index(self.related_case_2, self.case_2.case_id)
 
         self.cases = [self.case_1, self.case_2, self.related_case_2]
-
-    def tearDown(self):
-        self.user_a.delete(self.domain, None)
-        self.user_b.delete(self.domain, None)
-        CommCareCase.objects.hard_delete_cases(
-            self.domain,
-            [case.case_id for case in self.cases]
-        )
-        super().tearDown()
 
     def _create_parent_index(self, case, parent_case_id):
         index = CommCareCaseIndex(

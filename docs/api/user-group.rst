@@ -172,7 +172,7 @@ Endpoint Specifications
 
 .. code-block:: text
 
-    https://www.commcarehq.org/a/[domain]/api/group/v1/[group_id]
+    https://www.commcarehq.org/a/[domain]/api/group/v1/[group_id]/
 
 **Supported Methods**
 

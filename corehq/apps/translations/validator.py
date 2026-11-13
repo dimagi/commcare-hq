@@ -145,13 +145,7 @@ class UploadedTranslationsValidator(object):
                 self._get_current_header_index(module_or_form_id, 'label')
             )
         elif for_type == 'module':
-            return self.app_translation_generator.filter_invalid_rows_for_module(
-                rows,
-                module_or_form_id,
-                self._get_current_header_index(module_or_form_id, 'case_property'),
-                self._get_current_header_index(module_or_form_id, 'list_or_detail'),
-                self._get_current_header_index(module_or_form_id, self.default_language_column)
-            )
+            return rows
         elif for_type == 'module_and_form':
             return rows
         assert False, "Unexpected type"

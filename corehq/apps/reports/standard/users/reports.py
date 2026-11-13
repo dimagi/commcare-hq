@@ -2,7 +2,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import conditional_escape, format_html_join
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -232,13 +232,13 @@ class UserHistoryReport(GetParamsMixin, DatespanMixin, GenericTabularReport, Pro
                 if isinstance(value, dict):
                     value = self._html_list(value)
                 elif isinstance(value, list):
-                    value = format_html(", ".join(value))
+                    value = format_html_join(", ", "{}", ((v,) for v in value))
                 else:
-                    value = format_html(str(value))
+                    value = conditional_escape(value)
                 items.append("<li>{}: {}</li>".format(key, value))
         elif isinstance(changes, list):
-            items = ["<li>{}</li>".format(format_html(change)) for change in changes]
-        return mark_safe(f"<ul class='list-unstyled'>{''.join(items)}</ul>")
+            items = format_html_join("", "<li>{}</li>", ((c,) for c in changes))
+        return mark_safe(f"<ul class='list-unstyled'>{items}</ul>")  # nosec: items sanitized
 
     def _user_history_details_cell(self, changes, domain, for_export):
         properties = UserHistoryReport.get_primary_properties(domain)

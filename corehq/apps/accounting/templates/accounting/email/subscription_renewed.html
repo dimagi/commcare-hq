@@ -1,0 +1,34 @@
+{% load i18n %}
+
+<p>
+  {% blocktrans %}
+    Dear {{ domain }} administrator,
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    This is a reminder that your subscription for project space {{ domain }} on
+    {{ plan }} is set to automatically renew on {{ date_start }}.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    In case you would not like to renew your subscription, you can simply turn
+    off auto-renew <a href="{{ subscription_url }}">here</a> at any point during
+    your subscription term.
+  {% endblocktrans %}
+</p>
+
+<p>
+  {% blocktrans %}
+    Best regards,
+  {% endblocktrans %}
+</p>
+<p>
+  {% blocktrans %}
+    The CommCare Team
+  {% endblocktrans %}<br />
+  {{ base_url }}
+</p>

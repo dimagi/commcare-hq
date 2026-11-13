@@ -4,13 +4,18 @@ from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
 
+from django.conf import settings
 from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
+
+from jsonobject.exceptions import BadValueError
+from lxml import etree
 
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.phone.data_providers.case.livequery import (
     get_all_related_live_cases,
 )
+from couchforms.geopoint import GeoPoint
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -20,6 +25,19 @@ from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
     IS_RELATED_CASE,
+)
+from corehq.apps.case_search.endpoint_capability import (
+    FIELD_TYPE_DATE,
+    FIELD_TYPE_DATETIME,
+    FIELD_TYPE_GEOPOINT,
+    FIELD_TYPE_NUMBER,
+    get_capability,
+)
+from corehq.apps.case_search.endpoint_query_spec import (
+    ParameterInput,
+    bind_values,
+    parse_parameter_spec,
+    parse_query_spec,
 )
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
@@ -35,7 +53,12 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_XPATH_QUERY_KEY,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
+    CaseSearchEndpoint,
     extract_search_request_config,
+)
+from corehq.apps.case_search.xpath_functions.query_functions import (
+    date_permutations,
+    validate_date,
 )
 from corehq.apps.es import HQESQuery, case_search
 from corehq.apps.es import cases as case_es
@@ -43,18 +66,29 @@ from corehq.apps.es import filters, queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_date_range,
+    case_property_geo_distance,
     case_property_missing,
+    case_property_numeric_range,
     case_property_query,
+    case_property_starts_with,
     reverse_index_case_query,
+    sounds_like_text_query,
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
+from corehq.apps.project_db.user_sql import (
+    UserSQL,
+    UserSQLProgrammingError,
+    UserSQLTimeout,
+)
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.quickcache import quickcache
+from corehq.util.xml_utils import serialize
 
 
 @dataclass
@@ -83,37 +117,151 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
     profiler = CaseSearchProfiler(debug_mode=debug)
     with profiler.timing_context:
         config = extract_search_request_config(request_dict)
-        cases = get_case_search_results(
-            domain,
-            config.case_types,
-            config.criteria,
-            app_id=app_id,
-            couch_user=couch_user,
-            registry_slug=config.data_registry,
-            custom_related_case_property=config.custom_related_case_property,
-            include_all_related_cases=config.include_all_related_cases,
-            commcare_sort=config.commcare_sort,
-            profiler=profiler,
-        )
-        with profiler.timing_context('CaseDBFixture.fixture'):
-            fixtures = CaseDBFixture(cases).fixture
+        # ProjectDB endpoints don't get turned into CaseDBFixtures
+        if endpoint := _get_project_db_endpoint(domain, config):
+            fixtures = get_project_db_fixture(domain, endpoint, config)
+        else:
+            cases = get_case_search_results(
+                domain,
+                config,
+                app_id=app_id,
+                couch_user=couch_user,
+                profiler=profiler,
+            )
+            with profiler.timing_context('CaseDBFixture.fixture'):
+                fixtures = CaseDBFixture(cases).fixture
     return fixtures, profiler
 
 
-def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None,
-                            include_all_related_cases=None, commcare_sort=None, profiler=None):
-    helper = _get_helper(couch_user, domain, case_types, registry_slug)
+def get_case_search_results(domain, config, app_id=None, couch_user=None, profiler=None):
+    helper = _get_helper(couch_user, domain, config.case_types, config.data_registry)
     if profiler:
         helper.profiler = profiler
 
-    cases = get_primary_case_search_results(helper, case_types, criteria, commcare_sort)
+    if config.endpoint_id:
+        return get_endpoint_results(helper, config)
+    else:
+        return get_unconfigured_endpoint_results(helper, config, app_id)
+
+
+def get_endpoint(domain, endpoint_id):
+    if not toggles.CASE_SEARCH_ENDPOINTS.enabled(domain):
+        raise CaseSearchUserError(_("Configurable Endpoints are not available"))
+    try:
+        # TODO: cache? Prefetch endpoint version?
+        endpoint = CaseSearchEndpoint.objects.get(domain=domain, id=endpoint_id)
+    except (CaseSearchEndpoint.DoesNotExist, ValueError):
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(endpoint_id))
+    if not endpoint.is_active:
+        raise CaseSearchUserError(_("Endpoint '{}' not found").format(endpoint_id))
+    return endpoint
+
+
+def get_endpoint_results(helper, config):
+    endpoint = get_endpoint(helper.domain, config.endpoint_id)
+    assert endpoint.target_type == CaseSearchEndpoint.TargetType.ELASTICSEARCH, endpoint.target_type
+    parameters, errors = parse_parameter_spec(endpoint.current_version.parameters)
+    query_root = None
+    if not errors:
+        query_root, errors = parse_query_spec(
+            endpoint.current_version.query,
+            parameters,
+            endpoint.current_version.case_type,
+            get_capability(helper.domain)
+        )
+    if errors:
+        notify_exception(None, "Stored endpoint query failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(_("Endpoint '{}' query is invalid").format(config.endpoint_id))
+    return get_primary_case_search_endpoint_results(
+        helper,
+        [endpoint.current_version.case_type],
+        config.criteria,
+        query_root)
+
+
+def _get_project_db_endpoint(domain, config):
+    if config.endpoint_id:
+        endpoint = get_endpoint(domain, config.endpoint_id)
+        if endpoint.target_type == CaseSearchEndpoint.TargetType.PROJECT_DB:
+            return endpoint
+
+
+def get_project_db_fixture(domain, endpoint, config):
+    """Run a ``project_db`` endpoint's query and return the results as XML"""
+    version = endpoint.current_version
+    parameters, errors = parse_parameter_spec(version.parameters)
+    if errors:
+        # The spec is validated when the endpoint is saved, so this is a bug
+        # or a hand-edited record rather than anything the searcher did.
+        notify_exception(None, "Stored endpoint parameters failed validation", details={
+            'endpoint': endpoint.id, 'errors': errors,
+        })
+        raise CaseSearchUserError(
+            _("Endpoint '{}' parameters are invalid").format(config.endpoint_id))
+    user_sql = UserSQL(domain, version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
+    query_params = bind_values(parameters, config.criteria)
+    result = _run_endpoint_query(domain, endpoint, user_sql, query_params)
+    return _rows_to_fixture(result.rows)
+
+
+def _run_endpoint_query(domain, endpoint, user_sql, query_params):
+    tags = {'domain': domain, 'endpoint_id': str(endpoint.id)}
+    with metrics_histogram_timer(
+        'commcare.project_db.endpoint_query.duration',
+        timing_buckets=(.1, .5, 1, 2, 5, 10),
+        tags=tags,
+    ):
+        try:
+            return user_sql.run(query_params)
+        except UserSQLTimeout as e:
+            metrics_counter('commcare.project_db.endpoint_query.timeout', tags=tags)
+            raise CaseSearchUserError(_("Endpoint '{}' query timed out").format(endpoint.id)) from e
+        except UserSQLProgrammingError as e:
+            notify_exception(None, "ProjectDB endpoint query failed", details={
+                'endpoint': endpoint.id, 'error': e.msg,
+            })
+            raise CaseSearchUserError(_("Endpoint '{}' query failed").format(endpoint.id)) from e
+
+
+def _rows_to_fixture(rows):
+    fixture = etree.Element('results')
+    fixture.attrib['id'] = CaseDBFixture.id
+    for row in rows:
+        item = etree.Element('case')
+        item.attrib['case_id'] = row['case_id']  # Required for claiming to work
+        for name, value in row.items():
+            element = etree.Element(name)
+            element.text = serialize(value)
+            item.append(element)
+        fixture.append(item)
+    return etree.tostring(fixture, encoding='utf-8')
+
+
+@time_function()
+def get_primary_case_search_endpoint_results(helper, case_types, criteria, endpoint_query, limit=None):
+    builder = CaseSearchEndpointQueryBuilder(helper, case_types, endpoint_query)
+    with helper.profiler.timing_context('build_query'):
+        search_es = builder.build_query(criteria)
+    if limit:
+        search_es = search_es.size(limit)
+
+    results = search_es.run()
+    with helper.profiler.timing_context('wrap_cases'):
+        cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
     helper.profiler.primary_count = len(cases)
+    return cases
+
+
+def get_unconfigured_endpoint_results(helper, config, app_id):
+    cases = get_primary_case_search_results(helper, config.case_types, config.criteria, config.commcare_sort)
     if app_id:
-        related_cases = get_and_tag_related_cases(helper, app_id, case_types, cases,
-                                                  custom_related_case_property, include_all_related_cases)
-        helper.profiler.related_count = len(related_cases)
-        cases.extend(related_cases)
+        cases.extend(get_and_tag_related_cases(
+            helper, app_id, config.case_types, cases,
+            config.custom_related_case_property,
+            config.include_all_related_cases,
+        ))
     return cases
 
 
@@ -133,6 +281,7 @@ def get_primary_case_search_results(helper, case_types, criteria, commcare_sort=
     results = search_es.run()
     with helper.profiler.timing_context('wrap_cases'):
         cases = [helper.wrap_case(hit, include_score=True) for hit in results.raw_hits]
+    helper.profiler.primary_count = len(cases)
     return cases
 
 
@@ -146,6 +295,7 @@ def _get_helper(couch_user, domain, case_types, registry_slug):
             pass
         else:
             helper = RegistryQueryHelper(domain, couch_user, registry_helper)
+    helper.is_case_search = True
     return helper
 
 
@@ -153,6 +303,7 @@ class QueryHelper:
     def __init__(self, domain):
         self.domain = domain
         self.profiler = CaseSearchProfiler()
+        self.is_case_search = False
 
     def get_base_queryset(self, slug=None):
         # slug is only informational, used for profiling
@@ -219,6 +370,7 @@ class CaseSearchQueryBuilder:
         max_results = CASE_SEARCH_MAX_RESULTS
         if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
             max_results = 1500
+
         return (self.helper.get_base_queryset('main')
                 .case_type(self.case_types)
                 .is_closed(False)
@@ -240,6 +392,7 @@ class CaseSearchQueryBuilder:
 
     def _apply_filter(self, search_es, criteria):
         if criteria.key == CASE_SEARCH_XPATH_QUERY_KEY:
+            _require_case_search_advanced(self.request_domain)
             if not criteria.is_empty:
                 xpaths = criteria.value if criteria.has_multiple_terms else [criteria.value]
                 for xpath in xpaths:
@@ -334,6 +487,121 @@ class CaseSearchQueryBuilder:
             for prop in properties_config.properties
         ]
 
+class CaseSearchEndpointQueryBuilder:
+    """Compiles the case search object for the view"""
+    def __init__(
+        self,
+        helper,
+        case_types,
+        query_root):
+        self.request_domain = helper.domain
+        self.case_types = case_types
+        self.query_root = query_root
+        self.helper = helper
+        self.config = helper.config
+
+    def build_query(self, search_criteria):
+        self.param_values = {c.key: c.value for c in search_criteria}
+        search_es = self._get_initial_search_es()
+        query = self._parse_query(self.query_root)
+        if query is None:
+            # Every condition dropped (e.g. all inputs were unsupplied
+            # parameters). Apply no extra filter rather than match-all-via-empty.
+            return search_es
+        return search_es.add_query(query, queries.MUST)
+
+    def _get_initial_search_es(self):
+        max_results = CASE_SEARCH_MAX_RESULTS
+        if toggles.INCREASED_MAX_SEARCH_RESULTS.enabled(self.request_domain):
+            max_results = 1500
+
+        return (self.helper.get_base_queryset('main')
+                .case_type(self.case_types)
+                .is_closed(False)
+                .size(max_results))
+
+    def _get_child_queries(self, node):
+        child_queries = [self._parse_query(child) for child in node.children]
+        return [q for q in child_queries if q is not None]
+
+    def _parse_query(self, node):
+        if node.type in ('all', 'any', 'none'):
+            # Drop a group with no surviving children rather than collapsing to
+            # an empty AND/OR. An empty bool matches all documents, which in an
+            # `any`/OR context would make the whole query match everything.
+            children = self._get_child_queries(node)
+            if not children:
+                return None
+            if node.type == 'all':
+                return filters.AND(*children)
+            if node.type == 'any':
+                return filters.OR(*children)
+            return filters.NOT(filters.OR(*children))
+        elif node.type == 'component':
+            return self._parse_component_node(node)
+        else:
+            return None
+
+    def _input_value(self, input_):
+        if input_ is None:
+            return None
+        if isinstance(input_, ParameterInput):
+            return self.param_values.get(input_.value)
+        return input_.value
+
+    def _parse_component_node(self, node):
+        operator = node.operator
+
+        if node.field_type == FIELD_TYPE_GEOPOINT:
+            if operator == 'within_distance':
+                point = self._input_value(node.inputs.get('point'))
+                distance = self._input_value(node.inputs.get('distance'))
+                unit = self._input_value(node.inputs.get('unit'))
+                if None in (point, distance, unit):
+                    return None
+                try:
+                    geo_point = GeoPoint.from_string(point, flexible=True)
+                    distance = float(distance)
+                except (BadValueError, ValueError):
+                    return None
+                if unit not in queries.DISTANCE_UNITS:
+                    return None
+                return case_property_geo_distance(node.field, geo_point, **{unit: distance})
+            return None
+
+        field = node.field
+        value = self._input_value(node.inputs['value'])
+        if value is None:
+            return None  # ignore component if value is not given
+
+        if node.field_type in (FIELD_TYPE_DATE, FIELD_TYPE_DATETIME):
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_date_range(field, **{operator: value})
+            elif operator == 'fuzzy_date':
+                if not validate_date(value):
+                    return None
+                return case_property_query(field, date_permutations(value), boost_first=True)
+        elif node.field_type == FIELD_TYPE_NUMBER:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator in ('lt', 'gt', 'lte', 'gte'):
+                return case_property_numeric_range(field, **{operator: value})
+        else:
+            if operator == 'equals':
+                return case_property_query(field, value)
+            elif operator == 'not_equals':
+                return filters.NOT(case_property_query(field, value))
+            elif operator == 'starts_with':
+                return case_property_starts_with(field, value)
+            elif operator == 'fuzzy':
+                return case_property_query(field, value, fuzzy=True)
+            elif operator == 'phonetic':
+                return sounds_like_text_query(field, value)
+        return None
 
 @time_function()
 def get_and_tag_related_cases(helper, app_id, case_types, cases,
@@ -364,6 +632,7 @@ def get_and_tag_related_cases(helper, app_id, case_types, cases,
     with helper.profiler.timing_context('_tag_is_related_case'):
         for case in results:
             _tag_is_related_case(case)
+    helper.profiler.related_count = len(results)
     return results
 
 
@@ -510,3 +779,10 @@ def _get_case_search_cases(helper, case_ids):
 # Warning: '_tag_is_related_case' may cause the relevant user-defined properties to be overwritten.
 def _tag_is_related_case(case):
     case.case_json[IS_RELATED_CASE] = "true"
+
+
+# log once per domain per day
+@quickcache(['domain'], timeout=24 * 60 * 60, skip_arg=lambda _: settings.UNIT_TESTING)
+def _require_case_search_advanced(domain):
+    if not toggles.CASE_SEARCH_ADVANCED.enabled(domain):
+        notify_exception(None, "Advanced case search feature attempted")

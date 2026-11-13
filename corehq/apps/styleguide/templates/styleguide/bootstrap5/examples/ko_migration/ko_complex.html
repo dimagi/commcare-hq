@@ -1,0 +1,40 @@
+<!--
+ We can't use template tags in this file, but we would include
+ the following tag on the same page for initial data:
+ {% initial_page_data "ko_complex_initial_value" complex_initial_value|JSON %}
+-->
+<div id="complex-ko-start-example" class="ko-template">
+  <!-- ko foreach: keyValuePairs -->
+    <div class="d-flex">
+      <div class="flex-fill">
+        <input
+          type="text"
+          class="form-control"
+          data-bind="textInput: key"
+        />
+      </div>
+      <p class="py-1 px-3">&rarr;</p>
+      <div class="flex-fill">
+        <input
+          type="text"
+          class="form-control"
+          data-bind="textInput: value"
+        />
+      </div>
+      <p class="ps-3">
+        <button
+          type="button"
+          class="btn btn-outline-danger"
+          data-bind="click: $root.removeKeyValuePair"
+        ><i class="fa fa-remove"></i></button>
+      </p>
+    </div>
+  <!-- /ko -->
+  <p>
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bind="click: addKeyValuePair"
+    ><i class="fa fa-plus"></i> Add</button>
+  </p>
+</div>

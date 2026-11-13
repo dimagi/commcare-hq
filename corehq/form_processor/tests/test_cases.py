@@ -111,7 +111,7 @@ class TestCommCareCaseManager(BaseCaseManagerTest):
         case2 = _create_case()
         case_ids = {'missing_case', case1.case_id, case2.case_id, '', None}
 
-        result = CommCareCase.objects.iter_cases(case_ids, DOMAIN)
+        result = CommCareCase.objects.iter_cases(case_ids)
         self.assertEqual({r.case_id for r in result}, {case1.case_id, case2.case_id})
 
     def test_get_case_by_external_id(self):

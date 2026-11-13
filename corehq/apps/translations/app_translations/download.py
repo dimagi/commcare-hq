@@ -31,10 +31,6 @@ def get_bulk_app_single_sheet_by_name(app, lang, eligible_for_transifex_only=Fal
         sheet_name = get_module_sheet_name(module)
         rows.append(get_name_menu_media_row(module, sheet_name, lang))
         for module_row in get_module_rows([lang], module, app.domain):
-            if eligible_for_transifex_only:
-                field_name, field_type, translation = module_row
-                if checker.is_blacklisted(module.unique_id, field_type, field_name, [translation]):
-                    continue
             rows.append(get_list_detail_case_property_row(module_row, sheet_name))
 
         for form in module.get_forms():
@@ -82,10 +78,6 @@ def get_bulk_app_sheets_by_name(app, lang=None, eligible_for_transifex_only=Fals
 
         rows[module_sheet_name] = []
         for module_row in get_module_rows(langs, module, app.domain):
-            if eligible_for_transifex_only:
-                field_name, field_type, *translations = module_row
-                if checker.is_blacklisted(module.unique_id, field_type, field_name, translations):
-                    continue
             rows[module_sheet_name].append(module_row)
 
         for form in module.get_forms():
@@ -207,22 +199,17 @@ def get_module_case_list_menu_item_rows(langs, module):
 
 
 def get_module_search_command_rows(langs, module, domain):
-    if not module_offers_search(module) or not toggles.USH_CASE_CLAIM_UPDATES.enabled(domain):
+    if not module_offers_search(module) or not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         return []
 
     rows = [
         ('search_label', 'list')
-        + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
+        + tuple(module.search_config.search_button_label.get(lang, '') for lang in langs),
         ('title_label', 'list')
         + tuple(module.search_config.title_label.get(lang, '') for lang in langs),
         ('description', 'list')
         + tuple(module.search_config.description.get(lang, '') for lang in langs),
     ]
-    if not toggles.SPLIT_SCREEN_CASE_SEARCH.enabled(domain):
-        rows.append(
-            ('search_again_label', 'list') + tuple(module.search_config.search_again_label.label.get(lang, '')
-                                                   for lang in langs),
-        )
     return rows
 
 

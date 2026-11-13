@@ -10,14 +10,13 @@ from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export, get_default_export_settings_if_available
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.signals import get_task_time_to_start
-from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
@@ -26,9 +25,10 @@ from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
     get_daily_saved_export_ids_for_auto_rebuild,
-    get_properly_wrapped_export_instance,
+    wrap_export_instance,
 )
 from .export import get_export_file, rebuild_export
+from .logging import ExportLoggingContext
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
@@ -43,7 +43,8 @@ logger = logging.getLogger('export_migration')
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username,
                                   es_filters, download_id, owner_id,
-                                  filename=None, expiry=10 * 60):
+                                  filename=None, expiry=10 * 60,
+                                  filter_summary=None):
     """
     :param expiry:  Time period for the export to be available for download in minutes
     """
@@ -61,6 +62,13 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
+    logging_context = ExportLoggingContext(
+        download_id=download_id,
+        username=username,
+        trigger="user_download",
+        filters=filter_summary or {},
+        bulk=None,
+    )
     with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -68,7 +76,8 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
             temp_path,
             # We don't have a great way to calculate progress if it's a bulk download,
             # so only track the progress for single instance exports.
-            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None,
+            logging_context=logging_context,
         )
 
         file_format = Format.from_format(export_file.format)
@@ -106,9 +115,16 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
 
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
-def _start_export_task(export_instance_id):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    rebuild_export(export_instance, progress_tracker=_start_export_task)
+def _start_export_task(export_instance_id, manual=False, username=None):
+    # This task rebuilds a specific export by id. It is reached only from
+    # request handlers that already scoped the export to a project, or from
+    # the nightly auto-rebuild that spans all projects, so there is no
+    # requester domain to scope the lookup against.
+    from corehq.apps.export.models import ExportInstance
+    export_instance = wrap_export_instance(
+        ExportInstance.get_db().get(export_instance_id))
+    rebuild_export(export_instance, progress_tracker=_start_export_task,
+                   manual=manual, username=username)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -120,7 +136,7 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, manual=False):
+def rebuild_saved_export(export_instance_id, manual=False, username=None):
     """Kicks off a celery task to rebuild the export.
 
     If this is called while another one is already running for the same export
@@ -137,6 +153,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data.set_task(
         _start_export_task.apply_async(
             args=[export_instance_id],
+            kwargs={"manual": manual, "username": username},
             queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )

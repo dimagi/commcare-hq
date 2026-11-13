@@ -14,7 +14,7 @@ class SingleSignOnErrorMiddleware(MiddlewareMixin):
         if isinstance(exception, SingleSignOnError):
             return render(
                 request,
-                'sso/sso_error.html',
+                'sso/bootstrap3/sso_error.html',
                 {'error': exception},
                 status=503,
             )

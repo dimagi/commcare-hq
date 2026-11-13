@@ -71,7 +71,7 @@ class ModuleAsChildTestBase(SuiteMixin):
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_deleted_parent(self, *args):
         self.module_1.root_module_id = "unknownmodule"
 
@@ -82,7 +82,7 @@ class ModuleAsChildTestBase(SuiteMixin):
         self.assertIn(cycle_error, errors)
 
     @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test_circular_relation(self, *args):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {

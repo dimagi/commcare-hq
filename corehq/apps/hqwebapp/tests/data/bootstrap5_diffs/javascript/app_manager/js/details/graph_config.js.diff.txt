@@ -1,0 +1,37 @@
+--- 
++++ 
+@@ -16,7 +16,7 @@
+ import $ from "jquery";
+ import ko from "knockout";
+ import _ from "underscore";
+-import main from "hqwebapp/js/bootstrap3/main";
++import main from "hqwebapp/js/bootstrap5/main";
+ import ClipboardJS from "clipboard/dist/clipboard";
+ import "hqwebapp/js/components/select_toggle";
+ import "hqwebapp/js/select2_knockout_bindings.ko";      // autocompleteSelect2
+@@ -57,7 +57,7 @@
+ 
+         var $modal = $modalDiv.find('.modal');
+         $modal.appendTo('body');
+-        $modal.modal('show');
++        $modal.modal('show');  /* todo B5: js-modal */
+         $modal.on('hidden.bs.modal', function () {
+             $modal.remove();
+         });
+@@ -563,13 +563,13 @@
+                 return $button.closest(".input-group").find("input").val();
+             },
+         });
+-        $button.tooltip({
++        $button.tooltip({  /* todo B5: js-tooltip */
+             title: gettext('Copied!'),
+         });
+         clipboard.on('success', function () {
+-            $button.tooltip('show');
++            $button.tooltip('show');  /* todo B5: js-tooltip */
+             window.setTimeout(function () {
+-                $button.tooltip('hide');
++                $button.tooltip('hide');  /* todo B5: js-tooltip */
+             }, 1000);
+         });
+         clipboard.onClick(e);

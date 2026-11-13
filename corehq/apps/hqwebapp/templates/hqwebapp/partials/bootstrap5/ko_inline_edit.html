@@ -12,7 +12,7 @@
         </span>
       <!-- /ko -->
       <!-- ko if: lang -->
-        <span class="btn btn-sm btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
+        <span class="badge btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>
       <!-- /ko -->
       <span data-bind="text: value, visible: value, attr: {'class': containerClass + ' ' + readOnlyClass + ' text'}"></span>
       <span class="text-secondary"

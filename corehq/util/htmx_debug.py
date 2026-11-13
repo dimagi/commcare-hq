@@ -7,19 +7,19 @@ from django.http import HttpResponse
 class HqHtmxDebugMixin:
     """
     Use this mixin alongside `HqHtmxActionMixin` to help simulate server
-    issues and slow requests locally (or on staging if you like) during
-    the development phase.
+    issues and slow requests locally (or on staging) during development.
 
-    Why a separate tool? Making the browser slow with dev tools throttling
-    just delays the request TO the server, rather than testing if the server
-    itself is slow.
+    Why a separate tool? Browser dev tools throttling slows the request
+    *to* the server, but doesn’t simulate a slow or flaky *server response*.
 
-    e.g.:
+    Example:
         class TodoListDemoView(HqHtmxDebugMixin, HqHtmxActionMixin, BasePageView):
-            ...
+            simulate_slow_response = True
+            slow_response_time = 3
+            simulate_flaky_gateway = True
 
-    Remember: Order matters when using mixins. make sure `HqHtmxDebugMixin` appears first
-    to have things work properly!
+    Remember: Order matters when using mixins. Make sure `HqHtmxDebugMixin`
+    appears first so its dispatch() logic runs before HqHtmxActionMixin.
     """
     # Simulate slow server responses by setting this to True and requests will wait
     # ``slow_response_time`` seconds with each request

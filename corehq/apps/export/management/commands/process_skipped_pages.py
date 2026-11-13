@@ -9,8 +9,9 @@ from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 import sh
+from couchdbkit import ResourceNotFound
 
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.dbaccessors import get_export_instance_in_domain
 from corehq.apps.export.multiprocess import (
     UNPROCESSED_PAGES_DIR,
     MultiprocessExporter,
@@ -24,6 +25,7 @@ class Command(BaseCommand):
     help = "Remove sensitive columns from an export"
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument('export_id')
         parser.add_argument(
             '--export_path',
@@ -46,12 +48,16 @@ class Command(BaseCommand):
         if __debug__:
             raise CommandError("You should run this with 'python -O'")
 
+        domain = options.pop('domain')
         export_id = options.pop('export_id')
         export_archive_path = options.pop('export_path')
         processes = options.pop('processes')
         force_upload = options.pop('force_upload')
 
-        export_instance = get_properly_wrapped_export_instance(export_id)
+        try:
+            export_instance = get_export_instance_in_domain(domain, export_id)
+        except ResourceNotFound:
+            raise CommandError(f"Export {export_id} not found in domain {domain}")
 
         if not export_archive_path or not os.path.exists(export_archive_path):
             confirm = input(

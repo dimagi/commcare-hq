@@ -1,6 +1,7 @@
 import json
 from unittest.mock import Mock, patch, call
 
+from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -43,7 +44,7 @@ from corehq.const import USER_CHANGE_VIA_API
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
-from ..resources.v0_5 import BadRequest, UserDomainsResource
+from ..resources.v0_5 import BadRequest, UserDomain, UserDomainsResource
 from .utils import APIResourceTest
 
 
@@ -109,9 +110,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty', PROFILE_SLUG: '', 'imaginary': '',
                           'commcare_location_id': self.loc2.location_id,
                           'commcare_primary_case_sharing_id': self.loc2.location_id,
@@ -142,9 +145,11 @@ class TestCommCareUserResource(APIResourceTest):
             'first_name': '',
             'groups': [],
             'id': backend_id,
+            'language': None,
             'last_name': '',
             'phone_numbers': [],
             'resource_uri': '/a/qwerty/api/v0.5/user/{}/'.format(backend_id),
+            'role': 'Mobile Worker Default',
             'user_data': {'commcare_project': 'qwerty',
                           PROFILE_SLUG: '',
                           'imaginary': '',
@@ -340,6 +345,43 @@ class TestCommCareUserResource(APIResourceTest):
                          f'{{"error": "Username \'jdoe@{self.domain.name}.commcarehq.org\' is already taken or '
                          f'reserved."}}')
 
+    def test_bad_request_if_profile_required_but_not_included(self):
+        definition = CustomDataFieldsDefinition.get_or_create(self.domain, UserFieldsView.field_type)
+        definition.profile_required_for_user_type = [UserFieldsView.COMMCARE_USER]
+        definition.save()
+
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "A profile assignment is required for Mobile Workers."}',
+        )
+
+    def test_bad_request_if_profile_not_found(self):
+        user_json = {
+            'username': 'jdoe',
+            'password': 'qwer1234',
+            'user_data': {'commcare_profile': 123456},
+        }
+        response = self._assert_auth_post_resource(
+            self.list_endpoint,
+            json.dumps(user_json),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "Profile with id 123456 not found."}'
+        )
+
     def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
@@ -518,6 +560,29 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 400)
         updated_user = CommCareUser.get(user.get_id)
         self.assertEqual(updated_user.is_account_confirmed, True)
+
+    def test_delete_user(self):
+        user = CommCareUser.create(domain=self.domain.name, username='doomed_user', password='*****',
+                                   created_by=None, created_via=None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+
+        response = self._assert_auth_post_resource(self.single_endpoint(user.get_id), '', method='DELETE')
+
+        assert response.status_code == 204, response.content
+        assert CommCareUser.get(user.get_id).is_deleted()
+
+    def test_cant_delete_user_in_another_domain(self):
+        not_my_domain = create_domain('not-my-project')
+        self.addCleanup(not_my_domain.delete)
+        not_my_user = CommCareUser.create(domain=not_my_domain.name, username='user', password='*****',
+                                          created_by=None, created_via=None)
+        self.addCleanup(not_my_user.delete, not_my_domain.name, deleted_by=None)
+
+        response = self._assert_auth_post_resource(self.single_endpoint(not_my_user.get_id), '', method='DELETE')
+
+        assert response.status_code == 404, response.content
+        assert not CommCareUser.get(not_my_user.get_id).is_deleted()
+        assert not UserHistory.objects.filter(user_id=not_my_user.get_id).exists()
 
     def test_activate_user(self):
         """Activate the user through the API"""
@@ -1024,16 +1089,73 @@ class TestBulkUserAPI(APIResourceTest):
         result = self.query(limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['robb_stark', 'jon_snow', 'brandon_stark'],
+        )
 
-        result = self.query(start_at=limit, limit=limit)
+        # 'offset' is applied by the Elasticsearch query, so the paginator must
+        # not slice the results a second time and skip the whole page.
+        result = self.query(offset=limit, limit=limit)
         self.assertEqual(result.status_code, 200)
         users = json.loads(result.content)['objects']
-        self.assertEqual(len(users), limit)
+        self.assertEqual(
+            [user['username'] for user in users],
+            ['eddard_stark', 'catelyn_stark', 'tyrion_lannister'],
+        )
 
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+
+@es_test(requires=[user_adapter], setup_class=True)
+class TestBulkUserESCall(TestCase):
+    """Exercises the real user_es_call against ES (TestBulkUserAPI mocks it out)."""
+
+    domain = 'bulk-user-q-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+
+        cls.target = CommCareUser.create(
+            domain=cls.domain, username='alice', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.target.delete, cls.domain, deleted_by=None)
+        cls.other = CommCareUser.create(
+            domain=cls.domain, username='bob', password='*****',
+            created_by=None, created_via=None,
+        )
+        cls.addClassCleanup(cls.other.delete, cls.domain, deleted_by=None)
+
+        for user in [cls.target, cls.other]:
+            user_adapter.index(user, refresh=True)
+
+    def test_q_filters_to_matching_user(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q='alice',
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice'], usernames
+
+    def test_q_none_returns_all_users(self):
+        hits = v0_5.user_es_call(
+            domain=self.domain,
+            q=None,
+            fields=['_id', 'username'],
+            size=10,
+            start_at=0,
+        )
+        usernames = sorted(h['username'] for h in hits)
+        assert usernames == ['alice', 'bob'], usernames
 
 
 @es_test(requires=[user_adapter])
@@ -1080,9 +1202,10 @@ class TestUserDomainsResource(TestCase):
     def test_domain_returned_when_no_filter(self, _):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertListEqual([self.domain], [d.domain_name for d in resp])
 
@@ -1090,9 +1213,10 @@ class TestUserDomainsResource(TestCase):
     def test_exception_when_invalid_filter_sent(self, _):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "its_a_feature_not_bug"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         with self.assertRaises(BadRequest):
             UserDomainsResource().obj_get_list(bundle)
 
@@ -1101,9 +1225,10 @@ class TestUserDomainsResource(TestCase):
     def test_domain_returned_when_valid_flag_sent(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertListEqual([self.domain], [d.domain_name for d in resp])
 
@@ -1111,11 +1236,107 @@ class TestUserDomainsResource(TestCase):
     def test_domain_not_returned_when_flag_not_enabled(self, *args):
         bundle = Bundle()
         bundle.obj = self.user
-        bundle.request = Mock()
+        bundle.request = Mock(spec=HttpRequest)
         bundle.request.GET = {"feature_flag": "superset-analytics"}
         bundle.request.user = self.user
+        bundle.request.api_key = None
         resp = UserDomainsResource().obj_get_list(bundle)
         self.assertEqual(0, len(resp))
+
+
+class TestUserDomainsResourcePagination(TestCase):
+
+    def test_all_domains_returned_when_more_than_default_page_size(self):
+        domain_names = [f'domain-{i}' for i in range(25)]
+        mock_domains = [
+            UserDomain(domain_name=name, project_name=name)
+            for name in domain_names
+        ]
+        request = Mock()
+        request.GET = {}
+        request.META = {}
+        resource = UserDomainsResource()
+        with patch.object(resource, 'get_object_list', return_value=mock_domains):
+            response = resource.get_list(request)
+        assert response.status_code == 200
+        data = json.loads(response.content)
+        assert len(data['objects']) == 25
+
+
+class TestUserDomainsResourceCredentialScopeFiltering(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain2 = 'test-domain-2'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.domain_obj2 = create_domain(cls.domain2)
+        cls.addClassCleanup(cls.domain_obj2.delete)
+        cls.user = WebUser.create(cls.domain, 'api-key-test@example.com', 'testpass', None, None)
+        cls.user.add_domain_membership(cls.domain2)
+        cls.user.save()
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
+
+    def _make_bundle(self, api_key=None, oauth_token_domains=None):
+        bundle = Bundle()
+        bundle.request = Mock(spec=HttpRequest)
+        bundle.request.GET = {}
+        bundle.request.user = self.user.get_django_user()
+        bundle.request.api_key = api_key
+        bundle.request.oauth_token_domains = oauth_token_domains
+        return bundle
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_without_api_key(self, _):
+        resp = UserDomainsResource().obj_get_list(self._make_bundle())
+        domain_names = [d.domain_name for d in resp]
+        assert set(domain_names) == {self.domain, self.domain2}
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_with_unrestricted_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = ''
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        assert set(domain_names) == {self.domain, self.domain2}
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_key_domain_returned_with_domain_scoped_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = self.domain
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        assert domain_names == [self.domain]
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_key_domain2_returned_with_domain_scoped_api_key(self, _):
+        api_key = Mock()
+        api_key.domain = self.domain2
+        resp = UserDomainsResource().obj_get_list(self._make_bundle(api_key=api_key))
+        domain_names = [d.domain_name for d in resp]
+        assert domain_names == [self.domain2]
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_all_domains_returned_with_unrestricted_oauth_token(self, _):
+        resp = UserDomainsResource().obj_get_list(
+            self._make_bundle(oauth_token_domains=frozenset())
+        )
+        domain_names = [d.domain_name for d in resp]
+        assert set(domain_names) == {self.domain, self.domain2}
+
+    @patch('corehq.apps.api.resources.v0_5.domain_has_privilege', return_value=True)
+    def test_only_token_domains_returned_with_domain_scoped_oauth_token(self, _):
+        """
+        A scoped token is let through to this endpoint so a client can find out
+        which project spaces it may use, so it must not see the others.
+        """
+        resp = UserDomainsResource().obj_get_list(
+            self._make_bundle(oauth_token_domains=frozenset({self.domain2}))
+        )
+        domain_names = [d.domain_name for d in resp]
+        assert domain_names == [self.domain2]
 
 
 class TestCommCareAnalyticsUserResource(APIResourceTest):
@@ -1226,7 +1447,7 @@ class TestInvitationResource(APIResourceTest):
         self.addCleanup(invitation.delete)
         self.assertEqual(invitation.get_role_name(), "App Editor")
         self.assertEqual(invitation.primary_location, self.loc1)
-        self.assertEqual(list(invitation.assigned_locations.all()), [self.loc1, self.loc2])
+        self.assertCountEqual(invitation.assigned_locations.all(), [self.loc1, self.loc2])
         self.assertEqual(invitation.profile, self.profile)
         self.assertEqual(invitation.custom_user_data["favorite_subject"], "math")
         self.assertEqual(invitation.tableau_role, "Viewer")

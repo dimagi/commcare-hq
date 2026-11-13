@@ -329,7 +329,7 @@ class TestUpdateRepeater(SimpleTestCase):
     @patch('corehq.motech.repeaters.tasks.RepeaterLock')
     @patch('corehq.motech.repeaters.tasks.Repeater.objects.get')
     def test_update_repeater_resets_backoff_on_invalid(self, mock_get_repeater, __):
-        repeat_record_states = [State.InvalidPayload, State.Fail, State.Empty, None]
+        repeat_record_states = [State.PayloadRejected, State.Fail, State.Empty, None]
         mock_repeater = MagicMock()
         mock_get_repeater.return_value = mock_repeater
         update_repeater(repeat_record_states, 1, 'token', False)

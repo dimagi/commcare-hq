@@ -10,7 +10,7 @@ from corehq.apps.users.signals import update_user_in_es
 logger = get_task_logger(__name__)
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True, durable=True)
 def refresh_es_for_profile_users(domain, profile_id):
     try:
         profile = CustomDataFieldsProfile.objects.get(id=profile_id, definition__domain=domain)

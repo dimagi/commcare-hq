@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import six
 from django.test import SimpleTestCase
 from xml.etree import cElementTree as ElementTree
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
@@ -38,7 +37,7 @@ class CaseBlockTest(SimpleTestCase):
                 case_name='Johnny',
                 update={'case_name': 'Johnny'},
             ).as_xml()
-        self.assertEqual(six.text_type(context.exception), "Key 'case_name' specified twice")
+        self.assertEqual(str(context.exception), "Key 'case_name' specified twice")
 
     def test_let_you_specify_system_props_for_create_via_updates(self):
         actual = ElementTree.tostring(CaseBlock(

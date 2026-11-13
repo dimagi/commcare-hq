@@ -289,7 +289,7 @@ def get_db_version(db_alias):
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
-        See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
+    See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
     If standby process (wal_receiver) is not running on standby -1 is returned
     """
@@ -409,40 +409,9 @@ def select_db_for_read(weighted_dbs):
         return random.choices(dbs, weights=weights)[0]
 
 
-def select_plproxy_db_for_read(primary_db):
-    if not plproxy_standby_config:
-        return primary_db
-
-    if primary_db == plproxy_config.proxy_db:
-        plproxy_shard_standbys = set(plproxy_standby_config.form_processing_dbs)
-        ok_standbys = get_standbys_with_acceptible_delay() & plproxy_shard_standbys
-        if ok_standbys == plproxy_shard_standbys:
-            # require ALL standbys to be available
-            return plproxy_standby_config.proxy_db
-        else:
-            return primary_db
-    else:
-        standbys = primary_to_standbys_mapping()[primary_db]
-        ok_standbys = get_standbys_with_acceptible_delay() & standbys
-        if ok_standbys:
-            return random.choice(list(ok_standbys))
-        else:
-            return primary_db
-
-
-@memoized
-def primary_to_standbys_mapping():
-    mapping = defaultdict(set)
-    for db, config in settings.DATABASES.items():
-        master = config.get('STANDBY', {}).get('MASTER')
-        if master:
-            mapping[master].add(db)
-    return mapping
-
-
 def create_unique_index_name(app, table, fields):
     assert all([app, table, fields]), "app, table, and fields must be specified"
-    assert type(fields) == list, "fields must be a list"
+    assert isinstance(fields, list), "fields must be a list"
 
     max_length = 30  # enforced by Django
     index_name = f"{app}_{table}_{'_'.join(fields)}_idx"

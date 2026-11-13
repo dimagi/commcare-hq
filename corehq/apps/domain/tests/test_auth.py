@@ -157,6 +157,13 @@ class ApiKeyFallbackTests(TestCase):
         with travel(datetime(year=2020, month=3, day=11), tick=False):
             self.assertIsNone(self.backend.authenticate(request, 'test@dimagi.com', '1234'))
 
+    def test_domain_scoped_api_key_allows_authentication_to_domain_agnostic_urls(self):
+        user = self._create_user('test@dimagi.com')
+        self._create_api_key_for_user(user, key='1234', domain='test-domain')
+        request = self._create_request()
+
+        self.assertEqual(self.backend.authenticate(request, 'test@dimagi.com', '1234'), user)
+
     def setUp(self):
         self.backend = ApiKeyFallbackBackend()
 

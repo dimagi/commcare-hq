@@ -4,6 +4,7 @@ import _ from "underscore";
 import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min";
 import initialPageData from "hqwebapp/js/initial_page_data";
 import { TempusDominus } from "tempusDominus";
+import "@eonasdan/tempus-dominus/dist/css/tempus-dominus.min.css";
 import "select2/dist/js/select2.full.min";
 
 var init = function () {

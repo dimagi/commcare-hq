@@ -1,0 +1,56 @@
+--- 
++++ 
+@@ -10,7 +10,6 @@
+   }
+ }
+ 
+-
+ .table-savecaseprops {
+   .select2-container {
+     width: 100%;
+@@ -20,7 +19,7 @@
+   }
+ 
+   thead > tr {
+-    background-color: @cc-bg;
++    background-color: $cc-bg;
+     border: none;
+     > th {
+       border: none;
+@@ -36,12 +35,11 @@
+       margin-top: 5px;
+       display: inline-block;
+     }
+-
+   }
+ 
+   tbody > tr {
+     &:nth-child(even) {
+-      background-color: @cc-bg;
++      background-color: $cc-bg;
+     }
+   }
+ 
+@@ -49,22 +47,6 @@
+   table-layout: fixed;
+ }
+ 
+-.table-profiles {
+-  clear: both;
+-
+-  tbody > tr {
+-    &:nth-child(even) {
+-      background-color: @cc-bg;
+-    }
+-  }
+-  .form-control {
+-    width: 100%;
+-  }
+-  td > a {
+-    line-height: 30px;
+-  }
+-}
+-
+ .full-width-select2 .select2-container {
+   width: 100% !important;
+   min-width: 200px;

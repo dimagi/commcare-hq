@@ -1,0 +1,25 @@
+// Deploy page
+#releases-table {
+  .pending img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .released {
+    color: #ffff00;
+    text-shadow:
+      1px 0px #ffa500,
+      -1px 0px #ffa500,
+      0px 1px #ffa500,
+      0px -1px #ffa500;
+  }
+}
+
+#deploy-build-modal-template .icon-link > i {
+  width: 1rem;
+  text-align: center;
+}
+
+#new-app-start .helpbubble {
+  max-width: 300px;
+}

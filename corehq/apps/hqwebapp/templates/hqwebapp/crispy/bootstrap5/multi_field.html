@@ -1,5 +1,5 @@
-<div class="form-group {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
-    <label class="control-label {{ label_class }} {% if multifield.required %}requiredField{% endif %}">
+<div class="row mb-3 {{ multifield.css_class }}" {{ multifield.flat_attrs|safe }}>
+    <label class="col-form-label {{ label_class }} {% if multifield.required %}requiredField{% endif %}">
         <label class="inner-control-label">
             {{ label_html }}{% if multifield.required %}<span class="asteriskField">*</span>{% endif %}
         </label>
@@ -10,7 +10,7 @@
             ></span>
         {% endif %}
     </label>
-    <div class="controls {{ field_class }} controls-multiple">
+    <div class="controls {{ field_class }} controls-multiple d-flex align-items-center">
         {% if show_row_class %}<div class="row">{% endif %}
             {{ field_html }}
         {% if show_row_class %}</div>{% endif %}

@@ -4,14 +4,18 @@ import toggles from "hqwebapp/js/toggles";
 import initialPageData from "hqwebapp/js/initial_page_data";
 
 export default {
-    getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
+    getQuestions: function (
+        questions,
+        filter,
+        excludeHidden = false,
+        includeRepeat = false,
+        excludeTrigger = false,
+        disableLocked = false,
+    ) {
         // filter can be "all", or any of "select1", "select", or "input" separated by spaces
         var i,
             options = [],
             q;
-        excludeHidden = excludeHidden || false;
-        excludeTrigger = excludeTrigger || false;
-        includeRepeat = includeRepeat || false;
         filter = filter.split(" ");
         if (!excludeHidden) {
             filter.push('hidden');
@@ -26,6 +30,9 @@ export default {
                 if (includeRepeat || !q.repeat) {
                     if (!excludeTrigger || q.tag !== "trigger") {
                         if (allowAttachments || q.tag !== "upload") {
+                            if (disableLocked) {
+                                q.disabled = q.locked;
+                            }
                             options.push(q);
                         }
                     }
@@ -87,6 +94,22 @@ export default {
         });
         return _(suggestedProperties).difference(usedProperties);
     },
+    propertyMultiDictToArray: function (required, propertyMultiDict, caseConfig) {
+        let propertyArray = Object.entries(propertyMultiDict).flatMap(([caseName, updateList]) => {
+            return updateList.map(conditionalCaseUpdate => ({
+                path: conditionalCaseUpdate.question_path,
+                key: caseName,
+                required: false,
+                save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
+                conflictingDelete: conditionalCaseUpdate.conflicting_delete,
+            }));
+        });
+
+        propertyArray = _(propertyArray).sortBy(function (property) {
+            return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
+        });
+        return required.concat(propertyArray);
+    },
     propertyDictToArray: function (required, propertyDict, caseConfig) {
         var propertyArray = _(propertyDict).map(function (conditionalCaseUpdate, caseName) {
             return {
@@ -100,6 +123,29 @@ export default {
             return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
         });
         return required.concat(propertyArray);
+    },
+    propertyArrayToMultiDict: function (required, propertyArray) {
+        const propertyDict = {},
+            extraDict = {};
+        _(propertyArray).each(function (caseProperty) {
+            const key = caseProperty.key;
+            const path = caseProperty.path;
+            const updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
+            if (key || path) {
+                const item = {question_path: path, update_mode: updateMode};
+                if (caseProperty.conflictingDelete) {
+                    item.conflicting_delete = true;
+                }
+                if (_(required).contains(key)) {
+                    extraDict[key] = extraDict[key] || [];
+                    extraDict[key].push(item);
+                } else {
+                    propertyDict[key] = propertyDict[key] || [];
+                    propertyDict[key].push(item);
+                }
+            }
+        });
+        return [propertyDict, extraDict];
     },
     propertyArrayToDict: function (required, propertyArray) {
         var propertyDict = {},

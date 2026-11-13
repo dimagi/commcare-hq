@@ -1,4 +1,4 @@
-from corehq.apps.prototype.utils import fake_data
+from corehq.apps.styleguide import fake_data
 from corehq.util.quickcache import quickcache
 
 

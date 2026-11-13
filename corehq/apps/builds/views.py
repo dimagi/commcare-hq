@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from couchdbkit import BadValueError, ResourceNotFound
+from couchdbkit import BadValueError
 
 from dimagi.utils.web import json_request, json_response
 
@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.util.view_utils import json_error
 
-from .models import CommCareBuild, CommCareBuildConfig, SemanticVersionProperty
+from .models import CommCareBuildConfig, CommCareMobileBuild, SemanticVersionProperty
 from .utils import get_all_versions
 
 
@@ -32,27 +32,14 @@ def post(request):
     except ValueError:
         return HttpResponseBadRequest("build_number has to be a base-10 integer")
 
-    CommCareBuild.create_without_artifacts(version, build_number)
+    CommCareMobileBuild.objects.create(version=version, build_number=build_number)
     return HttpResponse()
-
-
-@require_GET
-def get(request, version, build_number, path):
-    build = CommCareBuild.get_build(version, build_number)
-    try:
-        file = build.fetch_file(path)
-    except ResourceNotFound:
-        raise Http404()
-
-    response = HttpResponse(file)
-    response['Content-Disposition'] = 'attachment; filename="%s"' % path.split("/")[-1]
-    return response
 
 
 @require_GET
 @require_superuser
 def get_all(request):
-    builds = sorted(CommCareBuild.all_builds(), key=lambda build: build.time)
+    builds = CommCareMobileBuild.objects.all().order_by('time')
     return render(request, 'builds/all.html', {'builds': builds})
 
 
@@ -110,12 +97,11 @@ def import_build(request):
             }
         }, status_code=400)
 
-    build = CommCareBuild.create_without_artifacts(version, None)
+    CommCareMobileBuild.objects.create(version=version, build_number=None)
 
     return json_response({
         'message': 'New CommCare build added',
         'info': {
             'version': version,
-            '_id': build.get_id,
         }
     })

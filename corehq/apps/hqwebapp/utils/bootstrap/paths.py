@@ -4,6 +4,7 @@ import corehq
 
 COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 CUSTOM_BASE_DIR = COREHQ_BASE_DIR.parent / "custom"
+SUBMODULES_BASE_DIR = COREHQ_BASE_DIR.parent / "submodules"
 TRACKED_JS_FOLDERS = ["js", "spec"]
 PARENT_PATHS = {
     "corehq": COREHQ_BASE_DIR,
@@ -12,7 +13,11 @@ PARENT_PATHS = {
     "motech": COREHQ_BASE_DIR / "motech",
     "casexml": COREHQ_BASE_DIR / "ex-submodules/casexml/apps",
     "ex-submodules": COREHQ_BASE_DIR / "ex-submodules",
+    "vellum": SUBMODULES_BASE_DIR / "formdesigner/src",
 }
+SUBMODULE_APPS = [
+    "vellum",
+]
 GRUNTFILE_PATH = COREHQ_BASE_DIR.parent / "Gruntfile.js"
 IGNORED_PATHS_BY_APP = {
     "hqwebapp": [
@@ -33,7 +38,10 @@ IGNORED_PATHS_BY_APP = {
         "hqwebapp/crispy/multi_inline_field.html",
         "hqwebapp/crispy/field/hidden_with_errors.html",
         "hqwebapp/js/daterangepicker.config.js",  # Todo B5: delete me after migration
-    ]
+    ],
+    "app_manager": [
+        "app_manager/js/vellum",
+    ],
 }
 
 
@@ -63,6 +71,8 @@ def is_mocha_path(path):
 
 
 def get_app_name_and_slug(app_name):
+    if app_name in SUBMODULE_APPS:
+        return app_name, app_name
     app_parts = app_name.split(".")
     if len(app_parts) == 2:
         return app_parts[0], app_parts[1]
@@ -77,16 +87,34 @@ def get_parent_path(app_name):
 def get_app_template_folder(app_name):
     parent_path = get_parent_path(app_name)
     _, app_name = get_app_name_and_slug(app_name)
+    if app_name in SUBMODULE_APPS:
+        return get_app_template_folder_for_submodule(app_name, parent_path)
     return parent_path / app_name / "templates" / app_name
+
+
+def get_app_template_folder_for_submodule(app_name, parent_path):
+    if app_name == "vellum":
+        return parent_path / "templates"
+    raise ValueError(f"Unknown submodule app: {app_name}")
 
 
 def get_app_static_folder(app_name):
     parent_path = get_parent_path(app_name)
     _, app_name = get_app_name_and_slug(app_name)
+    if app_name in SUBMODULE_APPS:
+        return get_app_static_folder_for_submodule(app_name, parent_path)
     return parent_path / app_name / "static" / app_name
 
 
+def get_app_static_folder_for_submodule(app_name, parent_path):
+    if app_name == "vellum":
+        return parent_path
+    raise ValueError(f"Unknown submodule app: {app_name}")
+
+
 def get_short_path(app_name, full_path, is_template):
+    if app_name in SUBMODULE_APPS:
+        return get_short_path_for_submodule(app_name, full_path, is_template)
     parent_path = get_parent_path(app_name)
     _, app_name = get_app_name_and_slug(app_name)
     if is_template:
@@ -97,6 +125,24 @@ def get_short_path(app_name, full_path, is_template):
         str(replace_path) + '/',
         ''
     )
+
+
+def get_short_path_for_submodule(app_name, full_path, is_template):
+    if app_name == "vellum":
+        if is_template:
+            parent_path = get_parent_path(app_name)
+            replace_path = parent_path / "templates"
+            return str(full_path).replace(
+                str(replace_path) + '/',
+                ''
+            )
+        else:
+            parent_path = get_parent_path(app_name)
+            return str(full_path).replace(
+                str(parent_path) + '/',
+                ''
+            )
+    raise ValueError(f"Unknown submodule app: {app_name}")
 
 
 def get_all_template_paths_for_app(app_name):

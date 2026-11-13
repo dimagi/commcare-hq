@@ -151,6 +151,7 @@ class ChangeFeed(metaclass=ABCMeta):
     """
 
     sequence_format = 'text'
+    topic_partitions = (None,)
 
     @abstractmethod
     def iter_changes(self, since, forever):

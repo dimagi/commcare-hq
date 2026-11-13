@@ -22,7 +22,6 @@ class TestCaseServiceDocument(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestCaseServiceDocument, cls).tearDownClass()
 
@@ -54,7 +53,6 @@ class TestFormServiceDocument(TestCase, FormOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestFormServiceDocument, cls).tearDownClass()
 

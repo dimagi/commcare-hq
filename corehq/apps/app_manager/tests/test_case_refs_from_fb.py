@@ -208,3 +208,75 @@ class CaseReferencesTest(SimpleTestCase):
         save_ref.properties.append('p3')
         self.assertEqual(['p1', 'p2', 'p3'], save_ref.properties)
         self.assertEqual(['p1', 'p2'], case_refs.save['p1'].properties)
+
+
+class FormGetSaveToCaseUpdatesTest(SimpleTestCase):
+    """Tests for ``FormBase.get_save_to_case_updates``."""
+
+    def test_no_save_references(self):
+        form = Form()
+        assert form.get_save_to_case_updates() == {}
+
+    def test_property_updates_grouped_by_case_type(self):
+        form = Form()
+        form.case_references = CaseReferences(save={
+            'data/q1': CaseSaveReference(
+                case_type='patient',
+                properties=['name'],
+            ),
+            'data/q2': CaseSaveReference(
+                case_type='patient',
+                properties=['dob'],
+            ),
+            'data/q3': CaseSaveReference(
+                case_type='visit',
+                properties=['date'],
+            ),
+        })
+        updates = form.get_save_to_case_updates()
+        assert updates == {'patient': {'name', 'dob'}, 'visit': {'date'}}
+
+    def test_close_only_save_reference_yields_case_type_with_empty_set(self):
+        # A SaveToCase question that only closes a case writes no
+        # properties. The case_type key is still present, so the dict is
+        # truthy.
+        form = Form()
+        form.case_references = CaseReferences(save={
+            'data/q1': CaseSaveReference(case_type='patient', close=True),
+        })
+        updates = form.get_save_to_case_updates()
+        assert updates == {'patient': set()}
+        assert bool(updates) is True
+
+    def test_index_only_save_reference_yields_case_type_with_empty_set(self):
+        # CaseSaveReference has no ``index`` field — Vellum's index-only
+        # SaveToCase questions appear here as a save reference with no
+        # properties (and create=False, close=False). Behavior matches
+        # the close-only case above.
+        form = Form()
+        form.case_references = CaseReferences(save={
+            'data/q1': CaseSaveReference(case_type='child'),
+        })
+        updates = form.get_save_to_case_updates()
+        assert updates == {'child': set()}
+        assert bool(updates) is True
+
+    def test_save_reference_with_no_case_type(self):
+        form = Form()
+        form.case_references = CaseReferences(save={
+            'data/q1': CaseSaveReference(properties=['name']),
+        })
+        updates = form.get_save_to_case_updates()
+        assert updates == {None: {'name'}}
+
+    def test_create_flag_does_not_affect_output(self):
+        form = Form()
+        form.case_references = CaseReferences(save={
+            'data/q1': CaseSaveReference(
+                case_type='patient',
+                properties=['name'],
+                create=True,
+            ),
+        })
+        updates = form.get_save_to_case_updates()
+        assert updates == {'patient': {'name'}}

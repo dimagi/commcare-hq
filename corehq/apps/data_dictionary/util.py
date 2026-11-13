@@ -5,6 +5,7 @@ from operator import attrgetter
 from urllib.parse import parse_qsl, urlencode, urlparse
 
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
@@ -17,6 +18,7 @@ from corehq.apps.data_dictionary.models import (
     CasePropertyAllowedValue,
     CasePropertyGroup,
     CaseType,
+    sync_project_db,
 )
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -109,6 +111,7 @@ def create_properties_for_case_types(domain, case_type_to_prop):
 
     CaseProperty.objects.bulk_create(new_case_properties, ignore_conflicts=True)
 
+    sync_project_db(domain)
     for case_type, props in case_type_to_prop.items():
         if case_type:
             CaseProperty.clear_caches(domain, case_type)
@@ -311,9 +314,9 @@ def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     }
 
 
-@quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
-def get_data_dict_case_types(domain):
-    case_types = CaseType.objects.filter(domain=domain).values_list('name', flat=True)
+@quickcache(vary_on=['domain', 'is_deprecated'], timeout=24 * 60 * 60)
+def get_data_dict_case_types(domain, is_deprecated=False):
+    case_types = CaseType.objects.filter(domain=domain, is_deprecated=is_deprecated).values_list('name', flat=True)
     return set(case_types)
 
 
@@ -322,14 +325,12 @@ def get_data_dict_deprecated_case_types(domain):
     return set(case_types)
 
 
-def fields_to_validate(domain, case_type_name):
-    filter_kwargs = {
-        'case_type__domain': domain,
-        'case_type__name': case_type_name,
-        'data_type__in': ['date', 'select'],
-    }
-    props = CaseProperty.objects.filter(**filter_kwargs)
-    return {prop.name: prop for prop in props}
+def get_case_properties_by_name(domain, case_type_name):
+    case_properties = CaseProperty.objects.filter(
+        case_type__domain=domain,
+        case_type__name=case_type_name,
+    )
+    return {p.name: p for p in case_properties}
 
 
 @quickcache(['domain', 'case_type'], timeout=24 * 60 * 60)
@@ -407,9 +408,21 @@ def is_case_property_unused(domain, case_type, case_property):
     return query.NOT(case_property_missing(case_property)).count() == 0
 
 
+def get_case_properties(domain, case_type_name):
+    return CaseProperty.objects.filter(
+        Q(group__isnull=True) | Q(group__deprecated=False),
+        case_type__name=case_type_name,
+        case_type__domain=domain,
+        deprecated=False,
+    )
+
+
 def get_case_property_group_name_for_properties(domain, case_type_name):
     return dict(CaseProperty.objects.filter(
-        case_type__name=case_type_name, case_type__domain=domain, deprecated=False, group__deprecated=False
+        case_type__name=case_type_name,
+        case_type__domain=domain,
+        deprecated=False,
+        group__deprecated=False
     ).values_list('name', 'group__name'))
 
 

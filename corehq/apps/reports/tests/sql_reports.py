@@ -1,7 +1,7 @@
 from numbers import Number
 
 from memoized import memoized
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 from sqlagg.columns import SimpleColumn, SumColumn
 
 from corehq.apps.reports.filters.dates import DatespanFilter

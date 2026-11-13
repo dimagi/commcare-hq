@@ -3,7 +3,6 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from datetime import date
-from nose.tools import assert_equal
 from custom.onse import tasks
 from custom.onse.tasks import _update_facility_cases_from_dhis2_data_elements
 from corehq.motech.models import ConnectionSettings
@@ -23,7 +22,7 @@ def test_previous_quarter():
         (date(2020, 12, 31), '2020Q3'),
     ]
     for test_date, expected_value in test_dates:
-        assert_equal(tasks.previous_quarter(test_date), expected_value)
+        assert tasks.previous_quarter(test_date) == expected_value
 
 
 def test_doctests():

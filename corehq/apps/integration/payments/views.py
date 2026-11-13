@@ -10,13 +10,17 @@ from corehq.apps.case_importer.const import MOMO_PAYMENT_CASE_TYPE
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.es import CaseSearchES, filters
-from corehq.apps.es.case_search import case_property_query
+from corehq.apps.es import cases as case_es
+from corehq.apps.es.case_search import case_property_query, case_property_missing
 from corehq.apps.geospatial.utils import get_celery_task_tracker
 from corehq.apps.hqwebapp.crispy import CSS_ACTION_CLASS
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.tables.export import TableExportMixin
-from corehq.apps.hqwebapp.tables.pagination import SelectablePaginatedTableView
-from corehq.apps.integration.kyc.models import KycConfig
+from corehq.apps.hqwebapp.tables.pagination import (
+    HtmxInvalidPageRedirectMixin,
+    SelectablePaginatedTableView,
+)
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
     PaymentProperties,
     PaymentStatus,
@@ -25,6 +29,8 @@ from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.forms import PaymentConfigureForm
 from corehq.apps.integration.payments.models import MoMoConfig
 from corehq.apps.integration.payments.services import (
+    get_kyc_verification_statuses,
+    get_user_or_case_ids,
     revert_payment_verification,
     verify_payment_cases,
 )
@@ -52,12 +58,15 @@ REVERT_VERIFICATION_REQUEST_SLUG = 'revert_verification'
 class PaymentsFiltersMixin:
     fields = [
         'corehq.apps.integration.payments.filters.PaymentCaseListFilter',
-        'corehq.apps.integration.payments.filters.BatchNumberFilter',
-        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
         'corehq.apps.integration.payments.filters.PaymentStatusFilter',
+        'corehq.apps.integration.payments.filters.PaymentVerifiedByFilter',
+        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        'corehq.apps.integration.payments.filters.CaseCreatedDateRangeFilter',
+        'corehq.apps.integration.payments.filters.BatchNumberFilter',
         'corehq.apps.integration.payments.filters.CampaignFilter',
         'corehq.apps.integration.payments.filters.ActivityFilter',
         'corehq.apps.integration.payments.filters.FunderFilter',
+        'corehq.apps.integration.payments.filters.CampaignWorkerRoleFilter',
         'corehq.apps.integration.payments.filters.PhoneNumberFilter',
     ]
 
@@ -90,7 +99,7 @@ require_payments_report_access = require_permission(
 
 @location_safe
 @method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
     urlname = 'payments_verify'
@@ -115,9 +124,11 @@ class PaymentsVerificationReportView(BaseDomainView, PaymentsFiltersMixin):
 
 @location_safe
 @method_decorator(login_and_domain_required, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
-class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin):
+class PaymentsVerificationTableView(
+    HtmxInvalidPageRedirectMixin, HqHtmxActionMixin, SelectablePaginatedTableView, TableExportMixin
+):
     urlname = 'payments_verify_table'
     table_class = PaymentsVerifyTable
     report_title = _('Payments Verification Report')
@@ -126,8 +137,17 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     VERIFICATION_ROWS_LIMIT = 100
     REVERT_VERIFICATION_ROWS_LIMIT = 100
 
+    def get_host_url(self):
+        return reverse('payments_verify', args=(self.request.domain,))
+
     def get_queryset(self):
         query = CaseSearchES().domain(self.request.domain).case_type(MOMO_PAYMENT_CASE_TYPE)
+        query = query.filter(
+            filters.OR(
+                case_property_missing(PaymentProperties.FINAL_MOBILE_VALIDATION),
+                case_property_query(PaymentProperties.FINAL_MOBILE_VALIDATION, 'true'),
+            ),
+        )
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         query = add_case_owners_and_location_access(
             query,
@@ -137,13 +157,24 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
             mobile_user_and_group_slugs
         )
         query = self._apply_filters(query)
+        if case_status := self.request.GET.get('is_open'):
+            query = query.is_closed(case_status == 'closed')
+        query = self._apply_datespan_filter(query)
         return query
+
+    def _apply_datespan_filter(self, query):
+        startdate = self.request.GET.get('startdate')
+        enddate = self.request.GET.get('enddate')
+        if not (startdate or enddate):
+            return query
+        return query.filter(case_es.opened_range(gte=startdate, lte=enddate))
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        context_data['user_or_cases_verification_statuses'] = self._get_user_or_cases_verification_status(
-            context_data['table'].paginated_rows.data
+        cases = [details.record.case for details in context_data['table'].paginated_rows.data]
+        context_data['user_or_cases_verification_statuses'] = get_kyc_verification_statuses(
+            self.kyc_config, get_user_or_case_ids(cases)
         )
 
         return context_data
@@ -151,38 +182,17 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
     def export_table_context(self, table):
         context = super().export_table_context(table)
         table.rows = list(table.rows)
-        object_list = [row.record for row in table.rows]
+        cases = [row.record.record.case for row in table.rows]
         context.update({
-            'user_or_cases_verification_statuses': self._get_user_or_cases_verification_status(object_list)
+            'user_or_cases_verification_statuses': get_kyc_verification_statuses(
+                self.kyc_config, get_user_or_case_ids(cases)
+            )
         })
         return context
 
-    def _get_user_or_cases_verification_status(self, object_list):
-        if not self.kyc_config:
-            return {}
-
-        user_or_case_ids = self._get_user_or_case_ids(object_list)
-        kyc_users = self.kyc_config.get_kyc_users_by_ids(user_or_case_ids)
-        return {
-            kyc_user.user_id: kyc_user.kyc_verification_status
-            for kyc_user in kyc_users
-        }
-
     @cached_property
     def kyc_config(self):
-        try:
-            return KycConfig.objects.get(domain=self.request.domain)
-        except KycConfig.DoesNotExist:
-            return None
-
-    @staticmethod
-    def _get_user_or_case_ids(object_list):
-        user_or_case_ids = []
-        for commcare_payment_case_details in object_list:
-            case = commcare_payment_case_details.record.case
-            if case_prop := case.get_case_property(PaymentProperties.USER_OR_CASE_ID):
-                user_or_case_ids.append(case_prop)
-        return user_or_case_ids
+        return get_kyc_config(self.request.domain)
 
     def _apply_filters(self, query):
         query_filters = []
@@ -212,6 +222,11 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
         if funder := self.request.GET.get('funder'):
             query_filters.append(case_property_query(PaymentProperties.FUNDER, funder))
+
+        if campaign_worker_role := self.request.GET.get('campaign_worker_role'):
+            query_filters.append(
+                case_property_query(PaymentProperties.CAMPAIGN_WORKER_ROLE, campaign_worker_role)
+            )
 
         if phone_number := self.request.GET.get('phone_number'):
             query_filters.append(case_property_query(PaymentProperties.PHONE_NUMBER, phone_number))
@@ -318,7 +333,7 @@ class PaymentsVerificationTableView(HqHtmxActionMixin, SelectablePaginatedTableV
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
-@method_decorator(toggles.MTN_MOBILE_WORKER_VERIFICATION.required_decorator(), name='dispatch')
+@method_decorator(toggles.MOBILE_MONEY_INTEGRATION.required_decorator(), name='dispatch')
 @method_decorator(require_payments_report_access, name='dispatch')
 class PaymentConfigurationView(HqHtmxActionMixin, BaseDomainView):
     section_name = _("Data")

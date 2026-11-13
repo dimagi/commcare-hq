@@ -115,7 +115,8 @@ def _get_form_attachment_info(domain, form_ids, export):
     properties = _get_export_properties(export)
     return [
         _extract_form_attachment_info(form, properties)
-        for form in XFormInstance.objects.iter_forms(form_ids, domain)
+        for form in XFormInstance.objects.iter_forms(form_ids)
+        if form.domain == domain
     ]
 
 

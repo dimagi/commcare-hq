@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 
-from six.moves.urllib.parse import unquote
+from urllib.parse import unquote
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand

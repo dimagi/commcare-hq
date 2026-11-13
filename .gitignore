@@ -7,10 +7,12 @@
 /localsettings*
 /loadtest/test_scripts/localsettings.py
 !localsettings.example.py
+/.claude/*.local.json
 .settings/
 .project
 .pydevproject
 .idea
+.zed
 xforms/
 /artifacts/
 /data/
@@ -21,7 +23,6 @@ bad/
 *.log*
 /CommCare.ja*
 startover.sh
-celery.db
 tmp.sh
 /requirements/local.in
 /requirements/local*.txt
@@ -59,9 +60,12 @@ ptop*.json
 /coverage-report
 /coverage-js
 
+# Celery
+/celery.db
+/celerybeat-schedule*
+
 # Sphinx
 docs/_build
-celerybeat-schedule
 
 # compiled translations
 /locale/*/*/*.mo
@@ -78,9 +82,6 @@ docker/data
 fab/config.py
 extensions/
 
-# third-party js libraries
-corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
-
 # direnv
 .envrc
 .direnv
@@ -90,3 +91,7 @@ corehq/apps/hqwebapp/static/hqwebapp/js/lib/modernizr.js
 
 # ruff
 ruff.toml
+CLAUDE.local.md
+.schemathesis/
+schemathesis-report/
+schemathesis.toml

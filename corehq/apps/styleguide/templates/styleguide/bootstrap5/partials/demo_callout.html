@@ -1,0 +1,14 @@
+<div class="alert alert-primary d-flex flex-wrap align-items-center gap-2">
+  <strong class="text-primary">
+    {{ title|default:"See it in action" }}:
+  </strong>
+  <a
+    href="{% url urlname %}"
+    target="_blank"
+    rel="noopener"
+    class="btn btn-primary"
+  >
+    Open demo
+    <i class="fa fa-arrow-up-right-from-square ms-1"></i>
+  </a>
+</div>

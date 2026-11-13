@@ -25,7 +25,7 @@ class CommCareCaseGroup(UndoableDocument):
             case_ids = case_ids[skip:]
         if limit is not None:
             case_ids = case_ids[:limit]
-        for case in CommCareCase.objects.iter_cases(case_ids, self.domain):
+        for case in CommCareCase.objects.iter_cases(case_ids):
             if not case.is_deleted:
                 yield case
 
@@ -37,7 +37,7 @@ class CommCareCaseGroup(UndoableDocument):
     def clean_cases(self):
         cleaned_list = []
         changed = False
-        for case in CommCareCase.objects.iter_cases(self.cases, self.domain):
+        for case in CommCareCase.objects.iter_cases(self.cases):
             if not case.is_deleted:
                 cleaned_list.append(case.case_id)
             else:

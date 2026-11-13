@@ -1,4 +1,3 @@
-/* eslint-env node */
 
 const fs = require('fs');
 const path = require('path');
@@ -22,6 +21,7 @@ const nonStandardAppPaths = {
     "telerivet": path.resolve(MESSAGING_PATH, 'smsbackends', 'telerivet'),
     // the path itself is standard, but the app has no templates so getStandardAppPaths filters it out
     "smsbillables": path.resolve(APPS_PATH, 'smsbillables'),
+    "translations": path.resolve(APPS_PATH, 'translations'),
     // motech apps:
     "dhis2": path.resolve(MOTECH_PATH, 'dhis2'),
     "generic_inbound": path.resolve(MOTECH_PATH, 'generic_inbound'),
@@ -46,7 +46,7 @@ const hasTemplateFolder = function (dirEnt) {
     const templatePath = path.resolve(APPS_PATH, dirEnt.name, TEMPLATES_DIR);
     try {
         return fs.readdirSync(templatePath);
-    } catch (e) {
+    } catch {
         // throws an error if the templates directory does not exist
         return false;
     }

@@ -86,6 +86,12 @@ var EmailRequest = function (modalId, formId) {
     };
 
     self.resetForm = function () {
+        self.$formElement.get(0).reset();
+        self.subjectText('');
+        self.descriptionText('');
+        self.emailInput('');
+        self.recipientEmailsText('');
+        self.isReportSent = false;
         self.$formElement.find("button[type='submit']").changeButtonState('reset');
         self.cancelBtnEnabled(true);
         self.$submitBtn.changeButtonState('reset');

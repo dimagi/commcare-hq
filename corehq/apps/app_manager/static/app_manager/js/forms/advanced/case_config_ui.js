@@ -7,9 +7,9 @@ import casePropertiesModels from "app_manager/js/forms/advanced/case_properties"
 import actions from "app_manager/js/forms/advanced/actions";
 import google from "analytix/js/google";
 import initialPageData from "hqwebapp/js/initial_page_data";
-import main from "hqwebapp/js/bootstrap3/main";
-import appManager from "app_manager/js/app_manager";
-import visitSchedulerModel from "app_manager/js/visit_scheduler";
+import main from "hqwebapp/js/bootstrap5/main";
+import appManager from "app_manager/js/bootstrap5/app_manager";
+import visitSchedulerModel from "app_manager/js/bootstrap5/visit_scheduler";
 
 $(function () {
     if (initialPageData.get('module_doc_type') !== "AdvancedModule") {
@@ -29,14 +29,6 @@ $(function () {
         var self = {};
         self.trackGoogleEvent = function () {
             google.track.event(...arguments);
-        };
-
-        self.makePopover = function () {
-            $('.property-description').closest('.read-only').popover({
-                'trigger': 'hover',
-                'placement': 'bottom',
-                'sanitize': false,
-            });
         };
 
         self.home = params.home;
@@ -168,7 +160,14 @@ $(function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(
+                self.questions(),
+                filter,
+                excludeHidden,
+                includeRepeat,
+                false, //excludeTrigger
+                true,  //disableLocked
+            );
         };
 
         self.getAnswers = function (condition) {

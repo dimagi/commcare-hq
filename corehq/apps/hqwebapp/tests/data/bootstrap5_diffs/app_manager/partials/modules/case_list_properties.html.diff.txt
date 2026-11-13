@@ -1,0 +1,204 @@
+--- 
++++ 
+@@ -8,25 +8,25 @@
+         tabindex="999"
+         data-bind="paste: function (data) { pasteCallback(data, 0); }"
+       >
+-        <th class="col-sm-1"></th>
+-        <th class="col-sm-2">{% trans "Property" %}</th>
+-        <th class="col-sm-2">{% trans "Display Text" %}</th>
++        <th class="col-md-1"></th>
++        <th class="col-md-2">{% trans "Property" %}</th>
++        <th class="col-md-2">{% trans "Display Text" %}</th>
+         <!-- ko if: showCaseTileMappingColumn() -->
+-        <th class="col-sm-3">{% trans "Format" %}</th>
+-        <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
++        <th class="col-md-3">{% trans "Format" %}</th>
++        <th class="col-md-2">{% trans "Case Tile Mapping" %}</th>
+         <!--/ko-->
+         <!-- ko ifnot: showCaseTileMappingColumn() -->
+-        <th class="col-sm-2">{% trans "Format" %}</th>
++        <th class="col-md-2">{% trans "Format" %}</th>
+         <!-- /ko -->
+         <!-- ko if: showCaseTileConfigColumns() -->
+-        <th class="col-sm-1">{% trans "Row/Column" %}</th>
+-        <th class="col-sm-1">{% trans "Width/Height" %}</th>
+-        <th class="col-sm-1">{% trans "Style" %}</th>
++        <th class="col-md-1">{% trans "Row/Column" %}</th>
++        <th class="col-md-1">{% trans "Width/Height" %}</th>
++        <th class="col-md-1">{% trans "Style" %}</th>
+         <!-- /ko -->
+         <!-- ko if: showCaseListOptimizations -->
+-        <th class="col-sm-2">{% trans "Optimize" %}</th>
+-        <!-- /ko -->
+-        <th class="col-sm-1"></th>
++        <th class="col-md-2">{% trans "Optimize" %}</th>
++        <!-- /ko -->
++        <th class="col-md-1"></th>
+       </tr>
+     </thead>
+     <tbody
+@@ -42,7 +42,7 @@
+                 paste: function (data) { $parent.pasteCallback(data, $index() + 1); }
+             "
+       >
+-        <td class="text-center col-sm-1">
++        <td class="text-center col-md-1">
+           <span class="sort-disabled" data-bind="ifnot: grip"></span>
+           <i
+             class="grip sortable-handle fa-solid fa-up-down"
+@@ -53,13 +53,13 @@
+           ></i>
+         </td>
+         <!--ko if: !isTab -->
+-        <td class="col-sm-2" data-bind="css: {'has-error': showWarning}">
++        <td class="col-md-2" data-bind="css: {'has-error': showWarning}">  {# todo B5: css-has-error #}
+           <div
+             data-bind="html: $data.getFieldHtml(field.val()), visible: !field.edit"
+           ></div>
+           <div data-bind="jqueryElement: field.ui, visible: field.edit"></div>
+           <!-- ko if: useXpathExpression -->
+-          <div class="label label-default">
++          <div class="badge text-bg-secondary">
+             {% trans "Calculated Property" %}&nbsp;(#<span
+               data-bind="text: $index() + 1"
+             ></span
+@@ -79,34 +79,34 @@
+         <td data-bind="jqueryElement: header.ui"></td>
+         <td
+           data-bind="jqueryElement: $format, css: {
+-                              'col-sm-3': $parent.showCaseTileMappingColumn(),
+-                              'col-sm-2': !$parent.showCaseTileMappingColumn(),
++                              'col-md-3': $parent.showCaseTileMappingColumn(),
++                              'col-md-2': !$parent.showCaseTileMappingColumn(),
+                           }"
+         ></td>
+         <!-- ko if: $parent.showCaseTileConfigColumns() -->
+-        <td class="col-sm-1">
+-          <select
++        <td class="col-md-1">
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: tileRowStart, options: tileRowOptions, visible: coordinatesVisible"
+           ></select>
+-          <select
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: tileColumnStart, options: tileColumnOptions, visible: coordinatesVisible"
+           ></select>
+         </td>
+-        <td class="col-sm-1">
+-          <select
++        <td class="col-md-1">
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: tileWidth, options: tileWidthOptions, visible: coordinatesVisible"
+           ></select>
+-          <select
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: tileHeight, options: tileHeightOptions, visible: coordinatesVisible"
+           ></select>
+         </td>
+-        <td class="col-sm-1">
++        <td class="col-md-1">
+           <button
+-            class="btn btn-default"
++            class="btn btn-outline-primary"
+             data-bind="click: openStyleModal, visible: coordinatesVisible"
+           >
+             {% trans "Edit" %}
+@@ -116,13 +116,13 @@
+         <!--/ko-->
+         <!--ko if: isTab -->
+         <!--ko if: $data.hasNodeset -->
+-        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+-        <td class="col-sm-3 form-group">
++        <td class="col-md-3" data-bind="jqueryElement: header.ui"></td>
++        <td class="col-md-3 form-group">  {# todo B5: css-form-group #}
+           <div data-bind="jqueryElement: relevant.ui"></div>
+         </td>
+         <td
+-          class="col-sm-3 form-group"
+-          data-bind="css: {'has-error': showWarning}"
++          class="col-md-3 form-group"  {# todo B5: css-form-group #}
++          data-bind="css: {'has-error': showWarning}"  {# todo B5: css-has-error #}
+         >
+           <div data-bind="jqueryElement: nodeset_extra.ui"></div>
+           <span
+@@ -132,24 +132,24 @@
+         </td>
+         <!--/ko-->
+         <!--ko ifnot: $data.hasNodeset -->
+-        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+-        <td class="col-sm-3 form-group">
++        <td class="col-md-3" data-bind="jqueryElement: header.ui"></td>
++        <td class="col-md-3 form-group">  {# todo B5: css-form-group #}
+           <div data-bind="jqueryElement: relevant.ui"></div>
+         </td>
+         <td
+-          class="col-sm-3 form-group"
+-          data-bind="css: {'has-error': showWarning}"
++          class="col-md-3 form-group"  {# todo B5: css-form-group #}
++          data-bind="css: {'has-error': showWarning}"  {# todo B5: css-has-error #}
+         ></td>
+         <!--/ko-->
+         <!-- ko if: $parent.showCaseTileConfigColumns() -->
+-        <td class="col-sm-1"></td>
+-        <td class="col-sm-1"></td>
+-        <td class="col-sm-1"></td>
++        <td class="col-md-1"></td>
++        <td class="col-md-1"></td>
++        <td class="col-md-1"></td>
+         <!--/ko-->
+         <!--/ko-->
+         <!-- ko if: $parent.showCaseTileMappingColumn() && $parent.caseTileFieldsForTemplate() -->
+-        <td class="col-sm-2">
+-          <select
++        <td class="col-md-2">
++          <select  {# todo B5: css-select-form-control #}
+             class="form-control"
+             data-bind="value: case_tile_field, options: $parent.caseTileFieldsForTemplate, visible: !$data.isTab"
+           ></select>
+@@ -157,7 +157,7 @@
+         <!-- /ko -->
+         <!-- ko if: $parent.showCaseListOptimizations -->
+         <td
+-          class="col-sm-2"
++          class="col-md-2"
+           data-bind="css: {'has-warning': showCaseListOptimizationsWarning}, visible: supportsOptimizations"
+         >
+           <div data-bind="jqueryElement: $optimizationSelectElement"></div>
+@@ -170,14 +170,14 @@
+           </div>
+         </td>
+         <td data-bind="hidden: supportsOptimizations">
+-          <select class="form-control" disabled>
++          <select class="form-select" disabled>
+             <option>{% trans "N/A" %}</option>
+           </select>
+         </td>
+         <!-- /ko -->
+-        <td class="col-sm-1 text-center">
++        <td class="col-md-1 text-center">
+           <i
+-            style="cursor: pointer;"
++            style="cursor: pointer;"  {# todo B5: inline-style #}
+             title="{% trans "Delete"|escapejs %}"
+             class="fa fa-remove"
+             data-bind="
+@@ -194,12 +194,12 @@
+       <tr>
+         <td></td>
+         <td colspan="4">
+-          {% include "app_manager/partials/modules/bootstrap3/add_property_button.html" %}
++          {% include "app_manager/partials/modules/bootstrap5/add_property_button.html" %}
+         </td>
+       </tr>
+     </tbody>
+   </table>
+   <div data-bind="visible: columns().length == 0">
+-    {% include "app_manager/partials/modules/bootstrap3/add_property_button.html" %}
++    {% include "app_manager/partials/modules/bootstrap5/add_property_button.html" %}
+   </div>
+ </div>

@@ -2,7 +2,6 @@ import logging
 from unittest.mock import patch
 
 import requests
-from nose.tools import assert_equal
 
 from corehq.motech.auth import BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
@@ -141,9 +140,9 @@ def test_simple_post():
             timeout=REQUEST_TIMEOUT,
         )
         ((__, (level, log_entry), ___),) = log_mock.mock_calls
-        assert_equal(level, logging.INFO)
-        assert_equal(log_entry.payload_id, TEST_PAYLOAD_ID)
-        assert_equal(response.status_code, 200)
+        assert level == logging.INFO
+        assert log_entry.payload_id == TEST_PAYLOAD_ID
+        assert response.status_code == 200
 
 
 def test_simple_post_400():
@@ -165,4 +164,4 @@ def test_simple_post_400():
             payload_id=TEST_PAYLOAD_ID,
         )
         notify_mock.assert_called_with('HTTP status code 400: Bad request')
-        assert_equal(response.status_code, 400)
+        assert response.status_code == 400

@@ -16,11 +16,9 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
-from corehq.apps.es.client import manager
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.geospatial.utils import get_geo_case_property
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
-from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from corehq.util.quickcache import quickcache
@@ -31,9 +29,8 @@ from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
 )
 from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors.elastic import ElasticProcessor
+from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.reindexer.change_providers.case import (
     get_domain_case_change_provider,
 )
@@ -41,6 +38,7 @@ from pillowtop.reindexer.reindexer import (
     PillowChangeProviderReindexer,
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
+    clean_index,
 )
 
 _assert_string_property = soft_assert(to='{}@{}.com'.format('cellowitz', 'dimagi'), notify_admins=True)
@@ -107,22 +105,14 @@ def _add_gps_smart_types(dynamic_properties, gps_props):
                 prop[GEOPOINT_VALUE] = None
 
 
-class CaseSearchPillowProcessor(ElasticProcessor):
+class CaseSearchPillowProcessor(BulkElasticProcessor):
 
-    def process_change(self, change):
-        assert isinstance(change, Change)
-        if self.change_filter_fn and self.change_filter_fn(change):
-            return
-
-        if change.metadata is not None:
-            # Comes from KafkaChangeFeed (i.e. running pillowtop)
+    def __init__(self, adapter):
+        def change_filter_fn(change):
             domain = change.metadata.domain
-        else:
-            # comes from ChangeProvider (i.e reindexing)
-            domain = change.get_document()['domain']
+            return not (domain and domain_needs_search_index(domain))
 
-        if domain and domain_needs_search_index(domain):
-            super(CaseSearchPillowProcessor, self).process_change(change)
+        super().__init__(adapter, change_filter_fn=change_filter_fn)
 
 
 def get_case_search_processor():
@@ -134,10 +124,7 @@ def get_case_search_processor():
     Writes to:
       - Case Search ES index
     """
-    return CaseSearchPillowProcessor(
-        adapter=case_search_adapter,
-        change_filter_fn=is_couch_change_for_sql_domain
-    )
+    return CaseSearchPillowProcessor(adapter=case_search_adapter)
 
 
 def _fail_gracefully_and_tell_admins():
@@ -162,6 +149,26 @@ def domain_args(parser):
     )
 
 
+class CaseSearchReindexer(PillowChangeProviderReindexer):
+    """Reindexes the case search index from SQL cases.
+
+    Unlike ``ElasticPillowReindexer``, this does not change the index
+    settings for the reindex, because the reindex can be limited to one
+    domain or shard of an index that is in use.
+    """
+
+    def __init__(self, pillow_or_processor, change_provider, partial=False):
+        super().__init__(pillow_or_processor, change_provider)
+        self.partial = partial
+
+    def clean(self):
+        clean_index(case_search_adapter.index_name)
+
+    def reindex(self):
+        initialize_index_and_mapping(case_search_adapter)
+        super().reindex()
+
+
 class CaseSearchReindexerFactory(ReindexerFactory):
     slug = 'case-search'
     arg_contributors = [
@@ -177,7 +184,6 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         domain = self.options.pop('domain', None)
 
         limit_db_aliases = [limit_to_db] if limit_to_db else None
-        initialize_index_and_mapping(case_search_adapter)
         try:
             if domain is not None:
                 if not domain_needs_search_index(domain):
@@ -192,9 +198,10 @@ class CaseSearchReindexerFactory(ReindexerFactory):
             # The db hasn't been intialized yet, so skip this reindex and complain.
             return _fail_gracefully_and_tell_admins()
         else:
-            return PillowChangeProviderReindexer(
+            return CaseSearchReindexer(
                 get_case_search_processor(),
                 change_provider=change_provider,
+                partial=domain is not None or limit_to_db is not None,
             )
 
 
@@ -260,14 +267,6 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
         return ResumableBulkElasticPillowReindexer(
             doc_provider,
             adapter=case_search_adapter,
+            partial=True,
             **self.options
         )
-
-
-def delete_case_search_cases(domain):
-    if domain is None or isinstance(domain, dict):
-        raise TypeError("Domain attribute is required")
-
-    manager.index_refresh(case_search_adapter.index_name)
-    case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-    case_search_adapter.bulk_delete(case_ids)

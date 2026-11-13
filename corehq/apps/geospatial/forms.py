@@ -1,18 +1,13 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms.widgets import Select
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import PrependedText, StrictButton
 
-from corehq import toggles
-from corehq.apps.geospatial.const import (
-    ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY,
-)
-from corehq.apps.geospatial.models import GeoConfig, validate_travel_mode
+from corehq.apps.geospatial.const import ASSIGNED_VIA_DISBURSEMENT_CASE_PROPERTY
+from corehq.apps.geospatial.models import GeoConfig
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.hqwebapp.utils.translation import format_html_lazy
 
 LOCATION_SOURCE_OPTIONS = [
     (GeoConfig.CUSTOM_USER_PROPERTY, _("Custom user field")),
@@ -21,12 +16,6 @@ LOCATION_SOURCE_OPTIONS = [
 
 
 class GeospatialConfigForm(forms.ModelForm):
-    RADIAL_ALGORITHM_OPTION = (GeoConfig.RADIAL_ALGORITHM, _('Radial Algorithm'))
-    ROAD_NETWORK_ALGORITHM_OPTION = (GeoConfig.ROAD_NETWORK_ALGORITHM, _('Road Network Algorithm'))
-
-    DISBURSEMENT_ALGORITHM_OPTIONS = [
-        RADIAL_ALGORITHM_OPTION,
-    ]
 
     class Meta:
         model = GeoConfig
@@ -37,13 +26,10 @@ class GeospatialConfigForm(forms.ModelForm):
             "max_cases_per_group",
             "min_cases_per_group",
             "target_group_count",
-            "selected_disbursement_algorithm",
-            "plaintext_api_token",
             "min_cases_per_user",
             "max_cases_per_user",
             "max_case_distance",
             "max_case_travel_time",
-            "travel_mode",
             "flag_assigned_cases",
         ]
 
@@ -95,38 +81,6 @@ class GeospatialConfigForm(forms.ModelForm):
         required=False,
         min_value=0,
     )
-    travel_mode = forms.CharField(
-        label=_("Select travel mode"),
-        help_text=_("The travel mode of the users. "
-                    "Consider this when specifying the max travel time to each case."),
-        widget=Select(choices=GeoConfig.VALID_TRAVEL_MODES),
-        validators=[validate_travel_mode]
-    )
-    selected_disbursement_algorithm = forms.ChoiceField(
-        label=_("Disbursement algorithm"),
-        # TODO: Uncomment once linked documentation becomes public (geospatial feature is GA'ed)
-        # help_text=format_html_lazy(
-        #     _('For more information on these algorithms please look at our '
-        #       '<a href="{}" target="_blank">support documentation</a>.'),
-        #     'https://confluence.dimagi.com/pages/viewpage.action?pageId=164694245'
-        # ),
-        choices=DISBURSEMENT_ALGORITHM_OPTIONS,
-        required=True,
-        help_text=format_html_lazy('''
-            <span data-bind="visible: selectedAlgorithm() == '{}'">
-                {}
-            </span>
-            <span data-bind="visible: selectedAlgorithm() == '{}'">
-                {}
-            </span>''',
-            GeoConfig.RADIAL_ALGORITHM,
-            _('Uses the straight-line distance between users and cases to determine '
-              ' allocation of cases. Ideal for when map road coverage is poor.'),
-            GeoConfig.ROAD_NETWORK_ALGORITHM,
-            _('Takes distance along roads between users and cases into account to determine '
-              'allocation of cases. Ideal for when map road coverage is good.'),
-        )
-    )
     min_cases_per_user = forms.IntegerField(
         label=_("Minimum cases assigned per user"),
         help_text=_("The minimum number of cases each user can be assigned"),
@@ -141,15 +95,6 @@ class GeospatialConfigForm(forms.ModelForm):
         ),
         required=False,
     )
-    plaintext_api_token = forms.CharField(
-        label=_("Enter mapbox token"),
-        help_text=_(
-            "Enter your Mapbox API token here. Make sure your token has the correct scope configured"
-            " for use of the Mapbox Matrix API."
-        ),
-        required=False,
-        widget=forms.PasswordInput(),
-    )
     flag_assigned_cases = forms.BooleanField(
         label=_("Flag assigned cases"),
         help_text=_(
@@ -161,11 +106,6 @@ class GeospatialConfigForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if toggles.SUPPORT_ROAD_NETWORK_DISBURSEMENT_ALGORITHM.enabled(self.domain):
-            choices = self.fields['selected_disbursement_algorithm'].choices
-            choices.append(self.ROAD_NETWORK_ALGORITHM_OPTION)
-            self.fields['selected_disbursement_algorithm'].choices = choices
 
         self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
@@ -186,10 +126,6 @@ class GeospatialConfigForm(forms.ModelForm):
                 crispy.Fieldset(
                     _('Algorithms'),
                     crispy.Field(
-                        'selected_disbursement_algorithm',
-                        data_bind='value: selectedAlgorithm',
-                    ),
-                    crispy.Field(
                         'min_cases_per_user',
                         data_bind='value: minCasesPerUser',
                     ),
@@ -201,34 +137,9 @@ class GeospatialConfigForm(forms.ModelForm):
                         'max_case_distance',
                         data_bind='value: maxCaseDistance',
                     ),
-                    crispy.Div(
-                        crispy.Field(
-                            'travel_mode',
-                            data_bind='value: travelMode',
-                        ),
-                        data_bind='visible: captureApiToken',
-                    ),
-                    crispy.Div(
-                        crispy.Field(
-                            'max_case_travel_time',
-                            data_bind='value: maxTravelTime',
-                        ),
-                        data_bind='visible: captureApiToken',
-                    ),
-                    crispy.Div(
-                        crispy.Field('plaintext_api_token', data_bind="value: plaintext_api_token"),
-                        data_bind="visible: captureApiToken"
-                    ),
-                    crispy.Div(
-                        StrictButton(
-                            _('Test API Key'),
-                            type='button',
-                            css_id='test-connection-button',
-                            css_class='btn btn-default',
-                            data_bind="click: validateApiToken",
-                        ),
-                        css_class=hqcrispy.CSS_ACTION_CLASS,
-                        data_bind="visible: captureApiToken"
+                    crispy.Field(
+                        'max_case_travel_time',
+                        data_bind='value: maxTravelTime',
                     ),
                 ),
                 hqcrispy.FieldsetAccordionGroup(
@@ -304,11 +215,6 @@ class GeospatialConfigForm(forms.ModelForm):
             if not cleaned_data['target_group_count']:
                 raise ValidationError(_("Value for target group count required"))
 
-        algorithm = cleaned_data.get('selected_disbursement_algorithm')
-        token = cleaned_data.get('plaintext_api_token')
-        if algorithm == GeoConfig.ROAD_NETWORK_ALGORITHM and not token:
-            raise ValidationError(_("Mapbox API token required"))
-
         max_cases_per_user_value = cleaned_data['max_cases_per_user']
         if max_cases_per_user_value and max_cases_per_user_value < cleaned_data['min_cases_per_user']:
             raise ValidationError(_("The maximum cases per user cannot be less than the minimum specified"))
@@ -316,6 +222,6 @@ class GeospatialConfigForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        if self.cleaned_data.get('plaintext_api_token'):
-            self.instance.plaintext_api_token = self.cleaned_data.get('plaintext_api_token')
+        # Since Road Network Algorithm has been removed, always use Radial Algorithm
+        self.instance.selected_disbursement_algorithm = GeoConfig.RADIAL_ALGORITHM
         return super().save(commit)

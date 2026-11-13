@@ -7,7 +7,6 @@ from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
 from functools import cached_property
-from uuid import UUID
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -62,7 +61,6 @@ from .app_manager.data_source_meta import (
 from .columns import get_expanded_column_config
 from .const import (
     ALL_EXPRESSION_TYPES,
-    DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_NAMED_EXPRESSION,
@@ -83,7 +81,6 @@ from .exceptions import (
     BadSpecError,
     DataSourceConfigurationNotFoundError,
     DuplicateColumnIdError,
-    InvalidDataSourceType,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
     ValidationError,
@@ -261,11 +258,6 @@ class AbstractUCRDataSource(object):
         raise NotImplementedError()
 
 
-class MirroredEngineIds(DocumentSchema):
-    server_environment = StringProperty()
-    engine_ids = StringListProperty()
-
-
 class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
@@ -291,7 +283,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
     validations = SchemaListProperty(Validation)
-    mirrored_engine_ids = ListProperty(default=[])
+    # REMOVED_PROPERTY: mirrored_engine_ids
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -543,22 +535,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         Return the number of ReportConfigurations that reference this data source.
         """
         return ReportConfiguration.count_by_data_source(self.domain, self._id)
-
-    def validate_db_config(self):
-        mirrored_engine_ids = self.mirrored_engine_ids
-        if not mirrored_engine_ids:
-            return
-        if self.engine_id in mirrored_engine_ids:
-            raise BadSpecError("mirrored_engine_ids list should not contain engine_id")
-
-        for engine_id in mirrored_engine_ids:
-            if not connection_manager.engine_id_is_available(engine_id):
-                raise BadSpecError(
-                    "DB for engine_id {} is not availble".format(engine_id)
-                )
-
-        if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
-            raise BadSpecError("No two engine_ids should point to the same database")
 
     @property
     def data_domains(self):
@@ -865,7 +841,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     # config_id of the datasource
     config_id = StringProperty(required=True)
     data_source_type = StringProperty(default=DATA_SOURCE_TYPE_STANDARD,
-                                      choices=[DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE])
+                                      choices=[DATA_SOURCE_TYPE_STANDARD])
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
@@ -902,7 +878,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     @property
     @memoized
     def config(self):
-        return get_datasource_config(self.config_id, self.domain, self.data_source_type)[0]
+        return get_datasource_config(self.config_id, self.domain)[0]
 
     @property
     @memoized
@@ -1130,7 +1106,7 @@ class StaticDataSourceConfiguration(JsonObject):
     domains = ListProperty(required=True)
     server_environment = ListProperty(required=True)
     config = DictProperty()
-    mirrored_engine_ids = SchemaListProperty(MirroredEngineIds)
+    # REMOVED_PROPERTY: mirrored_engine_ids
 
     @classmethod
     def get_doc_id(cls, domain, table_id):
@@ -1200,13 +1176,6 @@ class StaticDataSourceConfiguration(JsonObject):
         doc = deepcopy(static_config.to_json()['config'])
         doc['domain'] = domain
         doc['_id'] = cls.get_doc_id(domain, doc['table_id'])
-
-        def _get_mirrored_engine_ids():
-            for env in static_config.mirrored_engine_ids:
-                if env.server_environment == settings.SERVER_ENVIRONMENT:
-                    return env.engine_ids
-            return []
-        doc['mirrored_engine_ids'] = _get_mirrored_engine_ids()
         return DataSourceConfiguration.wrap(doc)
 
 
@@ -1561,64 +1530,26 @@ class UCRExpression(models.Model):
         return f"{self.name}{description}"
 
 
-def get_datasource_config_infer_type(config_id, domain):
-    return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
-
-
-def guess_data_source_type(data_source_id):
-    """
-    Given a data source ID, try to guess its type (standard or aggregate).
-    """
-    # ints are definitely aggregate
-    if isinstance(data_source_id, int):
-        return DATA_SOURCE_TYPE_AGGREGATE
-    # static ids are standard
-    if id_is_static(data_source_id):
-        return DATA_SOURCE_TYPE_STANDARD
-    try:
-        # uuids are standard
-        UUID(data_source_id)
-        return DATA_SOURCE_TYPE_STANDARD
-    except ValueError:
-        try:
-            # int-like-things are aggregate
-            int(data_source_id)
-            return DATA_SOURCE_TYPE_AGGREGATE
-        except ValueError:
-            # default should be standard
-            return DATA_SOURCE_TYPE_STANDARD
-
-
-def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
+def get_datasource_config(config_id, domain):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
             'The data source referenced by this report could not be found.'
         ))
 
-    if data_source_type == DATA_SOURCE_TYPE_STANDARD:
-        is_static = id_is_static(config_id)
-        if is_static:
-            config = StaticDataSourceConfiguration.by_id(config_id)
-            if config.domain != domain:
-                _raise_not_found()
-        else:
-            try:
-                config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
-            except DocumentNotFound:
-                try:
-                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
-                except DocumentNotFound:
-                    _raise_not_found()
-        return config, is_static
-    elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
-        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-        try:
-            config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
-            return config, False
-        except AggregateTableDefinition.DoesNotExist:
+    is_static = id_is_static(config_id)
+    if is_static:
+        config = StaticDataSourceConfiguration.by_id(config_id)
+        if config.domain != domain:
             _raise_not_found()
     else:
-        raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
+        try:
+            config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
+        except DocumentNotFound:
+            try:
+                config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+            except DocumentNotFound:
+                _raise_not_found()
+    return config, is_static
 
 
 def id_is_static(data_source_id):

@@ -1,10 +1,12 @@
 from django.shortcuts import render
 
 from django.utils.translation import gettext as _
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 from corehq.apps.sso.utils.url_helpers import get_documentation_url
 
 
+@use_bootstrap5
 def render_untrusted_identity_provider_for_domain_view(request, domain):
     """
     This is a "faux" view that doesn't map to a url, but returns a rendered
@@ -34,7 +36,7 @@ def render_untrusted_identity_provider_for_domain_view(request, domain):
 
 
 def render_sso_error(request, error):
-    return render(request, 'sso/config_errors.html', {
+    return render(request, 'sso/bootstrap3/config_errors.html', {
         'idp_is_active': request.idp.is_active,
         'idp_name': request.idp.name,
         'error': error,
@@ -45,11 +47,11 @@ def render_sso_error(request, error):
 
 
 def render_sso_user_login_failed(request):
-    return render(request, 'sso/sso_request_denied.html', {})
+    return render(request, 'sso/bootstrap3/sso_request_denied.html', {})
 
 
 def render_saml_acs_error(request, saml_error_reason=None, idp_service_name=None, login_error=None):
-    return render(request, 'sso/acs_errors.html', {
+    return render(request, 'sso/bootstrap3/acs_errors.html', {
         'saml_error_reason': saml_error_reason,
         'idp_type': idp_service_name,
         'docs_link': get_documentation_url(request.idp),

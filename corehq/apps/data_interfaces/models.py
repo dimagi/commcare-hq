@@ -1,9 +1,12 @@
 import csv
 import hashlib
+import json
 import operator
 import re
+import uuid
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
@@ -12,6 +15,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 
+import architect
 import jsonfield
 import pytz
 from dateutil.parser import parse
@@ -46,6 +50,7 @@ from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS, is_copied_case, resave_case
 from corehq.apps.users.util import SYSTEM_USER_ID, cached_owner_id_to_display
 from corehq.apps.users.cases import get_wrapped_owner
+from corehq.blobs import CODES, get_blob_db
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
@@ -65,6 +70,7 @@ from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
 )
+from corehq.sql_db.fields import ModelClassField
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query,
@@ -1141,18 +1147,17 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
 
         return deduplicate_action_definition
 
-    def properties_fit_definition(self, updated_case_properties):
-        """Given a list of case properties, returns whether these will be pertinent in
+    def properties_fit_definition(self, case_properties):
+        """Given a set of case properties, returns whether these will be pertinent in
         finding duplicate cases.
         """
 
         definition_properties = set(self.case_properties)
-        updated_case_properties = set(updated_case_properties)
 
         if self.match_type == CaseDeduplicationMatchTypeChoices.ALL:
-            return updated_case_properties.issuperset(definition_properties)
+            return case_properties.issuperset(definition_properties)
         elif self.match_type == CaseDeduplicationMatchTypeChoices.ANY:
-            return updated_case_properties.intersection(definition_properties)
+            return case_properties.intersection(definition_properties)
 
         raise ValueError(f"Unknown match type: {self.match_type}")
 
@@ -1291,8 +1296,8 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
     def _update_cases(self, domain, rule, duplicate_case_ids):
         """Updates all the duplicate cases according to the rule
         """
-        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
-        case_updates = self._get_case_updates(duplicate_cases)
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids))
+        case_updates = self._get_case_updates(duplicate_cases, domain)
         for case_update_batch in chunked(case_updates, 100):
             result = bulk_update_cases(
                 domain,
@@ -1303,10 +1308,11 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
             rule.log_submission(result[0].form_id)
         return len(case_updates)
 
-    def _get_case_updates(self, duplicate_cases):
+    def _get_case_updates(self, duplicate_cases, domain):
         cases_to_update = defaultdict(dict)
         for duplicate_case in duplicate_cases:
-            cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
+            if duplicate_case.domain == domain:
+                cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
         return [
             (case_id, case_properties, False) for case_id, case_properties in cases_to_update.items()
         ]
@@ -1810,10 +1816,10 @@ class CaseRuleSubmission(models.Model):
     archived = models.BooleanField(default=False)
 
     class Meta(object):
-        index_together = (
-            ('domain', 'created_on'),
-            ('domain', 'rule', 'created_on'),
-        )
+        indexes = [
+            models.Index(fields=['domain', 'created_on']),
+            models.Index(fields=['domain', 'rule', 'created_on']),
+        ]
 
 
 class CaseRuleUndoer(object):
@@ -1855,7 +1861,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):
@@ -1902,9 +1908,7 @@ class DomainCaseRuleRun(models.Model):
     dbs_completed = models.JSONField(default=list)
 
     class Meta(object):
-        index_together = (
-            ('domain', 'started_on'),
-        )
+        indexes = [models.Index(fields=['domain', 'started_on'])]
 
     @classmethod
     def done(cls, run_id, cases_checked, result, db=None, halted=False):
@@ -1939,3 +1943,92 @@ class DomainCaseRuleRun(models.Model):
                 run.status = cls.STATUS_FINISHED
             run.save()
             return run
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='year',
+    column='created_at',
+)
+class BulkAsyncJob(models.Model):
+    """Tracks a bulk async action (archive/unarchive/delete)"""
+
+    class Status(models.TextChoices):
+        PENDING = 'pending'
+        RUNNING = 'running'
+        COMPLETE = 'complete'
+        FAILED = 'failed'
+
+    class Action(models.TextChoices):
+        ARCHIVE = 'archive'
+        UNARCHIVE = 'unarchive'
+        DELETE = 'delete'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    domain = models.CharField(max_length=126, db_index=True)
+    model = ModelClassField()
+    action = models.CharField(max_length=16, choices=Action.choices)
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    requested_by = models.CharField(max_length=255)
+    api_key = models.ForeignKey(
+        'users.HQApiKey',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='bulk_async_jobs',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    requested_ids_blob_key = models.CharField(max_length=64)
+    skipped_ids_blob_key = models.CharField(max_length=64)
+    requested_count = models.PositiveIntegerField(default=0)
+    processed_count = models.PositiveIntegerField(default=0)
+    succeeded_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        app_label = 'data_interfaces'
+
+    @property
+    def is_done(self):
+        return self.status in (self.Status.COMPLETE, self.Status.FAILED)
+
+    def set_requested_ids(self, form_ids, db=None):
+        # dict.fromkeys dedups while keeping the order ids were requested in
+        ids = list(dict.fromkeys(form_ids))
+        self.requested_count = len(ids)
+        self.requested_ids_blob_key = self._put_blob(ids, db=db)
+
+    def get_requested_ids(self):
+        return self._get_blob(self.requested_ids_blob_key)
+
+    def set_skipped(self, grouped):
+        self.skipped_ids_blob_key = self._put_blob(grouped)
+
+    def get_skipped(self):
+        return self._get_blob(self.skipped_ids_blob_key)
+
+    def _put_blob(self, payload, db=None):
+        db = db or get_blob_db()
+        content = BytesIO(json.dumps(payload).encode("utf-8"))
+        meta = db.put(
+            content,
+            domain=self.domain,
+            parent_id=self.id.hex,
+            type_code=CODES.bulk_async_job,
+            key=uuid.uuid4().hex,
+        )
+        return meta.key
+
+    def _get_blob(self, key):
+        # Read through the BlobMeta to ensure content is decompressed.
+        db = get_blob_db()
+        meta = db.metadb.get(key=key, parent_id=self.id.hex)
+        with db.get(meta=meta) as stream:
+            return json.loads(stream.read())

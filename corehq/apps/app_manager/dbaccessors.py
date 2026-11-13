@@ -16,7 +16,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.aggregations import NestedAggregation, TermsAggregation
 from corehq.util.quickcache import quickcache
 from quickcache.django_quickcache import tiered_django_cache
-from corehq.toggles import VELLUM_SAVE_TO_CASE
+from corehq import privileges
 from corehq.apps.es import apps as app_es
 
 
@@ -65,15 +65,27 @@ def get_latest_released_app_versions_by_app_id(domain):
     and the version of their most recently released build. Note that keys
     are the app ids, not build ids.
     """
+    return {r['key'][2]: r['key'][3] for r in _get_released_build_view_results(domain)}
+
+
+def get_latest_released_build_ids_by_app_id(domain):
+    """
+    Gets a dict of all apps in domain that have released at least one build
+    and the id of their most recently released build, keyed by app id.
+    """
+    return {r['key'][2]: r['id'] for r in _get_released_build_view_results(domain)}
+
+
+def _get_released_build_view_results(domain):
+    # only released builds are emitted under ^ReleasedApplications, ordered by
+    # app_id, version asc, so the last row per app is its newest released build
     from .models import Application
-    results = Application.get_db().view(
+    return Application.get_db().view(
         'app_manager/applications',
         startkey=['^ReleasedApplications', domain],
         endkey=['^ReleasedApplications', domain, {}],
         include_docs=False,
     ).all()
-    # key[3] will be latest released version since view is ordered by app_id, version asc
-    return {r['key'][2]: r['key'][3] for r in results}
 
 
 @quickcache(['domain', 'app_id'], timeout=24 * 60 * 60)
@@ -151,11 +163,6 @@ def get_build_doc_by_version(domain, app_id, version):
     return get_build_by_version(domain, app_id, version, return_doc=True)
 
 
-def get_build_doc_by_build_id(build_id):
-    from .models import Application
-    return Application.get_db().get(build_id)
-
-
 def wrap_app(app_doc, wrap_cls=None):
     """Will raise DocTypeError if it can't figure out the correct class"""
     from corehq.apps.app_manager.util import get_correct_app_class
@@ -172,7 +179,7 @@ def get_current_app_version(domain, app_id):
     return result['value']['version']
 
 
-def get_current_app_doc(domain, app_id):
+def get_app_doc(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
     if app.get('domain', None) != domain:
@@ -181,7 +188,7 @@ def get_current_app_doc(domain, app_id):
 
 
 def get_current_app(domain, app_id):
-    return wrap_app(get_current_app_doc(domain, app_id))
+    return wrap_app(get_app_doc(domain, app_id))
 
 
 def get_app_cached(domain, app_id):
@@ -216,7 +223,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
-                    = get_current_app_doc(domain, app_id)
+                    = get_app_doc(domain, app_id)
         latest_released_build = get_app(domain, app_id, latest=True)
                               = get_latest_released_app_doc(domain, app_id)
         latest_build = get_app(domain, app_id, latest=True, target='build')
@@ -245,7 +252,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
             # If the app_id passed in was the working copy, just use that app.
             # If it's a build, get the working copy.
             if app.get('copy_of'):
-                app = get_current_app_doc(domain, app_id)
+                app = get_app_doc(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
@@ -510,6 +517,9 @@ def get_version_build_id(domain, app_id, version):
 def _get_save_to_case_updates(domain):
     save_to_case_updates = set()
     for app in get_apps_in_domain(domain):
+        # RemoteApp does not implement get_forms() (would raise AttributeError).
+        if app.is_remote_app():
+            continue
         for form in app.get_forms():
             for update in form.get_save_to_case_updates():
                 save_to_case_updates.add(update)
@@ -529,14 +539,15 @@ def _get_case_types_from_apps_query(domain, is_build=False):
     )
 
 
-def get_case_types_from_apps(domain, include_save_to_case_updates=True):
+def get_case_types_from_apps(domain):
     """
     Get the case types of modules in applications in the domain.
     Also returns case types for SaveToCase properties in the domain, if the toggle is enabled.
     :returns: A set of case_types
     """
+    from corehq.apps.accounting.utils import domain_has_privilege
     save_to_case_updates = set()
-    if include_save_to_case_updates and VELLUM_SAVE_TO_CASE.enabled(domain):
+    if domain_has_privilege(domain, privileges.VELLUM_SAVE_TO_CASE):
         save_to_case_updates = _get_save_to_case_updates(domain)
     q = _get_case_types_from_apps_query(domain)
     case_types = set(q.run().aggregations.modules.case_types.keys)
@@ -582,3 +593,19 @@ def get_app_languages(domain):
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
     apps = get_apps_in_domain(domain, include_remote=False)
     return [a for a in apps if a.case_sharing and exclude_app_id != a.id]
+
+
+def get_latest_app_meta(domain, target):
+    """:param target: should be set to one of: 'save', 'build', 'release'"""
+    from .models import Application
+    prefix = {'save': 'SAVE', 'build': 'BUILD', 'release': 'RELEASE'}[target]
+    # The key is [target, domain, origin_id, version]
+    # reduce with group_level=3 yields the highest version for each
+    # (target, domain, origin_id)
+    return [res['value'] for res in Application.get_db().view(
+        'latest_apps/view',
+        startkey=[prefix, domain],
+        endkey=[prefix, domain, {}],
+        group_level=3,
+        reduce=True,
+    )]

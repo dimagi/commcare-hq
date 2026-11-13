@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -3,10 +3,10 @@
+ import ko from "knockout";
+ import _ from "underscore";
+ import initialPageData from "hqwebapp/js/initial_page_data";
+-import "hqwebapp/js/bootstrap3/widgets";  // role selection
++import "hqwebapp/js/bootstrap5/widgets";  // role selection
+ import "locations/js/widgets";  // location search
+ import "hqwebapp/js/components/select_toggle";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // slideVisible binding
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // slideVisible binding
+ 
+ function FiltersModel(options) {
+     var self = {};

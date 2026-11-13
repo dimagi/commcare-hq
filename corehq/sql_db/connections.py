@@ -17,6 +17,7 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
+PROJECT_DB_ENGINE_ID = 'project_db'
 
 
 def get_db_alias_or_none(enigne_id):
@@ -61,7 +62,7 @@ class SessionHelper(object):
             try:
                 yield session
                 session.commit()
-            except:
+            except:  # noqa: E722
                 session.rollback()
                 raise
             finally:
@@ -181,6 +182,12 @@ class ConnectionManager(object):
             self.engine_id_django_db_map[DEFAULT_ENGINE_ID] = DEFAULT_DB_ALIAS
         if UCR_ENGINE_ID not in self.engine_id_django_db_map:
             self.engine_id_django_db_map[UCR_ENGINE_ID] = DEFAULT_DB_ALIAS
+        # Real environments must configure project_db explicitly; only fall
+        # back to the default database for local dev and tests.
+        if PROJECT_DB_ENGINE_ID not in self.engine_id_django_db_map and (
+            settings.DEBUG or settings.UNIT_TESTING
+        ):
+            self.engine_id_django_db_map[PROJECT_DB_ENGINE_ID] = DEFAULT_DB_ALIAS
 
     @memoized
     def _connection_string_from_django(self, django_alias):
@@ -209,7 +216,18 @@ def _close_connections(**kwargs):
     Session.remove()  # todo: unclear whether this is necessary
     connection_manager.close_scoped_sessions()
 
+
 signals.request_finished.connect(_close_connections)
+
+
+def cleanup_connections(sender):
+    """Close old connections
+
+    Use in long-running processes that use Django and/or SQLAlchemy
+    ORM but do not serve Django web requests.
+    https://github.com/jneight/django-db-geventpool#using-orm-when-not-serving-requests
+    """
+    signals.request_finished.send(sender=sender)
 
 
 @unit_testing_only

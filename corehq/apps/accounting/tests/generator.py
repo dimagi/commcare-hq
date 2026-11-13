@@ -3,13 +3,13 @@ import datetime
 import random
 import uuid
 from decimal import Decimal
+from unittest import mock
 
 from django.apps import apps
 from django.conf import settings
 from django.core.management import call_command
 
-from unittest import mock
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from dimagi.utils.data import generator as data_gen
 
@@ -23,12 +23,13 @@ from corehq.apps.accounting.models import (
     Currency,
     DefaultProductPlan,
     Feature,
+    FeatureRate,
     FeatureType,
+    Role,
     SoftwarePlan,
     SoftwarePlanEdition,
     SoftwarePlanVersion,
     SoftwareProductRate,
-    Role,
     Subscriber,
     Subscription,
     SubscriptionType,
@@ -105,10 +106,10 @@ def arbitrary_contact_info(account, web_user_creator):
         email_list=[web_user_creator],
         phone_number="+15555555",
         company_name="Company Name",
-        first_line="585 Mass Ave",
+        first_line="245 Main Street",
         city="Cambridge",
         state_province_region="MA",
-        postal_code="02139",
+        postal_code="02142",
         country="US",
     )
 
@@ -128,6 +129,20 @@ def default_feature_rates(edition=SoftwarePlanEdition.STANDARD):
         )
         feature_rates.append(feature.get_rate(default_instance=True))
     return feature_rates
+
+
+@unit_testing_only
+def add_web_user_feature_rate(plan_version):
+    feature, __ = Feature.objects.get_or_create(
+        name=FeatureType.WEB_USER, defaults={'feature_type': FeatureType.WEB_USER},
+    )
+    rate = FeatureRate.objects.create(
+        feature=feature,
+        monthly_limit=10,
+        per_excess_fee=Decimal('10.00'),
+    )
+    plan_version.feature_rates.add(rate)
+    return rate
 
 
 @unit_testing_only
@@ -153,7 +168,7 @@ def custom_plan_version(name='Custom software plan', edition=SoftwarePlanEdition
 @unit_testing_only
 def generate_domain_subscription(account, domain, date_start, date_end,
                                  plan_version=None, service_type=SubscriptionType.NOT_SET,
-                                 is_active=False, do_not_invoice=False):
+                                 is_active=False, do_not_invoice=False, **kwargs):
     subscriber, _ = Subscriber.objects.get_or_create(domain=domain.name)
     subscription = Subscription(
         account=account,
@@ -163,7 +178,8 @@ def generate_domain_subscription(account, domain, date_start, date_end,
         date_end=date_end,
         service_type=service_type,
         is_active=is_active,
-        do_not_invoice=do_not_invoice
+        do_not_invoice=do_not_invoice,
+        **kwargs
     )
     subscription.save()
     return subscription

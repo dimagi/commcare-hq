@@ -86,7 +86,7 @@ class TestCaseCopier(TestCase):
             )
 
             new_case_ids = [pair[1] for pair in case_id_pairs]
-            new_cases = CommCareCase.objects.get_cases(new_case_ids, DOMAIN)
+            new_cases = CommCareCase.objects.get_cases(new_case_ids)
             self.assertEqual(len(new_cases), 2)
             mother_case = next(c for c in new_cases if c.type == 'mother')
             child_case = next(c for c in new_cases if c.type == 'child')

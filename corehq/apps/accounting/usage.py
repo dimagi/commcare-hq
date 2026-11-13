@@ -62,3 +62,7 @@ def get_web_user_usage(domains):
             .web_users()
             .exclude_dimagi_users()
             .count())
+
+
+def get_web_usernames(domain):
+    return UserES().domain(domain).web_users().values_list('username', flat=True)

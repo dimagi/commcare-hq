@@ -224,10 +224,11 @@ class ApiKeyFallbackBackend(object):
                 Q(expiration_date__isnull=True) | Q(expiration_date__gte=datetime.now(tz.utc))
             )
 
-            api_domain_filter = Q(domain='')
+            api_domain_filter = Q()
             domain = getattr(request, 'domain', '')
             if domain:
-                api_domain_filter = api_domain_filter | Q(domain=domain)
+                domain_accessible = Q(domain='') | Q(domain=domain)
+                api_domain_filter = domain_accessible
 
             ip = get_ip(request)
             api_whitelist_filter = Q(ip_allowlist=[]) | Q(ip_allowlist__contains=[ip])
@@ -237,7 +238,8 @@ class ApiKeyFallbackBackend(object):
 
             for key in keys_qs:
                 if key.plaintext_key == password:
-                    request.skip_two_factor_check = True
+                    request.api_key_authenticated = True
+                    request.bypass_two_factor = True
                     return user
             return None
         except User.DoesNotExist:

@@ -92,6 +92,7 @@ standard_v2 = community_v2 + [
     privileges.FORM_CASE_IDS_CASE_IMPORTER,
     privileges.EXPORT_MULTISORT,
     privileges.TWO_STAGE_MOBILE_WORKER_ACCOUNT_CREATION,
+    privileges.AI_APP_TRANSLATION,
 ]
 
 
@@ -125,11 +126,11 @@ pro_v1 = standard_v2 + [
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
     privileges.DATA_FILE_DOWNLOAD,
-    privileges.ATTENDANCE_TRACKING,
     privileges.REGEX_FIELD_VALIDATION,
     privileges.EXPORT_OWNERSHIP,
     privileges.CASE_LIST_EXPLORER,
     privileges.CASE_DEDUPE,
+    privileges.SHOW_ENABLE_ALL_ADD_ONS,
     privileges.USERCASE,
     privileges.ZAPIER_INTEGRATION,
 ]
@@ -161,6 +162,13 @@ advanced_v0 = pro_v1 + [
     privileges.CUSTOM_DOMAIN_ALERTS,
     privileges.APP_DEPENDENCIES,
     privileges.BULK_DATA_EDITING,
+    privileges.DATA_DICT_TYPES,
+    privileges.GEOJSON_EXPORT,
+    privileges.CUSTOM_ICON_BADGES,
+    privileges.LOCATION_COLUMNS_IN_USER_LAST_ACTIVITY_REPORT,
+    privileges.LOCKED_ADMIN_QUESTIONS,
+    privileges.VELLUM_SAVE_TO_CASE,
+    privileges.PUBLIC_WEBFORMS,
 ]
 
 enterprise_v0 = advanced_v0 + [

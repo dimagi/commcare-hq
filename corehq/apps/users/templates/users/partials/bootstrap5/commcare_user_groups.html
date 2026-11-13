@@ -1,0 +1,49 @@
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if needs_to_downgrade_locations %}
+  <div>
+    <p>
+      {% trans "This project no longer has access to the Organization feature." %}
+      <a href="{% url "downgrade_locations" domain %}">
+        {% trans "Click here to fix this." %}
+      </a>
+    </p>
+  </div>
+{% else %}
+  <form class="form-horizontal" action="{% url "update_user_groups" domain couch_user.user_id %}" method='post'>
+    {% if not are_groups %}
+      <p>
+        {% trans "No groups created yet." %}
+        {% if can_create_groups %}
+          {% blocktrans %}
+            Go to <a href="{{ groups_url }}">groups configuration</a> to create them.
+          {% endblocktrans %}
+        {% endif %}
+      </p>
+    {% else %}
+      {% if request.is_view_only %}
+        <div class="form form-horizontal">
+          <legend>
+            {% trans "Group Memberships" %}
+          </legend>
+          <div class="form-group">  {# todo B5: css-form-group #}
+            <label class="col-sm-12 col-md-4 col-lg-4 col-xl-2 form-label">
+              {% trans "Group Membership" %}
+            </label>
+            <div class="col-sm-12 col-md-8 col-lg-8 col-xl-6 controls-text">
+              <ul>
+                {% for group in group_names %}
+                  <li>{{ group }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        {% crispy group_form %}  {# todo B5: crispy #}
+      {% endif %}
+    {% endif %}
+  </form>
+{% endif %}

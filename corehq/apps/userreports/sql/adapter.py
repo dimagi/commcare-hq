@@ -262,92 +262,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         return rows
 
 
-class MultiDBSqlAdapter(object):
-
-    mirror_adapter_cls = IndicatorSqlAdapter
-
-    def __init__(self, config, override_table_name=None):
-        config.validate_db_config()
-        self.config = config
-        self.main_adapter = self.mirror_adapter_cls(config, override_table_name)
-        self.all_adapters = [self.main_adapter]
-        engine_ids = self.config.mirrored_engine_ids
-        for engine_id in engine_ids:
-            self.all_adapters.append(self.mirror_adapter_cls(config, override_table_name, engine_id))
-
-    def __getattr__(self, attr):
-        return getattr(self.main_adapter, attr)
-
-    @property
-    def config_id(self):
-        return self.config._id
-
-    @property
-    def is_active(self):
-        return not self.config.is_deactivated
-
-    @property
-    def table_id(self):
-        return self.config.table_id
-
-    @property
-    def display_name(self):
-        return self.config.display_name
-
-    def best_effort_save(self, doc, eval_context=None):
-        for adapter in self.all_adapters:
-            adapter.best_effort_save(doc, eval_context)
-
-    def save(self, doc, eval_context=None):
-        for adapter in self.all_adapters:
-            adapter.save(doc, eval_context)
-
-    def get_all_values(self, doc, eval_context=None):
-        return self.config.get_all_values(doc, eval_context)
-
-    @property
-    def run_asynchronous(self):
-        return self.config.asynchronous
-
-    def get_distinct_values(self, column, limit):
-        return self.main_adapter.get_distinct_values(column, limit)
-
-    def build_table(self, initiated_by=None, source=None):
-        for adapter in self.all_adapters:
-            adapter.build_table(initiated_by=initiated_by, source=source)
-
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
-        for adapter in self.all_adapters:
-            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
-
-    def drop_table(self, initiated_by=None, source=None, skip_log=False):
-        for adapter in self.all_adapters:
-            adapter.drop_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
-
-    @unit_testing_only
-    def clear_table(self):
-        for adapter in self.all_adapters:
-            adapter.clear_table()
-
-    def save_rows(self, rows, use_shard_col=True):
-        for adapter in self.all_adapters:
-            adapter.save_rows(rows, use_shard_col)
-
-    def bulk_save(self, docs):
-        for adapter in self.all_adapters:
-            adapter.bulk_save(docs)
-
-    def bulk_delete(self, docs, use_shard_col=True):
-        for adapter in self.all_adapters:
-            adapter.bulk_delete(docs, use_shard_col)
-
-    def doc_exists(self, doc):
-        return any([
-            adapter.doc_exists(doc)
-            for adapter in self.all_adapters
-        ])
-
-
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
     def handle_exception(self, doc, exception):
@@ -372,10 +286,6 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
                 return
 
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
-
-
-class ErrorRaisingMultiDBAdapter(MultiDBSqlAdapter):
-    mirror_adapter_cls = ErrorRaisingIndicatorSqlAdapter
 
 
 def _get_table_name_for_adapter(override_table_name, config):

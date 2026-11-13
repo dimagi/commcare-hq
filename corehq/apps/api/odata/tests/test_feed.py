@@ -32,7 +32,6 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataCaseFeed, cls).tearDownClass()
 
@@ -118,7 +117,6 @@ class TestODataFormFeed(TestCase, FormOdataTestMixin):
 
     @classmethod
     def tearDownClass(cls):
-        cls._teardownclass()
         cls._teardown_accounting()
         super(TestODataFormFeed, cls).tearDownClass()
 

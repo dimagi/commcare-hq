@@ -14,7 +14,6 @@ from corehq.apps.app_manager.ui_translations.commcare_versioning import (
     get_strict_commcare_version_string,
     set_commcare_version_in_workbook,
 )
-from corehq.apps.translations.models import TransifexBlacklist
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -102,18 +101,7 @@ def process_ui_translation_upload(app, trans_file):
     return trans_dict, error_properties, warnings
 
 
-def _get_ui_blacklist(app):
-    blacklist = TransifexBlacklist.objects.filter(
-        domain=app.domain,
-        app_id=app._id,
-        module_id='',
-        field_type='ui',
-    ).all()
-    return {b.field_name for b in blacklist}
-
-
 def build_ui_translation_download_file(app):
-    blacklist = _get_ui_blacklist(app)
     properties = tuple(["property"] + app.langs)
     temp = io.BytesIO()
     headers = (("translations", properties),)
@@ -123,8 +111,6 @@ def build_ui_translation_download_file(app):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
         for prop, trans in trans_dict.items():
-            if prop in blacklist:
-                continue
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
@@ -135,7 +121,7 @@ def build_ui_translation_download_file(app):
     commcare_version = get_strict_commcare_version_string(app.build_version)
 
     all_prop_trans = get_default_translations_for_download(app, commcare_version)
-    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict and t not in blacklist])
+    rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
         num_to_fill = len(properties) - len(row)

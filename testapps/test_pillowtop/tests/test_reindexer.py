@@ -86,6 +86,19 @@ class PillowtopReindexerTest(TestCase):
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
         self.addCleanup(delete_es_index, case_search_adapter.index_name)
 
+    def test_case_search_reindexer_cleanup_removes_stale_cases(self):
+        FormProcessorTestUtils.delete_all_cases()
+        stale_case = _create_and_save_a_case()
+        create_domain(stale_case.domain)
+        reindex_and_clean('case-search')
+        self.addCleanup(delete_es_index, case_search_adapter.index_name)
+        FormProcessorTestUtils.delete_all_cases()
+        case = _create_and_save_a_case()
+
+        reindex_and_clean('case-search')
+        manager.index_refresh(case_search_adapter.index_name)
+        self._assert_case_is_in_es(case, esquery=CaseSearchES())
+
     def test_xform_reindexer_v2(self):
         FormProcessorTestUtils.delete_all_xforms()
         form = create_and_save_a_form(DOMAIN)

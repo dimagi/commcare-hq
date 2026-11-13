@@ -35,6 +35,10 @@ class ImporterExcelFileEncrypted(ImporterExcelError):
     """Raised when a file cannot be open because it is encrypted (password-protected)"""
 
 
+class ImporterExcelExternalLinks(ImporterExcelError):
+    """Raised when a file contains links to another workbook"""
+
+
 class ImporterExcelTooManyRows(ImporterError):
     """Raised when case import exceeds MAX_CASE_IMPORTER_ROWS"""
 
@@ -109,6 +113,28 @@ class InvalidDate(CaseRowError):
     title = gettext_noop('Invalid Date')
     message = gettext_lazy(
         'Required format: YYYY-MM-DD (e.g. "2021-12-31")'
+    )
+
+
+class InvalidNumber(CaseRowError):
+    title = gettext_noop('Invalid Number')
+    message = gettext_lazy(
+        'The given value is not a number'
+    )
+
+
+class InvalidGPS(CaseRowError):
+    title = gettext_noop('Invalid GPS')
+    message = gettext_lazy(
+        'Required format: "latitude longitude" or '
+        '"latitude longitude altitude precision"'
+    )
+
+
+class InvalidPhoneNumber(CaseRowError):
+    title = gettext_noop('Invalid Phone Number')
+    message = gettext_lazy(
+        'The given value is not a valid phone number'
     )
 
 

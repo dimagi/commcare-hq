@@ -7,7 +7,7 @@ from unittest.mock import ANY, patch
 from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.es import const
 from corehq.apps.es.utils import check_task_progress, get_es_reindex_setting_value

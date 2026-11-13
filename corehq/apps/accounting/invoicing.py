@@ -35,11 +35,11 @@ from corehq.apps.accounting.models import (
     CustomerBillingRecord,
     CustomerInvoice,
     DomainUserHistory,
+    DomainWebUserHistory,
     EntryPoint,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     Invoice,
-    InvoicingPlan,
     LineItem,
     SoftwarePlanEdition,
     Subscriber,
@@ -54,7 +54,6 @@ from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
-    get_first_day_x_months_later,
 )
 from corehq.apps.accounting.utils.invoicing import (
     get_flagged_pay_annually_prepay_invoice,
@@ -66,6 +65,7 @@ from corehq.apps.domain.utils import (
     get_serializable_wire_invoice_prepaid_item,
 )
 from corehq.apps.smsbillables.models import SmsBillable
+from corehq.apps.users.util import is_dimagi_email
 from corehq.util.dates import (
     get_first_last_days,
     get_previous_month_date_range,
@@ -300,24 +300,35 @@ class DomainWireInvoiceFactory(object):
 
         return wire_invoice
 
-    def create_wire_credits_invoice(self, amount, credit_label, unit_cost, quantity, date_due=None):
-
+    def create_wire_credits_invoice(
+        self,
+        amount,
+        credit_label,
+        unit_cost,
+        quantity,
+        date_due=None,
+        send_async=True,
+    ):
         serializable_amount = simplejson.dumps(amount, use_decimal=True)
         serializable_items = get_serializable_wire_invoice_general_credit(
             amount, credit_label, unit_cost, quantity
         )
 
         from corehq.apps.accounting.tasks import create_wire_credits_invoice
-        create_wire_credits_invoice.delay(
-            domain_name=self.domain.name,
-            amount=serializable_amount,
-            invoice_items=serializable_items,
-            date_start=self.date_start,
-            date_end=self.date_end,
-            contact_emails=self.contact_emails,
-            cc_emails=self.cc_emails,
-            date_due=date_due,
-        )
+        task_kwargs = {
+            'domain_name': self.domain.name,
+            'amount': serializable_amount,
+            'invoice_items': serializable_items,
+            'date_start': self.date_start,
+            'date_end': self.date_end,
+            'contact_emails': self.contact_emails,
+            'cc_emails': self.cc_emails,
+            'date_due': date_due,
+        }
+        if send_async:
+            create_wire_credits_invoice.delay(**task_kwargs)
+            return None
+        return create_wire_credits_invoice(**task_kwargs)
 
     def create_subscription_credits_invoice(self, plan_version, date_start, date_end):
         label = f"One month of {plan_version.plan.name}"
@@ -402,6 +413,7 @@ class CustomerAccountInvoiceFactory(object):
                 show_stack_trace=True,
             )
 
+    @transaction.atomic
     def _generate_customer_invoice(self):
         # We have unique index on account, date_start and date_end
         invoice, is_new_invoice = CustomerInvoice.objects.create_or_get(
@@ -487,8 +499,6 @@ def generate_line_items(invoice, subscription):
         feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
             feature_rate.feature.feature_type
         )
-        if feature_factory_class == WebUserLineItemFactory and not subscription.account.bill_web_user:
-            continue
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
 
@@ -680,24 +690,7 @@ class ProductLineItemFactory(LineItemFactory):
     def quantity(self):
         if self.is_prorated:
             return self.num_prorated_days
-        if self.invoice.is_customer_invoice:
-            if self.invoice.account.invoicing_plan == InvoicingPlan.QUARTERLY:
-                return self.months_product_active_over_period(3)
-            elif self.invoice.account.invoicing_plan == InvoicingPlan.YEARLY:
-                return self.months_product_active_over_period(12)
         return 1
-
-    def months_product_active_over_period(self, num_months):
-        # Calculate the number of months out of num_months the subscription was active
-        quantity = 0
-        date_start = get_first_day_x_months_later(self.invoice.date_end, -(num_months - 1))
-        while date_start < self.invoice.date_end:
-            if self.subscription.date_end and self.subscription.date_end <= date_start:
-                continue
-            elif self.subscription.date_start <= date_start:
-                quantity += 1
-            date_start = date_start + relativedelta(months=1)
-        return quantity
 
     @property
     def plan_name(self):
@@ -814,13 +807,29 @@ class FormSubmittingMobileWorkerLineItemFactory(UserLineItemFactory):
 class WebUserLineItemFactory(UserLineItemFactory):
 
     def total_users_for_date(self, date):
-        try:
-            history = BillingAccountWebUserHistory.objects.get(
-                billing_account=self.subscription.account, record_date=date)
-            total_users = history.num_users
-        except BillingAccountWebUserHistory.DoesNotExist:
-            raise
-        return total_users
+        histories = list(DomainWebUserHistory.objects.filter(
+            domain__in=self.subscribed_domains, record_date=date,
+        ))
+        if not histories:
+            # fallback to legacy BillingAccountWebUserHistory rows
+            # which count web users across all domains in an account,
+            # not just self.subscribed_domains
+            return BillingAccountWebUserHistory.objects.get(
+                billing_account=self.subscription.account, record_date=date,
+            ).num_users
+
+        recorded_domains = {history.domain for history in histories}
+        for domain in self.subscribed_domains:
+            if domain not in recorded_domains and not deleted_domain_exists(domain):
+                raise DomainWebUserHistory.DoesNotExist(f"No web user history for {domain} on {date}")
+
+        usernames = {
+            username
+            for history in histories
+            for username in history.usernames
+            if not is_dimagi_email(username)
+        }
+        return len(usernames)
 
     @property
     def unit_description(self):

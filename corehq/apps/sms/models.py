@@ -397,9 +397,9 @@ class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
     class Meta(object):
         db_table = 'sms_lastreadmessage'
         app_label = 'sms'
-        index_together = [
-            ['domain', 'read_by', 'contact_id'],
-            ['domain', 'contact_id'],
+        indexes = [
+            models.Index(fields=['domain', 'read_by', 'contact_id']),
+            models.Index(fields=['domain', 'contact_id']),
         ]
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -461,9 +461,7 @@ class ExpectedCallback(UUIDGeneratorMixin, models.Model):
 
     class Meta(object):
         app_label = 'sms'
-        index_together = [
-            ['domain', 'date'],
-        ]
+        indexes = [models.Index(fields=['domain', 'date'])]
 
     STATUS_CHOICES = (
         (CALLBACK_PENDING, gettext_lazy("Pending")),
@@ -1116,6 +1114,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
     ERROR_NO_FCM_TOKENS = 'NO_FCM_TOKENS'
     FILTER_MISMATCH = 'FILTER_MISMATCH'
+    ERROR_CONNECT_USER_NOT_FOUND = 'CONNECT_USER_NOT_FOUND'
+    ERROR_CONNECT_GATEWAY = 'CONNECT_GATEWAY_ERROR'
+    ERROR_USER_NOT_SUPPORTED = 'USER_NOT_SUPPORTED'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1172,7 +1173,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_EMAIL_BOUNCED: gettext_noop("Email Bounced"),
         ERROR_EMAIL_GATEWAY: gettext_noop("Email Gateway Error"),
         ERROR_NO_FCM_TOKENS: gettext_noop("No FCM tokens found for recipient."),
-        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:")
+        FILTER_MISMATCH: gettext_noop("Recipient did not match filters:"),
+        ERROR_CONNECT_USER_NOT_FOUND: gettext_noop("Connect user not found for recipient."),
+        ERROR_CONNECT_GATEWAY: gettext_noop("Connect Messaging Gateway Error"),
+        ERROR_USER_NOT_SUPPORTED:
+            gettext_noop("Only Mobile workers with Connect accounts are supported as recipients "
+                "for Connect Message and Surveys."),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -1286,6 +1292,23 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return obj
 
+    def create_subevent_for_content_type(self, recipient_doc_type=None,
+            recipient_id=None, case=None, completed=False, content_type=None):
+        recipient_type = MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type)
+        subevent = MessagingSubEvent.objects.create(
+            parent=self,
+            domain=self.domain,
+            date=datetime.utcnow(),
+            recipient_type=recipient_type,
+            recipient_id=recipient_id,
+            content_type=content_type or self.content_type,
+            case_id=case.case_id if case else None,
+            status=(MessagingEvent.STATUS_COMPLETED
+                    if completed
+                    else MessagingEvent.STATUS_IN_PROGRESS),
+        )
+        return subevent
+
     @property
     def subevents(self):
         return self.messagingsubevent_set.all()
@@ -1308,13 +1331,23 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         for action in keyword.keywordaction_set.all():
             if action.recipient == KeywordAction.RECIPIENT_SENDER:
-                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
-                    content_type = cls.CONTENT_SMS_SURVEY
+                if action.action in (
+                    KeywordAction.ACTION_SMS_SURVEY,
+                    KeywordAction.ACTION_STRUCTURED_SMS,
+                    KeywordAction.ACTION_CONNECT_SURVEY,
+                ):
+                    content_type = (
+                        cls.CONTENT_CONNECT_SURVEY
+                        if action.action == KeywordAction.ACTION_CONNECT_SURVEY
+                        else cls.CONTENT_SMS_SURVEY
+                    )
                     app_id = action.app_id
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(keyword.domain, action.app_id, action.form_unique_id)
                 elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
+                elif action.action == KeywordAction.ACTION_CONNECT_MESSAGE:
+                    content_type = cls.CONTENT_CONNECT
 
         return (content_type, app_id, form_unique_id, form_name)
 
@@ -1326,9 +1359,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         from corehq.messaging.scheduling.scheduling_partitioned.models import (
             AlertScheduleInstance,
-            TimedScheduleInstance,
             CaseAlertScheduleInstance,
             CaseTimedScheduleInstance,
+            TimedScheduleInstance,
         )
 
         if isinstance(schedule_instance, AlertScheduleInstance):
@@ -1357,13 +1390,12 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     @classmethod
     def get_content_info_from_content_object(cls, domain, content):
         from corehq.messaging.scheduling.models import (
+            ConnectMessageContent,
+            ConnectMessageSurveyContent,
+            CustomContent,
+            EmailContent,
             SMSContent,
             SMSSurveyContent,
-            EmailContent,
-            CustomContent,
-            FCMNotificationContent,
-            ConnectMessageContent,
-            ConnectMessageSurveyContent
         )
 
         if isinstance(content, (SMSContent, CustomContent)):
@@ -1374,8 +1406,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return cls.CONTENT_SMS_SURVEY, content.app_id, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
             return cls.CONTENT_EMAIL, None, None, None
-        elif isinstance(content, FCMNotificationContent):
-            return cls.CONTENT_FCM_Notification, None, None, None
         elif isinstance(content, ConnectMessageContent):
             return cls.CONTENT_CONNECT, None, None, None
         elif isinstance(content, ConnectMessageSurveyContent):
@@ -1387,7 +1417,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type_and_id_from_schedule_instance(cls, schedule_instance):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance
+        from corehq.messaging.scheduling.scheduling_partitioned.models import (
+            ScheduleInstance,
+        )
 
         if isinstance(schedule_instance.recipient, list):
             recipient_type = cls.RECIPIENT_VARIOUS
@@ -1643,10 +1675,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     class Meta(object):
         app_label = 'sms'
-        index_together = (
+        indexes = [
             # used by the messaging-event api
-            ('domain', 'date_last_activity', 'id'),
-        )
+            models.Index(fields=['domain', 'date_last_activity', 'id']),
+        ]
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
@@ -2516,9 +2548,7 @@ class Keyword(UUIDGeneratorMixin, models.Model):
     UUIDS_TO_GENERATE = ['couch_id']
 
     class Meta(object):
-        index_together = (
-            ('domain', 'keyword')
-        )
+        indexes = [models.Index(fields=['domain', 'keyword'])]
 
     couch_id = models.CharField(max_length=126, null=True, db_index=True)
     domain = models.CharField(max_length=126, db_index=True)
@@ -2609,6 +2639,12 @@ class KeywordAction(models.Model):
     # Start an SMS Survey
     ACTION_SMS_SURVEY = "survey"
 
+    # Send a Connect Message
+    ACTION_CONNECT_MESSAGE = "connect_message"
+
+    # Start a Connect Survey
+    ACTION_CONNECT_SURVEY = "connect_survey"
+
     # Process the text as structured SMS. The expected format of the structured
     # SMS is described using the fields on this object.
     ACTION_STRUCTURED_SMS = "structured_sms"
@@ -2670,10 +2706,10 @@ class KeywordAction(models.Model):
         if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
             raise self.InvalidModelStateException("Expected a value for recipient_id")
 
-        if self.action == self.ACTION_SMS and not self.message_content:
+        if self.action in [self.ACTION_SMS, self.ACTION_CONNECT_MESSAGE] and not self.message_content:
             raise self.InvalidModelStateException("Expected a value for message_content")
 
-        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS]:
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS, self.ACTION_CONNECT_SURVEY]:
             if not self.app_id:
                 raise self.InvalidModelStateException("Expected a value for app_id")
             if not self.form_unique_id:

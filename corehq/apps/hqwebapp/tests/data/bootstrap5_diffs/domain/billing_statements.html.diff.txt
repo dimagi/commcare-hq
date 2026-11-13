@@ -13,8 +13,8 @@
 +  {% initial_page_data 'pagination' pagination %}  {# todo B5: css-pagination #}
    {% initial_page_data 'stripe_cards' stripe_cards %}
    {% initial_page_data 'stripe_public_key' stripe_public_key %}
-   {% initial_page_data 'payment_urls' payment_urls %}
-@@ -24,8 +24,8 @@
+   {% initial_page_data 'autopay_card' autopay_card|JSON %}
+@@ -25,8 +25,8 @@
        <button
          type="button"
          class="btn btn-primary"
@@ -25,7 +25,7 @@
          id="bulkPaymentBtn"
        >
          {% trans 'Pay by Credit Card' %}
-@@ -36,8 +36,8 @@
+@@ -37,8 +37,8 @@
          <button
            type="button"
            class="btn btn-primary"
@@ -36,7 +36,7 @@
            id="bulkWirePaymentBtn"
          >
            {% trans 'Pay by Wire' %}
-@@ -72,21 +72,21 @@
+@@ -73,21 +73,21 @@
  {% block pagination_templates %}
    <script type="text/html" id="statement-row-template">
      <td
@@ -63,7 +63,7 @@
        <span
          data-bind="text: payment_status, attr: {class: payment_class}"
        ></span>
-@@ -94,14 +94,14 @@
+@@ -95,14 +95,14 @@
        <button
          type="button"
          class="btn btn-primary payment-button"
@@ -81,7 +81,7 @@
        <a
          class="btn btn-primary"
          data-bind="attr: { href: pdfUrl }"
-@@ -114,16 +114,16 @@
+@@ -115,16 +115,16 @@
    {% include 'accounting/partials/stripe_card_ko_template.html' %}
  
    <script type="text/html" id="cost-item-template">
@@ -101,7 +101,7 @@
          <div class="radio">
            <label>
              <input
-@@ -149,7 +149,7 @@
+@@ -150,7 +150,7 @@
              />
              {% blocktrans %} Pay a portion of the balance: {% endblocktrans %}
              <div class="input-group">
@@ -110,7 +110,7 @@
                <input
                  type="text"
                  class="form-control"
-@@ -218,12 +218,12 @@
+@@ -219,12 +219,12 @@
  {% block modals %}
    {{ block.super }}
    {% with process_invoice_payment_url as process_payment_url %}

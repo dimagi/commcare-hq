@@ -5,7 +5,6 @@ from uuid import uuid4
 import pytest
 from django.test import SimpleTestCase
 
-from nose.tools import assert_equal
 
 from .. import matchers
 from ..const import SYSTEM_URI_CASE_ID
@@ -62,7 +61,7 @@ def test_organization_name_method(resource, candidate, expected):
 
 def check_method(method, a, b, expected):
     result = method.is_match(a, b)
-    assert_equal(result, expected)
+    assert result == expected
 
 
 @pytest.mark.parametrize("a, b, expected", [
@@ -73,7 +72,7 @@ def check_method(method, a, b, expected):
 ])
 def test_negative_identifier(a, b, expected):
     result = NegativeIdentifier.compare(a, b)
-    assert_equal(result, expected)
+    assert result == expected
 
 
 class TestPatientCandidates(SimpleTestCase):
@@ -137,4 +136,4 @@ class TestPatientCandidates(SimpleTestCase):
 
 def test_doctests():
     results = doctest.testmod(matchers)
-    assert_equal(results.failed, 0)
+    assert results.failed == 0

@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from corehq.apps.accounting.const import COMMCARE_PRODUCT_TYPE, DIMAGI_ONLY
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,
@@ -61,9 +62,9 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
 
     SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
-    product_name = f"CommCare {edition}"
+    product_name = f"{COMMCARE_PRODUCT_TYPE} {edition}"
     if edition == SoftwarePlanEdition.ENTERPRISE:
-        product_name = f"Dimagi Only {product_name}"
+        product_name = f"{DIMAGI_ONLY} {product_name}"
 
     product_rate = SoftwareProductRate(monthly_fee=monthly_fee)
     try:
@@ -83,7 +84,7 @@ def _ensure_product_rate(monthly_fee, edition, verbose, apps):
 def _get_software_product(product_name, verbose, apps):
     # SoftwareProduct no longer exists but is retained here to avoid breaking old migrations
     SoftwareProduct = apps.get_model('accounting', 'SoftwareProduct')
-    product = SoftwareProduct(name=product_name, product_type='CommCare')
+    product = SoftwareProduct(name=product_name, product_type=COMMCARE_PRODUCT_TYPE)
     try:
         product = SoftwareProduct.objects.get(name=product.name)
         if verbose:

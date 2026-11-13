@@ -6,7 +6,6 @@ from django.conf import settings
 from django.http import HttpRequest
 from django.utils.translation import gettext as _
 
-import six
 from celery.schedules import crontab
 from couchdbkit import ResourceNotFound
 
@@ -14,7 +13,7 @@ from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
 
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
     UnsupportedScheduledReportError,
@@ -25,7 +24,6 @@ from corehq.apps.saved_reports.scheduled import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.elastic import ESError
-from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
 from .exceptions import ReportNotFound
@@ -162,7 +160,7 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
                 'error': er,
             }
         )
-        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or type(er) == ESError:
+        if getattr(er, 'smtp_code', None) in LARGE_FILE_SIZE_ERROR_CODES or isinstance(er, ESError):
             # If the email doesn't work because it is too large to fit in the HTML body,
             # send it as an excel attachment.
             report_state = {
@@ -187,7 +185,7 @@ def create_config_for_email(report_type, report_slug, user_id, domain, request_d
     config.owner_id = user_id
     config.domain = domain
 
-    GET = dict(six.iterlists(request_data['GET']))
+    GET = dict(request_data['GET'].lists())
     exclude = ['startdate', 'enddate', 'subject', 'send_to_owner', 'notes', 'recipient_emails']
     filters = {}
     for field in GET:

@@ -9,8 +9,8 @@
 {% block task-status-text %}
   <i class="fa-solid fa-check-double me-1"></i>
   {# prettier-ignore-start #}
-  {% blocktrans count count=num_records_changed %}
-    Finished processing changes, updated 1 case.
+  {% blocktrans trimmed count count=num_records_changed %}
+    Finished processing changes, updated {{ count }} case.
   {% plural %}
     Finished processing changes, updated {{ count }} cases.
   {% endblocktrans %}

@@ -461,6 +461,24 @@ class TestSingleSignOnResource(APIResourceTest):
         response = self.client.post(self.list_endpoint, {'username': self.username})
         self.assertEqual(response.status_code, 400)
 
+    def test_credentials_are_declared_fields(self):
+        '''
+        Both credentials are declared so the request contract is explicit
+        '''
+        for name in ('username', 'password'):
+            field = self.resource.base_fields[name]
+            self.assertIsNone(field.attribute)
+
+    def test_password_is_not_echoed_back(self):
+        '''
+        Declaring password must not cause it to be serialized into the response
+        '''
+        response = self.client.post(self.list_endpoint,
+                                    {'username': self.commcare_username,
+                                     'password': self.commcare_password})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('password', json.loads(response.content))
+
 
 class TestApiKey(APIResourceTest):
     """

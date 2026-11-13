@@ -979,7 +979,7 @@ class TestDeduplicationRuleRuns(TestCase):
             cases_ids.append(case.case_id)
             run_rules_for_case(case, [rule], datetime.utcnow())
 
-        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids)
         self.assertEqual(len(refreshed_cases), 2)
         self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
         self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
@@ -1021,7 +1021,7 @@ class TestDeduplicationRuleRuns(TestCase):
             cases_ids.append(case.case_id)
             run_rules_for_case(case, [rule], datetime.utcnow())
 
-        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids)
 
         self.assertEqual(len(refreshed_cases), 2)
         self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
@@ -1096,7 +1096,7 @@ class TestDeduplicationRuleRuns(TestCase):
             cases_ids.append(case.case_id)
             run_rules_for_case(case, [rule], datetime.utcnow())
 
-        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids)
 
         refreshed_real_cases = [case for case in refreshed_cases if case.case_id in real_cases]
         refreshed_fake_cases = [case for case in refreshed_cases if case.case_id in fake_cases]
@@ -1179,7 +1179,7 @@ class TestDeduplicationRuleRuns(TestCase):
             cases_ids.append(case.case_id)
             run_rules_for_case(case, [rule], datetime.utcnow())
 
-        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids)
 
         refreshed_real_cases = [case for case in refreshed_cases if case.case_id in real_cases]
         refreshed_fake_cases = [case for case in refreshed_cases if case.case_id in fake_cases]

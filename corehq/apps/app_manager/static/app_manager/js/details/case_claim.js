@@ -203,17 +203,15 @@ var additionalRegistryCaseModel = function (xpath, saveButton) {
 };
 
 var searchConfigKeys = [
-    'auto_launch', 'blacklisted_owner_ids_expression', 'default_search', 'search_again_label',
-    'title_label', 'description', 'search_button_display_condition', 'search_label', 'search_filter',
-    'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
+    'auto_launch', 'blacklisted_owner_ids_expression', 'default_search',
+    'title_label', 'description', 'search_button_display_condition',
+    'data_registry', 'data_registry_workflow', 'additional_registry_cases',
     'custom_related_case_property', 'inline_search', 'instance_name', 'include_all_related_cases',
-    'search_on_clear',
+    'search_on_clear', 'case_search_endpoint_id',
 ];
-var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
+var searchConfigModel = function (options, lang, saveButton) {
     assertProperties.assertRequired(options, searchConfigKeys);
 
-    options.search_label = options.search_label[lang] || "";
-    options.search_again_label = options.search_again_label[lang] || "";
     options.title_label = options.title_label[lang] || "";
     options.description = options.description[lang] || "";
     var mapping = {
@@ -244,14 +242,12 @@ var searchConfigModel = function (options, lang, searchFilterObservable, saveBut
                     return "es_only";
                 }
                 return "auto_launch";
-            } else if (self.default_search()) {
-                return "see_more";
             }
             return "classic";
         },
         write: function (value) {
             self.auto_launch(_.contains(["es_only", "auto_launch"], value));
-            self.default_search(_.contains(["es_only", "see_more"], value));
+            self.default_search(value === "es_only");
         },
     });
 
@@ -267,17 +263,6 @@ var searchConfigModel = function (options, lang, searchFilterObservable, saveBut
         return "instance('results:" + name + "')/results/case";
     });
 
-
-    // Allow search filter to be copied from another part of the page
-    self.setSearchFilterVisible = ko.computed(function () {
-        return searchFilterObservable && searchFilterObservable();
-    });
-    self.setSearchFilterEnabled = ko.computed(function () {
-        return self.setSearchFilterVisible() && searchFilterObservable() !== self.search_filter();
-    });
-    self.setSearchFilter = function () {
-        self.search_filter(searchFilterObservable());
-    };
 
     subscribeToSave(self, searchConfigKeys, saveButton);
     // media image/audio buttons
@@ -300,14 +285,6 @@ var searchConfigModel = function (options, lang, searchFilterObservable, saveBut
     self.serialize = function () {
         var data = ko.mapping.toJS(self);
         data.additional_registry_cases = data.data_registry_workflow === "load_case" ? _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
-        _.each(['search_label', 'search_again_label'], function (label) {
-            _.each(['image', 'audio'], function (media) {
-                var key = label + "_" + media,
-                    selector = "#case_search-" + label + "_media_media_" + media + " input[type='hidden']";
-                data[key] = $(selector + "[name='case_search-" + label + "_media_media_" + media + "']").val();
-                data[key + "_for_all"] = $(selector + "[name='case_search-" + label + "_media_use_default_" + media + "_for_all']").val();
-            });
-        });
         return data;
     };
 
@@ -334,10 +311,10 @@ var _getAppearance = function (searchProperty) {
     return appearance;
 };
 
-var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
+var searchViewModel = function (searchProperties, defaultProperties, customSortProperties, searchConfigOptions, lang, saveButton) {
     var self = {};
 
-    self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
+    self.searchConfig = searchConfigModel(searchConfigOptions, lang, saveButton);
     self.default_properties = ko.observableArray();
     self.custom_sort_properties = ko.observableArray();
 

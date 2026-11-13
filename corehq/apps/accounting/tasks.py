@@ -11,19 +11,28 @@ from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.request
 from celery.schedules import crontab
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.accounting.automated_reports import CreditsAutomatedReport
+from corehq.apps.accounting.const import (
+    PREPAY_SCHEDULE_NOTICE_DAYS,
+    SCHEDULED_PREPAYMENT_MAX_FAILURES,
+)
+from corehq.apps.accounting.emails import (
+    send_dimagi_contact_ending_reminder_email,
+    send_renewal_reminder_email,
+    send_scheduled_invoice_notice,
+    send_subscription_ending_email,
+    send_subscription_renewed_email,
+)
 from corehq.apps.accounting.exceptions import (
     ActiveSubscriptionWithoutDomain,
     CreditLineBalanceMismatchError,
@@ -36,16 +45,22 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.invoicing import (
     CustomerAccountInvoiceFactory,
     DomainInvoiceFactory,
+    DomainWireInvoiceFactory,
 )
 from corehq.apps.accounting.models import (
+    INACTIVE_SUBSCRIPTION_REASON,
     BillingAccount,
-    BillingAccountWebUserHistory,
+    BillingAccountDomainHistory,
     CreditLine,
     Currency,
+    DefaultProductPlan,
     DomainUserHistory,
+    DomainWebUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
-    InvoicingPlan,
+    ScheduledPrepaymentInvoice,
+    ScheduledPrepaymentInvoiceStatus,
+    SoftwarePlanEdition,
     Subscription,
     SubscriptionAdjustment,
     SubscriptionAdjustmentMethod,
@@ -61,6 +76,7 @@ from corehq.apps.accounting.task_utils import (
     get_context_to_send_autopay_failed_email,
     get_context_to_send_purchase_receipt,
 )
+from corehq.apps.accounting.usage import get_web_usernames
 from corehq.apps.accounting.utils import (
     count_form_submitting_mobile_workers,
     get_change_status,
@@ -74,9 +90,8 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
     Downgrade,
     InvoiceReminder,
 )
-from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
-from corehq.apps.celery import periodic_task, task
+from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
@@ -320,15 +335,9 @@ def generate_invoices_based_on_date(invoice_date):
     all_customer_billing_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
     for account in all_customer_billing_accounts:
         try:
-            if account.invoicing_plan == InvoicingPlan.QUARTERLY:
-                customer_invoice_start = invoice_start - relativedelta(months=2)
-            elif account.invoicing_plan == InvoicingPlan.YEARLY:
-                customer_invoice_start = invoice_start - relativedelta(months=11)
-            else:
-                customer_invoice_start = invoice_start
             invoice_factory = CustomerAccountInvoiceFactory(
                 account=account,
-                date_start=customer_invoice_start,
+                date_start=invoice_start,
                 date_end=invoice_end
             )
             invoice_factory.create_invoice()
@@ -342,7 +351,7 @@ def generate_invoices_based_on_date(invoice_date):
                 "domain %s: %s" % (domain_obj.name, e))
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True, durable=True)
 def generate_invoices():
     """
     Generates all invoices for the past month.
@@ -413,57 +422,133 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0))
+def auto_renew_subscriptions(domain_name=None):
+    """
+    Automatically renew eligible subscriptions 30 or fewer days from their end date.
+    """
+    ending_subscriptions = _get_auto_renewable_subscriptions(domain_name=domain_name)
+    for subscription in ending_subscriptions:
+        if not subscription.is_renewed:
+            auto_renew_subscription(subscription)
+
+
+def _get_auto_renewable_subscriptions(domain_name=None):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=30)
+    auto_renewable_subscriptions = Subscription.visible_objects.filter(
+        date_end__gte=today,
+        date_end__lte=date_in_n_days,
+        service_type=SubscriptionType.PRODUCT,
+        auto_renew=True,
+    ).exclude(
+        account__is_customer_billing_account=True,
+    )
+    if domain_name:
+        auto_renewable_subscriptions = auto_renewable_subscriptions.filter(
+            subscriber__domain=domain_name
+        )
+    return auto_renewable_subscriptions
+
+
+@transaction.atomic
+def auto_renew_subscription(subscription):
+    new_plan_version = DefaultProductPlan.get_default_plan_version(
+        edition=subscription.plan_version.plan.edition,
+        is_annual_plan=subscription.plan_version.plan.is_annual_plan,
+    )
+    next_subscription = subscription.renew_subscription(
+        adjustment_method=SubscriptionAdjustmentMethod.AUTO_RENEWAL,
+        new_version=new_plan_version,
+    )
+    send_subscription_renewed_email(next_subscription)
+
+    if next_subscription.plan_version.plan.is_annual_plan:
+        invoice_factory = DomainWireInvoiceFactory(
+            next_subscription.subscriber.domain,
+            date_start=next_subscription.date_start,
+            date_end=next_subscription.date_end,
+        )
+        invoice_factory.create_subscription_credits_invoice(
+            next_subscription.plan_version,
+            next_subscription.date_start,
+            next_subscription.date_end,
+        )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True, durable=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
     """
-    send_subscription_reminder_emails(30)
-    send_subscription_reminder_emails(10)
-    send_subscription_reminder_emails(1)
+    send_renewal_reminder_emails(90)
+    send_renewal_reminder_emails(60)
+    send_subscription_ending_emails(30)
+    send_subscription_ending_emails(10)
+    send_subscription_ending_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
-def remind_dimagi_contact_subscription_ending_60_days():
+def send_renewal_reminder_emails(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_trial=False, service_type=SubscriptionType.PRODUCT
+    ).exclude(account__is_customer_billing_account=True)
+    for subscription in ending_subscriptions:
+        _try_send_subscription_email(subscription, days_left, send_renewal_reminder_email)
+
+
+def send_subscription_ending_emails(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_trial=False, service_type=SubscriptionType.PRODUCT, auto_renew=False,
+    ).exclude(account__is_customer_billing_account=True)
+    for subscription in ending_subscriptions:
+        _try_send_subscription_email(subscription, days_left, send_subscription_ending_email)
+
+
+def _try_send_subscription_email(subscription, days_left, send_email_func):
+    try:
+        # only send reminder emails if the subscription isn't renewed
+        if not subscription.is_renewed:
+            send_email_func(subscription, days_left)
+    except Exception as e:
+        log_accounting_error(
+            "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
+            show_stack_trace=True,
+        )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True, durable=True)
+def remind_dimagi_contact_subscription_ending():
     """
     Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
     """
     send_subscription_reminder_emails_dimagi_contact(60)
+    send_subscription_reminder_emails_dimagi_contact(30)
+    send_subscription_reminder_emails_dimagi_contact(10)
+    send_subscription_reminder_emails_dimagi_contact(1)
 
 
-def send_subscription_reminder_emails(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = Subscription.visible_objects.filter(
-        date_end=date_in_n_days, do_not_email_reminder=False, is_trial=False
-    )
-    for subscription in ending_subscriptions:
-        try:
-            # only send reminder emails if the subscription isn't renewed
-            if not subscription.is_renewed:
-                subscription.send_ending_reminder_email()
-        except Exception as e:
-            log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, str(e)),
-                show_stack_trace=True,
-            )
-
-
-def send_subscription_reminder_emails_dimagi_contact(num_days):
-    today = datetime.date.today()
-    date_in_n_days = today + datetime.timedelta(days=num_days)
-    ending_subscriptions = (Subscription.visible_objects
-                            .filter(is_active=True)
-                            .filter(date_end=date_in_n_days)
-                            .filter(do_not_email_reminder=False)
-                            .exclude(account__dimagi_contact=''))
+def send_subscription_reminder_emails_dimagi_contact(days_left):
+    ending_subscriptions = _filter_subscriptions_for_reminder_emails(
+        days_left, is_active=True, service_type=SubscriptionType.IMPLEMENTATION
+    ).exclude(account__dimagi_contact='')
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
-            subscription.send_dimagi_ending_reminder_email()
+            send_dimagi_contact_ending_reminder_email(subscription)
 
 
-@task(ignore_result=True, acks_late=True)
+def _filter_subscriptions_for_reminder_emails(days_left, **kwargs):
+    today = datetime.date.today()
+    date_in_n_days = today + datetime.timedelta(days=days_left)
+    ending_subscriptions = Subscription.visible_objects.filter(
+        date_end=date_in_n_days, do_not_email_reminder=False, **kwargs
+    ).exclude(
+        plan_version__plan__edition=SoftwarePlanEdition.PAUSED
+    )
+    return ending_subscriptions
+
+
+@task(ignore_result=True, acks_late=True, durable=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 amount,
@@ -505,6 +590,7 @@ def create_wire_credits_invoice(domain_name,
 
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
+        contact_emails = contact_emails or wire_invoice.get_contact_emails()
         try:
             for email in contact_emails:
                 record.send_email(contact_email=email, cc_emails=cc_emails)
@@ -517,10 +603,17 @@ def create_wire_credits_invoice(domain_name,
         record.skipped_email = True
         record.save()
 
+    # useful for non-async callers
+    return wire_invoice.id
 
-@task(ignore_result=True, acks_late=True)
-def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
-    context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
+
+@task(ignore_result=True, acks_late=True, durable=True)
+def send_purchase_receipt(
+    payment_record_id, domain_name, account_id, template_html, template_plaintext, additional_context
+):
+    context = get_context_to_send_purchase_receipt(
+        payment_record_id, domain_name, account_id, additional_context
+    )
 
     email_html = render_to_string(template_html, context['template_context'])
     email_plaintext = render_to_string(template_plaintext, context['template_context'])
@@ -534,9 +627,9 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
-def send_autopay_failed(invoice_id):
-    context = get_context_to_send_autopay_failed_email(invoice_id)
+@task(queue='background_queue', ignore_result=True, acks_late=True, durable=True)
+def send_autopay_failed(invoice_id, is_customer_invoice=False):
+    context = get_context_to_send_autopay_failed_email(invoice_id, is_customer_invoice=is_customer_invoice)
 
     template_html = 'accounting/email/autopay_failed.html'
     html_content = render_to_string(template_html, context['template_context'])
@@ -652,7 +745,9 @@ def weekly_digest():
 @periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
-    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
+    today = datetime.datetime.today()
+    AutoPayInvoicePaymentHandler().pay_autopayable_invoices(today)
+    AutoPayInvoicePaymentHandler().pay_autopayable_customer_invoices(today)
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
@@ -661,7 +756,7 @@ def update_exchange_rates():
     if app_id:
         try:
             log_accounting_info("Updating exchange rates...")
-            rates = json.load(six.moves.urllib.request.urlopen(
+            rates = json.load(urllib.request.urlopen(
                 'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
             default_rate = float(rates[Currency.get_default().code])
             for code, rate in rates.items():
@@ -680,12 +775,12 @@ def update_exchange_rates():
 
 
 # Email this out on the first day and first hour of each month
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_month=1), acks_late=True, durable=True)
 def send_credits_on_hq_report():
     if settings.SAAS_REPORTING_EMAIL and settings.SERVER_ENVIRONMENT in [
         'production',
         'india',
-        'swiss'
+        'eu'
     ]:
         yesterday = datetime.date.today() - datetime.timedelta(days=1)
         credits_report = CreditsAutomatedReport()
@@ -742,7 +837,12 @@ def restore_logos(self, domain_name):
         raise e
 
 
-@periodic_task(run_every=crontab(day_of_month='1', hour=5, minute=0), queue='background_queue', acks_late=True)
+@periodic_task(
+    run_every=crontab(day_of_month='1', hour=5, minute=0),
+    queue='background_queue',
+    acks_late=True,
+    durable=True,
+)
 def send_prepaid_credits_export():
     if settings.ENTERPRISE_MODE:
         return
@@ -815,7 +915,11 @@ def send_prepaid_credits_export():
     )
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(
+    run_every=crontab(hour=1, minute=0, day_of_month='1'),
+    acks_late=True,
+    durable=True,
+)
 def calculate_users_in_all_domains(today=None):
     today = today or datetime.date.today()
     for domain in Domain.get_all_names():
@@ -839,7 +943,7 @@ def calculate_users_in_all_domains(today=None):
     auto_deactivate_mobile_workers.delay()
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
 def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
     today = today or datetime.date.today()
     date_start = today - relativedelta(months=1)
@@ -860,20 +964,138 @@ def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
             )
 
 
-@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True)
-def calculate_web_users_in_all_billing_accounts(today=None):
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
+def calculate_web_users_in_all_domains(today=None):
     today = today or datetime.date.today()
-    for account in BillingAccount.objects.all():
-        record_date = today - relativedelta(days=1)
-        num_users = get_web_user_usage(account.get_domains())
+    record_date = today - relativedelta(days=1)
+    for domain in Domain.get_all_names():
         try:
-            BillingAccountWebUserHistory.objects.create(
-                billing_account=account,
-                num_users=num_users,
-                record_date=record_date
+            usernames = get_web_usernames(domain)
+            DomainWebUserHistory.objects.create(
+                domain=domain,
+                record_date=record_date,
+                usernames=usernames,
+                num_users=len(usernames),
             )
         except Exception as e:
             log_accounting_error(
-                f"Unable to create BillingAccountWebUserHistory for account {account.name}: {e}",
+                f"Something went wrong while creating DomainWebUserHistory for domain {domain}: {e}",
                 show_stack_trace=True,
             )
+
+
+@periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
+def calculate_domains_in_customer_billing_accounts(today=None):
+    today = today or datetime.date.today()
+    record_date = today - relativedelta(days=1)
+    for account in BillingAccount.objects.filter(is_customer_billing_account=True):
+        num_domains = len(account.get_domains())
+        try:
+            BillingAccountDomainHistory.objects.create(
+                billing_account=account,
+                num_domains=num_domains,
+                record_date=record_date,
+            )
+        except Exception as e:
+            log_accounting_error(
+                f"Unable to create BillingAccountDomainHistory for account {account.name}: {e}",
+                show_stack_trace=True,
+            )
+
+
+@periodic_task(
+    run_every=crontab(minute=0, hour=6),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+    acks_late=True,
+    durable=True,
+)
+def process_scheduled_prepayment_invoices():
+    for domain in ScheduledPrepaymentInvoice.objects.pending_domains():
+        process_scheduled_prepayment_invoices_for_domain.delay(domain)
+
+
+@serial_task('{domain}', timeout=30 * 60, queue='background_queue', durable=True)
+def process_scheduled_prepayment_invoices_for_domain(domain):
+    """Serial per domain to avoid redelivered invoices"""
+    today = datetime.date.today()
+    cancel_scheduled_invoices_for_inactive_subscriptions(domain)
+    notify_upcoming_scheduled_invoices(today, domain)
+    generate_due_scheduled_invoices(today, domain)
+
+
+def cancel_scheduled_invoices_for_inactive_subscriptions(domain):
+    """Drop scheduled invoices whose subscription has since paused or ended"""
+    pending = ScheduledPrepaymentInvoice.objects.pending(domain).select_related(
+        'subscription__plan_version__plan'
+    )
+    for scheduled in pending:
+        subscription = scheduled.subscription
+        if subscription.is_active and not subscription.plan_version.is_paused:
+            continue
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.CANCELLED
+        scheduled.cancelled_reason = INACTIVE_SUBSCRIPTION_REASON
+        scheduled.save()
+        log_accounting_info(
+            f"Cancelled scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain}: subscription {subscription.id} is paused or "
+            f"no longer active."
+        )
+
+
+def notify_upcoming_scheduled_invoices(today, domain):
+    """Notify accounting before a queued invoice is sent"""
+    # send_date <= the notice date so a missed run still notifies
+    notice_date = today + datetime.timedelta(days=PREPAY_SCHEDULE_NOTICE_DAYS)
+    upcoming = ScheduledPrepaymentInvoice.objects.pending(domain).filter(
+        send_date__lte=notice_date,
+        notified_accounting=False,
+    ).select_related('subscription__plan_version__plan', 'subscription__account')
+    for scheduled in upcoming:
+        send_scheduled_invoice_notice(scheduled)
+        scheduled.notified_accounting = True
+        scheduled.save()
+
+
+def generate_due_scheduled_invoices(today, domain):
+    due = ScheduledPrepaymentInvoice.objects.due(domain, today)
+    for scheduled in due:
+        _send_scheduled_prepayment_invoice(scheduled)
+
+
+def _send_scheduled_prepayment_invoice(scheduled):
+    try:
+        with transaction.atomic():
+            factory = DomainWireInvoiceFactory(
+                scheduled.domain,
+                date_start=scheduled.date_start,
+                date_end=scheduled.date_end,
+                contact_emails=scheduled.contact_emails,
+                cc_emails=scheduled.cc_emails,
+            )
+            scheduled.invoice_id = factory.create_wire_credits_invoice(
+                scheduled.amount,
+                scheduled.credit_label,
+                scheduled.unit_cost,
+                scheduled.quantity,
+                send_async=False,
+            )
+            scheduled.status = ScheduledPrepaymentInvoiceStatus.SENT
+            scheduled.save()
+    except Exception as e:
+        _record_scheduled_invoice_failure(scheduled, e)
+    else:
+        log_accounting_info(
+            f"Sent scheduled prepayment invoice {scheduled.id} for domain "
+            f"{scheduled.domain} as invoice {scheduled.invoice_id}."
+        )
+
+
+def _record_scheduled_invoice_failure(scheduled, exception):
+    scheduled.failure_count += 1
+    if scheduled.failure_count >= SCHEDULED_PREPAYMENT_MAX_FAILURES:
+        scheduled.status = ScheduledPrepaymentInvoiceStatus.FAILED
+    scheduled.save()
+    log_error_and_soft_assert(
+        f"Failed to send scheduled prepayment invoice {scheduled.id} for domain "
+        f"{scheduled.domain} (attempt {scheduled.failure_count}): {exception}"
+    )

@@ -1,6 +1,5 @@
 import random
 import uuid
-from six.moves import range
 
 # these lists arbitrarily generated once from http://www.generatedata.com/
 
@@ -33,11 +32,11 @@ LAST_NAMES = [ "Acevedo", "Acosta", "Andrews", "Baldwin", "Ball", "Barton", "Bea
 
 
 def arbitrary_firstname():
-    return random.choice(FIRST_NAMES) 
+    return random.choice(FIRST_NAMES)
 
 
 def arbitrary_lastname():
-    return random.choice(LAST_NAMES) 
+    return random.choice(LAST_NAMES)
 
 
 def arbitrary_fullname():

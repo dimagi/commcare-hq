@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views import View
 
+from corehq.apps.sso.models import IdentityProvider
 from django_digest.decorators import httpdigest
 from django_otp import match_token
 from django_prbac.utils import has_privilege
@@ -42,26 +43,28 @@ from corehq.apps.domain.auth import (
 )
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.hqwebapp.oauth_scopes import token_domains
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.sso.utils.request_helpers import (
     is_request_blocked_from_viewing_domain_due_to_sso,
     is_request_using_sso,
-)
-from corehq.apps.sso.utils.view_helpers import (
-    render_untrusted_identity_provider_for_domain_view,
 )
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     DATA_MIGRATION,
     DISABLE_MOBILE_ENDPOINTS,
     IS_CONTRACTOR,
-    TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
 
 auth_logger = logging.getLogger("commcare_auth")
 
 OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
+
+SSO_AUTH_FAIL_RESPONSE = {
+    "error": "Basic authentication is not supported for SSO users. "
+             "Use the ApiKey authorization header: 'Authorization: ApiKey <username>:<api_key>'"
+}
 
 
 def load_domain(req, domain):
@@ -84,6 +87,7 @@ def login_and_domain_required(view_func):
 
     @wraps(view_func)
     def _inner(req, domain, *args, **kwargs):
+        from corehq.apps.hqwebapp.utils.bootstrap import set_bootstrap_version5
         user = req.user
         domain_name, domain_obj = load_domain(req, domain)
 
@@ -111,14 +115,18 @@ def login_and_domain_required(view_func):
                and not couch_user.is_active_in_domain(domain_name)):
                 return _show_deactivated_notice(req, domain)
             if _is_missing_two_factor(view_func, req):
+                set_bootstrap_version5()
                 return TemplateResponse(request=req,
-                                        template='two_factor/core/bootstrap3/otp_required.html',
+                                        template='two_factor/core/bootstrap5/otp_required.html',
                                         status=403)
             elif not _can_access_project_page(req):
                 return _redirect_to_project_access_upgrade(req)
             elif is_request_blocked_from_viewing_domain_due_to_sso(req, domain_obj):
                 # Important! Make sure this is always the final check prior
                 # to returning call_view() below
+                from corehq.apps.sso.utils.view_helpers import (
+                    render_untrusted_identity_provider_for_domain_view,
+                )
                 return render_untrusted_identity_provider_for_domain_view(req, domain_obj)
             else:
                 return call_view()
@@ -239,18 +247,41 @@ def _oauth2_check(scopes):
         valid, r = oauthlib_core.verify_request(request, scopes=scopes)
         if valid:
             request.user = r.user
+            request._auth_method_restricts_superuser_access = True
+            # Read the raw scope string, not `access_token.scopes`, which intersects
+            # against an enumerated dict of static scopes and drops dynamic (domain) scopes.
+            access_token = getattr(r, 'access_token', None)
+            request.oauth_token_domains = token_domains(getattr(access_token, 'scope', None))
             return True
 
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
-            auth = auth_check(request)
-            if auth:
-                return view(request, *args, **kwargs)
-
-            response = HttpUnauthorized()
-            return response
+            if not auth_check(request):
+                return HttpUnauthorized()
+            if not _oauth_token_allows_request_domain(request):
+                return HttpResponseForbidden()
+            return view(request, *args, **kwargs)
         return wrapper
     return real_decorator
+
+
+def _oauth_token_allows_request_domain(request):
+    """
+    Check an OAuth2 token's project space scope against the requested project space.
+
+    Returns ``True`` when the token is not restricted to any project space.
+
+    A token restricted to one project space is still allowed on project-agnostic
+    endpoints. Those are how a client discovers which projects it may use, so
+    rejecting them would break integration setup.
+    """
+    allowed_domains = getattr(request, 'oauth_token_domains', None)
+    if not allowed_domains:
+        return True
+    domain = getattr(request, 'domain', '')
+    if not domain:
+        return True
+    return domain in allowed_domains
 
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
@@ -281,6 +312,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
                     @check_lockout
                     @challenge_fn
                     @two_factor_check(fn, api_key)
+                    @sso_check(fn, api_key)
                     def _inner(request, domain, *args, **kwargs):
                         couch_user = _ensure_request_couch_user(request)
                         if (
@@ -383,7 +415,7 @@ def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain
 
 
 def get_multi_auth_decorator(
-    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_as_password=False
+    default, allow_formplayer=False, oauth_scopes=None, allow_creds_in_data=True, allow_api_key_in_basic=True
 ):
     """
     :param allow_formplayer: If True this will allow one additional auth mechanism which is used
@@ -393,7 +425,7 @@ def get_multi_auth_decorator(
              formplayer can not use the session cookie to auth. To allow formplayer access to the
              endpoints we validate each formplayer request using a shared key. See the auth
              function for more details.
-    :param allow_api_key_as_password: If True, allows API Key to be used in BASIC auth
+    :param allow_api_key_in_basic: If True, allows API Key to be used in BASIC auth
     """
     oauth_scopes = oauth_scopes or ['access_apis']
 
@@ -401,8 +433,6 @@ def get_multi_auth_decorator(
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            assert not (authtype == DIGEST and allow_api_key_as_password), \
-                'api keys as passwords are not supported for digest auth'
             if authtype == FORMPLAYER and not allow_formplayer:
                 auth_logger.info(
                     "Request rejected reason=%s request=%s",
@@ -414,7 +444,7 @@ def get_multi_auth_decorator(
                 allow_cc_users=True,
                 oauth_scopes=oauth_scopes,
                 allow_creds_in_data=allow_creds_in_data,
-                allow_api_key_as_password=allow_api_key_as_password,
+                allow_api_key_in_basic=allow_api_key_in_basic,
             )[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -440,23 +470,6 @@ def api_auth(*, allow_creds_in_data=True, oauth_scopes=None):
         default=DIGEST,
         oauth_scopes=oauth_scopes,
         allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_as_password=False,  # if supporting digest auth, you cannot use an api key as a password
-    )
-
-
-def api_auth_allow_key_as_password_LIMITED_USE(*, allow_creds_in_data=True, oauth_scopes=None):
-    """
-    Intentionally does not support digest auth to allow using api key as password if desired.
-    See determine_authtype_from_header for more details on how defaulting to BASIC drops DIGEST support
-    This decorator arose because our previous version of authenticating through API keys
-    (providing an authentication header) was not being respected by Excel. This decorator should be used
-    sparingly, as we do not want the widespread ability to circumvent normal BASIC authentication
-    """
-    return get_multi_auth_decorator(
-        default=BASIC,
-        oauth_scopes=oauth_scopes,
-        allow_creds_in_data=allow_creds_in_data,
-        allow_api_key_as_password=True,
     )
 
 
@@ -467,6 +480,9 @@ login_or_api_key = login_or_api_key_ex()
 
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
+api_key_auth_header_only = login_or_api_key_ex(
+    allow_sessions=False, allow_creds_in_data=False)
+
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
 
@@ -476,13 +492,8 @@ def get_auth_decorator_map(
         allow_sessions=True,
         oauth_scopes=None,
         allow_creds_in_data=True,
-        allow_api_key_as_password=False,
+        allow_api_key_in_basic=True,
 ):
-    # Due to the high risk of our login flows, leaving a safety net here to guard against
-    # non-domain endpoints accepting API keys as passwords. We have no current use for this combination,
-    # but this check can be removed if we create new global endpoints that should support api keys as passwords
-    assert not (require_domain is False and allow_api_key_as_password), \
-        'only domain endpoints support API key authentication'
     # get a mapped set of decorators for different auth types with the specified parameters
     oauth_scopes = oauth_scopes or ['access_apis']
     decorator_function_kwargs = {
@@ -493,7 +504,7 @@ def get_auth_decorator_map(
 
     basic_auth_fn = (
         login_or_basic_or_api_key_ex(**decorator_function_kwargs)
-        if allow_api_key_as_password
+        if allow_api_key_in_basic
         else login_or_basic_ex(**decorator_function_kwargs)
     )
 
@@ -515,7 +526,7 @@ def two_factor_check(view_func, api_key):
             _ensure_request_couch_user(request)
             if (
                 not api_key
-                and not getattr(request, 'skip_two_factor_check', False)
+                and not getattr(request, 'bypass_two_factor', False)
                 and domain_obj
                 and _two_factor_required(view_func, domain_obj, request)
             ):
@@ -540,6 +551,32 @@ def two_factor_check(view_func, api_key):
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
+
+
+def sso_check(view_func, api_key):
+    def _outer(fn):
+        @wraps(fn)
+        def _inner(request, domain, *args, **kwargs):
+            _ensure_request_couch_user(request)
+            if (
+                not api_key
+                and not getattr(request, 'api_key_authenticated', False)
+                and _sso_required(request)
+            ):
+                return JsonResponse(SSO_AUTH_FAIL_RESPONSE, status=401)
+            return fn(request, domain, *args, **kwargs)
+        return _inner
+    return _outer
+
+
+def _sso_required(request):
+    couch_user = getattr(request, 'couch_user', None)
+    username = couch_user.username if couch_user else None
+    if username:
+        idp = IdentityProvider.get_required_identity_provider(username)
+        if idp:
+            return True
+    return False
 
 
 def _two_factor_required(view_func, domain_obj, request):
@@ -570,7 +607,7 @@ def _two_factor_required(view_func, domain_obj, request):
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
         # and need time to set up two factor auth again.
-        (domain_obj.two_factor_auth or TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.couch_user.username))
+        domain_obj.two_factor_auth
         and not request.couch_user.two_factor_disabled
     )
 

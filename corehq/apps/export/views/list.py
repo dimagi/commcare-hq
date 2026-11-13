@@ -16,11 +16,11 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.core.cache import cache
 
-from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.export.exceptions import ExportTooLargeException
+from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format
 from couchexport.writers import XlsLengthException
@@ -33,7 +33,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow_noop
 from corehq.apps.api.resources.v0_5 import ODataCaseResource, ODataFormResource
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
-from corehq.apps.domain.decorators import api_auth_allow_key_as_password_LIMITED_USE, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.const import (
     CASE_EXPORT,
@@ -49,7 +49,7 @@ from corehq.apps.export.const import (
 from corehq.apps.export.dbaccessors import (
     get_brief_deid_exports,
     get_brief_exports,
-    get_properly_wrapped_export_instance,
+    get_export_instance_or_404,
 )
 from corehq.apps.export.forms import (
     CreateExportTagForm,
@@ -185,7 +185,7 @@ class ExportListHelper(object):
                 and ('owner_id' in export and export['owner_id'] == self.request.couch_user.user_id) == my_exports
             ]
 
-        docs = [self.fmt_export_data(get_properly_wrapped_export_instance(e['_id']))
+        docs = [self.fmt_export_data(get_export_instance_or_404(self.domain, e['_id']))
                 for e in brief_exports[limit * (page - 1):limit * page]]
         return (docs, len(brief_exports))
 
@@ -446,9 +446,7 @@ class DashboardFeedListHelper(DailySavedExportListHelper):
         return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
     def _should_appear_in_list(self, export):
-        return (export['is_daily_saved_export']
-                and export['export_format'] == "html"
-                and not export['is_odata_config'])
+        return is_dashboard_feed(export)
 
     def _edit_view(self, export):
         from corehq.apps.export.views.edit import EditFormFeedView, EditCaseFeedView
@@ -597,6 +595,7 @@ def get_saved_export_progress(request, domain):
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
     export_instance_id = request.GET.get('export_instance_id')
+    get_export_instance_or_404(domain, export_instance_id)
     return json_response({
         'taskStatus': _get_task_status_json(export_instance_id),
     })
@@ -610,7 +609,7 @@ def toggle_saved_export_enabled(request, domain):
     permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    export_instance = get_export_instance_or_404(domain, export_instance_id)
     export_instance.auto_rebuild_enabled = not json.loads(request.POST.get('is_auto_rebuild_enabled'))
     export_instance.save()
     return json_response({
@@ -628,8 +627,9 @@ def update_emailed_export_data(request, domain):
     permissions.access_list_exports_or_404(is_deid=json.loads(request.POST.get('is_deid')))
 
     export_instance_id = request.POST.get('export_id')
+    get_export_instance_or_404(domain, export_instance_id)
     try:
-        rebuild_saved_export(export_instance_id, manual=True)
+        rebuild_saved_export(export_instance_id, manual=True, username=request.couch_user.username)
     except XlsLengthException:
         return json_response({
             'error': _('This file has more than 256 columns, which is not supported by xls. '
@@ -674,7 +674,7 @@ def commit_filters(request, domain):
         raise Http404
     export_id = request.POST.get('export_id')
     form_data = json.loads(request.POST.get('form_data'))
-    export = get_properly_wrapped_export_instance(export_id)
+    export = get_export_instance_or_404(domain, export_id)
     if export.is_daily_saved_export and not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
         raise Http404
     if export.export_format == "html" and not domain_has_privilege(domain, EXCEL_DASHBOARD):
@@ -704,7 +704,7 @@ def commit_filters(request, domain):
             export.filters = filters
             export.save()
             if export.is_daily_saved_export:
-                rebuild_saved_export(export_id, manual=True)
+                rebuild_saved_export(export_id, manual=True, username=request.couch_user.username)
         return json_response({
             'success': True,
             'locationRestrictions': ExportListHelper.get_location_restriction_names(
@@ -806,16 +806,11 @@ def can_download_daily_saved_export(export, domain, couch_user):
 
 @location_safe
 @csrf_exempt
-@api_auth_allow_key_as_password_LIMITED_USE()
+@api_auth()
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
     with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-        try:
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        except ResourceNotFound:
-            raise Http404(_("Export not found"))
-
-        assert domain == export_instance.domain
+        export_instance = get_export_instance_or_404(domain, export_instance_id)
 
         if export_instance.export_format == "html":
             if not domain_has_privilege(domain, EXCEL_DASHBOARD):

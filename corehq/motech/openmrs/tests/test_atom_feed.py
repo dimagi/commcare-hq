@@ -10,9 +10,9 @@ from django.test import SimpleTestCase, TestCase
 
 import attr
 from dateutil.tz import tzoffset, tzutc
-from lxml import etree
-from nose.tools import assert_equal, assert_is_none, assert_raises
+import pytest
 from corehq.motech.models import ConnectionSettings
+from corehq.util.xml_utils import XML
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -63,25 +63,25 @@ class GetTimestampTests(SimpleTestCase):
 
     def test_no_node(self):
         xml = re.sub(r'<updated.*</updated>', '', self.feed_xml)
-        feed_elem = etree.XML(xml.encode('utf-8'))
+        feed_elem = XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'^XPath "./atom:updated" not found$'):
             get_timestamp(feed_elem)
 
     def test_xpath(self):
-        feed_elem = etree.XML(self.feed_xml.encode('utf-8'))
+        feed_elem = XML(self.feed_xml.encode('utf-8'))
         # "*[local-name()='foo']" ignores namespaces and matches all nodes with tag "foo":
         timestamp = get_timestamp(feed_elem, "./*[local-name()='entry']/*[local-name()='updated']")
         self.assertEqual(timestamp, datetime(2018, 4, 26, 10, 56, 10, tzinfo=tzutc()))
 
     def test_bad_date(self):
         xml = re.sub(r'2018-05-15T14:02:08Z', 'Nevermore', self.feed_xml)
-        feed_elem = etree.XML(xml.encode('utf-8'))
+        feed_elem = XML(xml.encode('utf-8'))
         with self.assertRaisesRegex(ValueError, r'Unknown string format'):
             get_timestamp(feed_elem)
 
     def test_timezone(self):
         xml = re.sub(r'2018-05-15T14:02:08Z', '2018-05-15T14:02:08+0500', self.feed_xml)
-        feed_elem = etree.XML(xml.encode('utf-8'))
+        feed_elem = XML(xml.encode('utf-8'))
         timestamp = get_timestamp(feed_elem)
         self.assertEqual(timestamp, datetime(2018, 5, 15, 14, 2, 8, tzinfo=tzoffset(None, 5 * 60 * 60)))
 
@@ -102,20 +102,20 @@ class GetPatientUuidTests(SimpleTestCase):
 
     def test_no_content_node(self):
         xml = re.sub(r'<content.*</content>', '', self.feed_xml, flags=re.DOTALL)
-        feed_elem = etree.XML(xml.encode('utf-8'))
+        feed_elem = XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_bad_cdata(self):
         xml = re.sub(r'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4', 'mary-mallon', self.feed_xml)
-        feed_elem = etree.XML(xml.encode('utf-8'))
+        feed_elem = XML(xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         with self.assertRaisesRegex(ValueError, r'^Patient UUID not found$'):
             get_patient_uuid(entry_elem)
 
     def test_success(self):
-        feed_elem = etree.XML(self.feed_xml.encode('utf-8'))
+        feed_elem = XML(self.feed_xml.encode('utf-8'))
         entry_elem = next(e for e in feed_elem if e.tag.endswith('entry'))
         patient_uuid = get_patient_uuid(entry_elem)
         self.assertEqual(patient_uuid, 'e8aa08f6-86cd-42f9-8924-1b3ea021aeb4')
@@ -124,7 +124,7 @@ class GetPatientUuidTests(SimpleTestCase):
 class GetEncounterUuidTests(SimpleTestCase):
 
     def test_bed_assignment(self):
-        element = etree.XML("""<entry>
+        element = XML("""<entry>
           <title>Bed-Assignment</title>
           <content type="application/vnd.atomfeed+xml">
             <![CDATA[/openmrs/ws/rest/v1/bedPatientAssignment/fed0d6f9-e76c-4a8e-a10d-c8e98c7d258f?v=custom:(uuid,startDatetime,endDatetime,bed,patient,encounter:(uuid,encounterDatetime,encounterType:(uuid,name),visit:(uuid,startDatetime,visitType)))]]>
@@ -134,7 +134,7 @@ class GetEncounterUuidTests(SimpleTestCase):
         self.assertIsNone(encounter_uuid)
 
     def test_unknown_entry(self):
-        element = etree.XML("""<entry>
+        element = XML("""<entry>
           <title>UnExPeCtEd</title>
           <content type="application/vnd.atomfeed+xml">
             <![CDATA[/openmrs/ws/rest/v1/UNKNOWN/0f54fe40-89af-4412-8dd4-5eaebe8684dc]]>
@@ -466,7 +466,7 @@ def test_get_feed_xml_feed_does_not_exist():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedRuntimeException):
+    with pytest.raises(OpenmrsFeedRuntimeException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Domain "test_domain": Page does not exist in Atom feed '
@@ -496,7 +496,7 @@ def test_get_feed_xml_feedid_zero():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedRuntimeException):
+    with pytest.raises(OpenmrsFeedRuntimeException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, '0')
     requests.notify_exception.assert_called_with(
         f'Domain "test_domain": Page "{page}" is not valid in Atom feed '
@@ -519,7 +519,7 @@ def test_get_feed_xml_500():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsException):
+    with pytest.raises(OpenmrsException):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Domain "test_domain": Unrecognized error in Atom feed '
@@ -541,7 +541,7 @@ def test_get_feed_xml_bad_xml():
         domain_name='test_domain',
         get=lambda url: response,
     )
-    with assert_raises(OpenmrsFeedSyntaxError):
+    with pytest.raises(OpenmrsFeedSyntaxError):
         get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
     requests.notify_exception.assert_called_with(
         'Opening and ending tag mismatch: body line 1 and html, line 1, '
@@ -576,8 +576,8 @@ def test_get_feed_updates():
 
 def test_status_defaults():
     status = AtomFeedStatus()
-    assert_is_none(status.last_polled_at)
-    assert_equal(status.last_page, 'recent')
+    assert status.last_polled_at is None
+    assert status.last_page == 'recent'
 
 
 def test_doctests():
@@ -602,10 +602,10 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
         self.repeater = OpenmrsRepeater(**openmrs_repeater).save()
 
         self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
-        self.encounter_feed_elem = etree.XML(self.encounter_feed_xml.encode('utf-8'))
+        self.encounter_feed_elem = XML(self.encounter_feed_xml.encode('utf-8'))
 
         self.patient_feed_xml = inspect.cleandoc(PATIENT_FEED_XML)
-        self.patient_feed_elem = etree.XML(self.patient_feed_xml.encode('utf-8'))
+        self.patient_feed_elem = XML(self.patient_feed_xml.encode('utf-8'))
 
     @patch('corehq.motech.openmrs.atom_feed.get_feed_xml')
     @patch('corehq.motech.openmrs.atom_feed.get_patient_by_uuid')

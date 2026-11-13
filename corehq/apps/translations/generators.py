@@ -3,7 +3,6 @@ import os
 import re
 import tempfile
 from collections import OrderedDict, defaultdict, namedtuple
-from itertools import chain
 
 from django.utils.functional import cached_property
 
@@ -15,7 +14,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_version_build_id,
 )
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME
-from corehq.apps.translations.models import TransifexBlacklist
 
 Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -39,15 +37,6 @@ class EligibleForTransifexChecker(object):
 
     def is_label_to_skip(self, form_id, label):
         return label in self.get_labels_to_skip()[form_id]
-
-    def is_blacklisted(self, module_id, field_type, field_name, translations):
-        blacklist = self._get_blacklist()
-        for display_text in chain([''], translations):
-            try:
-                return blacklist[self.app.domain][self.app.id][module_id][field_type][field_name][display_text]
-            except KeyError:
-                pass
-        return False
 
     @memoized
     def get_labels_to_skip(self):
@@ -87,24 +76,6 @@ class EligibleForTransifexChecker(object):
             labels_to_skip[form_id] = labels_to_skip[form_id] - necessary_labels[form_id]
 
         return labels_to_skip
-
-    @memoized
-    def _get_blacklist(self):
-        """
-        Returns a nested dictionary of blacklisted translations for a given app.
-
-        A nested dictionary is used so that search for a translation fails at the
-        first missing key.
-        """
-        blacklist = {}
-        for b in TransifexBlacklist.objects.filter(domain=self.app.domain, app_id=self.app.id).all():
-            blacklist.setdefault(b.domain, {})
-            blacklist[b.domain].setdefault(b.app_id, {})
-            blacklist[b.domain][b.app_id].setdefault(b.module_id, {})
-            blacklist[b.domain][b.app_id][b.module_id].setdefault(b.field_type, {})
-            blacklist[b.domain][b.app_id][b.module_id][b.field_type].setdefault(b.field_name, {})
-            blacklist[b.domain][b.app_id][b.module_id][b.field_type][b.field_name][b.display_text] = True
-        return blacklist
 
 
 class AppTranslationsGenerator(object):
@@ -262,49 +233,37 @@ class AppTranslationsGenerator(object):
                 valid_rows.append(row)
         return valid_rows
 
-    @cached_property
-    def _blacklisted_translations(self):
-        return TransifexBlacklist.objects.filter(domain=self.domain, app_id=self.app_id).all()
-
-    def filter_invalid_rows_for_module(self, rows, module_id, case_property_index,
-                                       list_or_detail_index, default_lang_index):
-        valid_rows = []
-        for i, row in enumerate(rows):
-            list_or_detail = row[list_or_detail_index]
-            case_property = row[case_property_index]
-            default_lang = row[default_lang_index]
-            if not self.checker.is_blacklisted(module_id, list_or_detail, case_property, [default_lang]):
-                valid_rows.append(row)
-        return valid_rows
-
     def _get_translation_for_sheet(self, sheet_name, rows):
-        occurrence = None
         # a dict mapping of a context to a Translation object with
         # multiple occurrences
         translations = OrderedDict()
-        type_and_id = None
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.app.default_language)
+
+        # Define the function to extract occurrence context from a row
+        # This function's implementation depends on the sheet type
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
             sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'menu_or_form')
             unique_id_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
 
-            def occurrence(_row):
+            def get_occurrence_context(_row):
                 # keep legacy notation to use module to avoid expiring translations already present
                 # caused by changing the context on the translation which is populated by this method
                 return ':'.join(
                     [_row[type_index].replace("Menu", "Module"),
                      _row[sheet_name_index].replace("menu", "module"),
                      _row[unique_id_index]])
+
+            type_and_id = None
         else:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
             if type_and_id.type == "Menu":
                 case_property_index = self._get_header_index(sheet_name, 'case_property')
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
 
-                def occurrence(_row):
+                def get_occurrence_context(_row):
                     case_property = _row[case_property_index]
                     # limit case property length to avoid errors at Transifex where there is a limit of 1000
                     case_property = case_property[:950]
@@ -312,8 +271,9 @@ class AppTranslationsGenerator(object):
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
 
-                def occurrence(_row):
+                def get_occurrence_context(_row):
                     return _row[label_index]
+
         is_module = type_and_id and type_and_id.type == "Menu"
         for index, row in enumerate(rows, 1):
             source = row[key_lang_index]
@@ -321,7 +281,7 @@ class AppTranslationsGenerator(object):
             if self.exclude_if_default:
                 if translation == row[default_lang_index]:
                     translation = ''
-            occurrence_row = occurrence(row)
+            occurrence_row = get_occurrence_context(row)
             occurrence_row_and_source = "%s %s" % (occurrence_row, source)
             if is_module:
                 # if there is already a translation with the same context and source,

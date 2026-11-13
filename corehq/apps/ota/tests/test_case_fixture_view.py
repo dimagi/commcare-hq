@@ -9,13 +9,11 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.case_search.const import COMMCARE_PROJECT
 from corehq.apps.case_search.models import CASE_SEARCH_REGISTRY_ID_KEY
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.registry.models import RegistryAuditLog
 from corehq.apps.registry.tests.utils import create_registry_for_test
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.test_utils import generate_cases, flag_enabled
 
 
@@ -26,7 +24,9 @@ class CaseFixtureViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.domain_object = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_object.delete)
         cls.user = CommCareUser.create(cls.domain, "user", "123", None, None)
+        cls.addClassCleanup(cls.user.delete, deleted_by_domain=None, deleted_by=None)
 
         cls.grand_parent_case_id = 'mona'
         cls.parent_case_id = 'homer'
@@ -65,16 +65,7 @@ class CaseFixtureViewTests(TestCase):
 
         cls.app = AppFactory(cls.domain).app
         cls.app.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(deleted_by_domain=None, deleted_by=None)
-        xform_ids = CommCareCase.objects.get_case_xform_ids(cls.parent_case_id)
-        CommCareCase.objects.hard_delete_cases(cls.domain, [case.case_id for case in cls.cases])
-        XFormInstance.objects.hard_delete_forms(cls.domain, xform_ids)
-        cls.app.delete()
-        Domain.get_db().delete_doc(cls.domain_object)  # no need to run the full domain delete
-        super().tearDownClass()
+        cls.addClassCleanup(cls.app.delete)
 
     def setUp(self):
         self.client = Client(enforce_csrf_checks=True)

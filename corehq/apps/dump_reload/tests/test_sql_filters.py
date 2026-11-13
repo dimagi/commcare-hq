@@ -1,14 +1,25 @@
 from django.db import router
 from django.test import TestCase
 
-from corehq.apps.dump_reload.sql.filters import MultimediaBlobMetaFilter, FilteredModelIteratorBuilder
+from casexml.apps.case.mock import CaseFactory
+
+from corehq.apps.dump_reload.sql.filters import (
+    CaseIDFilter,
+    FilteredModelIteratorBuilder,
+    MultimediaBlobMetaFilter,
+    SimpleFilter,
+)
+from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.tests.util import get_single_balance_block
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.blobs.models import BlobMeta
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
+from corehq.form_processor.models import CaseTransaction, LedgerTransaction
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.models import ConnectionSettings
-from corehq.apps.dump_reload.sql.filters import SimpleFilter
 
 
 class TestUseAllObjectsInModelIteratorBuilder(TestCase):
@@ -103,3 +114,154 @@ class TestMultimediaBlobMetaFilter(TestCase):
         cls.addClassCleanup(cls.db.close)
         cls.domain = 'test-multimedia'
         cls.db_alias = get_db_aliases_for_partitioned_query()[0]
+
+
+@sharded
+class TestPagingChildModelByCompoundKey(TestCase):
+    """Page a case child model over the case__domain join with a compound
+    (case_id, pk) keyset, and check it returns every transaction exactly once
+    across pages and shards."""
+    domain = 'test-paging-child-by-compound-key'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+
+    def test_returns_every_transaction_exactly_once(self):
+        builder = FilteredModelIteratorBuilder(
+            'form_processor.CaseTransaction',
+            SimpleFilter('case__domain'),
+            pagination_key=('case_id', 'pk'),
+        )
+        # chunk_size=2 with 3 cases forces paging across the seek boundary
+        transactions = [
+            txn
+            for db_alias in get_db_aliases_for_partitioned_query()
+            for iterator in builder.build(self.domain, CaseTransaction, db_alias).iterators(2)
+            for txn in iterator
+        ]
+
+        assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
+        # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
+        assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
+@sharded
+class TestCaseIDFilter(TestCase):
+    domain = 'test-caseid-filter'
+    other_domain = 'test-caseid-filter-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.other_case = CaseFactory(cls.other_domain).create_case()
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.other_domain)
+
+    def _ids_across_shards(self, filter_):
+        ids = []
+        for db_alias in get_db_aliases_for_partitioned_query():
+            ids.extend(filter_.get_ids(self.domain, db_alias=db_alias))
+        return ids
+
+    def test_get_ids_returns_only_this_domains_case_ids(self):
+        found = set(self._ids_across_shards(CaseIDFilter()))
+        assert found == {case.case_id for case in self.cases}
+        assert self.other_case.case_id not in found
+
+    def test_get_filters_yields_chunked_case_id_in_queries(self):
+        chunks = [
+            q
+            for db_alias in get_db_aliases_for_partitioned_query()
+            for q in CaseIDFilter(chunksize=2).get_filters(self.domain, db_alias=db_alias)
+        ]
+        all_ids = []
+        for q in chunks:
+            (lookup, ids), = q.children  # Q(case_id__in=[...]) -> [('case_id__in', [...])]
+            assert lookup == 'case_id__in'
+            assert len(ids) <= 2
+            all_ids.extend(ids)
+        assert set(all_ids) == {case.case_id for case in self.cases}
+
+    def test_count_is_none(self):
+        assert CaseIDFilter().count(self.domain) is None
+
+
+@sharded
+class TestCaseTransactionDumpViaCaseIDFilter(TestCase):
+    domain = 'test-casetxn-caseid-filter'
+    other_domain = 'test-casetxn-caseid-filter-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.other_case = CaseFactory(cls.other_domain).create_case()
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.other_domain)
+
+    def test_dumps_exactly_this_domains_transactions(self):
+        builder = FilteredModelIteratorBuilder(
+            'form_processor.CaseTransaction',
+            CaseIDFilter(chunksize=2),  # 3 cases over batches of 2 ids
+            pagination_key=('case_id', 'pk'),
+        )
+        transactions = [
+            txn
+            for db_alias in get_db_aliases_for_partitioned_query()
+            # chunk_size=1 forces queryset_to_iterator to page within each IN batch
+            for iterator in builder.build(self.domain, CaseTransaction, db_alias).iterators(1)
+            for txn in iterator
+        ]
+
+        assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
+        assert self.other_case.case_id not in {txn.case_id for txn in transactions}
+        # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
+        assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)
+
+
+@sharded
+class TestLedgerTransactionDumpViaCaseIDFilter(TestCase):
+    domain = 'test-ledgertxn-caseid-filter'
+    other_domain = 'test-ledgertxn-caseid-filter-other'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
+        cls.other_product = make_product(cls.other_domain, 'A Product', 'prodcode_a')
+        cls.addClassCleanup(cls.product.delete)
+        cls.addClassCleanup(cls.other_product.delete)
+        cls.cases = [CaseFactory(cls.domain).create_case() for _ in range(3)]
+        cls.other_case = CaseFactory(cls.other_domain).create_case()
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.domain)
+        cls.addClassCleanup(FormProcessorTestUtils.delete_all_cases_forms_ledgers, cls.other_domain)
+        for case in cls.cases:
+            cls._set_balance(cls.domain, case.case_id, cls.product._id)
+        cls._set_balance(cls.other_domain, cls.other_case.case_id, cls.other_product._id)
+
+    @staticmethod
+    def _set_balance(domain, case_id, product_id):
+        submit_case_blocks([get_single_balance_block(case_id, product_id, 100)], domain)
+
+    def test_dumps_exactly_this_domains_transactions(self):
+        builder = FilteredModelIteratorBuilder(
+            'form_processor.LedgerTransaction',
+            CaseIDFilter(chunksize=2),  # 3 cases over batches of 2 ids
+            pagination_key=('case_id', 'pk'),
+        )
+        transactions = [
+            txn
+            for db_alias in get_db_aliases_for_partitioned_query()
+            # chunk_size=1 forces queryset_to_iterator to page within each IN batch
+            for iterator in builder.build(self.domain, LedgerTransaction, db_alias).iterators(1)
+            for txn in iterator
+        ]
+
+        assert {txn.case_id for txn in transactions} == {case.case_id for case in self.cases}
+        assert self.other_case.case_id not in {txn.case_id for txn in transactions}
+        # no dupes; (case_id, id) is the unique key -- id (pk) repeats across shards
+        assert len({(txn.case_id, txn.id) for txn in transactions}) == len(transactions)

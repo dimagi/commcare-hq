@@ -8,10 +8,10 @@
       <span class="sr-only">{% trans 'Dropdown toggle' %}</span>
     </button>
     <ul class="dropdown-menu dropdown-menu-end noprint-sub-container" aria-label="Dropdown">
-      <li tabindex="0" class="print-button">
-        <a href="#" class="dropdown-item">
+      <li>
+        <button class="print-button dropdown-item fw-normal" type="button">
           {% trans "Print" %}
-        </a>
+        </button>
       </li>
       <% if (languageOptionsEnabled) { %>
       <li><hr class="dropdown-divider"></li>

@@ -1,0 +1,35 @@
+--- 
++++ 
+@@ -11,7 +11,7 @@
+ import webUsersList from "users/js/web_users_list";
+ import "hqwebapp/js/components/pagination";
+ import "hqwebapp/js/components/search_box";
+-import "hqwebapp/js/bootstrap3/knockout_bindings.ko";  // for modals
++import "hqwebapp/js/bootstrap5/knockout_bindings.ko";  // for modals
+ 
+ 
+ /* Web Users panel */
+@@ -189,12 +189,12 @@
+             $.post(postUrl, data, function () {
+                 $el.closest("tr").remove();
+                 $button.removeClass('disabled').prop('disabled', false);
+-                $('#modal-deletion').modal('hide');
++                $('#modal-deletion').modal('hide');  /* todo B5: js-modal */
+             });
+         });
+         $('#modal-deletion').find(".modal-title").html(title);
+         $('#modal-deletion').find(".modal-body").html($("<p/>").append(body));
+-        $('#modal-deletion').modal('show');
++        $('#modal-deletion').modal('show');  /* todo B5: js-modal */
+     }
+ 
+     $('.delete-request').on('click', function (e) {
+@@ -207,7 +207,7 @@
+         e.preventDefault();
+     });
+ 
+-    $('.undeliverable-label').tooltip({
++    $('.undeliverable-label').tooltip({  /* todo B5: js-tooltip */
+         placement: 'right',
+         html: true,
+         title: _.template(gettext(

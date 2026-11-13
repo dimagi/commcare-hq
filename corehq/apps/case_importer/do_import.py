@@ -14,7 +14,9 @@ from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
 from soil.progress import TaskProgressManager
 
-from corehq.apps.data_dictionary.util import fields_to_validate
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.data_dictionary.util import get_case_properties_by_name
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.groups.models import Group
@@ -26,10 +28,8 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.models import STANDARD_CHARFIELD_LENGTH
 from corehq.toggles import (
-    BULK_UPLOAD_DATE_OPENED,
-    CASE_IMPORT_DATA_DICTIONARY_VALIDATION,
     DOMAIN_PERMISSIONS_MIRROR,
-    MTN_MOBILE_WORKER_VERIFICATION,
+    MOBILE_MONEY_INTEGRATION,
 )
 from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
@@ -37,10 +37,10 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
 from .const import (
-    LookupErrors,
-    MOMO_REQUIRED_PAYMENT_FIELDS,
     MOMO_NO_EDIT_PAYMENT_FIELDS,
     MOMO_PAYMENT_CASE_TYPE,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
+    LookupErrors,
 )
 from .exceptions import (
     BlankExternalId,
@@ -132,10 +132,10 @@ class _TimedAndThrottledImporter:
         self.owner_accessor = _OwnerAccessor(domain, self.user)
         self._unsubmitted_caseblocks = []
         self.multi_domain = multi_domain
-        if CASE_IMPORT_DATA_DICTIONARY_VALIDATION.enabled(self.domain):
-            self.fields_to_validate = fields_to_validate(domain, config.case_type)
+        if domain_has_privilege(self.domain, privileges.DATA_DICT_TYPES):
+            self.field_to_case_property = get_case_properties_by_name(domain, config.case_type)
         else:
-            self.fields_to_validate = {}
+            self.field_to_case_property = {}
         self.field_map = self._create_field_map()
 
     def do_import(self, spreadsheet):
@@ -176,7 +176,7 @@ class _TimedAndThrottledImporter:
         search_id = self._parse_search_id(raw_row)
         fields_to_update = self._populate_updated_fields(raw_row)
         if (
-            self.mtn_mobile_worker_verification_ff_enabled
+            self.mobile_money_integration_ff_enabled
             and self.submission_handler.case_type == MOMO_PAYMENT_CASE_TYPE
         ):
             self._validate_payment_fields(fields_to_update)
@@ -263,8 +263,8 @@ class _TimedAndThrottledImporter:
         return CouchUser.get_by_user_id(self.config.couch_user_id)
 
     @cached_property
-    def mtn_mobile_worker_verification_ff_enabled(self):
-        return MTN_MOBILE_WORKER_VERIFICATION.enabled(self.domain)
+    def mobile_money_integration_ff_enabled(self):
+        return MOBILE_MONEY_INTEGRATION.enabled(self.domain)
 
     def _parse_search_id(self, row):
         """ Find and convert the search id in an Excel row """
@@ -321,8 +321,8 @@ class _TimedAndThrottledImporter:
             elif update_value is not None:
                 update_value = _convert_field_value(update_value)
 
-            if update_field_name in self.fields_to_validate:
-                case_property = self.fields_to_validate[update_field_name]
+            if update_field_name in self.field_to_case_property:
+                case_property = self.field_to_case_property[update_field_name]
                 try:
                     case_property.check_validity(update_value)
                 except CaseRowError as error:
@@ -573,12 +573,20 @@ class _CaseImportRow(object):
             return
         elif self.parent_relationship_type == 'extension':
             if not self.parent_identifier:
-                raise InvalidParentId(_(
-                    "'parent_identifier' column must be provided "
-                    "when 'parent_relationship_type' column is set to 'extension'"
-                ))
+                raise InvalidParentId(
+                    column_name='parent_identifier',
+                    message=_(
+                        "'parent_identifier' column must be provided "
+                        "when 'parent_relationship_type' column is set to 'extension'"
+                    ),
+                )
         else:
-            raise InvalidParentId(_("Invalid value for 'parent_relationship_type' column"))
+            raise InvalidParentId(
+                column_name='parent_relationship_type',
+                message=_(
+                    "Invalid value for 'parent_relationship_type' column"
+                ),
+            )
 
     def relies_on_uncreated_case(self, uncreated_external_ids):
         return any(lookup_id and lookup_id in uncreated_external_ids
@@ -630,10 +638,6 @@ class _CaseImportRow(object):
                         return {identifier: (parent_case.type, parent_case.case_id, "extension")}
                 raise InvalidParentId(column)
 
-    def _get_date_opened(self):
-        if self.date_opened and BULK_UPLOAD_DATE_OPENED.enabled(self.domain):
-            return self.date_opened
-
     def _get_external_id(self):
         if self.is_new_case and self.config.search_field == 'external_id':
             return self.search_id
@@ -644,8 +648,6 @@ class _CaseImportRow(object):
             'update': self.fields_to_update,
             'index': self._get_parent_index(),
         }
-        if date_opened := self._get_date_opened():
-            kwargs['date_opened'] = date_opened
         if external_id := self._get_external_id():
             kwargs['external_id'] = external_id
         return kwargs

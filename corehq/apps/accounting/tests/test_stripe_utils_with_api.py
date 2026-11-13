@@ -1,11 +1,17 @@
 from decimal import Decimal
+from unittest import SkipTest
+
+from django.conf import settings
 from django.test import TestCase
+
 import stripe
+
 from corehq.apps.accounting.models import StripePaymentMethod
 from corehq.apps.accounting.tests import generator
-from corehq.apps.accounting.utils.stripe import get_customer_cards, charge_through_stripe
-from unittest import SkipTest
-from django.conf import settings
+from corehq.apps.accounting.utils.stripe import (
+    charge_through_stripe,
+    get_customer_cards,
+)
 
 
 class StripeUtilsTests(TestCase):

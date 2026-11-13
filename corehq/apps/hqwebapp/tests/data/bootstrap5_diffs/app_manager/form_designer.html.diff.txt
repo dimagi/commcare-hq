@@ -1,0 +1,44 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'app_manager/bootstrap3/apps_base.html' %}
++{% extends 'app_manager/bootstrap5/apps_base.html' %}
+ {% load compress %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+@@ -25,7 +25,7 @@
+   </style>
+ {% endblock %}
+ 
+-{% js_entry_b3 "app_manager/js/forms/bootstrap3/form_designer" %}
++{% js_entry "app_manager/js/forms/bootstrap5/form_designer" %}
+ 
+ {% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
+ 
+@@ -43,7 +43,7 @@
+   <div id="formdesigner" class="clearfix loading"></div>
+ 
+   <script type="text/html" id="js-fd-form-actions">
+-    <div class="pull-right">
++    <div class="float-end">
+       <!-- B5 TODO: Replace btn-form-action with bootstrap 5 utils after migration -->
+       <a
+         class="btn btn-form-action track-usage-link custom-button-style"
+@@ -68,7 +68,7 @@
+   </script>
+ 
+   <script type="text/html" id="js-fd-view-submissions-only">
+-    <div class="pull-right">
++    <div class="float-end">
+       {% include "app_manager/partials/view_submissions_button.html" with btn_style='btn-form-action custom-button-style' %}
+     </div>
+   </script>
+@@ -86,7 +86,7 @@
+   </script>
+ 
+   <script type="text/html" id="fd-hq-helptext-close">
+-    close form
++    btn-close form  {# todo B5: css-close #}
+   </script>
+ 
+   <script type="text/html" id="fd-hq-helptext-followup">

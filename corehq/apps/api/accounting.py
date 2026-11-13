@@ -165,7 +165,7 @@ class BillingAccountResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = BillingAccount.objects.all().order_by('pk')
-        fields = ['id', 'name', 'salesforce_account_id', 'created_by', 'date_created', 'is_auto_invoiceable',
+        fields = ['id', 'name', 'salesforce_account_id', 'created_by', 'date_created', 'require_auto_pay',
                   'account_type', 'created_by_domain', 'date_confirmed_extra_charges', 'is_active',
                   'dimagi_contact', 'entry_point', 'last_modified', 'last_payment_method', 'pre_or_post_pay']
         resource_name = 'billing_account'
@@ -181,7 +181,7 @@ class SubscriptionResource(ModelResource):
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
                   'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
-                  'skip_auto_downgrade', 'skip_auto_downgrade_reason']
+                  'skip_auto_downgrade', 'skip_auto_downgrade_reason', 'skip_auto_downgrade_until']
         resource_name = 'subscription'
 
 
@@ -275,7 +275,7 @@ class CreditAdjustmentResource(ModelResource):
 
     class Meta(AccountingResourceMeta):
         queryset = CreditAdjustment.objects.all().order_by('pk')
-        fields = ['id', 'reason', 'note', 'amount', 'date_created', 'web_user', 'last_modified']
+        fields = ['id', 'reason', 'payment_type', 'note', 'amount', 'date_created', 'web_user', 'last_modified']
         resource_name = 'credit_adjustment'
 
 

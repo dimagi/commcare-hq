@@ -1,0 +1,23 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+
+{% load crispy_forms_tags %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% js_entry 'users/js/bulk_lookup' %}
+
+{% block page_content %}
+  {% blocktrans %}
+    <h2>
+      Mobile Workers Bulk Lookup
+    </h2>
+
+    <p class="help-block">
+      Please upload an Excel file with a single <strong>username</strong> column.
+      This page will then generate an Excel download noting which of the uploaded users already exist and which are
+      active.
+    </p>
+
+  {% endblocktrans %}
+  {% crispy bulk_upload_form %}  {# todo B5: crispy #}
+{% endblock page_content %}

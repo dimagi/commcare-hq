@@ -1,0 +1,61 @@
+--- 
++++ 
+@@ -25,7 +25,7 @@
+   {% endif %}
+ 
+   {% if unmatched_files %}
+-    <h4>{% trans 'No Matches' %} <span class="badge badge-important">{{ unmatched_count}} </h4>
++    <h4>{% trans 'No Matches' %} <span class="badge rounded-pill badge-important">{{ unmatched_count}} </h4>
+     <ul>
+       {% for unmatched in unmatched_files %}
+         <li>
+@@ -39,14 +39,14 @@
+   {% endif %}
+ 
+   {% if matched_files.CommCareImage %}
+-    <h4>{% trans 'Matched Images' %} <span class="badge badge-success">{{ image_count }}</span></h4>
++    <h4>{% trans 'Matched Images' %} <span class="badge rounded-pill text-bg-success">{{ image_count }}</span></h4>
+     <ul>
+       {% for image in matched_files.CommCareImage %}
+         <li>
+           <p>
+-            <img src="{{ image.url }}?thumb=50" style="width: 50px; height: 50px;" alt="{{ image.path }}" />
++            <img src="{{ image.url }}?thumb=50" style="width: 50px; height: 50px;" alt="{{ image.path }}" />  {# todo B5: inline-style #}
+             {% if image.updated %}
+-              <span class="label label-success">{% trans 'Updated' %}</span>
++              <span class="badge text-bg-success">{% trans 'Updated' %}</span>
+             {% endif %}
+             <a href="{{ image.url }}"
+                target="_blank"
+@@ -62,13 +62,13 @@
+   {% endif %}
+ 
+   {% if matched_files.CommCareAudio %}
+-    <h4>{% trans 'Matched Audio' %} <span class="badge badge-success">{{ audio_count }}</span></h4>
++    <h4>{% trans 'Matched Audio' %} <span class="badge rounded-pill text-bg-success">{{ audio_count }}</span></h4>
+     <ul>
+       {% for audio in matched_files.CommCareAudio %}
+         <li>
+           <p>
+             {% if audio.updated %}
+-              <span class="label label-success">{% trans 'Updated' %}</span>
++              <span class="badge text-bg-success">{% trans 'Updated' %}</span>
+             {% endif %}
+             <a href="{{ audio.url }}"
+                   target="_blank"
+@@ -83,13 +83,13 @@
+   {% endif %}
+ 
+   {% if matched_files.CommCareVideo %}
+-    <h4>{% trans 'Matched Video' %} <span class="badge badge-success">{{ video_count }}</span></h4>
++    <h4>{% trans 'Matched Video' %} <span class="badge rounded-pill text-bg-success">{{ video_count }}</span></h4>
+     <ul>
+       {% for video in matched_files.CommCareVideo %}
+         <li>
+           <p>
+             {% if video.updated %}
+-              <span class="label label-success">{% trans 'Updated' %}</span>
++              <span class="badge text-bg-success">{% trans 'Updated' %}</span>
+             {% endif %}
+             <a href="{{ video.url }}"
+                   target="_blank"

@@ -8,7 +8,7 @@
         <tr>
           <% _.each(headers, function(header, index) { %>
           <% if (!(styles[index].widthHint === 0)) { %>
-          <th class="module-case-list-header"> <%= header %></th>
+          <th class="module-case-list-header"> <%- header %></th>
           <% } %>
           <% }); %>
         </tr>

@@ -8,7 +8,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain,
     get_case_sharing_apps_in_domain,
 )
-from corehq.apps.app_manager.util import is_remote_app, is_usercase_in_use
+from corehq.apps.app_manager.util import is_remote_app, domain_has_usercase_access
 from corehq.util.quickcache import quickcache
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
@@ -499,7 +499,7 @@ def get_all_case_properties_for_case_type(domain, case_type, exclude_deprecated_
 
 @quickcache(vary_on=['app.get_id'])
 def get_usercase_properties(app):
-    if is_usercase_in_use(app.domain):
+    if domain_has_usercase_access(app.domain):
         # TODO: add name here once it is fixed to concatenate first and last in form builder
         default_properties = {'first_name', 'last_name', 'phone_number', 'username'}
         case_properties = get_case_properties(app, [USERCASE_TYPE])
@@ -524,7 +524,7 @@ def get_per_type_defaults(domain):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
     per_type_defaults = {}
-    if is_usercase_in_use(domain):
+    if domain_has_usercase_access(domain):
         per_type_defaults = {
             USERCASE_TYPE: _get_usercase_default_properties(domain)
         }

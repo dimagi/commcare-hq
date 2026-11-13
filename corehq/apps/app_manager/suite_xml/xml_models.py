@@ -5,7 +5,6 @@ from eulxml.xmlmap import (
     SimpleBooleanField,
     StringField,
     XmlObject,
-    load_xmlobject_from_string,
 )
 from lxml import etree
 
@@ -601,7 +600,6 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     prompts = NodeListField('prompt', QueryPrompt)
     prompt_groups = NodeListField('group', QueryPromptGroup)
     default_search = BooleanField("@default_search")
-    dynamic_search = BooleanField("@dynamic_search")
     search_on_clear = BooleanField("@search_on_clear", required=False)
 
     @property
@@ -1004,8 +1002,7 @@ class Detail(OrderedXmlObject, IdNode):
 
         for field in self.fields:
             if field.template.form == 'graph':
-                s = etree.tostring(field.template.node, encoding='utf-8')
-                template = load_xmlobject_from_string(s, xmlclass=GraphTemplate)
+                template = GraphTemplate(field.template.node)
                 result.update(_get_graph_config_xpaths(template.graph.configuration))
                 for series in template.graph.series:
                     result.add(series.nodeset)

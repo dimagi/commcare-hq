@@ -4,7 +4,6 @@ import uuid
 from math import ceil
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
@@ -35,7 +34,6 @@ from corehq.apps.analytics.tasks import (
 from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
-    get_app_cached,
     get_build_ids,
     get_current_app_version,
     get_latest_build_id,
@@ -48,7 +46,7 @@ from corehq.apps.app_manager.decorators import (
     avoid_parallel_build_request,
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppValidationError,
@@ -62,7 +60,6 @@ from corehq.apps.app_manager.models import (
     ApplicationReleaseLog,
     AppReleaseByLocation,
     BuildProfile,
-    LatestEnabledBuildProfiles,
     SavedAppBuild,
 )
 from corehq.apps.app_manager.tasks import (
@@ -116,7 +113,7 @@ def _get_error_counts(domain, app_id, version_numbers):
 
 
 @cache_control(no_cache=True, no_store=True)
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def paginate_releases(request, domain, app_id):
     limit = request.GET.get('limit')
     only_show_released = json.loads(request.GET.get('only_show_released', 'false'))
@@ -265,8 +262,7 @@ def release_build(request, domain, app_id, saved_app_id):
     is_released = request.POST.get('is_released') == 'true'
     if not is_released:
         if (
-            LatestEnabledBuildProfiles.objects.filter(build_id=saved_app_id, active=True).exists()
-            or AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
+            AppReleaseByLocation.objects.filter(build_id=saved_app_id, active=True).exists()
         ):
             return json_response({'error': _('Please disable any enabled profiles/location restriction '
                                              'to un-release this build.')})
@@ -336,7 +332,7 @@ def save_copy(request, domain, app_id):
         lang, langs = get_langs(request, app)
         return JsonResponse({
             "saved_app": None,
-            "error_html": render_to_string("app_manager/partials/build_errors.html", {
+            "error_html": render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
                 'app': get_app(domain, app_id),
                 'build_errors': e.errors,
                 'domain': domain,
@@ -487,6 +483,7 @@ def revert_to_copy(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@toggles.SUPPORT.required_decorator()
 def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.
@@ -531,7 +528,7 @@ def odk_install(request, domain, app_id, with_media=False):
                            }),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/odk_install.html", context)
+    return render(request, "app_manager/bootstrap5/odk_install.html", context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -558,7 +555,7 @@ def short_odk_url(request, domain, app_id, with_media=False):
     return HttpResponse(short_url)
 
 
-@require_deploy_apps
+@require_can_edit_apps
 def update_build_comment(request, domain, app_id):
     build_id = request.POST.get('build_id')
     try:
@@ -622,7 +619,7 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = gettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/bootstrap3/app_diff.html'
 
     def dispatch(self, request, *args, **kwargs):
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
@@ -716,29 +713,7 @@ class LanguageProfilesView(View):
         return HttpResponse()
 
 
-@require_can_edit_apps
-def toggle_build_profile(request, domain, build_id, build_profile_id):
-    build = get_app_cached(request.domain, build_id)
-    status = request.GET.get('action') == 'enable'
-    try:
-        LatestEnabledBuildProfiles.update_status(build, build_profile_id, status)
-    except ValidationError as e:
-        messages.error(request, e)
-    else:
-        latest_enabled_build_profile = LatestEnabledBuildProfiles.for_app_and_profile(
-            build.copy_of, build_profile_id)
-        if latest_enabled_build_profile:
-            messages.success(request, _("Latest version for profile {} is now {}").format(
-                build.build_profiles[build_profile_id].name, latest_enabled_build_profile.version
-            ))
-        else:
-            messages.success(request, _("Latest release now available for profile {}").format(
-                build.build_profiles[build_profile_id].name
-            ))
-    return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
-
-
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def paginate_release_logs(request, domain, app_id):
     limit = request.GET.get('limit')
     page = int(request.GET.get('page', 1))

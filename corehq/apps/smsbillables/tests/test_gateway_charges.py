@@ -10,7 +10,6 @@ from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee
 from corehq.apps.smsbillables.tests.utils import create_sms, long_text, short_text
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.util.test_utils import flag_enabled
 
 
 class TestGatewayCharge(TestCase):
@@ -148,17 +147,6 @@ class TestGatewayCharge(TestCase):
         actual_gateway_charge = billable.gateway_charge
 
         self.assertEqual(Decimal('0.0'), actual_gateway_charge)
-
-    @flag_enabled('ENABLE_INCLUDE_SMS_GATEWAY_CHARGING')
-    def test_non_global_backend_is_charged_if_flag_enabled(self):
-        msg = create_sms(self.domain, self.non_global_backend, '+12223334444', OUTGOING, short_text)
-        SmsGatewayFee.create_new(self.non_global_backend.hq_api_id, msg.direction, Decimal('0.01'))
-        create_billable_for_sms(msg, delay=False)
-        billable = SmsBillable.objects.get(domain=self.domain, log_id=msg.couch_id)
-
-        actual_charge = billable.gateway_charge
-
-        self.assertEqual(Decimal('0.01'), actual_charge)
 
 
 class TestGetByCriteria(TestCase):

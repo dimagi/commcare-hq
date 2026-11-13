@@ -1,0 +1,13 @@
+--- 
++++ 
+@@ -1,8 +1,8 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-            <div class="form-group">
+-              <label class="control-label {% css_label_class %}">
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label class="form-label {% css_label_class %}">
+                 {% trans 'Session Endpoint ID' %}
+                 <span class="hq-help-template"
+                       data-title="{% trans 'Session Endpoint ID' %}"

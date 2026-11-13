@@ -13,11 +13,12 @@ from couchforms.models import DefaultAuthContext
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import AppInDifferentDomainException
 from corehq.apps.app_manager.models import ApplicationBase
+from corehq.apps.public_webforms.app_builds import canonical_app_id
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.submission_post import SubmissionPost
-from corehq.form_processor.utils.xform import convert_xform_to_json, sanitize_instance_xml
+from corehq.form_processor.utils.xform import convert_xform_to_json
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
@@ -146,10 +147,10 @@ def get_commcare_version_from_appversion_text(appversion_text):
     >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
     '2.27.8'
     >>> get_commcare_version_from_appversion_text(
-            ...     u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17'  # noqa: E501
+            ...     u'CommCare Android, आवृत्ती" 2.44.5"(452680). ॲप वि.29635 कॉमर्स आवृत्ती2.44. बिल्ड452680, रोजी तयार केले:2019-01-17'
     ... )
     '2.44.3'
-    """
+    """  # noqa: E501
     patterns = [
         r'version "([\d.]+)"',
         r'"([\d.]+)"\s+\(\d+\)',
@@ -217,7 +218,7 @@ def get_app_and_build_ids(domain, build_or_app_id):
         if domain == app_json.get('domain'):
             copy_of = app_json.get('copy_of')
             if copy_of:
-                return copy_of, build_or_app_id
+                return canonical_app_id(copy_of), build_or_app_id
     return build_or_app_id, None
 
 
@@ -269,7 +270,6 @@ def should_ignore_submission(request):
     form_json = None
     if settings.IGNORE_ALL_DEMO_USER_SUBMISSIONS:
         instance, _ = couchforms.get_instance_and_attachment(request)
-        instance = sanitize_instance_xml(instance, request)
         try:
             form_json = convert_xform_to_json(instance)
         except couchforms.XMLSyntaxError:
@@ -286,7 +286,6 @@ def should_ignore_submission(request):
 
     if form_json is None:
         instance, _ = couchforms.get_instance_and_attachment(request)
-        instance = sanitize_instance_xml(instance, request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
 

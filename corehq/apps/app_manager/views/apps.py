@@ -3,7 +3,11 @@ import json
 import os
 from collections import defaultdict
 
+import urllib3
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_request, json_response
 from django.contrib import messages
+from django.apps import apps as django_apps
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -13,21 +17,11 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET, require_POST
-
-import urllib3
+from django.views.decorators.http import require_GET
 from django_prbac.utils import has_privilege
-
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_request, json_response
+from memoized import memoized
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.analytics.tasks import (
-    HUBSPOT_APP_TEMPLATE_FORM_ID,
-    send_hubspot_form,
-    track_workflow_noop,
-)
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_layout,
@@ -45,12 +39,15 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
     AppLinkError,
+    AppValidationError,
     IncompatibleFormTypeException,
-    RearrangeError, AppValidationError,
+    ModuleNotFoundException,
+    RearrangeError,
+    RemoteAppsUnsupported,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -58,49 +55,46 @@ from corehq.apps.app_manager.models import (
     ApplicationBase,
     DeleteApplicationRecord,
     ExchangeApplication,
-    Module,
-    ModuleNotFoundException,
-    app_template_dir,
+    LinkedApplication,
 )
-from corehq.apps.app_manager.models import import_app as import_app_util
-from corehq.apps.app_manager.models import load_app_template, LinkedApplication
+from corehq.apps.app_manager.models import (
+    import_app_from_doc,
+    import_app_from_id,
+)
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
-    app_doc_types,
     get_and_assert_practice_user_in_domain,
-    get_latest_enabled_versions_per_profile,
     get_settings_values,
     is_linked_app,
     is_remote_app,
 )
-from corehq.apps.app_manager.util import enable_usercase as enable_usercase_util
 from corehq.apps.app_manager.views.utils import (
     back_to_main,
     capture_user_errors,
     clear_xmlns_app_id_cache,
     get_langs,
-    validate_custom_assertions,
     update_linked_app,
+    validate_custom_assertions,
     validate_langs,
 )
 from corehq.apps.builds.models import BuildSpec, CommCareBuildConfig
 from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
+    api_auth,
     login_and_domain_required,
-    login_or_digest,
     track_domain_request,
 )
+from corehq.apps.domain.models import all_app_manager_add_ons_enabled
 from corehq.apps.hqmedia.models import MULTIMEDIA_PREFIX, CommCareMultimedia
+from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.linked_domain.exceptions import RemoteRequestError
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.dbaccessors import (
-    get_practice_mode_mobile_workers,
-)
+from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
 from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.dates import iso_string_to_datetime
@@ -148,9 +142,6 @@ def default_new_app(request, domain):
     instead of creating a form and posting to the above link, which was getting
     annoying for the Dashboard.
     """
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow_noop(request.couch_user.username, "User created a new blank application")
-
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
     add_ons.init_app(request, app)
@@ -160,13 +151,6 @@ def default_new_app(request, domain):
     clear_app_cache(request, domain)
     app.save()
     return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-
-
-@require_POST
-@require_can_edit_apps
-def enable_usercase(request, domain):
-    enable_usercase_util(domain)
-    return JsonResponse({"success": 1})
 
 
 def get_app_view_context(request, app):
@@ -286,7 +270,16 @@ def get_app_view_context(request, app):
             'can_select_language': toggles.BULK_UPDATE_MULTIMEDIA_PATHS.enabled_for_request(request),
             'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request),
         },
+        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False),
+
+        'is_linked_app': is_linked_app(app),
+        'is_remote_app': is_remote_app(app),
+
+        'all_add_ons_enabled': all_app_manager_add_ons_enabled(app.domain),
     })
+
+    # dependent on bulk_ui_translation_upload and bulk_app_translation_upload
+    # keys existing in context
     context.update({
         'bulk_ui_translation_form': get_bulk_upload_form(
             context,
@@ -298,14 +291,7 @@ def get_app_view_context(request, app):
             form_class=AppTranslationsBulkUploadForm,
         ),
     })
-    context.update({
-        'smart_lang_display_enabled': getattr(app, 'smart_lang_display', False)
-    })
 
-    context.update({
-        'is_linked_app': is_linked_app(app),
-        'is_remote_app': is_remote_app(app),
-    })
     if isinstance(app, Application):
         context.update({'custom_assertions': [
             {'test': assertion.test, 'text': assertion.text.get(lang)}
@@ -379,13 +365,12 @@ def get_apps_base_context(request, domain, app):
     context = {
         'lang': lang,
         'langs': langs,
+        'langs_for_ocs_context': app.langs if app and app.langs else [],
         'domain': domain,
         'app': app,
         'linked_name': linked_name,
         'app_subset': {
             'commcare_minor_release': app.commcare_minor_release,
-            'doc_type': app.get_doc_type(),
-            'form_counts_by_module': [len(m.forms) for m in app.modules] if not app.is_remote_app() else [],
             'version': app.version,
         } if app else {},
         'timezone': timezone,
@@ -411,10 +396,6 @@ def get_apps_base_context(request, domain, app):
             except ESError:
                 notify_exception(request, 'Error getting practice mode mobile workers')
 
-        latest_version_for_build_profiles = {}
-        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-            latest_version_for_build_profiles = get_latest_enabled_versions_per_profile(app.get_id)
-
         context.update({
             'show_advanced': show_advanced,
             'show_biometric': show_biometric,
@@ -424,13 +405,13 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
             'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [{"id": u['_id'], "text": u["username"]} for u in practice_users],
-            'latest_version_for_build_profiles': latest_version_for_build_profiles,
         })
 
     return context
 
 
-@login_or_digest
+@require_GET
+@api_auth()
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
@@ -441,6 +422,9 @@ def app_source(request, domain, app_id):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
+    if is_remote_app(app):
+        messages.error(request, str(RemoteAppsUnsupported()))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
     form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
@@ -494,7 +478,7 @@ def _create_linked_app(request, app_id, build_id, from_domain, to_domain, link_a
 
 def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     extra_properties = {'name': to_app_name}
-    app_copy = import_app_util(from_app_id, to_domain, extra_properties, request)
+    app_copy = import_app_from_id(from_app_id, to_domain, extra_properties, request)
     if is_linked_app(app_copy):
         app_copy = app_copy.convert_to_application()
         app_copy.save()
@@ -503,8 +487,6 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
 
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
-    send_hubspot_form(HUBSPOT_APP_TEMPLATE_FORM_ID, request)
-    track_workflow_noop(request.couch_user.username, "User created an application from a template")
     clear_app_cache(request, domain)
 
     build = load_app_from_slug(domain, request.user.username, slug)
@@ -512,15 +494,35 @@ def app_from_template(request, domain, slug):
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
 
+def _app_template_dir(slug):
+    root = os.path.join(
+        django_apps.get_app_config('app_manager').path,
+        'static',
+        'app_manager',
+        'template_apps',
+    )
+    # Resolve the slug against the set of template apps that actually exist
+    for name in os.listdir(root):
+        if name == slug:
+            return os.path.join(root, name)
+
+
+@memoized
+def _load_app_template(slug):
+    if app_dir := _app_template_dir(slug):
+        with open(os.path.join(app_dir, 'app.json')) as f:
+            return json.load(f)
+
+
 def load_app_from_slug(domain, username, slug):
     # Import app itself
-    template = load_app_template(slug)
-    app = import_app_util(template, domain, {
+    template = _load_app_template(slug)
+    app = import_app_from_doc(template, domain, {
         'created_from_template': '%s' % slug,
     })
 
     # Fetch multimedia, which is hosted elsewhere
-    multimedia_filename = os.path.join(app_template_dir(slug), 'multimedia.json')
+    multimedia_filename = os.path.join(_app_template_dir(slug), 'multimedia.json')
     if (os.path.exists(multimedia_filename)):
         with open(multimedia_filename) as f:
             path_url_map = json.load(f)
@@ -558,6 +560,7 @@ def _build_sample_app(app):
 
 
 @require_can_edit_apps
+@use_bootstrap5
 def app_exchange(request, domain):
     template = "app_manager/app_exchange.html"
     records = []
@@ -569,10 +572,6 @@ def app_exchange(request, domain):
         results.reverse()
         first = results[0]
 
-        required_privileges = str(obj.required_privileges or '').split()
-        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
-            continue
-
         def _version_text(result):
             if result['_id'] == first['_id']:
                 return _("Latest Version")
@@ -583,7 +582,6 @@ def app_exchange(request, domain):
             "id": first['_id'],
             "name": first['name'],
             "help_link": obj.help_link,
-            "changelog_link": obj.changelog_link,
             "last_released": iso_string_to_datetime(first['built_on']).date(),
             "versions": [{
                 "id": r['_id'],
@@ -603,7 +601,7 @@ def app_exchange(request, domain):
             messages.error(request, _("Invalid application id requested for exchange import"))
             return render(request, template, context)
 
-        app_copy = import_app_util(from_app_id, domain, {
+        app_copy = import_app_from_id(from_app_id, domain, {
             'created_from_template': from_app_id,
         })
         return back_to_main(request, domain, app_id=app_copy._id)
@@ -620,43 +618,17 @@ def _valid_exchange_record_exists_helper(app_id, records):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def app_settings(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id)
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def new_app(request, domain):
-    "Adds an app to the database"
-    lang = 'en'
-    type = request.POST["type"]
-    cls = app_doc_types()[type]
-    form_args = []
-    if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Menu", lang)
-        app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
-        form_args = [module.id, form.id]
-    else:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-    if request.project.secure_submissions:
-        app.secure_submissions = True
-    app.save()
-    clear_app_cache(request, domain)
-    main_args = [request, domain, app.id]
-    main_args.extend(form_args)
-
-    return back_to_main(*main_args)
 
 
 @no_conflict_require_POST
@@ -773,9 +745,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
-        # RemoteApp only
-        'profile_url',
-        'manage_urls',
         'mobile_ucr_restore_version',
         'custom_assertions',
     ]
@@ -802,7 +771,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('practice_mobile_worker_id', None, _always_allowed),
         ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
         ('cloudcare_enabled', None, _always_allowed),
-        ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
         ('recipients', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
@@ -816,7 +784,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('custom_base_url', None, _always_allowed),
         ('mobile_ucr_restore_version', None, _always_allowed),
         ('location_fixture_restore', None, _always_allowed),
-        ('split_screen_dynamic_search', None, _always_allowed),
         ('persistent_menu', None, _always_allowed),
         ('show_breadcrumbs', None, _always_allowed)
     )
@@ -864,17 +831,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit('custom_assertions'):
         app.custom_assertions = validate_custom_assertions(hq_settings[attr], app.custom_assertions, lang)
-
-    def require_remote_app():
-        if not is_remote_app(app):
-            raise Exception("App type %s does not support profile url" % app.get_doc_type())
-
-    # For RemoteApps
-    if should_edit("profile_url"):
-        require_remote_app()
-        app['profile_url'] = hq_settings['profile_url']
-    if should_edit("manage_urls"):
-        require_remote_app()
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved
@@ -995,5 +951,4 @@ def pull_upstream_app(request, domain, app_id):
             messages.error(request, str(e))
             return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
         messages.success(request, _('Your linked application was successfully updated to the latest version.'))
-    track_workflow_noop(request.couch_user.username, "Linked domain: upstream app pulled")
     return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))

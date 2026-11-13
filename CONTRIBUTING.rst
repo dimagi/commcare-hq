@@ -29,7 +29,8 @@ considered for review or re-review
 
 
 
-When opening a PR, please review our `Guide to Authoring Pull Requests`_.  
+When opening a PR, please review our `Guide to Authoring Pull Requests`_ and our
+`AI Contribution Guidelines`_ if relevant.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
 
@@ -37,18 +38,12 @@ Useful Tools
 ------------
 Here are some tools widely used by CommCare HQ developers
 
-flake8
-    Flake8 is run on all PRs automatically. You can run it locally to ensure your
-    code meets those standards before opening a PR.
-
-pylint
-    It requires some configuration, but this is the most comprehensive python linter
-    out there and can provide some useful feedback.
-
-isort
-    This will organize the imports in the file you're editing according to the
-    ``.isort.cfg`` in the root of the repository.  See how to run this from within
-    your editor `here <https://github.com/pycqa/isort/wiki/isort-Plugins>`_
+ruff
+    Ruff is used for linting, formatting, and sorting imports. It is run on all
+    PRs automatically. Run ``ruff check path/to/file.py`` to lint,
+    ``ruff format path/to/file.py`` to format, or
+    ``ruff check --select I --fix path/to/file.py`` to sort imports.
+    Commit formatting and import-sorting changes separately from logic changes.
 
 ./manage.py show_urls
     Provided by ``django-extensions``, this outputs a list of all URL paths used in the
@@ -104,6 +99,7 @@ to see how that works.
 .. _Read the Docs: https://commcare-hq.readthedocs.io/
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _autoclass: https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+.. _AI Contribution Guidelines: https://github.com/dimagi/open-source/blob/master/docs/ai_contribution_guidelines.md
 
 
 Updating requirements

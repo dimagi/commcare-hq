@@ -7,9 +7,9 @@ from contextlib import contextmanager
 
 from django.test import SimpleTestCase
 
+import pytest
 import pytz
 from unittest.mock import patch
-from nose.tools import assert_raises
 from requests.exceptions import ConnectTimeout, ReadTimeout
 
 from corehq.apps.groups.models import Group
@@ -22,6 +22,7 @@ from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.tasks import (
     get_case_properties,
     get_openmrs_patients,
+    import_patients_of_owner,
     import_patients_with_importer,
 )
 from corehq.motech.requests import Requests
@@ -195,7 +196,7 @@ def test_bad_data_type():
         'property': 'data_proxima_consulta'
     }
     with get_importer(bad_column_mapping) as importer:
-        with assert_raises(ConfigurationError, msg=re.compile(re.escape(
+        with pytest.raises(ConfigurationError, match=re.compile(re.escape(
             'Errors importing from <OpenmrsImporter None admin@http://www.example.com/openmrs>:\n'
             'Unable to deserialize value 1551564000000 '
             'in column "data_proxima_consulta" '
@@ -290,6 +291,39 @@ class TestTimeout(SimpleTestCase):
                 {u'familyName': u'Hornblower', u'givenName': u'Horatio', u'personId': 2},
                 {u'familyName': u'Patient', u'givenName': u'John', u'personId': 3},
             ])
+
+
+def test_get_openmrs_patients_rejects_bad_report_params():
+    importer = Importer()
+    importer.report_params = {'endDate': '{{ tomorrow }}'}
+    with patch.object(Requests, 'get') as request_get:
+        requests = Requests(
+            TEST_DOMAIN,
+            'https://example.com/',
+            auth_manager=AuthManager(),
+            logger=lambda level, entry: None,
+        )
+        with pytest.raises(ConfigurationError, match='endDate'):
+            get_openmrs_patients(requests, importer)
+    request_get.assert_not_called()
+
+
+def test_import_patients_of_owner_raises_on_bad_report_params():
+    # Not caught and reported as an unexpected response format
+    importer = Importer()
+    importer.report_params = {'endDate': '{{ tomorrow }}'}
+    with patch.object(Requests, 'get') as request_get, \
+            patch.object(Requests, 'notify_exception') as notify_exception:
+        requests = Requests(
+            TEST_DOMAIN,
+            'https://example.com/',
+            auth_manager=AuthManager(),
+            logger=lambda level, entry: None,
+        )
+        with pytest.raises(ConfigurationError, match='endDate'):
+            import_patients_of_owner(requests, importer, TEST_DOMAIN, 'owner-id')
+    request_get.assert_not_called()
+    notify_exception.assert_not_called()
 
 
 class Importer:

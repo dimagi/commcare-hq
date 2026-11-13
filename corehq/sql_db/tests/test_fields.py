@@ -6,7 +6,7 @@ from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 
 from corehq.util.test_utils import unregistered_django_model
 
-from ..fields import CharIdField
+from ..fields import CharIdField, ModelClassField
 
 
 def test_CharIdField_without_indexes():
@@ -71,3 +71,26 @@ def assert_no_pattern_ops_index(editor):
 
 def has_pattern_ops_index(statements):
     return any("_pattern_ops" in str(sql) for sql in statements)
+
+
+def test_ModelClassField_slugs_are_unique():
+    slugs = list(ModelClassField._slug_by_model().values())
+    assert len(slugs) == len(set(slugs)), f"Duplicate slugs: {slugs}"
+
+
+def test_ModelClassField_pre_save_returns_slug_for_class():
+    from corehq.form_processor.models import XFormInstance
+
+    @unregistered_django_model
+    class Test(models.Model):
+        model = ModelClassField()
+
+    field = {f.name: f for f in Test._meta.fields}["model"]
+    obj = Test(model=XFormInstance)
+    assert field.pre_save(obj, add=False) == 'xform'
+
+
+def test_ModelClassField_slug_for():
+    from corehq.form_processor.models import XFormInstance
+
+    assert ModelClassField.slug_for(XFormInstance) == 'xform'

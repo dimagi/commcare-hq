@@ -16,8 +16,21 @@ var keywordActionsViewModel = function (initialValues) {
     self.isMessageSMS = ko.computed(function () {
         return self.senderContentType() === 'sms';
     });
+    self.isConnectMessage = ko.computed(function () {
+        return self.senderContentType() === 'connect_message';
+    });
+    self.isConnectSurvey = ko.computed(function () {
+        return self.senderContentType() === 'connect_survey';
+    });
     self.isMessageSurvey = ko.computed(function () {
         return self.senderContentType() === 'survey';
+    });
+
+    self.showMessageInput = ko.computed(function () {
+        return self.isMessageSMS() || self.isConnectMessage();
+    });
+    self.showSurveyInput = ko.computed(function () {
+        return self.isMessageSurvey() || self.isConnectSurvey();
     });
 
     self.senderMessage = ko.observable(initialValues.sender_message);
@@ -32,8 +45,7 @@ var keywordActionsViewModel = function (initialValues) {
     self.otherRecipientId = ko.observable(initialValues.other_recipient_id);
     self.otherRecipientContentType = ko.observable(initialValues.other_recipient_content_type);
     self.notifyOthers = ko.computed(function () {
-        return (self.otherRecipientContentType() === 'sms'
-            || self.otherRecipientContentType() === 'survey');
+        return ['sms', 'survey', 'connect_message', 'connect_survey'].includes(self.otherRecipientContentType());
     });
 
     self.otherRecipientMessage = ko.observable(initialValues.other_recipient_message);

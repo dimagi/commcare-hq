@@ -1,6 +1,5 @@
-from unittest.mock import ANY, Mock, patch
+from unittest.mock import Mock, patch
 
-from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
@@ -9,7 +8,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.views import post_api, secure_post
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
-from corehq.util.test_utils import flag_enabled
 
 
 def return_200(*args, **kwargs):
@@ -78,24 +76,10 @@ class TestAuditLoggingForFormSubmission(TestCase):
             self.assert_api_response(200, url)
             mock_notify_exception.assert_not_called()
 
-    def test_api_user_regular_submission_with_no_FF(self):
+    def test_api_user_regular_submission(self):
         url = reverse(secure_post, args=[self.domain])
         self._create_user(access_api=True, access_mobile_endpoints=False)
         self.assert_api_response(403, url)
-
-    @flag_enabled('OPEN_SUBMISSION_ENDPOINT')
-    def test_api_user_regular_submission_with_FF(self):
-        url = reverse(secure_post, args=[self.domain])
-        user = self._create_user(access_api=True, access_mobile_endpoints=False)
-        with patch('corehq.apps.receiverwrapper.views.notify_exception') as mock_notify_exception:
-            self.assert_api_response(200, url)
-            mock_notify_exception.assert_called_once_with(ANY, message=ANY)
-            args, kwargs = mock_notify_exception.call_args
-
-            self.assertIsInstance(args[0], WSGIRequest)
-
-            expected_message = f"NoMobileEndpointsAccess: invalid request by {user.get_id} on {self.domain}"
-            self.assertEqual(expected_message, kwargs.get("message"))
 
     def test_web_user_no_api_access(self):
         url = reverse(post_api, args=[self.domain])

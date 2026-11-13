@@ -13,7 +13,6 @@ from urllib3.exceptions import HTTPError
 
 from couchforms.signals import successful_form_received
 
-from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
@@ -28,6 +27,7 @@ from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     OptionValue,
+    get_form_payload_doc,
 )
 from corehq.motech.repeaters.optionvalue import DateTimeCoder
 from corehq.motech.repeaters.repeater_generators import (
@@ -111,10 +111,6 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
             and payload.xmlns != XMLNS_DHIS2
         )
 
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-
     @property
     def form_class_name(self):
         """
@@ -185,7 +181,7 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
+        return get_form_payload_doc(repeat_record)
 
     @property
     def form_class_name(self):

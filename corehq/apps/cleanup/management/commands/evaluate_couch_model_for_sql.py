@@ -98,7 +98,7 @@ class Command(BaseCommand):
         print(f"\n################# add {command_file} #################")
         print(command_content)
 
-        test_file_name = f'test_{self.class_name.lower()}_attr_comparision.py'
+        test_file_name = f'test_{self.class_name.lower()}_attr_comparison.py'
         test_file = os.path.join("corehq", "apps", self.django_app, "tests", test_file_name)
         test_content = self.generate_test_file()
         print(f"\n################# add {test_file} #################\n")
@@ -288,7 +288,7 @@ class Command(BaseCommand):
             arg_list = ", ".join([f"{k}={v}" for k, v, in params.items()])
             suggested_fields.append(f"{key} = {self.field_types[key]}({arg_list})")
             migration_field_names.append(key)
-        suggested_fields.append("couch_id = models.CharField(max_length=126, null=True)")
+        suggested_fields.append("couch_id = models.UUIDField(null=True)")
         self.add_index('couch_id')
 
         index_list = ['models.Index(fields={}),'.format(fields) for fields in self.index_fields]

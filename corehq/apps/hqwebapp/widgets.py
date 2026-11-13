@@ -2,6 +2,7 @@ import json
 from collections.abc import Sequence
 
 from django import forms
+from django.conf import settings
 from django.forms.utils import flatatt
 from django.forms.widgets import CheckboxInput, Input
 from django.utils.encoding import force_str
@@ -39,14 +40,25 @@ class BootstrapCheckboxInput(CheckboxInput):
             final_attrs['value'] = force_str(value)
         from corehq.apps.hqwebapp.utils.bootstrap import get_bootstrap_version, BOOTSTRAP_5
         use_bootstrap5 = get_bootstrap_version() == BOOTSTRAP_5
-        final_attrs['class'] = 'form-check-input' if use_bootstrap5 else 'bootstrapcheckboxinput'
+        base_class = 'form-check-input' if use_bootstrap5 else 'bootstrapcheckboxinput'
+        final_attrs['class'] = self._merge_css_classes(base_class, final_attrs.get('class', ''))
         context.update({
             'use_bootstrap5': use_bootstrap5,
             'input_id': final_attrs.get('id'),
             'inline_label': self.inline_label,
+            'is_invalid': 'is-invalid' in final_attrs['class'].split(),
             'attrs': mark_safe(flatatt(final_attrs)),  # nosec: trusting the user to sanitize attributes
         })
         return context
+
+    def _merge_css_classes(self, base_class, incoming_classes):
+        # crispy forms adds classes meant for generic full-width controls,
+        # plus the lowercased widget class name; neither belongs on a
+        # checkbox, but classes like is-invalid must survive
+        unwanted = {'form-control', 'form-select', base_class, type(self).__name__.lower()}
+        merged = [base_class]
+        merged += [css_class for css_class in incoming_classes.split() if css_class not in unwanted]
+        return ' '.join(merged)
 
 
 class BootstrapSwitchInput(BootstrapCheckboxInput):
@@ -261,4 +273,14 @@ class AlpineSelect(forms.Select):
                 ':selected': f"{x_model} == '{option_value}'"
             })
             context["widget"]['optgroups'][index][1][0] = option_context
+        return context
+
+
+class TurnstileWidget(forms.Widget):
+
+    template_name = "hqwebapp/widgets/turnstile.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context['widget']['site_key'] = settings.TURNSTILE_SITE_KEY
         return context

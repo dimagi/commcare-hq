@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# flake8: noqa: E266, F405
+# ruff: noqa
 
 import inspect
 from collections import defaultdict
@@ -143,6 +143,9 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
+# Shared password for all ProjectDB projectdb_<domain> roles - put into localsettings.py
+PROJECTDB_USERS_PASSWORD = 'you should really change this'
+
 MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'corehq.middleware.SecureCookiesMiddleware',
@@ -188,7 +191,7 @@ INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
 MINIMUM_ZXCVBN_SCORE = 2
-MINIMUM_PASSWORD_LENGTH = 8
+MINIMUM_PASSWORD_LENGTH = 14
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 FORMS_URLFIELD_ASSUME_HTTPS = True
@@ -243,9 +246,26 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+SILENCED_SYSTEM_CHECKS = [
+    'captcha.recaptcha_test_key_error',
+    # django-oauth-toolkit RFC 9700 (OAuth 2.0 Security BCP) compliance
+    # warnings. Defaults change in 4.0, and W007/W008 become errors.
+    'oauth2_provider.W001',
+    'oauth2_provider.W002',
+    'oauth2_provider.W003',
+    'oauth2_provider.W004',
+    'oauth2_provider.W005',
+    'oauth2_provider.W006',
+    'oauth2_provider.W007',
+    'oauth2_provider.W008',
+]
+# Per-environment additions, set in localsettings
+LOCAL_SILENCED_SYSTEM_CHECKS = []
 RECAPTCHA_PRIVATE_KEY = ''
 RECAPTCHA_PUBLIC_KEY = ''
+
+TURNSTILE_SECRET_KEY = ''
+TURNSTILE_SITE_KEY = ''
 
 MAXMIND_ACCOUNT_ID = ''
 MAXMIND_LICENSE_KEY = ''
@@ -273,6 +293,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.data_cleaning',
     'corehq.apps.data_pipeline_audit',
+    'corehq.apps.document_templates',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
@@ -289,6 +310,9 @@ HQ_APPS = (
     'corehq.apps.locations',
     'corehq.apps.products',
     'corehq.apps.programs',
+    'corehq.apps.project_db',
+    'corehq.apps.public_webforms',
+    'corehq.apps.short_links',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',
@@ -325,7 +349,6 @@ HQ_APPS = (
     'corehq.apps.mobile_auth',
     'corehq.apps.sms',
     'corehq.apps.email',
-    'corehq.apps.events',
     'corehq.apps.geospatial',
     'corehq.apps.smsforms',
     'corehq.apps.sso',
@@ -362,7 +385,6 @@ HQ_APPS = (
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
-    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -378,7 +400,6 @@ HQ_APPS = (
     'pillowtop',
     'pillow_retry',
     'corehq.apps.styleguide',
-    'corehq.apps.prototype',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
     'corehq.motech',
@@ -394,7 +415,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.apps.app_execution',
+    'corehq.apps.tombstones',
 
     # custom reports
     'custom.reports.mc',
@@ -405,7 +426,6 @@ HQ_APPS = (
     'custom.covid',
     'custom.inddex',
     'custom.nutrition_project',
-    'custom.cowin.COWINAppConfig',
     'custom.hmhb',
 
     'custom.ccqa',
@@ -462,7 +482,8 @@ SOIL_HEARTBEAT_CACHE_KEY = "django-soil-heartbeat"
 # restyle some templates
 BASE_TEMPLATE = "hqwebapp/bootstrap3/base_navigation.html"
 BASE_ASYNC_TEMPLATE = "reports/async/bootstrap3/basic.html"
-LOGIN_TEMPLATE = "login_and_password/bootstrap3/login.html"
+LOGIN_TEMPLATE = "login_and_password/bootstrap5/login.html"
+LOGIN_TEMPLATE_B3 = "login_and_password/bootstrap3/login.html"
 LOGGEDOUT_TEMPLATE = LOGIN_TEMPLATE
 
 CSRF_FAILURE_VIEW = 'corehq.apps.hqwebapp.views.csrf_failure'
@@ -572,6 +593,14 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
+# Redis redelivers any message not acked within visibility_timeout (default 1h),
+# so acks_late tasks running longer, and countdown/ETA tasks due later, would
+# run more than once. Keep this above both; the longest countdown today is the
+# report builder's 24h TEMP_DATA_SOURCE_LIFESPAN.
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 26 * 60 * 60,
+}
+
 # https://github.com/celery/celery/issues/4226
 CELERY_BROKER_POOL_LIMIT = None
 
@@ -625,7 +654,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
-    "repeat_record_queue": 60 * 60,
+    "repeat_record_queue": 15 * 60,
     "saved_exports_queue": 6 * 60 * 60,
     "send_report_throttled": 6 * 60 * 60,
     "sms_queue": 5 * 60,
@@ -789,6 +818,7 @@ AUDIT_ALL_VIEWS = False
 AUDIT_VIEWS = []
 AUDIT_MODULES = []
 AUDIT_ADMIN_VIEWS = False
+AUDITCARE_RETENTION_YEARS = 6
 
 # Don't use google analytics unless overridden in localsettings
 ANALYTICS_IDS = {
@@ -810,7 +840,16 @@ GREENHOUSE_API_KEY = ''
 
 MAPBOX_ACCESS_TOKEN = ''
 
+USERFLOW_TOKEN = ''
+
 OPEN_EXCHANGE_RATES_API_ID = ''
+
+# API keys for AI app translations, per provider. Deliberately separate
+# from OPENAI_API_KEY, which is only used by the PO-file translation
+# pipeline in GitHub Actions.
+AI_TRANSLATION_API_KEYS = {
+    'openai': '',
+}
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -840,8 +879,6 @@ REPEATER_CLASSES = [
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
     'corehq.motech.dhis2.repeaters.Dhis2Repeater',
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
-    'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
-    'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
     'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.FormExpressionRepeater',
     'corehq.motech.repeaters.expression.repeaters.ArcGISFormExpressionRepeater',
@@ -891,12 +928,7 @@ OAUTH2_PROVIDER = {
     # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
     'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'PKCE_REQUIRED': _pkce_required,
-    'SCOPES': {
-        'access_apis': 'Access API data on all your CommCare projects',
-        'reports:view': 'Allow users to view and download all report data',
-        'mobile_access': 'Allow access to mobile sync and submit endpoints',
-        'sync': '(Deprecated, do not use) Allow access to mobile endpoints',
-    },
+    'SCOPES_BACKEND_CLASS': 'corehq.apps.hqwebapp.oauth_scopes.HQScopes',
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
 
@@ -968,7 +1000,7 @@ STRIPE_PRIVATE_KEY = ''
 # }
 REPORTING_DATABASES = {
     'default': 'default',
-    'ucr': 'default'
+    'ucr': 'default',
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
@@ -1002,6 +1034,28 @@ METRICS_PROVIDERS = []
 
 DATADOG_API_KEY = None
 DATADOG_APP_KEY = None
+
+OFFBOARDING_PLATFORMS = {
+    'datadog': {
+        'api_key': None,
+        'app_key': None,
+        'site': 'datadoghq.com',
+    },
+    'sentry': {
+        'auth_token': None,
+        'api_url': 'https://sentry.io/api/0/',
+        'org_slug': None,
+    },
+    'sumologic': {
+        'access_id': None,
+        'access_key': None,
+        'api_url': 'https://api.us2.sumologic.com/api/',
+    },
+    'hubspot': {
+        'access_token': None,
+    },
+}
+OFFBOARDING_PROTECTED_EMAILS = []
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 
@@ -1165,21 +1219,41 @@ CONNECTID_SECRET_KEY = ''
 CONNECTID_CHANNEL_URL = 'http://localhost:8080/messaging/create_channel/'
 CONNECTID_MESSAGE_URL = 'http://localhost:8080/messaging/send_fcm/'
 CONNECTID_CREDENTIALS_URL = 'http://localhost:8080/users/add_credential/'
+CONNECTID_CREDENTIALS_CLIENT_ID = ''
+CONNECTID_CREDENTIALS_SECRET_KEY = ''
+CONNECTID_ADD_USER_ANALYTICS_URL = 'http://localhost:8080/users/add_user_analytics/'
 
 MAX_MOBILE_UCR_LIMIT = 300  # used in corehq.apps.cloudcare.util.should_restrict_web_apps_usage
 MAX_MOBILE_UCR_SIZE = 100000  # max number of rows allowed when syncing a mobile UCR
 
-# used by periodic tasks that delete soft deleted data older than PERMANENT_DELETION_WINDOW days
-PERMANENT_DELETION_WINDOW = 30  # days
+# days to commit to keeping soft deleted data in databases
+DATA_RETENTION_WINDOW = 90  # days
 
-# Used by `corehq.apps.integration.kyc`. Override in localsettings.py
-MTN_KYC_CONNECTION_SETTINGS = {
-    'url': 'https://dev.api.chenosis.io/',
-    'token_url': 'https://dev.api.chenosis.io/oauth/client/accesstoken',
-    'client_id': 'test',
-    'client_secret': 'password',
+#### Chatbot configuration
+# Override in localsettings.py
+# See https://docs.openchatstudio.com/chat_widget/
+
+# ID of the chatbot in Open Chat Studio
+AI_CHATBOT_ID = None
+AI_CHATBOT_TOKEN = None
+OCS_API_KEY = None
+OCS_OAUTH_CLIENT_ID = None
+OCS_OAUTH_CLIENT_SECRET = None
+
+# Platform-wide defaults for AI app translations, used where no
+# AITranslationConfig row overrides them. Override in localsettings.py.
+AI_TRANSLATION_DEFAULTS = {
+    'provider': 'openai',
+    # 'model' defaults to the provider's default model
+    'monthly_word_limit': 1_000_000,
 }
 
+#  Credentials for Orange Cameroon API. Override in localsettings.py
+ORANGE_CAMEROON_API_CREDS = {
+    'x-auth-token': '',
+    'channel_msisdn': '',
+    'channel_pin': '',
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1213,6 +1287,8 @@ AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 COMMCARE_EXTENSIONS.extend(DEFAULT_COMMCARE_EXTENSIONS)
+
+SILENCED_SYSTEM_CHECKS.extend(LOCAL_SILENCED_SYSTEM_CHECKS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1295,6 +1371,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.get_demo',
                 'corehq.util.context_processors.subscription_banners',
+                'corehq.util.context_processors.lockout_banner',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.commcare_hq_names',
@@ -1304,7 +1381,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.bootstrap5',
                 'corehq.util.context_processors.js_privileges',
                 'corehq.util.context_processors.server_location_display',
-                'corehq.util.context_processors.chat_widget_config',
+                'corehq.util.context_processors.ai_chat_widget',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1880,11 +1957,6 @@ PILLOWTOPS = {
             'instance': 'corehq.apps.change_feed.pillow.get_application_db_kafka_pillow',
         },
         {
-            'name': 'DefaultChangeFeedPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.apps.change_feed.pillow.get_default_couch_db_change_feed_pillow',
-        },
-        {
             'name': 'DomainDbKafkaPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.apps.change_feed.pillow.get_domain_db_kafka_pillow',
@@ -2040,10 +2112,10 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 
-    'epic-integration-test': 'custom.mgh_epic',
-    'sudcare-dev': 'custom.mgh_epic',
     # Temporarily disabled SUDCare integration (paused 2025-06-13)
-    #'sudcare': 'custom.mgh_epic',
+    # 'epic-integration-test': 'custom.mgh_epic',
+    # 'sudcare-dev': 'custom.mgh_epic',
+    # 'sudcare': 'custom.mgh_epic',
 }
 
 CUSTOM_DOMAINS_BY_MODULE = defaultdict(list)
@@ -2063,6 +2135,7 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
 COMPRESS_OFFLINE_CONTEXT = {
     'base_template': BASE_TEMPLATE,
     'login_template': LOGIN_TEMPLATE,
+    'login_template_b3': LOGIN_TEMPLATE_B3,
     'original_template': BASE_ASYNC_TEMPLATE,
 }
 

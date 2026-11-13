@@ -13,6 +13,7 @@ from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
+from corehq.util.xml_utils import safe_fromstring
 from corehq.form_processor.parsers.ledgers.helpers import (
     StockTransactionHelper,
 )
@@ -137,7 +138,7 @@ def get_ota_balance_xml(project, user):
 
 
 def extract_balance_xml(xml_payload):
-    balance_blocks = etree.fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
+    balance_blocks = safe_fromstring(xml_payload).findall('{http://commcarehq.org/ledger/v1}balance')
     if balance_blocks:
         return [etree.tostring(bb, encoding='utf-8') for bb in balance_blocks]
     return []
@@ -148,7 +149,7 @@ def get_single_balance_block(case_id, product_id, quantity, date_string=None, se
     return """
 <balance xmlns="http://commcarehq.org/ledger/v1" entity-id="{case_id}" date="{date}" section-id="{section_id}"{type}>
     <entry id="{product_id}" quantity="{quantity}" />
-</balance>""".format(
+</balance>""".format(  # noqa: E501
         case_id=case_id, product_id=product_id, quantity=quantity, date=date_string, section_id=section_id,
         type=' type="{}"'.format(type) if type else ''
     ).strip()

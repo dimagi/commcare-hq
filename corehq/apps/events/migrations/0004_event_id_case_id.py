@@ -43,7 +43,7 @@ def _get_expected_attendees(event):
         [old_case_id],
         include_closed=False,
     )
-    return CommCareCase.objects.get_cases(ext_case_ids, event.domain)
+    return CommCareCase.objects.get_cases(ext_case_ids)
 
 
 def _delete_old_style(case_factory, event):

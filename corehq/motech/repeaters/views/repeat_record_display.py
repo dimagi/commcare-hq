@@ -2,6 +2,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
 from corehq.motech.repeaters.const import RECORD_QUEUED_STATES, State
+from corehq.motech.repeaters.exceptions import PayloadNotFoundError
 from corehq.util.timezones.conversions import ServerTime
 
 MISSING_VALUE = '---'
@@ -43,9 +44,11 @@ class RepeatRecordDisplay:
     @property
     def url(self):
         if self.record.repeater:
-            return self.record.repeater.get_url(self.record)
-        else:
-            return _('Unable to generate url for record')
+            try:
+                return self.record.repeater.get_url(self.record)
+            except PayloadNotFoundError:
+                pass
+        return _('Unable to generate url for record')
 
     @property
     def remote_service(self):
@@ -56,7 +59,7 @@ class RepeatRecordDisplay:
     @property
     def state(self):
         label_cls, label_text = _get_state_tuple(self.record)
-        return format_html(f'<span class="label label-{label_cls}">{label_text}</span>')
+        return format_html('<span class="label label-{}">{}</span>', label_cls, label_text)
 
     def _format_date(self, date):
         if not date:
@@ -71,6 +74,7 @@ def _get_state_tuple(record):
         State.Cancelled: ('danger', _('Cancelled')),
         State.Fail: ('danger', _('Failed')),
         State.Empty: ('success', _('Empty')),
-        State.InvalidPayload: ('danger', _('Invalid payload')),
+        State.PayloadRejected: ('danger', _('Payload rejected')),
+        State.ErrorGeneratingPayload: ('danger', _('Error generating payload')),
     }
     return state_map.get(record.state, ('', ''))

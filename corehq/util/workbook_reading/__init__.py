@@ -1,7 +1,8 @@
 from corehq.util.workbook_reading.exceptions import (
-    CellValueError,
+    CellValueError,  # noqa: F401
     SpreadsheetFileEncrypted,
     SpreadsheetFileError,
+    SpreadsheetFileExternalLinks,
     SpreadsheetFileExtError,
     SpreadsheetFileInvalidError,
     SpreadsheetFileNotFound,
@@ -31,6 +32,7 @@ __all__ = [
     'SpreadsheetFileInvalidError',
     'SpreadsheetFileNotFound',
     'SpreadsheetFileEncrypted',
+    'SpreadsheetFileExternalLinks',
 
     'Workbook',
     'Worksheet',

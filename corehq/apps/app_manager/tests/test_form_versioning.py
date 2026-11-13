@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import (
     Form,
     FormLink,
     Module,
-    import_app,
+    import_app_from_doc,
 )
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -42,13 +42,13 @@ INVALID_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
         </input>
     </h:body>
 </h:html>
-"""
+"""  # noqa: E501
 
 
 class FormVersioningTest(TestCase):
 
     @patch_default_builds
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    @patch('corehq.apps.app_manager.models.forms.validate_xform', return_value=None)
     def test(self, mock):
         add_build(version='2.7.0', build_number=20655)
         domain = 'form-versioning-test'
@@ -100,7 +100,7 @@ class FormVersioningTest(TestCase):
         self.assertEqual(self.get_form_versions(build4), [6, 1])
 
         # copy app
-        xxx_app = import_app(app.export_json(dump_json=False), domain)
+        xxx_app = import_app_from_doc(app.export_json(dump_json=False), domain)
 
         # make build of copy
         xxx_build1 = xxx_app.make_build()
@@ -119,10 +119,10 @@ class FormVersioningTest(TestCase):
 
     @staticmethod
     def get_form_versions(build):
-        from lxml import etree
+        from corehq.util.xml_utils import safe_fromstring
 
         suite = suite_models.Suite(
-            etree.fromstring(build.fetch_attachment('files/suite.xml'))
+            safe_fromstring(build.fetch_attachment('files/suite.xml'))
         )
         return [r.version for r in suite.xform_resources]
 

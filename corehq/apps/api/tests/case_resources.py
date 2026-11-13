@@ -22,7 +22,6 @@ from .utils import APIResourceTest, FakeFormESView
 @es_test(requires=[case_adapter])
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
-    case_ids = []
 
     def _setup_case(self, cases=None):
 
@@ -42,6 +41,7 @@ class TestCommCareCaseResource(APIResourceTest):
                 **kwargs
             )
             backend_case.save()
+            self.addCleanup(backend_case.delete)
             backend_cases.append(backend_case)
 
         case_adapter.bulk_index(backend_cases, refresh=True)
@@ -75,6 +75,26 @@ class TestCommCareCaseResource(APIResourceTest):
         api_cases = json.loads(response.content)['objects']
         self.assertEqual(len(api_cases), 1)
         self.assertItemsEqual(api_cases[0]['case_id'], 'id1')
+
+    def test_get_by_case_id(self):
+        self._setup_case([('owner1', 'id1')])
+        url = f'{self.list_endpoint}id1/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 200)
+        api_case = response.json()
+        self.assertEqual(api_case['case_id'], 'id1')
+
+    def test_get_by_missing_case_id(self):
+        url = f'{self.list_endpoint}missing-case-id/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.content.decode(), '')
+
+    def test_get_by_empty_case_id(self):
+        url = f'{self.list_endpoint}/'
+        response = self._assert_auth_get_resource(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.content.decode(), '')
 
     def test_get_list_format(self):
         """

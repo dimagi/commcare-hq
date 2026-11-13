@@ -1,8 +1,16 @@
+import logging
 from itertools import chain
+
+from django.http import Http404
+
+from couchdbkit import ResourceNotFound
 from dimagi.utils.couch.database import safe_delete
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.util.test_utils import unit_testing_only
+
+logger = logging.getLogger(__name__)
 
 
 def get_latest_case_export_schema(domain, case_type):
@@ -135,8 +143,34 @@ def _get_export_instance(cls, key, include_docs=True):
         reduce=False,
     ).all()
     if include_docs:
-        return [cls.wrap(result['doc']) for result in results]
+        return list(_iter_export_instances_by_domain_docs(cls, results))
     return [result['value'] for result in results]
+
+
+def _iter_export_instances_by_domain_docs(cls, results):
+    """Wrap a row docs, discarding stale docs that no longer exist
+
+    The view has been observed to return a row for a doc that was
+    deleted from every CouchDB node, causing ``cls.wrap(None)`` to
+    raise. Verify the doc is actually gone before discarding the row,
+    so a row that's missing its doc for some other reason is not
+    silently dropped.
+    """
+    for result in results:
+        doc = result['doc']
+        if doc is None:
+            doc_id = result['id']
+            try:
+                doc = cls.get_db().get(doc_id)
+            except ResourceNotFound:
+                logger.warning("Discarding stale export_instances_by_domain view row for deleted doc %s", doc_id)
+                continue
+            notify_exception(
+                None,
+                "export_instances_by_domain view returned doc=None for a document that still exists",
+                details={'doc_id': doc_id},
+            )
+        yield cls.wrap(doc)
 
 
 def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
@@ -165,16 +199,24 @@ def get_daily_saved_export_ids_for_auto_rebuild(accessed_after):
     return export_ids
 
 
-def get_properly_wrapped_export_instance(doc_id):
-    from .models import ExportInstance
-    doc = ExportInstance.get_db().get(doc_id)
-    return _properly_wrap_export_instance(doc)
+def get_export_instance_or_404(domain, export_id):
+    try:
+        return get_export_instance_in_domain(domain, export_id)
+    except ResourceNotFound:
+        raise Http404()
 
 
-def _properly_wrap_export_instance(doc):
-    from .models import FormExportInstance
-    from .models import CaseExportInstance
+def get_export_instance_in_domain(domain, export_id):
+    """Request handlers should use get_export_instance_or_404 instead."""
     from .models import ExportInstance
+    export = wrap_export_instance(ExportInstance.get_db().get(export_id))
+    if export.domain != domain:
+        raise ResourceNotFound(f"Export {export_id} is not in domain {domain}")
+    return export
+
+
+def wrap_export_instance(doc):
+    from .models import CaseExportInstance, ExportInstance, FormExportInstance
     class_ = {
         "FormExportInstance": FormExportInstance,
         "CaseExportInstance": CaseExportInstance,

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from corehq.motech.repeaters.const import State
+from corehq.motech.repeaters.const import State, states_for_key
 from corehq.motech.repeaters.models import ConnectionSettings, FormRepeater, RepeatRecord
 
 
@@ -115,8 +115,13 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), 1)
 
     def test_get_paged_repeat_records_with_state(self):
-        records = RepeatRecord.objects.page(self.domain, 0, 10, state=State.Pending)
+        records = RepeatRecord.objects.page(self.domain, 0, 10, states=[State.Pending])
         self.assertEqual(len(records), 3)
+
+    def test_get_paged_repeat_records_with_state_group(self):
+        records = RepeatRecord.objects.page(
+            self.domain, 0, 10, states=states_for_key('SUCCESS'))
+        self.assertEqual(len(records), 2)  # one Success, one Empty
 
     def test_get_paged_repeat_records_wrong_domain(self):
         records = RepeatRecord.objects.page('wrong-domain', 0, 2)

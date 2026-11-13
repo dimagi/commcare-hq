@@ -234,6 +234,11 @@ The following linked project spaces received content:
         return (html, text)
 
 
+def _apps_last(models):
+    """Apps can reference other content, which must already exist downstream"""
+    return sorted(models, key=lambda model: model['type'] == MODEL_APP)
+
+
 @task(queue='linked_domain_queue')
 def release_domain(upstream_domain, downstream_domain, username, models, build_apps=False, overwrite=False):
     manager = ReleaseManager(upstream_domain, username)
@@ -244,7 +249,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
                                            "was released to it.").format(upstream_domain, downstream_domain))
         return manager.results()
 
-    for model in models:
+    for model in _apps_last(models):
         errors = None
         try:
             if model['type'] == MODEL_APP:

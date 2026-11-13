@@ -290,7 +290,7 @@ def test_flag_selects_without_form_control_bootstrap5():
     line = """    <select\n"""
     flags = flag_selects_without_form_control(line)
     eq(flags[0][0], "css-select-form-control")
-    eq(flags[0][1].startswith("Please replace `form-control` with `form-select`."), True)
+    eq(flags[0][1].startswith("Replace `form-control` with `form-select`"), True)
 
 
 def test_file_contains_reference_to_path():
@@ -394,6 +394,15 @@ def test_add_todo_comments_for_flags_template():
     )
     line = add_todo_comments_for_flags(flags, line, is_template=True)
     eq(line, """          <div class="form-inline nav"  {# todo B5: css-form-inline, css-nav #}\n""")
+
+
+def test_add_todo_comments_for_flags_template_submodule():
+    line = """          <div class="form-inline nav"\n"""
+    flags = flag_changed_css_classes(
+        line, get_spec('bootstrap_3_to_5')
+    )
+    line = add_todo_comments_for_flags(flags, line, is_template=True, is_submodule_app=True)
+    eq(line, """          <div class="form-inline nav"  <!-- todo B5: css-form-inline, css-nav -->\n""")
 
 
 def test_add_todo_comments_for_flags_template_replace():

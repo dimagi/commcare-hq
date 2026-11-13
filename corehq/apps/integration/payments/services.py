@@ -1,24 +1,35 @@
 import uuid
 from dataclasses import asdict
 from datetime import datetime
+from json import JSONDecodeError
 
+from django.conf import settings
 from django.utils.translation import gettext as _
 
+import requests
+
 from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.apps.integration.kyc.models import KycVerificationStatus
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
+    PAYMENT_STATUS_DEVICE_ID,
+    PaymentStatusErrorCode,
     PAYMENT_SUBMITTED_DEVICE_ID,
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
+    PAYMENT_STATUS_MAX_RETRIES,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
-from corehq.apps.integration.payments.models import MoMoConfig
+from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
 from corehq.apps.integration.payments.schemas import (
     PartyDetails,
-    PaymentTransferDetails,
+    MTNPaymentTransferDetails,
+    OrangeCameroonPaymentTransferDetails,
 )
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
@@ -63,32 +74,70 @@ def request_payment(payment_case: CommCareCase, config: MoMoConfig):
             'transaction_id': transaction_id,  # can be used to check payment status
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.SUBMITTED,
         })
-    except PaymentRequestError as e:
+    except (requests.HTTPError, PaymentRequestError) as e:
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: str(e),
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_REQUEST_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
-    except Exception:
+        error = e.response.text if hasattr(e, 'response') else str(e)
+        details = _get_notify_error_details(config.domain, payment_case.case_id, error)
+        notify_error("[MoMo Payments] Request error occurred while making payment", details=details)
+    except Exception as e:
         # We need to know when anything goes wrong
         payment_update.update({
-            PaymentProperties.PAYMENT_ERROR: _("Something went wrong"),
+            PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.UNEXPECTED_ERROR,
             PaymentProperties.PAYMENT_STATUS: PaymentStatus.REQUEST_FAILED,
         })
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e))
+        notify_exception(None, "[MoMo Payments] Internal error occurred while making payment", details=details)
 
     return payment_update
 
 
 def _request_payment(payee_case: CommCareCase, config: MoMoConfig):
     _validate_payment_request(payee_case.case_json)
-    transfer_details = _get_transfer_details(payee_case)
-    transaction_id = _make_payment_request(
+    transfer_details = _get_transfer_details(payee_case, config)
+    payment_api_method = config.get_payment_api_method()
+    transaction_id = payment_api_method(
         request_data=asdict(transfer_details),
         config=config,
     )
     return transaction_id
 
 
-def _make_payment_request(request_data, config: MoMoConfig):
+def make_mtn_payment_request(request_data, config: MoMoConfig):
+    """
+    Make a payment request using the MTN Mobile Money API.
+
+    Returns the transaction ID that can be used to check payment status.
+    """
+
+    # Documentation: https://momodeveloper.mtn.com/API-collections#api=disbursement&operation=Deposit-V2
+    #
+    # Example request:
+    #
+    #     POST /disbursement/v2_0/deposit
+    #     Headers:
+    #         X-Reference-Id: <transaction_id>
+    #         X-Target-Environment: <environment>
+    #         Authorization: Bearer <access_token>
+    #     Body:
+    #     {
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "1234567890"
+    #         },
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "payeeNote": "Payment for services",
+    #         "payerMessage": "Thank you",
+    #         "externalId": "user123"
+    #     }
+    #
+    # Example 202 response:
+    #
+    #     HTTP 202 Accepted
+
     connection_settings = config.connection_settings
     requests = connection_settings.get_requests()
 
@@ -106,23 +155,107 @@ def _make_payment_request(request_data, config: MoMoConfig):
     return transaction_id
 
 
+def make_orange_cameroon_payment_request(request_data, config: MoMoConfig):
+    """
+    Make a payment request using the Orange Cameroon Mobile Money API.
+
+    Returns the payment token that can be used to check payment status.
+    """
+
+    # Documentation: https://apiis.orange.cm/store/apis/info?name=OrangeMoneyCoreAPIS&version=1.0.2
+    # &provider=bmhb8456
+    #
+    # Example request (init):
+    #
+    #     POST /omcoreapis/1.0.2/cashin/init
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #         Authorization: Bearer <access_token>
+    #
+    # Example 200 response (init):
+    #
+    #     {
+    #         "data": {
+    #             "payToken": "abc123xyz"
+    #         },
+    #         "message": "Pay token generated successfully"
+    #     }
+    #
+    # Example request (pay):
+    #
+    #     POST /omcoreapis/1.0.2/cashin/pay
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #         Authorization: Bearer <access_token>
+    #     Body:
+    #     {
+    #         "channelUserMsisdn": "1234567890",
+    #         "pin": "1234",
+    #         "amount": "100",
+    #         "subscriberMsisdn": "9876543210",
+    #         "orderId": "order123",
+    #         "description": "Payment for services",
+    #         "payToken": "abc123xyz"
+    #     }
+    #
+    # Example 200 response (pay):
+    #
+    #     {
+    #         "data": {
+    #             "id": 45681987,
+    #             "createtime": "1764767241",
+    #             "amount": 100,
+    #             "channelUserMsisdn": "1234567890",
+    #             "subscriberMsisdn": "9876543210",
+    #             "txnmode": "OMAPI#CI#45681987",
+    #             "txnstatus": 200,
+    #             "txnmessage": "Transaction successful",
+    #             "payToken": "abc123xyz",
+    #             "txnid": "TXN123456789",
+    #             "status": "SUCCESSFULL",
+    #             "orderId": "order123",
+    #             "description": "Payment for services",
+    #             "notifUrl": null
+    #         },
+    #         "message": "Cash In successfully",
+    #     }
+
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+
+    response = requests.post(
+        '/omcoreapis/1.0.2/cashin/init',
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    response.raise_for_status()
+    pay_token = response.json()['data']['payToken']
+
+    res = requests.post(
+        '/omcoreapis/1.0.2/cashin/pay',
+        json={**request_data, 'payToken': pay_token},
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    res.raise_for_status()
+
+    return pay_token
+
+
 def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     if not case_ids:
         return []
 
-    valid_statuses_for_verification = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    if _any_invalid_payment_status(case_ids, domain, valid_statuses_for_verification):
-        raise PaymentRequestError(
-            _("Only payments in '{}' or '{}' state are eligible for verification.".format(
-                PaymentStatus.NOT_VERIFIED.label, PaymentStatus.REQUEST_FAILED.label
-            ))
-        )
+    _validate_payment_cases_for_verification(case_ids, domain)
     payment_properties_update = {
         PaymentProperties.PAYMENT_VERIFIED: 'True',
-        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: str(datetime.now()),
+        PaymentProperties.PAYMENT_VERIFIED_ON_UTC: datetime.utcnow().isoformat(),
         PaymentProperties.PAYMENT_VERIFIED_BY: verifying_user.username,
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: verifying_user.user_id,
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.PENDING_SUBMISSION,
+        PaymentProperties.PAYMENT_ERROR: '',
     }
 
     updated_cases = []
@@ -136,12 +269,64 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     return updated_cases
 
 
-def _any_invalid_payment_status(case_ids, domain, valid_statuses):
-    for case in CommCareCase.objects.iter_cases(case_ids, domain):
-        payment_status_value = case.get_case_property(PaymentProperties.PAYMENT_STATUS)
-        if PaymentStatus.from_value(payment_status_value) not in valid_statuses:
-            return True
-    return False
+def get_user_or_case_ids(cases):
+    return [
+        user_or_case_id for case in cases
+        if (user_or_case_id := case.get_case_property(PaymentProperties.USER_OR_CASE_ID))
+    ]
+
+
+def get_kyc_verification_statuses(kyc_config, user_or_case_ids):
+    if not kyc_config or not user_or_case_ids:
+        return {}
+    return {
+        kyc_user.user_id: kyc_user.kyc_verification_status
+        for kyc_user in kyc_config.get_kyc_users_by_ids(user_or_case_ids)
+    }
+
+
+def _validate_payment_cases_for_verification(case_ids, domain):
+    valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
+    kyc_config = get_kyc_config(domain)
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        cases = CommCareCase.objects.get_cases(list(case_ids_chunk))
+        kyc_statuses = get_kyc_verification_statuses(kyc_config, get_user_or_case_ids(cases))
+        for case in cases:
+            _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
+            _validate_final_mobile_validation(case)
+            _validate_kyc_passed(case, kyc_statuses)
+
+
+def _validate_kyc_passed(case, kyc_statuses):
+    user_or_case_id = case.get_case_property(PaymentProperties.USER_OR_CASE_ID)
+    if kyc_statuses.get(user_or_case_id) != KycVerificationStatus.PASSED:
+        raise PaymentRequestError(
+            _("Only payments with users that have KYC status '{}' are eligible for verification.").format(
+                KycVerificationStatus.PASSED.label
+            )
+        )
+
+
+def _validate_payment_case_status(case, domain, valid_statuses, operation):
+    if case.domain != domain:
+        raise PaymentRequestError(_("Case '{}' not in '{}' project").format(case.case_id, domain))
+    payment_status = PaymentStatus.from_value(
+        case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+    )
+    if payment_status not in valid_statuses:
+        status_labels = ", ".join(f"'{status.label}'" for status in valid_statuses)
+        error_message = _('Payment status must be one of the following:')
+        raise PaymentRequestError(f'{operation}: {error_message} {status_labels}')
+
+
+def _validate_final_mobile_validation(case):
+    final_mobile_validation = case.get_case_property(PaymentProperties.FINAL_MOBILE_VALIDATION)
+    if final_mobile_validation and final_mobile_validation != "true":
+        raise PaymentRequestError(
+            _("Only payments with '{}' set to 'true' are eligible for verification.".format(
+                PaymentProperties.FINAL_MOBILE_VALIDATION.value
+            ))
+        )
 
 
 def _get_cases_updates(case_ids, updates):
@@ -156,17 +341,29 @@ def _get_cases_updates(case_ids, updates):
     return cases
 
 
-def _get_transfer_details(payee_case: CommCareCase) -> PaymentTransferDetails:
+def _get_transfer_details(payee_case: CommCareCase, config: MoMoConfig):
     case_json = payee_case.case_json
 
-    return PaymentTransferDetails(
-        payee=_get_payee_details(case_json),
-        amount=case_json.get(PaymentProperties.AMOUNT),
-        currency=case_json.get(PaymentProperties.CURRENCY),
-        payeeNote=case_json.get(PaymentProperties.PAYEE_NOTE),
-        payerMessage=case_json.get(PaymentProperties.PAYER_MESSAGE),
-        externalId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
-    )
+    if config.provider == MoMoProviders.MTN_MONEY:
+        return MTNPaymentTransferDetails(
+            payee=_get_payee_details(case_json),
+            amount=case_json.get(PaymentProperties.AMOUNT),
+            currency=case_json.get(PaymentProperties.CURRENCY),
+            payeeNote=case_json.get(PaymentProperties.PAYEE_NOTE),
+            payerMessage=case_json.get(PaymentProperties.PAYER_MESSAGE),
+            externalId=case_json.get(PaymentProperties.USER_OR_CASE_ID),
+        )
+    elif config.provider == MoMoProviders.ORANGE_CAMEROON_MONEY:
+        return OrangeCameroonPaymentTransferDetails(
+            channelUserMsisdn=settings.ORANGE_CAMEROON_API_CREDS['channel_msisdn'],
+            pin=settings.ORANGE_CAMEROON_API_CREDS['channel_pin'],
+            amount=case_json.get(PaymentProperties.AMOUNT),
+            subscriberMsisdn=case_json.get(PaymentProperties.PHONE_NUMBER),
+            orderId=payee_case.case_id[:20],
+            description=case_json.get(PaymentProperties.PAYER_MESSAGE),
+        )
+    else:
+        raise PaymentRequestError(_("Unsupported payment provider"))
 
 
 def _get_payee_details(case_data: dict) -> PartyDetails:
@@ -204,14 +401,15 @@ def revert_payment_verification(domain, case_ids: list):
     if not case_ids:
         return []
 
-    if _any_invalid_payment_status(case_ids, domain, [PaymentStatus.PENDING_SUBMISSION]):
-        raise PaymentRequestError(
-            _("Only payments in the '{}' state are eligible for verification reversal.".format(
-                PaymentStatus.PENDING_SUBMISSION.label
-            ))
-        )
+    _validate_payment_cases_for_revert(case_ids, domain)
 
     return _update_payment_properties_for_revert(domain, case_ids)
+
+
+def _validate_payment_cases_for_revert(case_ids, domain):
+    valid_statuses = [PaymentStatus.PENDING_SUBMISSION]
+    for case in CommCareCase.objects.iter_cases(case_ids):
+        _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification reversal"))
 
 
 def _update_payment_properties_for_revert(domain, case_ids: list):
@@ -235,3 +433,277 @@ def _properties_to_update_for_revert():
         PaymentProperties.PAYMENT_VERIFIED_BY_USER_ID: '',
         PaymentProperties.PAYMENT_STATUS: PaymentStatus.NOT_VERIFIED,
     }
+
+
+def request_payments_status_for_cases(case_ids, config):
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        status_updates = []
+        for payment_case in CommCareCase.objects.get_cases(case_ids=list(case_ids_chunk)):
+            payment_status_value = payment_case.get_case_property(PaymentProperties.PAYMENT_STATUS)
+            if PaymentStatus.from_value(payment_status_value) not in (
+                    PaymentStatus.SUBMITTED, PaymentStatus.PENDING_PROVIDER
+            ):
+                continue
+
+            try:
+                status_update = request_payment_status(payment_case, config)
+                if status_update.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.PENDING_PROVIDER:
+                    # If status is still pending, we need to retry fetching status in future runs
+                    status_update = _handle_pending_status(payment_case, status_update)
+            except PaymentRequestError as err:
+                status_update = _handle_status_request_error(payment_case, err)
+
+            status_updates.append(
+                (payment_case.case_id, status_update, False)
+            )
+        bulk_update_cases(
+            config.domain, status_updates, device_id=PAYMENT_STATUS_DEVICE_ID
+        )
+
+
+def _get_status_retry_count(payment_case):
+    try:
+        return int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
+    except ValueError:
+        return 0
+
+
+def _handle_status_request_error(payment_case, request_error):
+    retry_count = _get_status_retry_count(payment_case)
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
+        details = _get_notify_error_details(
+            payment_case.domain,
+            payment_case.case_id,
+            str(request_error),
+            payment_case.get_case_property('transaction_id')
+        )
+        notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
+
+    # The status is left unchanged so that the payment is picked up again in the next scheduled run.
+    # The error lets the user know the status could not be fetched.
+    return {
+        PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1,
+        PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR,
+    }
+
+
+def _handle_pending_status(payment_case, status_update):
+    retry_count = _get_status_retry_count(payment_case)
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
+
+    return {**status_update, PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
+
+
+def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
+    transaction_id = payment_case.get_case_property('transaction_id')
+    if not transaction_id:
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MISSING_TRANSACTION_ID)
+
+    try:
+        payment_status_api_method = config.get_payment_status_api_method()
+        status, error_code = payment_status_api_method(transaction_id, config)
+    except requests.exceptions.HTTPError as err:
+        # https://momodeveloper.mtn.com/api-documentation/common-error
+        status_code = err.response.status_code
+        if status_code == 404:
+            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.HTTP_ERROR_404)
+
+        details = _get_notify_error_details(
+            config.domain,
+            payment_case.case_id,
+            str(err.response.text),
+            transaction_id
+        )
+        notify_error(
+            f"[MoMo Payments] Unexpected HTTP error {status_code} while fetching status.",
+            details=details
+        )
+
+        # Server errors that are likely to be temporary, we should retry in next scheduled run
+        if status_code in (502, 503, 504):
+            raise PaymentRequestError(
+                _("Failed to fetch payment status with code: {}".format(status_code))
+            )
+        # Unexpected HTTP errors, this is considered as an error status
+        if config.provider == MoMoProviders.MTN_MONEY:
+            error_code = _get_http_error_code(status_code, err.response)
+        else:
+            error_code = "HttpError{}".format(status_code)
+        return _get_status_details(PaymentStatus.ERROR, error_code)
+    except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+        raise PaymentRequestError(
+            _("Failed to fetch payment status. Unable to connect to server. Please try again later.")
+        )
+    except Exception as e:
+        details = _get_notify_error_details(config.domain, payment_case.case_id, str(e), transaction_id)
+        notify_exception(None, "[MoMo Payments] Unexpected error occurred while fetching status", details=details)
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.UNEXPECTED_ERROR)
+
+    return _get_status_details(status, error_code)
+
+
+def make_mtn_payment_status_request(reference_id, config):
+    """
+    Check the status of a payment using the MTN Mobile Money API.
+
+    Returns a tuple of (status, error_code) where status is the payment status
+    (e.g., 'successful', 'failed', 'pending') and error_code is the reason for
+    failure if applicable.
+    """
+
+    # Documentation: https://momodeveloper.mtn.com/API-collections#api=disbursement&operation=GetDepositStatus
+    #
+    # Example request:
+    #
+    #     GET /disbursement/v1_0/deposit/{reference_id}
+    #     Headers:
+    #         X-Target-Environment: <environment>
+    #         Authorization: Bearer <access_token>
+    #
+    # Example 200 response (successful):
+    #
+    #     {
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "financialTransactionId": "23503452",
+    #         "externalId": "user123",
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "46733123450"
+    #         },
+    #         "payerMessage": "Payment for services",
+    #         "payeeNote": "Thank you for your business",
+    #         "status": "SUCCESSFUL"
+    #     }
+    #
+    # Example 200 response (failed):
+    #
+    #     {
+    #         "amount": "100",
+    #         "currency": "EUR",
+    #         "externalId": "user123",
+    #         "payee": {
+    #             "partyIdType": "MSISDN",
+    #             "partyId": "46733123450"
+    #         },
+    #         "payerMessage": "Payment for services",
+    #         "payeeNote": "Thank you for your business",
+    #         "status": "FAILED",
+    #         "reason": {
+    #             "code": "PAYEE_NOT_FOUND",
+    #             "message": "Payee does not exist"
+    #         }
+    #     }
+
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+    response = requests.get(
+        f'/disbursement/v1_0/deposit/{reference_id}',
+        headers={
+            'X-Target-Environment': config.environment,
+        }
+    )
+    response.raise_for_status()
+    response_data = response.json()
+    return response_data.get('status', '').lower(), response_data.get('reason')
+
+
+def make_orange_cameroon_payment_status_request(reference_id, config):
+    """
+    Check the status of a payment using the Orange Cameroon Mobile Money API.
+
+    Returns a tuple of (status, error_code) where status is the payment status
+    (e.g., 'successfull', 'failed', 'pending') and error_code is the error message
+    if the payment failed.
+    """
+
+    # Documentation: https://apiis.orange.cm/store/apis/info?name=OrangeMoneyCoreAPIS&version=1.0.2
+    # &provider=bmhb8456
+    #
+    # Example request:
+    #
+    #     GET /omcoreapis/1.0.2/cashin/paymentstatus/{reference_id}
+    #     Headers:
+    #         X-AUTH-TOKEN: <auth_token>
+    #       Authorization: Bearer <access_token>
+    #
+    # Example 200 response (successful):
+    #
+    #     {
+    #         "message": "Transaction retrieved successfully",
+    #         "data": {
+    #             "id": 45681987,
+    #             "subscriberMsisdn": "9876543210",
+    #             "amount": 100,
+    #             "payToken": "abc123xyz",
+    #             "txnmode": "OMAPI#CI#45681987",
+    #             "channelUserMsisdn": "1234567890",
+    #             "status": "SUCCESSFULL",
+    #             "txnid": "CI251203.1312.A20573",
+    #             "txnmessage": "null",
+    #             "txnstatus": "200",
+    #             "orderId": "order123",
+    #             "notifUrl": null,
+    #             "description": "Payment for services",
+    #             "createtime": "1764767241"
+    #         }
+    #     }
+    #
+
+    connection_settings = config.connection_settings
+    requests = connection_settings.get_requests()
+    response = requests.get(
+        f'/omcoreapis/1.0.2/cashin/paymentstatus/{reference_id}',
+        headers={
+            'X-AUTH-TOKEN': settings.ORANGE_CAMEROON_API_CREDS['x-auth-token'],
+        }
+    )
+    response.raise_for_status()
+    response_data = response.json()
+    status = response_data['data']['status'].lower()
+    error_code = response_data.get('message', '') if status == PaymentStatus.FAILED else ''
+    return status, error_code
+
+
+def _get_status_details(status, error_code=None):
+    # Orange Cameroon API returns 'successfull' instead of 'successful'
+    if status == 'successfull':
+        status = PaymentStatus.SUCCESSFUL
+    # Just a future proofing measure in case API returns an unexpected status value
+    elif status not in (
+            PaymentStatus.SUCCESSFUL,
+            PaymentStatus.FAILED,
+            PaymentStatus.PENDING_PROVIDER,
+            PaymentStatus.ERROR
+    ):
+        error_code = "UnexpectedStatus-{}".format(status)
+        status = PaymentStatus.ERROR
+
+    return {
+        PaymentProperties.PAYMENT_STATUS: status,
+        PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON: datetime.utcnow().isoformat(),
+        # Clears any previous error when the new status has none
+        PaymentProperties.PAYMENT_ERROR: error_code or '',
+    }
+
+
+def _get_http_error_code(code, response):
+    default_error = "HttpError{}".format(code)
+    try:
+        error = response.json()
+    except JSONDecodeError:
+        return default_error
+    return error.get("code", default_error)
+
+
+def _get_notify_error_details(domain, case_id, error, transaction_id=None):
+    details = {
+        'domain': domain,
+        'case_id': case_id,
+        'error': error,
+    }
+    if transaction_id:
+        details['transaction_id'] = transaction_id
+    return details

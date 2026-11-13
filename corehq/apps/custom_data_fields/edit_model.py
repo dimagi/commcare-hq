@@ -17,7 +17,7 @@ from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.apps.users.models import SQLUserData, CouchUser
+from corehq.apps.users.models import SQLUserData, CouchUser, Invitation
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -199,21 +199,40 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': gettext_lazy('A label is required for each field.')}
+        max_length=255,
+        error_messages={
+            'required': gettext_lazy('A label is required for each field.'),
+            'max_length': gettext_lazy('Labels must be at most %(limit_value)d characters.'),
+        }
     )
     slug = XmlSlugField(
         required=True,
+        max_length=127,
         error_messages={
             'required': gettext_lazy('A property name is required for each field.'),
             'invalid': gettext_lazy('Properties must start with a letter and '
                          'consist only of letters, numbers, underscores or hyphens.'),
+            'max_length': gettext_lazy('Property names must be at most %(limit_value)d characters.'),
         }
     )
     is_required = forms.BooleanField(required=False)
     required_for = forms.CharField(widget=forms.HiddenInput, required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
-    regex = forms.CharField(required=False)
-    regex_msg = forms.CharField(required=False)
+    regex = forms.CharField(
+        required=False,
+        max_length=127,
+        error_messages={
+            'max_length': gettext_lazy('Regular expressions must be at most %(limit_value)d characters '
+                                       '(this one has %(show_value)d).'),
+        }
+    )
+    regex_msg = forms.CharField(
+        required=False,
+        max_length=255,
+        error_messages={
+            'max_length': gettext_lazy('Regex error messages must be at most %(limit_value)d characters.'),
+        }
+    )
     upstream_id = forms.CharField(required=False, empty_value=None)
 
     def __init__(self, raw, *args, **kwargs):
@@ -395,6 +414,10 @@ class CustomDataModelMixin(object):
         errors = []
         for profile in all_profiles:
             if profile.id not in updated_profile_list:
+                if Invitation.by_domain(self.domain, expired=False).filter(profile=profile).exists():
+                    errors.append(_("Could not delete profile '{}' because it has invitations "
+                                    "assigned.").format(profile.name))
+                    break
                 user_data = SQLUserData.objects.filter(profile=profile)
                 for ud in user_data:
                     user = CouchUser.get_by_user_id(ud.user_id)

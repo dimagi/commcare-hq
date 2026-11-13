@@ -58,7 +58,7 @@ class CouchDataLoader(DataLoader):
     def _create_db_for_doc_type(self, doc_type):
         couch_db = get_db_by_doc_type(doc_type)
         if couch_db is None:
-            raise DocumentClassNotFound('No Document class with name "{}" could be found.'.format(doc_type))
+            raise DocumentClassNotFound(f'No Document class with name "{doc_type}" could be found.')
         callback = LoaderCallback(self._success_counter, self.stdout)
         large_doc_types = [Application._doc_type, LinkedApplication._doc_type, RemoteApp._doc_type]
         chunksize = 1 if doc_type in large_doc_types else self.chunksize
@@ -82,14 +82,14 @@ class LoaderCallback(IterDBCallback):
             doc_id = doc['_id']
             doc_type = drop_suffix(doc['doc_type'])
             doc_class = get_document_class_by_doc_type(doc_type)
-            doc_label = '{}.{}'.format(doc_class._meta.app_label, doc_type)
+            doc_label = f'{doc_class._meta.app_label}.{doc_type}'
             if doc_id in success_ids:
                 success_doc_types.append(doc_label)
 
         self._success_counter.update(success_doc_types)
 
         if self.stdout:
-            self.stdout.write('Loaded {} couch docs'.format(sum(self._success_counter.values())))
+            self.stdout.write(f'Loaded {sum(self._success_counter.values())} couch docs')
 
 
 class ToggleLoader(DataLoader):
@@ -118,7 +118,7 @@ class ToggleLoader(DataLoader):
 
             count += 1
 
-        self.stdout.write('Loaded {} Toggles'.format(count))
+        self.stdout.write(f'Loaded {count} Toggles')
         return Counter({'Toggle': count})
 
 
@@ -140,9 +140,9 @@ class DomainLoader(DataLoader):
         else:
             if existing_domain:
                 if force:
-                    self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
+                    self.stderr.write(f'Loading data for existing domain: {domain_name}')
                 else:
-                    raise DataExistsException("Domain: {}".format(domain_name))
+                    raise DataExistsException(f"Domain: {domain_name}")
 
         if not dry_run:
             Domain.get_db().bulk_save([domain_dict], new_edits=False)

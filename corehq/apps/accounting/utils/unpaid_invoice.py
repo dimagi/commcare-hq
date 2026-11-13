@@ -3,6 +3,7 @@ import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from corehq.apps.accounting.const import (
     DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
@@ -144,9 +145,18 @@ class InvoiceReminder(UnpaidInvoiceAction):
         else:
             account_name = invoice.get_domain()
 
-        subject = _(
-            "Your CommCare Billing Statement for {account_name} is due in {num_days} days"
-        ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
+        if invoice.account.auto_pay_enabled:
+            subject = ngettext(
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} day",
+                "Your Automatic Payment for CommCare Account {account_name} is scheduled in {num_days} days",
+                DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
+            ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
+        else:
+            subject = ngettext(
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} day",
+                "Your CommCare Billing Statement for {account_name} is due in {num_days} days",
+                DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER,
+            ).format(account_name=account_name, num_days=DAYS_BEFORE_DUE_TO_TRIGGER_REMINDER)
 
         send_HTML_email(
             subject,
@@ -181,6 +191,9 @@ class InvoiceReminder(UnpaidInvoiceAction):
             'total_balance': fmt_dollar_amount(total),
             'plan_name': subscription.plan_version.plan.name,
             'can_pay_by_wire': invoice.can_pay_by_wire,
+            'autopay_enabled': subscription.account.auto_pay_enabled,
+            'autopay_required': subscription.account.require_auto_pay,
+            'overdue_invoice_limit_days': OVERDUE_INVOICE_LIMIT_DAYS,
         })
         return context
 
@@ -196,7 +209,7 @@ class Downgrade(UnpaidInvoiceAction):
             subscription.plan_version.plan.edition not in [
                 SoftwarePlanEdition.FREE,
                 SoftwarePlanEdition.PAUSED,
-            ] and not subscription.skip_auto_downgrade
+            ] and not subscription.should_skip_downgrade
         )
 
     @classmethod

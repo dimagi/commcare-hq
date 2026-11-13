@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.core.cache import cache
 from django.test import SimpleTestCase, TestCase
 
-from nose.tools import nottest
+from corehq.tests.tools import nottest
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import CASE_SQL

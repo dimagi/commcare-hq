@@ -1,12 +1,12 @@
 import uuid
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock
-from corehq.apps.hqcase.utils import submit_case_blocks
 
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
@@ -24,6 +24,8 @@ from corehq.apps.userreports.reports.specs import (
     AggregateDateColumn,
     FieldColumn,
     PercentageColumn,
+    SumWhenColumn,
+    SumWhenTemplateColumn,
 )
 from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -495,3 +497,29 @@ class TestPercentageColumn(SimpleTestCase):
                 "type": "field",
             }
         }
+
+
+class TestSumWhenColumnsRestrictedToStatic(SimpleTestCase):
+    """
+    sum_when and sum_when_template columns are restricted to static reports
+    because their conditional expressions lack sufficient safety checks.
+    """
+
+    def test_sum_when_column_restricted_to_static(self):
+        assert SumWhenColumn.restricted_to_static('some-domain') is True
+
+    def test_sum_when_template_column_restricted_to_static(self):
+        assert SumWhenTemplateColumn.restricted_to_static('some-domain') is True
+
+    @override_settings(UNIT_TESTING=False)
+    def test_sum_when_template_raises_in_dynamic_report(self):
+        """sum_when_template must not be usable in dynamic (non-static) UCRs."""
+        spec = {
+            'type': 'sum_when_template',
+            'column_id': 'test_col',
+            'field': 'age',
+            'whens': [],
+            'else_': 0,
+        }
+        with self.assertRaises(BadSpecError):
+            ReportColumnFactory.from_spec(spec, is_static=False, domain='some-domain')

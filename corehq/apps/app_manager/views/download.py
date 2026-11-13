@@ -15,7 +15,7 @@ from couchdbkit import ResourceConflict, ResourceNotFound
 
 from dimagi.utils.web import json_response
 
-from corehq import privileges, toggles
+from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
@@ -30,10 +30,7 @@ from corehq.apps.app_manager.exceptions import (
 )
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tasks import autogenerate_build
-from corehq.apps.app_manager.util import (
-    add_odk_profile_after_build,
-    get_latest_enabled_versions_per_profile,
-)
+from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
@@ -368,12 +365,8 @@ def download_index(request, domain, app_id):
     latest_enabled_build_profiles = {}
     build_profiles = [{'id': build_profile_id, 'name': build_profile.name}
                       for build_profile_id, build_profile in request.app.build_profiles.items()]
-    if request.app.is_released and toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        latest_enabled_build_profiles = get_latest_enabled_versions_per_profile(request.app.copy_of)
-        enabled_build_profiles = [_id for _id, version in latest_enabled_build_profiles.items()
-                                  if version == request.app.version]
 
-    return render(request, "app_manager/download_index.html", {
+    return render(request, "app_manager/bootstrap3/download_index.html", {
         'app': request.app,
         'files': OrderedDict(sorted(files.items(), key=lambda x: x[0] or '')),
         'build_profiles': build_profiles,
@@ -395,7 +388,7 @@ def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     if ajax and "blank form" in [error.get('type') for error in errors]:
         response_html = ""
     else:
-        response_html = render_to_string("app_manager/partials/build_errors.html", {
+        response_html = render_to_string("app_manager/partials/bootstrap3/build_errors.html", {
             'app': app,
             'build_errors': errors,
             'not_actual_build': True,

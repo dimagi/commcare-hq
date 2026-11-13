@@ -191,7 +191,7 @@
       <instance id="commcaresession" src="jr://instance/session"></instance>
       <session>
         <datum detail-select="m0_case_short" id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open']" value="./@case_id"></datum>
-        <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id"></datum>
+        <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_id]" value="./@case_id"></datum>
       </session>
     </entry>
     <entry>
@@ -205,8 +205,8 @@
       <instance id="commcaresession" src="jr://instance/session"></instance>
       <session>
         <datum detail-select="m0_case_short" id="parent_parent_id" nodeset="instance('casedb')/casedb/case[@case_type='parent'][@status='open']" value="./@case_id"></datum>
-        <datum detail-select="m1_case_short" id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_parent_id]" value="./@case_id"></datum>
-        <datum detail-confirm="m2_case_long" detail-select="m2_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='grandchild'][@status='open'][index/parent=instance('commcaresession')/session/data/parent_id]" value="./@case_id"></datum>
+        <datum detail-select="m1_case_short" id="parent_id" nodeset="instance('casedb')/casedb/case[@case_type='child'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_parent_id]" value="./@case_id"></datum>
+        <datum detail-confirm="m2_case_long" detail-select="m2_case_short" id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='grandchild'][@status='open'][index/*[not(@relationship='extension')]=instance('commcaresession')/session/data/parent_id]" value="./@case_id"></datum>
       </session>
     </entry>
     <menu id="m0">

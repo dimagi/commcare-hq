@@ -1,0 +1,43 @@
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+<form id="commtrack_form" class="form-horizontal" name="" method="post">
+  {% csrf_token %}
+  <input type="hidden" name="form_type" value="commtrack" />
+  <fieldset>
+    <legend>{% trans 'Organization Settings' %}</legend>
+    {% crispy commtrack.update_form %}  {# todo B5: crispy #}
+  </fieldset>
+  {% if not request.is_view_only %}
+    {% include 'users/partials/location_edit_warnings.html' with user_type="Mobile Worker" couch_username=couch_user.username request_username=request.couch_user.username %}
+    {% if warning_banner_info and warning_banner_info.orphaned_case_count_per_location %}
+      <div class="alert alert-warning">
+        <p>
+          {% blocktrans %}
+            The user is the only assigned user who can view cases in the following locations:
+          {% endblocktrans %}
+        </p>
+        {% for location, case_count in warning_banner_info.orphaned_case_count_per_location.items %}
+          <ul>
+            <li>{{ location }} ({{ case_count }})</li>
+          </ul>
+        {% endfor %}
+        <p>
+          {% blocktrans %}
+            Depending on your application's case sharing configuration, changing one or more of these
+            locations may result in some cases not being visible to any user until a new user is assigned
+            to those locations.
+          {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
+    <div class="form-actions">
+      <div class="offset-md-3 offset-lg-2 col-md-9 col-lg-8 col-xl-6">
+        <button type="submit" class="btn btn-primary disable-on-submit">
+          {% trans 'Update Location Settings' %}
+        </button>
+      </div>
+    </div>
+  {% endif %}
+</form>

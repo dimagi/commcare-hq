@@ -1,0 +1,22 @@
+{% extends "hqwebapp/partials/bootstrap5/bulk_upload.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block prerequisites %}
+  <li>
+    <p>
+      {% trans "Include only paths where the multimedia file is missing?" %}
+      <select-toggle data-apply-bindings="false"  {# todo B5: css-select-form-control #}
+                     params="name: 'only_missing',
+                             id: 'only_missing',
+                             value: only_missing,
+                             options: [{
+                               id: 'false',
+                               text: '{% trans_html_attr 'All Paths' %}',
+                             }, {
+                               id: 'true',
+                               text: '{% trans_html_attr 'Only Missing Paths' %}'
+                             }]"></select-toggle>
+    </p>
+  </li>
+{% endblock prerequisites %}

@@ -1,0 +1,25 @@
+--- 
++++ 
+@@ -2,16 +2,16 @@
+ {% load hq_shared_tags %}
+ 
+ {% compress css %}
+-  <link type="text/less"
++  <link type="text/scss"
+         rel="stylesheet"
+         media="all"
+-        href="{% static 'app_manager/less/font-workflow.less' %}" />
+-  <link type="text/less"
++        href="{% static 'app_manager/scss/font-workflow.scss' %}" />
++  <link type="text/scss"
+         rel="stylesheet"
+         media="all"
+-        href="{% static 'app_manager/less/app_manager.less' %}" />
+-  <link type="text/less"
++        href="{% static 'app_manager/scss/app_manager.scss' %}" />
++  <link type="text/scss"
+         rel="stylesheet"
+         media="all"
+-        href="{% static 'app_manager/less/preview_app.less' %}"/>
++        href="{% static 'app_manager/scss/preview_app.scss' %}"/>
+ {% endcompress %}

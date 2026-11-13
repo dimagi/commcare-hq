@@ -38,11 +38,9 @@ class KafkaPublishingTest(TestCase):
             change_feed=KafkaChangeFeed(topics=[topics.CASE_SQL], client_id='test-kafka-case-feed'),
             processor=cls.processor
         )
-        cls.process_form_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_form_changes.add_pillow(cls.form_pillow)
+        cls.process_form_changes = process_pillow_changes(cls.form_pillow)
 
-        cls.process_case_changes = process_pillow_changes('DefaultChangeFeedPillow')
-        cls.process_case_changes.add_pillow(cls.case_pillow)
+        cls.process_case_changes = process_pillow_changes(cls.case_pillow)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()

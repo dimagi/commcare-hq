@@ -2,16 +2,18 @@ import shutil
 from datetime import datetime
 
 from django.conf import settings
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from couchdbkit import ResourceNotFound
+
+from corehq.apps.export.dbaccessors import get_export_instance_in_domain
 from corehq.util.files import safe_filename
 
 
-def download_saved_export(export_id, dest_dir=None):
+def download_saved_export(domain, export_id, dest_dir=None):
     # Downloads the latest saved export to shared-directory
     dest_dir = (dest_dir or settings.SHARED_DRIVE_ROOT).rstrip()
-    export_instance = get_properly_wrapped_export_instance(export_id)
+    export_instance = get_export_instance_in_domain(domain, export_id)
     export_archive_path = '{}/{}_{}.zip'.format(
         dest_dir,
         safe_filename(export_instance.name.encode('ascii', 'replace') or 'Export'),
@@ -29,7 +31,10 @@ class Command(BaseCommand):
     help = "Download saved exports to a directory"
 
     def add_arguments(self, parser):
-
+        parser.add_argument(
+            'domain',
+            help="Domain the export belongs to",
+        )
         parser.add_argument(
             'export_id',
             help="Export ID of the saved export"
@@ -41,6 +46,9 @@ class Command(BaseCommand):
             help='Destination directory',
         )
 
-    def handle(self, export_id, **options):
+    def handle(self, domain, export_id, **options):
         dest_dir = options.pop('destination_dir')
-        download_saved_export(export_id, dest_dir=dest_dir)
+        try:
+            download_saved_export(domain, export_id, dest_dir=dest_dir)
+        except ResourceNotFound:
+            raise CommandError(f"Export {export_id} not found in domain {domain}")

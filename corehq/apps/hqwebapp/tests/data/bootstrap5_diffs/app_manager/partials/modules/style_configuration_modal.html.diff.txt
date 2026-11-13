@@ -1,0 +1,94 @@
+--- 
++++ 
+@@ -1,60 +1,60 @@
+ {% load i18n %}
+-<div id="style_configuration_modal" class="hide">
++<div id="style_configuration_modal" class="d-none">
+   <div class="modal fade">
+     <div class="modal-dialog modal-sm">
+       <div class="modal-content">
+         <div class="modal-header">
+-          <button type="button" class="close" data-dismiss="modal">
++          <button type="button" class="btn-close" data-bs-dismiss="modal">  {# todo B5: css-close #}
+             <span aria-hidden="true">&times;</span>
+           </button>
+           <h4 class="modal-title">{% trans "Edit Field Style" %}</h4>
+         </div>
+         <div class="modal-body">
+           <div >
+-            <div class="form-group">
+-              <label for="horizontalAlign" class="control-label">{% trans "Horizontal Align" %}</label>
+-              <select
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label for="horizontalAlign" class="form-label">{% trans "Horizontal Align" %}</label>
++              <select  {# todo B5: css-select-form-control #}
+                 id="horizontalAlign"
+                 class="form-control"
+                 data-bind="value: horizontalAlign, options: horizontalAlignOptions, visible: coordinatesVisible">
+               </select>
+             </div>
+-            <div class="form-group">
+-              <label for="verticalAlign" class="control-label">{% trans "Vertical Align" %}</label>
+-              <select
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label for="verticalAlign" class="form-label">{% trans "Vertical Align" %}</label>
++              <select  {# todo B5: css-select-form-control #}
+                 id="verticalAlign"
+                 class="form-control"
+                 data-bind="value: verticalAlign, options: verticalAlignOptions, visible: coordinatesVisible">
+               </select>
+             </div>
+-            <div class="form-group">
+-              <label for="fontSize" class="control-label">{% trans "Font Size" %}</label>
+-              <select
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label for="fontSize" class="form-label">{% trans "Font Size" %}</label>
++              <select  {# todo B5: css-select-form-control #}
+                 id="fontSize"
+                 class="form-control"
+                 data-bind="value: fontSize, options: fontSizeOptions, visible: coordinatesVisible">
+               </select>
+             </div>
+-            <div class="form-group">
+-              <label for="showBorder" class="control-label">{% trans "Border" %}</label>
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label for="showBorder" class="form-label">{% trans "Border" %}</label>
+               <input
+                 id="showBorder"
+-                type="checkbox"
++                type="checkbox"  {# todo B5: css-checkbox #}
+                 data-bind="checked: showBorder, visible: coordinatesVisible"
+               >
+             </div>
+-            <div class="form-group">
+-              <label for="showShading" class="control-label">{% trans "Shade" %}</label>
++            <div class="form-group">  {# todo B5: css-form-group #}
++              <label for="showShading" class="form-label">{% trans "Shade" %}</label>
+               <input
+                 id="showShading"
+-                type="checkbox"
++                type="checkbox"  {# todo B5: css-checkbox #}
+                 data-bind="checked: showShading, visible: coordinatesVisible"
+               >
+             </div>
+           </div>
+         </div>
+         <div class="modal-footer">
+-          <button class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
++          <button class="btn btn-outline-primary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+         </div>
+       </div>
+     </div>
+@@ -65,10 +65,10 @@
+   {# TODO: The following markup is pretty similar to the markup #}
+   {#       on the key_value_mapping page... consider making it DRYer #}
+   {#       ex: there could be a single class for language badges #}
+-  <span class="btn btn-default btn-xs lang-text"
++  <span class="btn btn-outline-primary btn-sm lang-text"
+         data-bind="
+             text: getBackup().lang,
+-            {# language badge is only visible if the field is empty and a backup was found #}
++            {# language badge rounded-pill is only visible if the field is empty and a backup was found #}
+             visible: ![$parent.lang, null].includes(getBackup().lang) && values[$parent.lang]() === null
+     "></span>
+ </script>

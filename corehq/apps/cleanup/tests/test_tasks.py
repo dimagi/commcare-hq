@@ -1,48 +1,48 @@
+import pytest
+
 from datetime import datetime
-from unittest.mock import patch
+from time_machine import travel
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
-from corehq.apps.cleanup.tasks import permanently_delete_eligible_data
+from corehq.apps.cleanup.tasks import purge_expired_data
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
 
 
-class TestPermanentlyDeleteEligibleData(TestCase):
+class TestPurgeExpiredData(TestCase):
     """
-    This serves as a general smoke test. To see specific tests, see:
-    - corehq.form_processor.tests.test_forms.TestHardDeleteFormsBeforeCutoff
+    This serves as a general smoke test. More comprehensive tests should
+    exist for each table that is eligible for hard deletion.
+    (e.g., corehq.form_processor.tests.test_forms.TestHardDeleteExpiredForms)
     """
+    domain = 'test_purge_expired_data'
 
-    def test_deletes_data(self):
-        before_cutoff = datetime(2020, 1, 1, 12, 29)
-        form = create_form_for_test(self.domain, deleted_on=before_cutoff)
+    @travel('2020-01-10')
+    def test_deletes_data_outside_of_retention_window(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 2))
 
-        permanently_delete_eligible_data(dry_run=False)
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            purge_expired_data(dry_run=False)
 
-        with self.assertRaises(XFormNotFound):
+        with pytest.raises(XFormNotFound):
             XFormInstance.objects.get_form(form.form_id)
 
-    def test_does_not_delete_data(self):
-        form = create_form_for_test(self.domain, deleted_on=self.cutoff)
+    @travel('2020-01-10')
+    def test_does_not_delete_data_within_retention_window(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 4))
 
-        permanently_delete_eligible_data(dry_run=False)
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            purge_expired_data(dry_run=False)
 
-        self.assertIsNotNone(XFormInstance.objects.get_form(form.form_id))
+        assert XFormInstance.objects.get_form(form.form_id) is not None
 
-    def test_does_not_delete_data_if_in_dry_run_mode(self):
-        before_cutoff = datetime(2020, 1, 1, 12, 29)
-        form = create_form_for_test(self.domain, deleted_on=before_cutoff)
+    @travel('2020-01-10')
+    def test_does_not_delete_data_in_dry_run(self):
+        form = create_form_for_test(self.domain, deleted_on=datetime(2020, 1, 2))
 
-        permanently_delete_eligible_data(dry_run=True)
+        with override_settings(DATA_RETENTION_WINDOW=7):
+            purge_expired_data(dry_run=True)
 
-        XFormInstance.objects.get_form(form.form_id)
-
-    def setUp(self):
-        self.domain = 'test_permanently_delete_eligible_data'
-        self.cutoff = datetime(2020, 1, 1, 12, 30)
-        patcher = patch('corehq.apps.cleanup.tasks.get_cutoff_date_for_data_deletion')
-        self.mock_cutoff = patcher.start()
-        self.mock_cutoff.return_value = self.cutoff
-        self.addCleanup(patcher.stop)
+        assert XFormInstance.objects.get_form(form.form_id) is not None

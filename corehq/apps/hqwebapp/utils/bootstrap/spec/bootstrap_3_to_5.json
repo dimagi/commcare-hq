@@ -26,7 +26,6 @@
         "panel-default": "",
         "panel-info": "text-bg-info",
         "panel-danger": "text-bg-danger",
-        "panel-group": "card-group",
         "panel": "card",
         "well": "card",
         "close": "btn-close",
@@ -100,6 +99,7 @@
         "page-header",
         "pagination",
         "panel",
+        "panel-group",
         "progress",
         "well"
     ],

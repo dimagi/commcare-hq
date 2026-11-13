@@ -1,4 +1,3 @@
-/* eslint-env node */
 const path = require('path');
 const webpack = require('webpack');
 const utils = require('./utils');
@@ -10,11 +9,6 @@ const aliases = {
         'commcarehq'),
     "jquery": require.resolve('jquery'),
     "langcodes/js/langcodes": path.resolve("submodules/langcodes/static/langcodes/js/langcodes"),
-
-    // todo after completing requirejs migration,
-    //  remove this file and the yarn modernizr post-install step
-    "modernizr": "hqwebapp/js/lib/modernizr",
-
     "nvd3/nv.d3.latest.min": "nvd3-1.8.6/build/nv.d3.min",
     "popper": "@popperjs/core/dist/cjs/popper.js",
     "sentry_browser": path.resolve(utils.getStaticFolderForApp('hqwebapp'),
@@ -54,7 +48,18 @@ module.exports = {
                     },
                     {
                         test: /\.less$/,
-                        use: ["style-loader", "css-loader", "less-loader"],
+                        use: [
+                            "style-loader",
+                            "css-loader",
+                            {
+                                loader: "less-loader",
+                                options: {
+                                    lessOptions: {
+                                        math: "always",
+                                    },
+                                },
+                            },
+                        ],
                     },
                     {
                         test: /\.js$/,
@@ -69,19 +74,6 @@ module.exports = {
                     {
                         test: /\.png/,
                         type: 'asset/resource',
-                    },
-
-                    {
-                        test: /modernizr\.js$/,
-                        loader: "webpack-modernizr-loader",
-                        options: {
-                            "options": [
-                                "setClasses",
-                            ],
-                            "feature-detects": [
-                                "test/svg/smil",
-                            ],
-                        },
                     },
 
                     {
@@ -129,6 +121,12 @@ module.exports = {
             'window.jQuery': 'jquery',  // needed for some third-party libraries that depend on jQuery, such as multiselect
         }),
         new hqPlugins.EntryChunksPlugin(),
+
+        // Supports hqAnalytics in vellum when VELLUM_DEBUG=True
+        new webpack.NormalModuleReplacementPlugin(
+            /hqAnalytics\.js/,
+            path.resolve(utils.getStaticPathForApp('app_manager', 'js/forms/'), 'form_designer_analytics.js'),
+        ),
     ],
 
     optimization: {
@@ -139,6 +137,12 @@ module.exports = {
 
     resolve: {
         alias: utils.getAllAliases(Object.assign(aliases, vellumUtils.getAliases())),
+
+        // Needed for js-xpath in app manager
+        fallback: {
+            "path": false,
+            "fs": false,
+        },
     },
 
     snapshot: {

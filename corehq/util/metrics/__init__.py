@@ -198,7 +198,6 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     @periodic_task(queue='background_queue', run_every=run_every, acks_late=True, ignore_result=True)
     @wraps(fn)
     def inner():
-        from corehq.util.metrics import metrics_gauge
         metrics_gauge(name, fn(), multiprocess_mode=multiprocess_mode)
 
     return inner

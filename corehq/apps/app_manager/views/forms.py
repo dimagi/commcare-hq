@@ -1,34 +1,35 @@
 import hashlib
 import json
 import logging
+from urllib.parse import quote, unquote
 from xml.sax.saxutils import escape
 
+from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from diff_match_patch import diff_match_patch
+from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     HttpResponseRedirect,
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-
-from diff_match_patch import diff_match_patch
 from lxml import etree
 from no_exceptions.exceptions import Http400
 from text_unidecode import unidecode
 
-from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import json_response
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.app_manager.app_schemas.case_properties import (
     get_all_case_properties,
     get_usercase_properties,
@@ -46,20 +47,30 @@ from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST,
     require_can_edit_apps,
-    require_deploy_apps,
+    require_can_edit_or_view_apps,
 )
 from corehq.apps.app_manager.exceptions import (
+    AppEditingError,
     AppInDifferentDomainException,
     AppMisconfigurationError,
     FormNotFoundException,
+    IncompatibleFormTypeException,
+    LockedQuestionError,
     ModuleNotFoundException,
     XFormValidationFailed,
+)
+from corehq.apps.app_manager.form_action_diff import (
+    collect_locked_advanced_mappings,
+    collect_locked_mappings,
+    get_case_mappings,
+    make_multi,
+    merge_case_mappings,
+    update_form_actions,
 )
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
-    AppEditingError,
     ArbitraryDatum,
     CaseReferences,
     CustomIcon,
@@ -67,9 +78,9 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActionCondition,
+    FormActions,
     FormDatum,
     FormLink,
-    IncompatibleFormTypeException,
     OpenCaseAction,
     UpdateCaseAction,
 )
@@ -80,10 +91,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import (
 from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USERCASE_XPATH_SUBSTRING_MATCHES,
-    actions_use_usercase,
-    advanced_actions_use_usercase,
-    enable_usercase,
-    is_usercase_in_use,
     module_loads_registry_case,
     module_uses_inline_search,
     save_xform,
@@ -103,13 +110,14 @@ from corehq.apps.app_manager.views.utils import (
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
+    XForm,
     XFormException,
     XFormValidationError,
 )
 from corehq.apps.data_dictionary.util import (
+    get_case_property_count,
     get_case_property_deprecated_dict,
     get_case_property_description_dict,
-    get_case_property_count,
 )
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
@@ -119,11 +127,26 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.programs.models import Program
+from corehq.apps.public_webforms.utils import get_create_public_webform_url
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.project_limits.const import CASE_PROP_LIMIT_PER_CASE_TYPE_KEY, DEFAULT_CASE_PROPS_PER_CASE_TYPE
+from corehq.project_limits.const import (
+    CASE_PROP_LIMIT_PER_CASE_TYPE_KEY,
+    DEFAULT_CASE_PROPS_PER_CASE_TYPE,
+)
 from corehq.project_limits.models import SystemLimit
 from corehq.util.view_utils import set_file_download
+
+
+_LOCKED_QUESTION_MAPPING_ERROR = gettext_lazy(
+    "Case property mappings that reference locked questions cannot be "
+    "modified. Unlock the question in the form builder first."
+)
+
+_LOCKED_QUESTION_CONTENT_ERROR = gettext_lazy(
+    "Locked questions cannot be modified. Unlock the question in the form "
+    "builder first."
+)
 
 
 @no_conflict_require_POST
@@ -207,12 +230,11 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
-    if form.form_type == "shadow_form":
-        form.extra_actions = actions
-    else:
-        form.actions = actions
-    if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
-        enable_usercase(domain)
+
+    try:
+        _apply_advanced_form_actions_change(request, domain, form, actions)
+    except LockedQuestionError:
+        return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     datums_json = json.loads(request.POST.get('arbitrary_datums'))
     datums = [ArbitraryDatum.wrap(item) for item in datums_json]
@@ -231,7 +253,13 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     old_load_from_form = form.actions.load_from_form
 
-    form.actions = _get_updates(form.actions, request.POST)
+    actions_json = json.loads(request.POST['actions'])
+    diff_json = request.POST.get('case_mapping_diff')
+    diff = json.loads(diff_json) if diff_json else {}
+    try:
+        _apply_form_actions_change(request, domain, form, actions_json, diff)
+    except LockedQuestionError:
+        return HttpResponseForbidden(_LOCKED_QUESTION_MAPPING_ERROR)
 
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
@@ -240,21 +268,113 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
         if isinstance(condition.answer, str):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions):
-        if not is_usercase_in_use(domain):
-            enable_usercase(domain)
 
     response_json = {}
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES_CASEMGT,
+            request.couch_user,
+        )
+    response_json['actions'] = make_multi(form.actions.to_json())
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
 
 
-def _get_updates(existing_actions, data):
-    updates = json.loads(data['actions'])
-    update_diff = json.loads(data['update_diff']) if 'update_diff' in data else {}
-    return existing_actions.with_updates(updates, update_diff)
+def _apply_advanced_form_actions_change(request, domain, form, new_actions):
+    """Assign ``new_actions`` to ``form.actions`` (or ``form.extra_actions``
+    for shadow forms).
+
+    :raises LockedQuestionError: if the change would add, remove, or
+        repoint a case-property mapping bound to a locked question.
+    """
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    current = form.extra_actions if form.form_type == 'shadow_form' else form.actions
+    if (
+        collect_locked_advanced_mappings(current, locked_paths)
+        != collect_locked_advanced_mappings(new_actions, locked_paths)
+    ):
+        raise LockedQuestionError
+
+    if form.form_type == "shadow_form":
+        form.extra_actions = new_actions
+    else:
+        form.actions = new_actions
+
+
+def _apply_form_actions_change(request, domain, form, actions_json, diff):
+    """Apply ``actions_json`` and ``diff`` to ``form.actions``.
+
+    :raises LockedQuestionError: if the change would add, remove, or
+        repoint a case-property mapping bound to a locked question.
+    """
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    before = collect_locked_mappings(form.actions, locked_paths)
+    update_form_actions(form.actions, actions_json, diff)
+    if collect_locked_mappings(form.actions, locked_paths) != before:
+        raise LockedQuestionError
+
+
+def _locked_paths_to_protect(request, domain, form):
+    """Set of locked question paths whose case-property mappings must be
+    preserved on this request, or empty set if the feature is off.
+    """
+    if not domain_has_privilege(domain, "locked_admin_questions"):
+        return set()
+    return form.wrapped_xform().locked_question_paths
+
+
+def _check_case_mapping_diff_does_not_touch_locked(request, domain, form, case_mapping_diff):
+    """Reject a save whose ``case_mapping_diff`` would change a case-property
+    mapping bound to a question that is locked.
+
+    Users with ``edit_locked_questions_in_apps`` bypass this check entirely:
+    the UI lock is a safeguard against accidents for them, not an authorization
+    boundary.
+
+    :raises LockedQuestionError: if the diff would change a locked mapping.
+    """
+    if (
+        not case_mapping_diff
+        or request.couch_user.can_edit_locked_questions_in_apps(domain)
+    ):
+        return
+
+    locked_paths = _locked_paths_to_protect(request, domain, form)
+    if not locked_paths:
+        return
+
+    before = collect_locked_mappings(form.actions, locked_paths)
+    actions_copy = FormActions.wrap(form.actions.to_json())
+    merge_case_mappings(case_mapping_diff, actions_copy)
+    if collect_locked_mappings(actions_copy, locked_paths) != before:
+        raise LockedQuestionError
+
+
+def _check_locked_questions_unmodified(request, domain, form, new_xml):
+    """Reject a save that changes anything about a locked question.
+
+    For every path that was locked in the old form, the question's signature
+    in the new XForm must be identical.
+
+    Users with ``edit_locked_questions_in_apps`` permission bypass this
+    check entirely; the UI lock is a safeguard against accidents for them,
+    not an authorization boundary.
+
+    :raises LockedQuestionError: if a locked question changed.
+    """
+    if request.couch_user.can_edit_locked_questions_in_apps(domain):
+        return
+    old_locked = _locked_paths_to_protect(request, domain, form)
+    if not old_locked:
+        return
+    old_xform = form.wrapped_xform()
+    new_xform = XForm(new_xml, domain=domain)
+    for path in old_locked:
+        if old_xform.get_question_signature(path) != new_xform.get_question_signature(path):
+            raise LockedQuestionError
 
 
 @waf_allow('XSS_BODY')
@@ -268,6 +388,25 @@ def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
 @login_or_digest
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
+
+
+def _apply_form_name_and_comment_updates(request, form, lang, app, sync_xform_title=False):
+    """
+    sync_xform_title=True is only needed when the name update is not from Vellum
+    """
+    update = {}
+    if "name" in request.POST:
+        name = request.POST['name']
+        form.name[lang] = name
+        if sync_xform_title and form.form_type != "shadow_form":
+            xform = form.wrapped_xform()
+            if xform.exists():
+                xform.set_name(name)
+                save_xform(app, form, xform.render())
+        update['.variable-form_name'] = clean_trans(form.name, [lang])
+    if "comment" in request.POST:
+        form.comment = request.POST['comment']
+    return update
 
 
 @no_conflict_require_POST
@@ -311,20 +450,21 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         if conflict is not None:
             return conflict
 
-    if should_edit("name"):
-        name = request.POST['name']
-        form.name[lang] = name
-        if not form.form_type == "shadow_form":
-            xform = form.wrapped_xform()
-            if xform.exists():
-                xform.set_name(name)
-                save_xform(app, form, xform.render())
-        resp['update'] = {'.variable-form_name': clean_trans(form.name, [lang])}
+    has_xform = should_edit("xform") or "xform" in request.FILES
 
-    if should_edit('comment'):
-        form.comment = request.POST['comment']
+    resp['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app, sync_xform_title=not has_xform)
 
-    if should_edit("xform") or "xform" in request.FILES:
+    if has_xform:
+        if "xform" in request.FILES and not _allow_xform_upload(
+            request, domain, form.wrapped_xform().has_locked_questions
+        ):
+            error = _("You do not have permission to upload an XForm for a form "
+                      "that contains locked questions.")
+            if ajax:
+                return HttpResponseForbidden(error)
+            messages.error(request, error)
+            return back_to_main(request, domain, app_id=app_id)
         try:
             # support FILES for upload and POST for ajax post from Vellum
             try:
@@ -339,7 +479,25 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             if xform:
                 if isinstance(xform, str):
                     xform = xform.encode('utf-8')
-                save_xform(app, form, xform)
+                case_mapping_diff = _get_case_mapping_diff(request)
+                try:
+                    _check_locked_questions_unmodified(request, domain, form, xform)
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_CONTENT_ERROR)
+                try:
+                    _check_case_mapping_diff_does_not_touch_locked(
+                        request, domain, form, case_mapping_diff,
+                    )
+                except LockedQuestionError:
+                    raise Exception(_LOCKED_QUESTION_MAPPING_ERROR)
+                save_xform(app, form, xform, case_mapping_diff)
+                if _case_mapping_diff_has_changes(case_mapping_diff):
+                    # form builder is the only client that submits
+                    # mapping_diff at time of writing, but that could change.
+                    record_google_analytics_event(
+                        METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER,
+                        request.couch_user,
+                    )
             else:
                 raise Exception("You didn't select a form to upload")
         except Exception as e:
@@ -435,7 +593,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
-    if should_edit("custom_icon_form"):
+    if should_edit("custom_icon_type"):
         handle_custom_icon_edits(request, form, lang)
 
     if should_edit('session_endpoint_id'):
@@ -443,7 +601,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         set_session_endpoint(form, raw_endpoint_id, app)
 
     if should_edit('access_hidden_forms'):
-        form.respect_relevancy = not ('true' in request.POST.getlist('access_hidden_forms'))
+        form.respect_relevancy = 'true' not in request.POST.getlist('access_hidden_forms')
 
     if should_edit('function_datum_endpoints'):
         if request.POST['function_datum_endpoints']:
@@ -455,6 +613,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     app.save(resp)
     if ajax:
+        _add_case_management_data(resp, form)
         return JsonResponse(resp)
     else:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
@@ -526,15 +685,26 @@ def patch_xform(request, domain, app_id, form_unique_id):
 
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
+    lang = request.COOKIES.get('lang', app.langs[0])
 
     conflict = _get_xform_conflict_response(form, sha1_checksum)
     if conflict is not None:
         return conflict
 
     xml = apply_patch(patch, form.source)
+    new_xml = xml.encode('utf-8')
+    case_mapping_diff = _get_case_mapping_diff(request)
 
     try:
-        xml = save_xform(app, form, xml.encode('utf-8'))
+        _check_locked_questions_unmodified(request, domain, form, new_xml)
+        _check_case_mapping_diff_does_not_touch_locked(
+            request, domain, form, case_mapping_diff,
+        )
+    except LockedQuestionError:
+        return HttpResponseForbidden()
+
+    try:
+        xml = save_xform(app, form, new_xml, case_mapping_diff)
     except XFormException:
         return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
 
@@ -545,13 +715,48 @@ def patch_xform(request, domain, app_id, form_unique_id):
         'status': 'ok',
         'sha1': hashlib.sha1(xml).hexdigest()
     }
+
+    response_json['update'] = _apply_form_name_and_comment_updates(
+        request, form, lang, app)
+
     app.save(response_json)
+
+    if _case_mapping_diff_has_changes(case_mapping_diff):
+        record_google_analytics_event(
+            METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER,
+            request.couch_user,
+        )
+
+    _add_case_management_data(response_json, form)
     return JsonResponse(response_json)
+
+
+METRICS_UPDATE_CASE_PROPERTIES_FORMBUILDER = "update_case_properties_formbuilder"
+METRICS_UPDATE_CASE_PROPERTIES_CASEMGT = "update_case_properties_casetab"
+
+# Characters that JS encodeURI preserves (beyond letters/digits which
+# Python's quote already preserves). Used to match encodeURI behavior
+# so patch coordinates align between JS and Python.
+ENCODE_URI_SAFE = "!#$&'()*+,-./:;=?@_~"
 
 
 def apply_patch(patch, text):
     dmp = diff_match_patch()
-    return dmp.patch_apply(dmp.patch_fromText(patch), text)[0]
+    # JS pre-encodes text with encodeURI before diffing to avoid emoji
+    # breaking the diff (see core.js). Encode source the same way before
+    # applying, then decode.
+    encoded_text = quote(text, safe=ENCODE_URI_SAFE)
+    encoded_result = dmp.patch_apply(dmp.patch_fromText(patch), encoded_text)[0]
+    return unquote(encoded_result)
+
+
+def _get_case_mapping_diff(request):
+    diff_json = request.POST.get('case_mapping_diff')
+    return json.loads(diff_json) if diff_json else None
+
+
+def _case_mapping_diff_has_changes(diff):
+    return diff and any(any(v.values()) for v in diff.values())
 
 
 def _get_xform_conflict_response(form, sha1_checksum):
@@ -559,6 +764,14 @@ def _get_xform_conflict_response(form, sha1_checksum):
     if hashlib.sha1(form_xml.encode('utf-8')).hexdigest() != sha1_checksum:
         return json_response({'status': 'conflict', 'xform': form_xml})
     return None
+
+
+def _add_case_management_data(response_json, form):
+    """Allow clients to immediately display concurrent edit conflict warnings"""
+    if form.get_module().case_type and not isinstance(form, AdvancedForm):
+        response_json['caseManagement'] = {
+            "mappings": get_case_mappings(form.actions),
+        }
 
 
 @require_GET
@@ -598,7 +811,8 @@ def get_form_questions(request, domain, app_id):
         lang, langs = get_langs(request, app)
     except FormNotFoundException:
         raise Http404()
-    xform_questions = form.get_questions(langs, include_triggers=True)
+    include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
+    xform_questions = form.get_questions(langs, include_triggers=True, include_locked_status=include_locked_status)
     return json_response(xform_questions)
 
 
@@ -665,6 +879,10 @@ def get_form_view_context(
         logging.exception(e)
         form_errors.append("Unexpected error in form: %s" % e)
 
+    # Capture this before ``form.add_stuff_to_xform`` below strips vellum
+    # namespace attributes (including ``vellum:lock``) from the xform.
+    has_locked_questions = xform and xform.has_locked_questions
+
     has_case_error = False
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -675,7 +893,10 @@ def get_form_view_context(
             )
 
         try:
-            xform_questions = xform.get_questions(langs, include_triggers=True)
+            include_locked_status = domain_has_privilege(domain, "locked_admin_questions")
+            xform_questions = xform.get_questions(
+                langs, include_triggers=True, include_locked_status=include_locked_status
+            )
             form.validate_form()
         except etree.XMLSyntaxError as e:
             form_errors.append("Syntax Error: %s" % e)
@@ -795,9 +1016,9 @@ def get_form_view_context(
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
+        'allow_xform_upload': _allow_xform_upload(request, domain, has_locked_questions),
         'allow_form_filtering': not form_has_schedule,
         'allow_usercase': allow_usercase,
-        'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_training_module': module.is_training_module,
         'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
@@ -816,8 +1037,9 @@ def get_form_view_context(
             {'test': assertion.test, 'text': assertion.text.get(current_lang)}
             for assertion in form.custom_assertions
         ],
-        'form_icon': None,
+        'form_custom_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
+        'create_public_webform_url': get_create_public_webform_url(request, form),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
         'case_property_warning': {
@@ -827,8 +1049,8 @@ def get_form_view_context(
         }
     }
 
-    if toggles.CUSTOM_ICON_BADGES.enabled(domain):
-        context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+    if domain_has_privilege(domain, privileges.CUSTOM_ICON_BADGES):
+        context['form_custom_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
@@ -874,11 +1096,8 @@ def get_form_view_context(
                 'schedule_options': schedule_options,
             })
     else:
-        context.update({
-            'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
-        })
         case_config_options.update({
-            'actions': form.actions,
+            'actions': make_multi(form.actions.to_json()),
             'allowUsercase': allow_usercase,
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
@@ -886,6 +1105,14 @@ def get_form_view_context(
 
     context.update({'case_config_options': case_config_options})
     return context
+
+
+def _allow_xform_upload(request, domain, has_locked_questions):
+    if not domain_has_privilege(domain, "locked_admin_questions"):
+        return True
+    if request.couch_user.can_edit_locked_questions_in_apps(domain):
+        return True
+    return not has_locked_questions
 
 
 def _get_case_property_limit(domain):
@@ -989,7 +1216,9 @@ def get_form_datums(request, domain, app_id):
 
 
 def _get_form_datums(domain, app_id, form_id):
-    from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    from corehq.apps.app_manager.suite_xml.sections.entries import (
+        EntriesHelper,
+    )
     try:
         app = get_app(domain, app_id)
     except AppInDifferentDomainException as e:
@@ -1018,7 +1247,7 @@ def _get_form_datums(domain, app_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form_legacy(request, domain, app_id, module_id, form_id):
     """
     This view has been kept around to not break any documentation on example apps
@@ -1030,7 +1259,7 @@ def view_form_legacy(request, domain, app_id, module_id, form_id):
 
 
 @require_GET
-@require_deploy_apps
+@require_can_edit_or_view_apps
 def view_form(request, domain, app_id, form_unique_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(

@@ -1,0 +1,8 @@
+{% if widget.site_key %}
+  <div
+    class="cf-turnstile"
+    data-sitekey="{{ widget.site_key }}"
+    data-response-field-name="{{ widget.name }}"
+    {% include "django/forms/widgets/attrs.html" %}
+  ></div>
+{% endif %}

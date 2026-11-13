@@ -2,8 +2,6 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-from unittest import mock
-
 from couchexport.export import export_raw
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
@@ -14,7 +12,6 @@ from corehq.apps.app_manager.ui_translations import (
 from corehq.apps.translations.utils import (
     update_app_translations_from_trans_dict,
 )
-from corehq.util.test_utils import flag_enabled
 
 INITIAL_TRANSLATIONS = {
     'en': {
@@ -81,17 +78,6 @@ class TestBulkUiTranslation(SimpleTestCase):
         self.assertDictEqual(self.app.translations['en'], {'translation.always.upload': 'Miley'})
         self.assertDictEqual(self.app.translations['fra'], {'translation.always.upload': 'Cyrus'})
 
-    @flag_enabled('PARTIAL_UI_TRANSLATIONS')
-    def test_not_upload_all_properties_with_parital_ui_translations(self):
-        headers = (('translations', ('property', 'en', 'fra')),)
-        data = (('translation.always.upload', 'Miley', 'Cyrus'),)
-        f = self._build_translation_download_file(headers, data)
-
-        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-        update_app_translations_from_trans_dict(self.app, translations)
-
-        self.assertDictEqual(self.app.translations, EXPECTED_TRANSLATIONS)
-
     def test_not_upload_all_languages(self):
         headers = (('translations', ('property', 'en')),)
         data = (
@@ -105,25 +91,6 @@ class TestBulkUiTranslation(SimpleTestCase):
         self.assertDictEqual(self.app.translations['en'], EXPECTED_TRANSLATIONS['en'])
         self.assertDictEqual(self.app.translations['fra'], INITIAL_TRANSLATIONS['fra'])
 
-    @flag_enabled('PARTIAL_UI_TRANSLATIONS')
-    def test_linked_app_not_upload_all_languages_with_partial_ui_translations(self):
-        headers = (('translations', ('property', 'en')),)
-        data = (
-            ('translation.always.upload', 'Miley'),
-            ('translation.sometimes.upload', 'Kanye'),
-        )
-        f = self._build_translation_download_file(headers, data)
-
-        translations, error_properties, warnings = process_ui_translation_upload(self.linked_app, f)
-        update_app_translations_from_trans_dict(self.linked_app, translations)
-        self.assertDictEqual(self.linked_app.translations['en'], EXPECTED_TRANSLATIONS['en'])
-        self.assertDictEqual(self.linked_app.translations['fra'], INITIAL_TRANSLATIONS['fra'])
-        self.assertDictEqual(self.linked_app.linked_app_translations['en'], EXPECTED_TRANSLATIONS['en'])
-
-        with mock.patch.object(LinkedApplication, 'save'):
-            self.linked_app.reapply_overrides()
-        self.assertDictEqual(self.linked_app.translations['en'], EXPECTED_TRANSLATIONS['en'])
-
     def test_partial_property_and_language(self):
         headers = (('translations', ('property', 'en')),)
         data = (('translation.always.upload', 'Miley'),)
@@ -133,16 +100,4 @@ class TestBulkUiTranslation(SimpleTestCase):
         update_app_translations_from_trans_dict(self.app, translations)
 
         self.assertDictEqual(self.app.translations['en'], {'translation.always.upload': 'Miley'})
-        self.assertDictEqual(self.app.translations['fra'], INITIAL_TRANSLATIONS['fra'])
-
-    @flag_enabled('PARTIAL_UI_TRANSLATIONS')
-    def test_partial_property_and_language_with_partial_ui_translations(self):
-        headers = (('translations', ('property', 'en')),)
-        data = (('translation.always.upload', 'Miley'),)
-        f = self._build_translation_download_file(headers, data)
-
-        translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-        update_app_translations_from_trans_dict(self.app, translations)
-
-        self.assertDictEqual(self.app.translations['en'], EXPECTED_TRANSLATIONS['en'])
         self.assertDictEqual(self.app.translations['fra'], INITIAL_TRANSLATIONS['fra'])

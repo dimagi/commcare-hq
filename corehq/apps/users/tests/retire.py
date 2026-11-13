@@ -13,6 +13,7 @@ from casexml.apps.case.mock import (
 )
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
+from corehq import privileges
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -22,8 +23,10 @@ from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.tasks import remove_indices_from_deleted_cases
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.models import CommCareCase, UserArchivedRebuild, XFormInstance
+from corehq.util.test_utils import privilege_enabled
 
 
+@privilege_enabled(privileges.USERCASE)
 class RetireUserTestCase(TestCase):
 
     @classmethod
@@ -31,8 +34,6 @@ class RetireUserTestCase(TestCase):
         super(RetireUserTestCase, cls).setUpClass()
         cls.domain = 'test'
         cls.domain_object = create_domain(cls.domain)
-        cls.domain_object.usercase_enabled = True
-        cls.domain_object.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -96,7 +97,7 @@ class RetireUserTestCase(TestCase):
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire(self.domain, deleted_by=None)
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = XFormInstance.objects.get_form(xform.form_id, self.domain)
@@ -121,7 +122,7 @@ class RetireUserTestCase(TestCase):
         self.assertEqual(user_history.changed_by, self.other_user.get_id)
         self.assertEqual(user_history.changed_via, "Test")
 
-        cases = CommCareCase.objects.get_cases(case_ids, self.domain)
+        cases = CommCareCase.objects.get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
         form = XFormInstance.objects.get_form(xform.form_id, self.domain)

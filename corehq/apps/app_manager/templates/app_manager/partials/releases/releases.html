@@ -4,40 +4,61 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-
 {% if intro_only %}
-  <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
-    {% blocktrans %}
-      <p class="lead">
-        Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
-      </p>
-    {% endblocktrans %}
-  </div>
-  <div class="helpbubble helpbubble-secondary helpbubble-right pull-right" style="max-width: 300px;">
-    {% blocktrans %}
-      <p class="lead">
-        As you build your App, check out the <strong>App Preview</strong> to demo it in real time!
-      </p>
-    {% endblocktrans %}
+  <div id="new-app-start">
+    <div class="helpbubble helpbubble-primary helpbubble-left float-start">
+      {% blocktrans %}
+        <p class="lead">
+          Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to
+          start building your App!
+        </p>
+      {% endblocktrans %}
+    </div>
+    <div class="helpbubble helpbubble-secondary helpbubble-right float-end">
+      {% blocktrans %}
+        <p class="lead">
+          As you build your App, check out the <strong>App Preview</strong> to
+          demo it in real time!
+        </p>
+      {% endblocktrans %}
+    </div>
   </div>
 {% else %}
 
   {% if not build_profile_access and not enable_update_prompts %}
     {% include 'app_manager/partials/releases/releases_table.html' %}
-  {% else%}
+  {% else %}
     <div class="tabbable">
       <ul class="nav nav-tabs sticky-tabs">
-        <li><a href="#versions-tab" data-toggle="tab">
-          {% trans "Versions" %}</a>
+        <li class="nav-item">
+          <a href="#versions-tab" class="nav-link" data-bs-toggle="tab">
+            {% trans "Versions" %}
+          </a>
         </li>
         {% if enable_update_prompts %}
-          <li><a href="#prompt-settings-tab" data-toggle="tab">{% trans "Manage Update Settings" %}</a></li>
+          <li class="nav-item">
+            <a
+              href="#prompt-settings-tab"
+              class="nav-link"
+              data-bs-toggle="tab"
+            >
+              {% trans "Manage Update Settings" %}
+            </a>
+          </li>
         {% endif %}
         {% if build_profile_access %}
-          <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
+          <li class="nav-item">
+            <a href="#profiles-tab" class="nav-link" data-bs-toggle="tab">
+              {% trans "Application Profiles" %}
+            </a>
+          </li>
         {% endif %}
         {% if request|toggle_enabled:"APPLICATION_RELEASE_LOGS" %}
-          <li><a href="#release-logs-tab" data-toggle="tab">{% trans "Application Release Logs" %}</a></li>
+          <li class="nav-item">
+            <a href="#release-logs-tab" class="nav-link" data-bs-toggle="tab">
+              {% trans "Application Release Logs" %}
+            </a>
+          </li>
         {% endif %}
       </ul>
       <div class="spacer"></div>
@@ -63,9 +84,8 @@
         {% endif %}
       </div>
     </div><!-- .tabbable -->
-  {% endif%}
-
+  {% endif %}
 {% endif %}<!-- intro_only condition -->
 
 <!-- Async Download Modals -->
-{% include 'app_manager/partials/download_async_modal.html' with element_id='download-zip-modal' %}
+{% include 'app_manager/partials/bootstrap5/download_async_modal.html' with element_id='download-zip-modal' %}

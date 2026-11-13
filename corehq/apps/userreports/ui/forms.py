@@ -16,7 +16,6 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
 from corehq.util.metrics import metrics_counter
 
 from ..const import DATA_SOURCE_REBUILD_RESTRICTED_AT
-from ..models import guess_data_source_type
 from ..util import get_table_name
 from . import help_text
 from .fields import JsonField, ReportDataSourceField
@@ -130,9 +129,6 @@ class ConfigurableReportEditForm(DocumentFormBase):
 
     def save(self, commit=False):
         self.instance.report_meta.edited_manually = True
-        if toggles.AGGREGATE_UCRS.enabled(self.instance.domain):
-            self.instance.data_source_type = guess_data_source_type(self.instance.config_id)
-
         return super(ConfigurableReportEditForm, self).save(commit)
 
 

@@ -80,7 +80,7 @@ class TestCreditStripePaymentHandler(TestCase):
 
     def _call_process_request(self):
         CreditStripePaymentHandler(
-            self.payment_method, self.domain, self.account, post_data={}
+            self.payment_method, self.domain.name, self.account, post_data={}
         ).process_request(
             RequestFactory().post('', {'amount': 1})
         )

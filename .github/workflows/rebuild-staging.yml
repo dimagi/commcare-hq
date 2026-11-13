@@ -1,0 +1,171 @@
+name: Rebuild staging branch
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+
+concurrency:
+  group: rebuild-staging
+  cancel-in-progress: false
+
+jobs:
+  check-branch:
+    # Only run on the canonical repo, not on forks or mirrors
+    if: github.repository == 'dimagi/commcare-hq'
+    runs-on: ubuntu-latest
+    outputs:
+      should-rebuild: >-
+        ${{ github.event_name == 'workflow_dispatch'
+            || (steps.check.outputs.found == 'true'
+                && steps.check-merged.outputs.is-merged-staging-branch != 'true') }}
+      is-merged-staging-branch: >-
+        ${{ steps.check-merged.outputs.is-merged-staging-branch }}
+      merged-branch: >-
+        ${{ steps.check-merged.outputs.merged-branch }}
+    steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
+    - name: Check if branch is in staging config
+      id: check
+      if: github.event_name == 'push'
+      env:
+        BRANCH: ${{ github.ref_name }}
+      run: |
+        curl -sf https://raw.githubusercontent.com/dimagi/staging-branches/main/commcare-hq-staging.yml \
+          -o staging.yml
+        if grep -qF "$BRANCH" staging.yml; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "Branch '$BRANCH' not found in staging config, skipping rebuild"
+        fi
+
+    - name: Check if push to master merged a staging branch
+      id: check-merged
+      if: github.event_name == 'push' && github.ref_name == 'master'
+      env:
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
+      run: |
+        # Extract branch name from the first line of the merge commit message
+        # Format: "Merge pull request #NNN from owner/branch-name"
+        FIRST_LINE="${COMMIT_MSG%%$'\n'*}"
+        if [[ "$FIRST_LINE" =~ ^Merge\ pull\ request\ \#[0-9]+\ from\ [^/]+/([^[:space:]]+) ]]; then
+          MERGED_BRANCH="${BASH_REMATCH[1]}"
+          echo "Detected merged branch: $MERGED_BRANCH"
+
+          # Check if this branch is a standalone entry in .branches
+          # (scopes out +-joined conflict resolution branches and submodule entries)
+          match_count=$(BRANCH="$MERGED_BRANCH" yq '[.branches[] | select(. == env(BRANCH))] | length' staging.yml)
+          if [ "$match_count" != "0" ]; then
+            echo "is-merged-staging-branch=true" >> "$GITHUB_OUTPUT"
+            echo "merged-branch=$MERGED_BRANCH" >> "$GITHUB_OUTPUT"
+            echo "Branch '$MERGED_BRANCH' found in staging config, will trigger removal"
+          else
+            echo "Merged branch '$MERGED_BRANCH' not in .branches of staging config"
+          fi
+        else
+          echo "Not a merge commit, skipping merged branch check"
+        fi
+
+  remove-merged-branch:
+    needs: check-branch
+    if: needs.check-branch.outputs.is-merged-staging-branch == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
+    - name: Generate GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547  # v1.12.0
+      with:
+        app-id: ${{ secrets.STAGING_BRANCHES_APP_ID }}
+        private-key: ${{ secrets.STAGING_BRANCHES_APP_PRIVATE_KEY }}
+        owner: dimagi
+        repositories: staging-branches
+
+    - name: Trigger branch removal
+      env:
+        GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        BRANCH: ${{ needs.check-branch.outputs.merged-branch }}
+      run: |
+        echo "Triggering removal of branch '$BRANCH' from commcare-hq-staging.yml"
+        gh workflow run remove-branch.yml \
+          --repo dimagi/staging-branches \
+          -f file=commcare-hq-staging.yml \
+          -f branch="$BRANCH" \
+          -f reason=merge
+
+  rebuild-staging:
+    needs: check-branch
+    if: needs.check-branch.outputs.should-rebuild == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+    # Audit-only: records egress from the runner, never fails the build.
+    # Tighten to egress-policy: block once audit logs confirm the endpoint list.
+    - name: Harden runner
+      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
+
+      with:
+        ref: master
+        # Full history needed for branch manipulation
+        fetch-depth: 0
+    - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7.6.0
+    - name: Install git-build-branch
+      run: uv tool install git-build-branch
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+    - name: Check if vellum-staging needs rebuild
+      id: vellum-check
+      run: |
+        if ! git fetch origin vellum-staging 2>/dev/null; then
+          echo "vellum-staging branch not found, skipping"
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if git merge-base --is-ancestor origin/vellum-staging HEAD; then
+          echo "vellum-staging is already merged into master, no rebuild needed"
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if git merge --no-commit --no-ff origin/vellum-staging; then
+          echo "vellum-staging merges cleanly, no rebuild needed"
+          git merge --abort
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "vellum-staging conflicts with master, rebuild needed"
+          git merge --abort
+          echo "needs-rebuild=true" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Check out Vellum
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      run: git clone --depth 1 --branch staging https://github.com/dimagi/Vellum.git ../Vellum
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38  # v6.5.0
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      with:
+        node-version: '24'
+    - name: Rebuild vellum-staging
+      if: steps.vellum-check.outputs.needs-rebuild == 'true'
+      env:
+        GIT_EDITOR: 'true'  # bypass "git commit --edit" in vellum-to-hq
+      run: uv run --with sh scripts/vellum-to-hq staging --no-test --push --vellum-dir=../Vellum
+    - name: Rebuild staging
+      run: ./scripts/rebuildstaging

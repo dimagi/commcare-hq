@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import datetime, timedelta
 
@@ -8,8 +7,6 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.calculations import (
     active_mobile_users,
-    all_domain_stats,
-    calced_props,
     get_sms_count,
     sms,
 )
@@ -43,19 +40,6 @@ class BaseCalculatedPropertiesTest(TestCase):
             'date': json_format_datetime(datetime.utcnow()),
         }
         sms_adapter.index(sms_doc, refresh=True)
-
-
-class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
-
-    def test_calculated_properties_are_serializable(self):
-        all_stats = all_domain_stats()
-        props = calced_props(self.domain, self.domain._id, all_stats)
-        json.dumps(props)
-
-    def test_domain_does_not_have_apps(self):
-        all_stats = all_domain_stats()
-        props = calced_props(self.domain, self.domain._id, all_stats)
-        self.assertFalse(props['cp_has_app'])
 
 
 class GetSMSCountTest(BaseCalculatedPropertiesTest):

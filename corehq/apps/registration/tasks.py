@@ -22,6 +22,7 @@ from corehq.apps.users.models import WebUser
 @periodic_task(
     run_every=crontab(minute=0),  # execute once every hour
     queue='background_queue',
+    durable=True,
 )
 def activation_24hr_reminder_email():
     """

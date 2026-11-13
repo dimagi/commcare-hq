@@ -12,6 +12,8 @@ from django.views.decorators.http import require_POST
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
 from corehq.apps.case_importer import base
@@ -21,8 +23,8 @@ from corehq.apps.case_importer.const import (
     ALL_CASE_TYPE_IMPORT,
     MAX_CASE_IMPORTER_COLUMNS,
     MAX_CASE_IMPORTER_ROWS,
-    MOMO_REQUIRED_PAYMENT_FIELDS,
     MOMO_PAYMENT_CASE_TYPE,
+    MOMO_REQUIRED_PAYMENT_FIELDS,
 )
 from corehq.apps.case_importer.exceptions import (
     CustomImporterError,
@@ -35,8 +37,8 @@ from corehq.apps.case_importer.extension_points import (
     custom_case_upload_file_operations,
 )
 from corehq.apps.case_importer.suggested_fields import (
-    get_suggested_case_fields,
     get_non_discoverable_system_properties,
+    get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import (
@@ -55,7 +57,10 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, MTN_MOBILE_WORKER_VERIFICATION
+from corehq.toggles import (
+    DOMAIN_PERMISSIONS_MIRROR,
+    MOBILE_MONEY_INTEGRATION,
+)
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import (
     SpreadsheetFileExtError,
@@ -149,7 +154,7 @@ def _process_spreadsheet_columns(spreadsheet, max_columns=None):
             'uence.dimagi.com/display/commcarepublic/Case+Configuration">case '
             'property names</a>. They must start with a letter, and can only '
             'contain letters, numbers and underscores. Please update the '
-            'following: {}.').format(', '.join(invalid_column_names)))
+            'following: {}.'), ', '.join(invalid_column_names))
         raise ImporterRawError(error_message)
 
     if row_count == 0:
@@ -293,7 +298,7 @@ def _process_excel_mapping(domain, spreadsheet, search_column):
 def _create_bulk_configs(domain, request, case_upload):
     all_configs = []
     worksheet_titles = _get_workbook_sheet_names(case_upload)
-    mtn_mobile_worker_verification_ff_enabled = MTN_MOBILE_WORKER_VERIFICATION.enabled(domain)
+    mobile_money_integration_ff_enabled = MOBILE_MONEY_INTEGRATION.enabled(domain)
     errors = []
     for index, title in enumerate(worksheet_titles):
         with case_upload.get_spreadsheet(index) as spreadsheet:
@@ -303,7 +308,7 @@ def _create_bulk_configs(domain, request, case_upload):
                 request.POST['search_field']
             )
             excel_fields = list(set(excel_fields) - set(RESERVED_FIELDS))
-            if mtn_mobile_worker_verification_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
+            if mobile_money_integration_ff_enabled and title == MOMO_PAYMENT_CASE_TYPE:
                 missing_fields = _get_missing_payment_fields(excel_fields)
                 if missing_fields:
                     errors.append(_(
@@ -389,7 +394,7 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
-    if MTN_MOBILE_WORKER_VERIFICATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
+    if MOBILE_MONEY_INTEGRATION.enabled(domain) and case_type == MOMO_PAYMENT_CASE_TYPE:
         missing_fields = _get_missing_payment_fields(columns)
         if any(missing_fields):
             return render_error(
@@ -409,6 +414,7 @@ def excel_fields(request, domain):
         'case_field_specs': case_field_specs,
         'system_fields': get_non_discoverable_system_properties(),
         'domain': domain,
+        'uses_data_type_validation': domain_has_privilege(domain, privileges.DATA_DICT_TYPES),
         'mirroring_enabled': mirroring_enabled,
         'is_bulk_import': request.POST.get('is_bulk_import', 'False') == 'True',
     }
