@@ -32,7 +32,8 @@ from .logging import ExportLoggingContext
 from .models.new import (
     EmailExportWhenDoneRequest,
     CaseExportInstance,
-    CaseExportDataSchema
+    CaseExportDataSchema,
+    get_export_data_schema_class,
 )
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 from django.core.cache import cache
@@ -230,8 +231,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
 
 @task(queue='background_queue', bind=True)
 def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier):
-    from .views.utils import GenerateSchemaFromAllBuildsView
-    export_cls = GenerateSchemaFromAllBuildsView.export_cls(export_type)
+    export_cls = get_export_data_schema_class(export_type)
     export_cls.generate_schema_from_builds(
         domain,
         app_id,
@@ -239,6 +239,25 @@ def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier
         only_process_current_builds=False,
         task=self,
     )
+
+
+@task(queue='background_queue', bind=True)
+def build_export_schema(self, export_type, domain, app_id, identifier, for_new_export_instance) -> dict:
+    """Returns ``{'schema_id': ...}``; soil's get_task_status requires a dict result."""
+    export_cls = get_export_data_schema_class(export_type)
+    try:
+        schema = export_cls.generate_schema_from_builds(
+            domain,
+            app_id,
+            identifier,
+            only_process_current_builds=True,
+            task=self,
+            for_new_export_instance=for_new_export_instance,
+        )
+    except Exception:
+        metrics_counter('commcare.exports.schema_build', tags={'outcome': 'failed'})
+        raise
+    return {'schema_id': schema._id}
 
 
 @task(queue='background_queue')

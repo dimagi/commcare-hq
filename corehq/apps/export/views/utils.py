@@ -1,7 +1,9 @@
+import logging
 from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -17,6 +19,7 @@ from soil.progress import get_task_status
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import (
     LoginAndDomainMixin,
     api_auth,
@@ -33,12 +36,9 @@ from corehq.apps.export.const import (
     ALL_CASE_TYPE_EXPORT
 )
 from corehq.apps.export.dbaccessors import get_export_instance_or_404
-from corehq.apps.export.models import (
-    CaseExportDataSchema,
-    FormExportDataSchema,
-)
 from corehq.apps.export.models.new import DataFile, DatePeriod, CaseExportInstance
 from corehq.apps.export.tasks import generate_schema_for_all_builds, process_populate_export_tables
+from corehq.apps.export.schema_builds import get_build_record, get_build_status
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -59,6 +59,8 @@ from corehq.util.download import get_download_response
 from corehq.util.timezones.utils import get_timezone
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+
+logger = logging.getLogger(__name__)
 
 
 def user_can_view_deid_exports(domain, couch_user):
@@ -261,10 +263,6 @@ class ODataFeedMixin(object):
 class GenerateSchemaFromAllBuildsView(LoginAndDomainMixin, View):
     urlname = 'build_full_schema'
 
-    @staticmethod
-    def export_cls(export_type):
-        return CaseExportDataSchema if export_type == CASE_EXPORT else FormExportDataSchema
-
     def get(self, request, *args, **kwargs):
         download_id = request.GET.get('download_id')
         download = DownloadBase.get(download_id)
@@ -432,3 +430,49 @@ def is_bulk_case_export(export_instance):
         isinstance(export_instance, CaseExportInstance)
         and export_instance.case_type == ALL_CASE_TYPE_EXPORT
     )
+
+
+@location_safe
+class ExportSchemaBuildStatusView(LoginAndDomainMixin, View):
+    """HTMX endpoint polled by the "Finding available columns" page.
+
+    On success it only fires a ``schemaBuildSucceeded`` event; the page
+    decides where to go, so no redirect target is taken from the request.
+    It is location safe because it exposes only the progress of a build
+    in the domain, and the create and edit views that start builds are
+    location safe.
+    """
+    urlname = 'export_schema_build_status'
+    template_name = 'export/partials/schema_build_status.html'
+
+    @method_decorator(require_can_edit_data)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, download_id):
+        record = get_build_record(download_id)
+        if record is None or record.domain != domain:
+            raise Http404()
+        status = get_build_status(download_id)
+        if status is None:
+            # The soil download expired, so the build can no longer be tracked
+            logger.warning(
+                'Export schema build expired (domain=%s, download_id=%s)', domain, download_id,
+            )
+        elif status.success():
+            response = HttpResponse()
+            response['HX-Trigger'] = 'schemaBuildSucceeded'
+            return response
+        failed = status is None or status.failed()
+        return render(request, self.template_name, {
+            'domain': domain,
+            'download_id': download_id,
+            'failed': failed,
+            'percent': 0 if failed else _progress_percent(status),
+        })
+
+
+def _progress_percent(status):
+    if status.progress is None:
+        return 0
+    return status.progress.percent or 0

@@ -1,0 +1,11 @@
+{% load i18n %}
+<div class="alert alert-danger" role="alert">
+  <p class="mb-2">{% trans "We couldn't load the available columns." %}</p>
+  <button
+    type="button"
+    class="btn btn-primary"
+    @click="window.location.reload()"
+  >
+    {% trans "Try again" %}
+  </button>
+</div>
