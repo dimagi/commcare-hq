@@ -6,6 +6,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -17,12 +18,18 @@ from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from corehq import toggles
+from corehq.apps.cloudcare.decorators import require_cloudcare_access
+from corehq.apps.document_templates.case_documents import (
+    CaseDocumentError,
+    render_case_documents,
+)
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     get_area_names,
+    generate_document,
     get_variable_names,
-    render_preview,
+    render_pdf,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -168,10 +175,10 @@ class DeleteDocumentTemplateView(BaseMessagingSectionView):
         )
 
 
-def _posted_area_values(request):
-    """The area values of the template form, as posted (the rest of the form is ignored)"""
+def _posted_areas(request):
+    """The areas of the template form, as posted (the rest of the form is ignored)"""
     return {
-        name: request.POST.get(f'{AREA_FIELD_PREFIX}{name}', '')
+        name: Area(value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}', ''))
         for name in get_area_names()
     }
 
@@ -190,7 +197,7 @@ def preview_document_variables(request, domain):
     The form is posted with the request, so values already typed into the modal are kept.
     """
     try:
-        names = get_variable_names(_posted_area_values(request))
+        names = get_variable_names(_posted_areas(request))
     except DocumentRenderError as error:
         template_context = {'error': str(error)}
     else:
@@ -203,12 +210,32 @@ def preview_document_variables(request, domain):
 @require_POST
 def preview_document(request, domain):
     """The rendered document as a PDF, for opening in a new tab"""
-    area_values = _posted_area_values(request)
+    areas = _posted_areas(request)
     try:
-        context = _posted_context(request, get_variable_names(area_values))
-        pdf = render_preview(area_values, context)
+        context = _posted_context(request, get_variable_names(areas))
+        pdf = render_pdf([generate_document(areas, context)])
     except DocumentRenderError as error:
         return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
     response = FileResponse(BytesIO(pdf), filename='preview.pdf')
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+@login_and_domain_required
+@require_cloudcare_access
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+@require_POST
+def render_document(request, domain):
+    """Called from web apps with space separated case IDs as the request body
+
+    Responds with a PDF with a document for each case.
+    """
+    try:
+        pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
+    except CaseDocumentError:
+        return JsonResponse(
+            {'error': gettext('Unable to render document.')}, status=400
+        )
+    response = FileResponse(BytesIO(pdf), filename='document.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
