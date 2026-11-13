@@ -33,7 +33,7 @@
             </td>
             <td>{{ template.slug }}</td>
             <td>
-              {% if not template.is_linked %}
+              {% if not template.is_linked or can_edit_linked %}
                   <a
                     class="btn btn-sm btn-outline-primary"
                     href="{% url 'edit_document_template' domain template.pk %}"
