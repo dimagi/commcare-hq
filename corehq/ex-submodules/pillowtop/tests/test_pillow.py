@@ -7,7 +7,7 @@ from pillowtop.exceptions import PillowtopCheckpointReset
 
 from ..pillow.interface import ConstructedPillow
 
-cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
+cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True, checkpoint_written=False)
 
 
 @pytest.mark.parametrize("cfg, expected_calls", [
@@ -60,6 +60,30 @@ cfg = Config(batch=True, changes=[1], chunk_size=1, forever=True)
     (cfg(batch=False, changes=[None], forever=False), [
         "checkpoint None",
     ]),
+    # idle with unsaved changes: re-check the checkpoint with the last change
+    (cfg(batch=False, changes=[1, 2, None]), [
+        "serial 1",
+        "checkpoint 1 seen=1",
+        "serial 2",
+        "checkpoint 2 seen=2",
+        "checkpoint 2 seen=2",
+    ]),
+    (cfg(changes=[1, 2, None], chunk_size=2), [
+        "batch [1, 2]",
+        "checkpoint 2 seen=2",
+        "checkpoint 2 seen=2",
+    ]),
+    (cfg(changes=[1, None, None], chunk_size=2), [
+        "batch [1]",
+        "checkpoint 1 seen=1",
+        "checkpoint 1 seen=1",
+    ]),
+    # idle with all changes saved: nothing to re-check
+    (cfg(batch=False, changes=[1, None], checkpoint_written=True), [
+        "serial 1",
+        "checkpoint 1 seen=1",
+        "checkpoint None",
+    ]),
 ])
 def test_process_changes(cfg, expected_calls):
     class feed:
@@ -76,6 +100,8 @@ def test_process_changes(cfg, expected_calls):
     def checkpoint(change, context):
         seen = "" if context is None else f" seen={context.changes_seen}"
         calls.append(f"checkpoint {change}{seen}")
+        if context is not None and cfg.checkpoint_written:
+            context.reset()
 
     print(cfg)
     pillow = ConstructedPillow(
