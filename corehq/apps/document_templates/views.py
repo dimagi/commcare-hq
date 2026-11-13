@@ -85,7 +85,8 @@ class DocumentTemplatesView(BaseDocumentTemplatesView):
                 domain=self.domain,
                 deleted=False,
             )
-            .order_by('name')
+            .order_by('name'),
+            'can_edit_linked': self.request.couch_user.can_edit_linked_data(self.domain),
         }
 
 
@@ -255,7 +256,7 @@ class EditDocumentTemplateView(BaseDocumentTemplateFormView):
 
     def get_object(self, queryset=None):
         template = super().get_object(queryset)
-        if template.upstream_id:
+        if template.upstream_id and not self.request.couch_user.can_edit_linked_data(self.domain):
             raise PermissionDenied
         return template
 
