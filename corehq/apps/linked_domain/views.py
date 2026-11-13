@@ -94,6 +94,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
     get_upstream_and_downstream_case_search_endpoints,
+    get_upstream_and_downstream_document_templates,
     get_upstream_and_downstream_ucr_expressions,
     get_upstream_and_downstream_update_rules
 )
@@ -267,6 +268,7 @@ class DomainLinkView(BaseProjectSettingsView):
         )
 
         upstream_endpoints, downstream_endpoints = get_upstream_and_downstream_case_search_endpoints(self.domain)
+        upstream_templates, downstream_templates = get_upstream_and_downstream_document_templates(self.domain)
         upstream_rules, downstream_rules = get_upstream_and_downstream_update_rules(self.domain, upstream_link)
 
         is_superuser = self.request.couch_user.is_superuser
@@ -281,6 +283,7 @@ class DomainLinkView(BaseProjectSettingsView):
             downstream_ucr_expressions,
             downstream_rules,
             downstream_endpoints,
+            downstream_templates,
             timezone,
             is_superuser=is_superuser
         )
@@ -294,6 +297,7 @@ class DomainLinkView(BaseProjectSettingsView):
             upstream_ucr_expressions,
             upstream_rules,
             upstream_endpoints,
+            upstream_templates,
             is_superuser=is_superuser
         )
 
