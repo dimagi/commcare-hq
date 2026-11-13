@@ -16,14 +16,18 @@ would have, and rebuilds the case without them.
 
 from dataclasses import dataclass, field, replace
 
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from django.db.models import F
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.models import (
     CaseTransaction,
+    RebuildWithReason,
     XFormInstance,
 )
 from corehq.sql_db.util import split_list_by_db_partition
+
+REBUILD_REASON = 'Revoked transactions for deleted forms'
 
 
 @dataclass(frozen=True)
@@ -120,3 +124,33 @@ def get_undeleted_form_ids(form_ids):
             .values_list('form_id', flat=True)
         )
     return undeleted
+
+
+def repair_case(domain, case_id, form_ids):
+    """Revoke the case's transactions for ``form_ids`` that are still
+    deleted, then rebuild the case.
+
+    Revoking is what archiving the forms would have done. It can be
+    reversed with ``revoke_restore_case_transactions_for_form``.
+
+    :returns: the number of transactions revoked. Zero means there was
+        nothing to repair and the case was not rebuilt.
+    """
+    deleted = set(form_ids) - get_undeleted_form_ids(form_ids)
+    if not deleted:
+        return 0
+    revoked = (
+        CaseTransaction.objects.partitioned_query(case_id)
+        .filter(
+            case_id=case_id,
+            case__domain=domain,
+            form_id__in=deleted,
+            revoked=False,
+        )
+        .update(revoked=True)
+    )
+    if revoked:
+        rebuild_case_from_forms(
+            domain, case_id, RebuildWithReason(reason=REBUILD_REASON)
+        )
+    return revoked
