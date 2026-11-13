@@ -330,6 +330,14 @@ class PublicSessionDetailsViewTest(TestCase):
         response = _post_with_hmac(self.url, data, content_type="application/json")
         assert response.status_code == 404
 
+    @patch('corehq.apps.hqwebapp.session_details_endpoint.views.rate_limit_session_request',
+           new=lambda session_id: True)
+    def test_rate_limited_public_session(self):
+        session = self._make_session()
+        data = json.dumps({'publicSessionKey': str(session.session_key)})
+        response = _post_with_hmac(self.url, data, content_type="application/json")
+        assert response.status_code == 404
+
     def test_public_session_for_an_inactive_domain(self):
         session = self._make_session()
         self.domain.is_active = False

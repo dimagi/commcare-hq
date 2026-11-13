@@ -26,6 +26,7 @@ from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.ip_access.middleware import is_valid_ip
 from corehq.apps.ip_access.utils import get_origin_ip
 from corehq.apps.public_webforms.models import PublicFormSession
+from corehq.apps.public_webforms.rate_limiter import rate_limit_session_request
 from corehq.apps.public_webforms.utils import public_webforms_enabled
 from corehq.apps.users.middleware import UsersMiddleware
 from corehq.apps.users.models import CouchUser
@@ -138,6 +139,8 @@ class SessionDetailsView(View):
     def _public_session_details(self, public_session_key, start_time):
         session = PublicFormSession.get_active_session_by_key(public_session_key)
         if session is None or not public_webforms_enabled(session.public_webform.domain):
+            raise Http404
+        if rate_limit_session_request(session.id.hex):
             raise Http404
 
         domain = session.public_webform.domain
