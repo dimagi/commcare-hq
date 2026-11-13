@@ -432,6 +432,13 @@ def is_bulk_case_export(export_instance):
     )
 
 
+def get_build_record_or_404(domain, download_id):
+    record = get_build_record(download_id)
+    if record is None or record.domain != domain:
+        raise Http404()
+    return record
+
+
 @location_safe
 class ExportSchemaBuildStatusView(LoginAndDomainMixin, View):
     """HTMX endpoint polled by the "Finding available columns" page.
@@ -450,9 +457,7 @@ class ExportSchemaBuildStatusView(LoginAndDomainMixin, View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, domain, download_id):
-        record = get_build_record(download_id)
-        if record is None or record.domain != domain:
-            raise Http404()
+        get_build_record_or_404(domain, download_id)
         status = get_build_status(download_id)
         if status is None:
             # The soil download expired, so the build can no longer be tracked
