@@ -184,3 +184,42 @@ def test_a_deactivated_project_hides_its_webforms():
     domain_obj.save()
 
     assert _get(webform.public_id).status_code == 404
+
+
+@use('db', webform_domain, public_webforms_available, skip_turnstile)
+class TestDirectAccessWebform:
+
+    def test_shows_the_start_page_when_no_delivery_channel_is_allowed(self):
+        webform = create_webform(
+            direct_access=True, is_disabled=False, allow_email=False, allow_sms=False)
+
+        with mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None):
+            response = _get(webform.public_id)
+
+        assert response.status_code == 200
+        assert 'public_webforms/public/webform_start.html' in [t.name for t in response.templates]
+
+    def test_starting_redirects_into_a_new_session(self):
+        webform = create_webform(direct_access=True, is_disabled=False)
+
+        response = Client().post(_url(PublicWebformRequestView.urlname, webform.public_id))
+
+        session = PublicFormSession.objects.get(public_webform=webform)
+        assert response.status_code == 302
+        assert response.url == self._form_url(session)
+
+    def test_starting_again_redirects_into_the_session_already_started(self):
+        webform = create_webform(direct_access=True, is_disabled=False)
+        started = create_session(webform)
+        client = Client()
+        client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = started.session_key.hex
+
+        response = client.post(_url(PublicWebformRequestView.urlname, webform.public_id))
+
+        assert response.url == self._form_url(started)
+
+    def _form_url(self, session):
+        return reverse(PublicFormView.urlname, kwargs={
+            'public_id': session.public_webform.public_id.hex,
+            'session_id': session.id.hex,
+        })
