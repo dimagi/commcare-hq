@@ -345,7 +345,7 @@ class BaseExportView(BaseProjectDataView):
         """Set ``self.export_schema``, or return a waiting page if the schema is still being built.
 
         The schema is built in Celery (see :mod:`corehq.apps.export.schema_builds`).
-        If the build takes longer than a short head start, the response is
+        If the build takes longer than ``HEAD_START_SECONDS``, the response is
         a waiting page that reloads this page with ``schema_build=<download_id>``
         once the build has finished. Returns None when the schema is ready.
         """
