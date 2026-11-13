@@ -8,6 +8,7 @@ from corehq.apps.document_templates.rendering import (
     MAX_RENDERED_LENGTH,
     Document,
     _image_flowable,
+    get_area_definitions,
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
@@ -33,6 +34,10 @@ def _generate(values, context):
 
 def test_get_area_names():
     assert get_area_names() == ['header', 'address', 'body', 'footer']
+
+
+def test_only_the_body_flows_over_pages():
+    assert [area.name for area in get_area_definitions() if not area.is_fixed] == ['body']
 
 
 @pytest.mark.parametrize('text, expected', [
@@ -233,14 +238,32 @@ def test_blank_is_underlined():
     assert [frag.text for frag in frags if frag.us_lines] == ['\xa0'] * 5
 
 
-def test_render_pdf_clips_overflowing_areas():
-    long_text = '\n\n'.join(['paragraph'] * 200)
-    render_pdf([_document(header=long_text, address=long_text, footer=long_text)])
+LONG_TEXT = '\n\n'.join(['paragraph'] * 200)
+
+
+@pytest.mark.parametrize('area_name', ['header', 'address', 'footer'])
+def test_generate_document_rejects_an_overflowing_fixed_area(area_name):
+    with pytest.raises(DocumentRenderError, match=f'{area_name} does not fit its area'):
+        _generate({**VALUES, area_name: LONG_TEXT}, {})
+
+
+@pytest.mark.parametrize('area_name', ['header', 'address', 'footer'])
+def test_generate_document_rejects_a_single_paragraph_taller_than_a_fixed_area(area_name):
+    with pytest.raises(DocumentRenderError, match=f'{area_name} does not fit its area'):
+        _generate({**VALUES, area_name: 'word ' * 2000}, {})
+
+
+def test_generate_document_accepts_fixed_areas_that_fit():
+    _generate({**VALUES, 'header': 'Clinic', 'address': 'Ada\n1 Main St\nTown', 'footer': 'Page'}, {})
+
+
+def test_generate_document_accepts_a_long_body():
+    _generate({**VALUES, 'body': LONG_TEXT}, {})
 
 
 def test_render_pdf_flows_the_body_over_pages():
     short = render_pdf([_document(body='paragraph')])
-    long = render_pdf([_document(body='\n\n'.join(['paragraph'] * 200))])
+    long = render_pdf([_document(body=LONG_TEXT)])
     assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
 
 
@@ -288,6 +311,12 @@ def test_render_pdf_draws_an_empty_image_area_as_blank():
 @pytest.mark.parametrize('area_name', list(VALUES))
 def test_render_pdf_fits_an_image_that_is_larger_than_the_area(area_name):
     render_pdf([_document(**{area_name: _image(make_image(size=(4000, 4000)))})])
+
+
+@pytest.mark.parametrize('area_name', ['header', 'address', 'footer'])
+@pytest.mark.parametrize('image_size', [(504, 72), (504, 90), (4000, 4000)])
+def test_generate_document_accepts_an_image_as_large_as_or_larger_than_a_fixed_area(area_name, image_size):
+    generate_document({**_areas(VALUES), area_name: _image(make_image(size=image_size))}, {})
 
 
 def test_render_pdf_moves_a_body_image_that_does_not_fit_below_the_address_to_the_next_page():
