@@ -116,6 +116,18 @@ def test_the_open_button_is_disabled_for_a_webform_whose_app_is_deleted(is_app_d
     assert ('disabled' in rendered) is is_app_deleted
 
 
+@pytest.mark.parametrize('direct_access, expected', [
+    (False, "One-time link"),
+    (True, "Anyone with the link"),
+])
+def test_access_names_how_respondents_open_the_webform(direct_access, expected):
+    webform = _webform(direct_access=direct_access)
+
+    rendered = _cells(webform)['direct_access']
+
+    assert expected in rendered
+
+
 @pytest.mark.parametrize('allow_email, allow_sms, expected_titles', [
     (True, False, ["Email enabled", "SMS disabled"]),
     (False, True, ["Email disabled", "SMS enabled"]),
