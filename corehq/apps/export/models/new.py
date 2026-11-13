@@ -2008,7 +2008,7 @@ class ExportDataSchema(Document):
                 schema.record_update(app.copy_of, app.version)
 
             apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids))
+            set_task_progress(task, apps_processed, len(app_build_ids), src="export_schema")
 
         return schema
 
@@ -2606,7 +2606,9 @@ class CaseExportDataSchema(ExportDataSchema):
                 schema.record_update(app.copy_of, app.version)
 
             apps_processed += 1
-            set_task_progress(task, apps_processed, len(app_build_ids) * len(case_types_to_use))
+            set_task_progress(
+                task, apps_processed, len(app_build_ids) * len(case_types_to_use), src="export_schema",
+            )
 
         return schema
 
@@ -2630,6 +2632,10 @@ class SMSExportDataSchema(ExportDataSchema):
     @staticmethod
     def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
+
+
+def get_export_data_schema_class(export_type):
+    return CaseExportDataSchema if export_type == CASE_EXPORT else FormExportDataSchema
 
 
 def _string_path_to_list(path):
