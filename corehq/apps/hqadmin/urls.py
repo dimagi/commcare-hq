@@ -3,7 +3,7 @@ from django.urls import include, re_path as url
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 from corehq.apps.domain.views.tombstone import TombstoneManagement, create_tombstone
 from corehq.apps.hqadmin.offboarding.views import ExternalPlatformOffboardingView
-from corehq.apps.hqadmin.template_apps.views import ManageTemplateAppsView, TemplateAppSectorsView
+from corehq.apps.hqadmin.manage_template_apps.views import ManageTemplateAppsView, TemplateAppSectorsView
 from corehq.apps.hqadmin.views.data import doc_in_es, download_blob, raw_doc
 from corehq.apps.hqadmin.views.operations import (
     CallcenterUCRCheck,
