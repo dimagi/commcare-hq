@@ -6,6 +6,7 @@ from unmagic import use
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.public_webforms import utils
+from corehq.apps.public_webforms.models import PublicFormSession
 from corehq.apps.public_webforms.tests.utils import (
     DOMAIN,
     build_app,
@@ -13,6 +14,7 @@ from corehq.apps.public_webforms.tests.utils import (
     webform_domain,
 )
 from corehq.apps.public_webforms.utils import (
+    get_analytics_delivery,
     get_create_public_webform_url,
     is_app_live,
     public_webforms_enabled,
@@ -142,3 +144,12 @@ def test_create_url_is_not_offered_for_an_ineligible_form():
     __, form = factory.new_basic_module('survey', 'patient')
 
     assert get_create_public_webform_url(Mock(), form) is None
+
+
+@pytest.mark.parametrize('contact, expected', [
+    ({'email': 'respondent@example.com'}, 'email'),
+    ({'phone_number': '15551234567'}, 'sms'),
+    ({}, None),
+], ids=['email', 'sms', 'no-contact'])
+def test_get_analytics_delivery(contact, expected):
+    assert get_analytics_delivery(PublicFormSession(**contact)) == expected
