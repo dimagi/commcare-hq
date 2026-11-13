@@ -43,6 +43,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
@@ -67,7 +68,6 @@ _ADDRESS_TOP = 2.25 * inch
 _BODY_TOP = 3.5 * inch
 _FOOTER_HEIGHT = 1 * inch
 _BODY_HEIGHT = _PAGE_HEIGHT - 2 * _MARGIN - _FOOTER_HEIGHT  # on the pages after the first
-_ALIGNMENT = {'header': 'CENTER', 'address': 'LEFT', 'body': 'LEFT', 'footer': 'CENTER'}
 
 _sheet = getSampleStyleSheet()
 BODY = _sheet['BodyText']
@@ -114,33 +114,54 @@ class AreaDefinition:
     """An area of a document template, and where it is on the page
 
     :param description: its size and position, for the author
+    :param alignment: ``'LEFT'`` or ``'CENTER'``, for an image
+    :param top: distance from the top edge of the page, in points; of the
+        first page for an area that flows over pages
+    :param height: in points; ``None`` for an area that flows over pages
     """
     name: str
     label: str
     description: str
+    alignment: str
+    top: float
+    height: float | None = None
+
+    @property
+    def is_fixed(self):
+        """Whether the content must fit the area; a flowing area continues on the next page"""
+        return self.height is not None
 
 
 def get_area_definitions():
-    def area(name, label, where, height=None):
+    def area(name, label, where, alignment, top, height=None):
         width = _AREA_WIDTH / inch
         if height:
             size = gettext('{width:g} x {height:g} in').format(width=width, height=height / inch)
         else:
             size = gettext('{width:g} in wide').format(width=width)
-        if _ALIGNMENT[name] == 'CENTER':
+        if alignment == 'CENTER':
             image = gettext('An image is centered.')
         else:
             image = gettext('An image is left-aligned.')
-        return AreaDefinition(name, label, f'{size}, {where} {image}')
+        return AreaDefinition(name, label, f'{size}, {where} {image}', alignment, top, height)
 
     return [
-        area('header', gettext('Header'), gettext('at the top of the first page.'), _HEADER_HEIGHT),
+        area(
+            'header', gettext('Header'), gettext('at the top of the first page.'),
+            'CENTER', _MARGIN, _HEADER_HEIGHT,
+        ),
         area(
             'address', gettext('Address'), gettext('below the header on the first page.'),
-            _BODY_TOP - _ADDRESS_TOP,
+            'LEFT', _ADDRESS_TOP, _BODY_TOP - _ADDRESS_TOP,
         ),
-        area('body', gettext('Body'), gettext('below the address and over the pages that follow.')),
-        area('footer', gettext('Footer'), gettext('at the bottom of every page.'), _FOOTER_HEIGHT),
+        area(
+            'body', gettext('Body'), gettext('below the address and over the pages that follow.'),
+            'LEFT', _BODY_TOP,
+        ),
+        area(
+            'footer', gettext('Footer'), gettext('at the bottom of every page.'),
+            'CENTER', _PAGE_HEIGHT - _MARGIN - _FOOTER_HEIGHT, _FOOTER_HEIGHT,
+        ),
     ]
 
 
@@ -231,7 +252,9 @@ def generate_document(areas, context):
     :returns: a :class:`Document`
     :raises DocumentRenderError: if an area is invalid or fails to render
     """
-    return Document({name: _generate_area(name, area, context) for name, area in areas.items()})
+    document = Document({name: _generate_area(name, area, context) for name, area in areas.items()})
+    _check_fixed_areas(document)
+    return document
 
 
 def _generate_area(name, area, context):
@@ -266,6 +289,17 @@ def _syntax_error_message(area_name, error):
     return f'Template syntax error in {area_name}, line {error.lineno}: {error.message}'
 
 
+def _check_fixed_areas(document):
+    for area in get_area_definitions():
+        if not area.is_fixed:
+            continue
+        flowables = _area_flowables(document, area, area.height)
+        # draws what fits, leaves the rest
+        _frame(area.top, area.height).addFromList(flowables, Canvas(BytesIO()))
+        if flowables:
+            raise DocumentRenderError(f'{area.name} does not fit its area')
+
+
 def render_pdf(documents):
     """One PDF with each document starting on a new page
 
@@ -288,46 +322,54 @@ def render_pdf(documents):
 def _us_letter(n, document):
     """The US letter layout: header and address on the first page, footer on every page
 
-    Header, address and footer are clipped to their area. The body flows
-    between the address (first page) or the top margin and the footer.
+    Header, address and footer must fit their area, see
+    :func:`_check_fixed_areas`. The body flows between the address (first page) or the top margin and the footer.
 
     An image is scaled down to fit its area, never up. It is centered in the
     header and footer and left-aligned in the address and body.
 
     :returns: ``(page templates, flowables)`` for ``document``, the ``n``-th in the PDF
     """
-    def frame(top, height, **kwargs):
-        return Frame(
-            _MARGIN, _PAGE_HEIGHT - top - height, _AREA_WIDTH, height,
-            leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0, **kwargs,
-        )
+    areas = {area.name: area for area in get_area_definitions()}
 
     def flowables(area_name, height):
-        content = document.areas.get(area_name)
-        return content.flowables(_AREA_WIDTH, height, _ALIGNMENT[area_name]) if content else []
+        return _area_flowables(document, areas[area_name], height)
 
-    def draw(canvas, area_name, top, height):
-        frame(top, height).addFromList(flowables(area_name, height), canvas)
-
-    def draw_footer(canvas):
-        draw(canvas, 'footer', top=_PAGE_HEIGHT - _MARGIN - _FOOTER_HEIGHT, height=_FOOTER_HEIGHT)
+    def draw(canvas, area_name):
+        area = areas[area_name]
+        _frame(area.top, area.height).addFromList(flowables(area_name, area.height), canvas)
 
     def draw_first_page(canvas, doc):
-        draw(canvas, 'header', top=_MARGIN, height=_HEADER_HEIGHT)
-        draw(canvas, 'address', top=_ADDRESS_TOP, height=_BODY_TOP - _ADDRESS_TOP)
-        draw_footer(canvas)
+        draw(canvas, 'header')
+        draw(canvas, 'address')
+        draw(canvas, 'footer')
 
     def draw_later_page(canvas, doc):
-        draw_footer(canvas)
+        draw(canvas, 'footer')
 
     def body_frame(top):
-        return frame(top, _PAGE_HEIGHT - top - _MARGIN - _FOOTER_HEIGHT, id='body')
+        return _frame(top, _PAGE_HEIGHT - top - _MARGIN - _FOOTER_HEIGHT, id='body')
 
     templates = [
-        PageTemplate(id=f'{n}-first', frames=[body_frame(_BODY_TOP)], onPage=draw_first_page),
+        PageTemplate(id=f'{n}-first', frames=[body_frame(areas['body'].top)], onPage=draw_first_page),
         PageTemplate(id=f'{n}-later', frames=[body_frame(_MARGIN)], onPage=draw_later_page),
     ]
     return templates, [NextPageTemplate(f'{n}-later'), *flowables('body', _BODY_HEIGHT)]
+
+
+def _frame(top, height, **kwargs):
+    return Frame(
+        _MARGIN, _PAGE_HEIGHT - top - height, _AREA_WIDTH, height,
+        leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0, **kwargs,
+    )
+
+
+def _area_flowables(document, area, height):
+    """:param area: an :class:`AreaDefinition`
+    :param height: available to the area, in points
+    """
+    content = document.areas.get(area.name)
+    return content.flowables(_AREA_WIDTH, height, area.alignment) if content else []
 
 
 def _markdown_to_flowables(text):
