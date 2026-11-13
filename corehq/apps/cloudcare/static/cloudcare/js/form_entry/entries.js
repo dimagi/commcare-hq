@@ -1251,8 +1251,13 @@ GeoPointEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 
 /**
- * An entry that sends the answer to the 'render_document' HQ endpoint and opens
- * the returned PDF in a new tab. The answer itself is left unchanged.
+ * An entry that sends the answer (space separated case IDs) to the
+ * 'render_document' HQ endpoint. Once the PDF is generated, the button is
+ * replaced by a link that opens it, so no popup blocker gets in the way.
+ *
+ * If some cases fail, they are listed in a modal, and the user can generate
+ * the PDF for the remaining cases. The answer is then replaced with their
+ * IDs, so the form acts on the cases that were printed.
  */
 function RenderDocumentEntry(question, options) {
     const self = this;
@@ -1260,9 +1265,13 @@ function RenderDocumentEntry(question, options) {
     self.templateType = 'fetch_value';
 
     const url = initialPageData.reverse('render_document');
+    // The answer the PDF was generated for
+    let renderedAnswer = null;
 
     self.isLoading = ko.observable(false);
-    self.generationFailed = ko.observable(false);
+    // {error: String, failed: [{case_id, name, reason}]} or null
+    self.failure = ko.observable(null);
+    self.pdfUrl = ko.observable(null);
 
     self.buttonLabel = ko.pureComputed(function () {
         return (
@@ -1271,35 +1280,76 @@ function RenderDocumentEntry(question, options) {
         );
     });
 
-    self.onClick = function () {
+    self.hasFailedCases = ko.pureComputed(function () {
+        return Boolean(self.failure() && self.failure().failed.length);
+    });
+
+    const remainingCaseIds = ko.pureComputed(function () {
+        const caseIds = _.uniq(_.compact(String(self.answer() || '').split(/\s+/)));
+        const failedIds = self.failure() ? _.pluck(self.failure().failed, 'case_id') : [];
+        return _.difference(caseIds, failedIds);
+    });
+
+    self.canGenerateRemaining = ko.pureComputed(function () {
+        return self.hasFailedCases() && remainingCaseIds().length > 0;
+    });
+
+    // The PDF no longer matches the answer
+    self.answer.subscribe(function (value) {
+        if (value !== renderedAnswer && self.pdfUrl()) {
+            URL.revokeObjectURL(self.pdfUrl());
+            self.pdfUrl(null);
+        }
+    });
+
+    const generate = function (caseIds) {
         self.isLoading(true);
-        self.generationFailed(false);
-        fetch(url, {
+        self.failure(null);
+        return fetch(url, {
             method: 'POST',
-            body: self.answer(),
+            body: caseIds,
             headers: {
                 "X-CSRFToken": document.getElementById("csrfTokenContainer").value,
             },
         })
             .then(function (response) {
-                if (!response.ok) {
-                    self.generationFailed(true);
-                    throw new Error("Request failed: " + response.status);
+                if (response.ok) {
+                    return response.blob().then(function (blob) {
+                        renderedAnswer = caseIds;
+                        // Goes through onAnswerChange, which sends the answer to formplayer
+                        self.answer(caseIds);
+                        self.pdfUrl(URL.createObjectURL(blob));
+                    });
                 }
-                return response.blob();
-            })
-            .then(function (blob) {
-                const blobUrl = URL.createObjectURL(blob);
-                window.open(blobUrl, '_blank');
-                // the new tab has started loading by then
-                setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60 * 1000);
+                if (response.status === 400) {
+                    return response.json().then(function (data) {
+                        self.failure({
+                            error: data.error || gettext("Generation Failed"),
+                            failed: data.failed || [],
+                        });
+                    });
+                }
+                throw new Error("Request failed: " + response.status);
             })
             .catch(function (error) {
                 window.console.error(error);
+                self.failure({error: gettext("Generation Failed"), failed: []});
             })
             .finally(function () {
                 self.isLoading(false);
             });
+    };
+
+    self.onClickGenerate = function () {
+        return generate(self.answer());
+    };
+
+    self.onClickGenerateRemaining = function () {
+        return generate(remainingCaseIds().join(' '));
+    };
+
+    self.onFailuresHidden = function () {
+        self.failure(null);
     };
 }
 
