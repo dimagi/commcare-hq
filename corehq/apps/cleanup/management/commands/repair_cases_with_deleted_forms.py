@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.cleanup.deleted_forms import (
     ScanPosition,
+    find_deleted_form_ids_for_cases,
     iter_scan_pages,
     repair_case,
 )
@@ -20,7 +21,8 @@ class Command(BaseCommand):
     that still apply its updates while it is soft deleted, and make
     rebuilding the case fail with XFormNotFound once it is hard deleted.
 
-    scan: read-only. Appends affected cases to a CSV. Resumable.
+    scan: read-only. Appends affected cases to a CSV. Resumable. Scans the
+    whole domain, or only the cases listed with --case-ids.
     fix: revokes those transactions and rebuilds the cases listed in the
     CSV, at a limited rate. Resumable.
     """
@@ -45,6 +47,11 @@ class Command(BaseCommand):
         )
         scan.add_argument('--include-deleted', action='store_true')
         scan.add_argument('--page-size', type=int, default=1000)
+        scan.add_argument(
+            '--case-ids',
+            help='File of case ids, one per line. Scan only these cases, '
+            'deleted or not, instead of the whole domain.',
+        )
 
         fix = subparsers.add_parser(
             'fix', help='Revoke transactions and rebuild cases from a scan.'
@@ -74,8 +81,24 @@ class Command(BaseCommand):
         func(**options)
 
     def scan(
-        self, domain, cases_csv, max_cases, include_deleted, page_size, **kw
+        self,
+        domain,
+        cases_csv,
+        max_cases,
+        include_deleted,
+        page_size,
+        case_ids,
+        **kw,
     ):
+        if case_ids:
+            if max_cases or include_deleted:
+                raise CommandError(
+                    '--case-ids cannot be used with --max-cases or '
+                    '--include-deleted'
+                )
+            self._scan_case_ids(domain, cases_csv, case_ids)
+            return
+
         checkpoint = Checkpoint(f'{cases_csv}.checkpoint')
         position = checkpoint.load(domain, include_deleted)
         # tie the CSV to these arguments even if no pages are found
@@ -102,6 +125,27 @@ class Command(BaseCommand):
         self.stdout.write(
             f'Scan complete. This run scanned {scanned} cases '
             f'and found {found}. All affected cases are in {cases_csv}'
+        )
+
+    def _scan_case_ids(self, domain, cases_csv, case_ids_file):
+        checkpoint = Checkpoint(f'{cases_csv}.checkpoint')
+        if checkpoint.domain() is not None:
+            raise CommandError(
+                f'{cases_csv} already has scan results. Use a different CSV.'
+            )
+        with open(case_ids_file) as f:
+            case_ids = list({line.strip() for line in f if line.strip()})
+        found = find_deleted_form_ids_for_cases(domain, case_ids)
+        with open(cases_csv, 'a', newline='') as f:
+            writer = csv.writer(f)
+            for case_id, form_ids in found.items():
+                writer.writerow([case_id, ' '.join(sorted(form_ids))])
+        checkpoint.save(
+            domain, False, ScanPosition(), case_ids=str(case_ids_file)
+        )
+        self.stdout.write(
+            f'Scanned {len(case_ids)} case ids and found {len(found)}. '
+            f'Affected cases are in {cases_csv}'
         )
 
     def fix(self, domain, cases_csv, done_csv, max_cases, per_minute, **kw):
@@ -168,6 +212,11 @@ class Checkpoint:
         data = self._read()
         if data is None:
             return None
+        if data.get('case_ids'):
+            raise CommandError(
+                f'{self.path} is for a scan of the cases in '
+                f'{data["case_ids"]}. Use a different CSV.'
+            )
         if (data['domain'], data['include_deleted']) != (
             domain,
             include_deleted,
@@ -193,12 +242,13 @@ class Checkpoint:
         with open(self.path) as f:
             return json.load(f)
 
-    def save(self, domain, include_deleted, position):
+    def save(self, domain, include_deleted, position, case_ids=None):
         with open(self.path, 'w') as f:
             json.dump(
                 {
                     'domain': domain,
                     'include_deleted': include_deleted,
+                    'case_ids': case_ids,
                     'done_db_aliases': list(position.done_db_aliases),
                     'db_alias': position.db_alias,
                     'last_pk': position.last_pk,

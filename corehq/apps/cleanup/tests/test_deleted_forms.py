@@ -5,6 +5,7 @@ from casexml.apps.case.mock import CaseBlock
 from django.test import TestCase
 
 from corehq.apps.cleanup.deleted_forms import (
+    find_deleted_form_ids_for_cases,
     iter_scan_pages,
     repair_case,
 )
@@ -99,6 +100,37 @@ class TestIterScanPages(TestCase):
             rest = scan(position=page.position, page_size=2)
             assert seen.keys().isdisjoint(rest.keys())
             assert {**seen, **rest} == broken
+
+
+@sharded
+class TestFindDeletedFormIdsForCases(TestCase):
+    def tearDown(self):
+        delete_all_cases_and_forms()
+        super().tearDown()
+
+    def test_only_listed_cases_are_reported(self):
+        listed = self.broken_case()
+        self.broken_case()
+        healthy_case_id, _, _ = create_case_with_update()
+        result = find_deleted_form_ids_for_cases(
+            DOMAIN, [listed[0], healthy_case_id]
+        )
+        assert result == dict([listed])
+
+    def test_cases_in_other_domains_and_unknown_ids_are_ignored(self):
+        other_case_id, _, other_form_id = create_case_with_update(
+            domain='other-domain'
+        )
+        hard_delete(other_form_id, domain='other-domain')
+        result = find_deleted_form_ids_for_cases(
+            DOMAIN, [other_case_id, 'unknown']
+        )
+        assert result == {}
+
+    def broken_case(self):
+        case_id, _, form_id = create_case_with_update()
+        hard_delete(form_id)
+        return case_id, {form_id}
 
 
 @sharded

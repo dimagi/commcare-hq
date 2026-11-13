@@ -17,11 +17,13 @@ would have, and rebuilds the case without them.
 from dataclasses import dataclass, field, replace
 
 from casexml.apps.case.cleanup import rebuild_case_from_forms
+from dimagi.utils.chunked import chunked
 from django.db.models import F
 
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.models import (
     CaseTransaction,
+    CommCareCase,
     RebuildWithReason,
     XFormInstance,
 )
@@ -81,6 +83,24 @@ def iter_scan_pages(
         position = ScanPosition(
             done_db_aliases=position.done_db_aliases + (db_alias,)
         )
+
+
+def find_deleted_form_ids_for_cases(domain, case_ids, chunk_size=1000):
+    """Return ``{case_id: deleted_form_ids}`` for the cases in ``case_ids``
+    that belong to ``domain``, deleted or not. Other case ids are ignored.
+    """
+    deleted_form_ids_by_case = {}
+    for chunk in chunked(case_ids, chunk_size, list):
+        for db_alias, ids in split_list_by_db_partition(chunk):
+            in_domain = list(
+                CommCareCase.objects.using(db_alias)
+                .filter(domain=domain, case_id__in=ids)
+                .values_list('case_id', flat=True)
+            )
+            deleted_form_ids_by_case.update(
+                find_deleted_form_ids(db_alias, in_domain)
+            )
+    return deleted_form_ids_by_case
 
 
 def find_deleted_form_ids(db_alias, case_ids):

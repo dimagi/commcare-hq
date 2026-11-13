@@ -57,6 +57,24 @@ class TestScan(TestCase):
         with self.assertRaisesRegex(CommandError, DOMAIN):
             call_command(COMMAND, 'scan', 'other-domain', self.cases_csv)
 
+    def test_case_ids_scans_only_listed_cases(self):
+        listed = self.broken_case()
+        self.broken_case()
+        call_command(
+            COMMAND,
+            'scan',
+            DOMAIN,
+            self.cases_csv,
+            '--case-ids',
+            self.case_ids_file([listed[0], 'unknown']),
+        )
+        assert self.rows() == [listed]
+
+    def case_ids_file(self, case_ids):
+        path = self.cases_csv.with_name('case_ids.txt')
+        path.write_text(''.join(f'{case_id}\n' for case_id in case_ids))
+        return str(path)
+
     def broken_case(self):
         case_id, _, form_id = create_case_with_update()
         hard_delete(form_id)
@@ -125,6 +143,22 @@ class TestFix(TestCase):
         with self.assertRaisesRegex(CommandError, 'not the output of a scan'):
             self.fix('--max-cases', '10')
         assert not self.done_csv.exists()
+
+    def test_repairs_cases_from_case_ids_scan(self):
+        case_id, _, form_id = create_case_with_update()
+        hard_delete(form_id)
+        case_ids_file = self.cases_csv.with_name('case_ids.txt')
+        case_ids_file.write_text(f'{case_id}\n')
+        call_command(
+            COMMAND,
+            'scan',
+            DOMAIN,
+            self.cases_csv,
+            '--case-ids',
+            str(case_ids_file),
+        )
+        self.fix('--max-cases', '10')
+        assert self.done() == [[case_id, 'revoked: 1']]
 
     def test_stop_file(self):
         self.scan_broken_cases(1)
