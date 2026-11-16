@@ -1277,6 +1277,7 @@ function RenderDocumentEntry(question, options) {
         fetch(url, {
             method: 'POST',
             body: self.answer(),
+            redirect: 'manual',
             headers: {
                 "X-CSRFToken": document.getElementById("csrfTokenContainer").value,
             },
