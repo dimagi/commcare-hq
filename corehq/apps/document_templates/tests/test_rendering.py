@@ -6,6 +6,7 @@ from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
+    Document,
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
@@ -24,7 +25,7 @@ def _areas(values):
 
 def _generate(values, context):
     document = generate_document(_areas(values), context)
-    return {name: area.value for name, area in document.items()}
+    return {name: area.value for name, area in document.areas.items()}
 
 
 def test_get_area_names():
@@ -199,7 +200,7 @@ def test_render_pdf_lays_out_a_table():
 
 
 def _document(**areas):
-    return {name: Area(value=areas.get(name, '')) for name in VALUES}
+    return Document({name: Area(value=areas.get(name, '')) for name in VALUES})
 
 
 def test_render_pdf_returns_a_pdf():
@@ -207,7 +208,7 @@ def test_render_pdf_returns_a_pdf():
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
-    document = {**_document(), 'body': Area(type='image', value='x.png')}
+    document = Document({**_document().areas, 'body': Area(type='image', value='x.png')})
     with pytest.raises(ValueError, match="Unknown area type: 'image'"):
         render_pdf([document])
 
@@ -239,7 +240,7 @@ def test_render_pdf_flows_the_body_over_pages():
 def test_generate_document_keeps_other_area_types():
     image = Area(type='image', value='{{ name }}.png')
     document = generate_document({**_areas(VALUES), 'body': image}, {})
-    assert document['body'] is image
+    assert document.areas['body'] is image
 
 
 def test_variable_names_ignores_other_area_types():

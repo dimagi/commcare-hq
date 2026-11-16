@@ -1,7 +1,8 @@
 """
 Renders document templates to PDF.
 
-A document is a set of areas (``{name: Area}``) with no variables left in them.
+A template's areas (``{name: Area}``) hold author-written Jinja. A
+:class:`Document` holds the same areas with the variables rendered.
 Rendering takes two steps:
 
 1. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
@@ -127,19 +128,25 @@ def get_variable_names(areas):
     return list(names)
 
 
+@attrs.define
+class Document:
+    """A template's areas with the variables rendered, ready for :func:`render_pdf`"""
+    areas = attrs.field()  # {name: Area}
+
+
 def generate_document(areas, context):
     """Render the Jinja in the markdown areas of a template; other area types are kept as they are
 
     :param areas: ``{name: Area}``
     :param context: values for the variables the areas use
-    :returns: a document: ``{name: Area}`` without variables
+    :returns: a :class:`Document`
     :raises DocumentRenderError: if an area is invalid or fails to render
     """
-    return {
+    return Document({
         name: attrs.evolve(area, value=_render_area(name, area.value, context))
         if area.type == 'markdown' else area
         for name, area in areas.items()
-    }
+    })
 
 
 def _check_area_length(name, text):
@@ -169,7 +176,7 @@ def _syntax_error_message(area_name, error):
 def render_pdf(documents):
     """One PDF with each document starting on a new page
 
-    :param documents: ``[{name: Area}]``, see :func:`generate_document`
+    :param documents: ``[Document]``
     """
     templates = []
     flowables = []
@@ -208,7 +215,7 @@ def _us_letter(n, document):
         )
 
     def draw(canvas, area_name, top, height):
-        frame(top, height).addFromList(_area_flowables(document.get(area_name)), canvas)
+        frame(top, height).addFromList(_area_flowables(document.areas.get(area_name)), canvas)
 
     def draw_footer(canvas):
         draw(canvas, 'footer', top=page_height - margin - footer_height, height=footer_height)
@@ -228,7 +235,7 @@ def _us_letter(n, document):
         PageTemplate(id=f'{n}-first', frames=[body_frame(body_top)], onPage=draw_first_page),
         PageTemplate(id=f'{n}-later', frames=[body_frame(margin)], onPage=draw_later_page),
     ]
-    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.get('body'))]
+    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.areas.get('body'))]
     return templates, flowables
 
 
