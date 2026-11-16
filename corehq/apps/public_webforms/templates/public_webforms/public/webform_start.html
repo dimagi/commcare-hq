@@ -1,0 +1,38 @@
+{% extends "public_webforms/public/base.html" %}
+{% load i18n %}
+
+{% block js %}
+  {{ block.super }}
+  <script
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async
+    defer
+  ></script>
+{% endblock js %}
+
+{% block page_content %}
+  {{ block.super }}
+  <div class="lead mb-4">
+    {% blocktrans %}
+      Fill out this form in your browser. You don't need an account.
+    {% endblocktrans %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="alert alert-light mb-4">
+      {% include "public_webforms/public/partials/terms_notice.html" %}
+    </div>
+
+    <div class="mb-3">{{ form }}</div>
+
+    <button
+      type="submit"
+      class="btn btn-primary btn-lg icon-link disable-on-submit"
+    >
+      {% trans "Start form" %}
+      <i class="fa fa-arrow-right"></i>
+    </button>
+  </form>
+{% endblock page_content %}
