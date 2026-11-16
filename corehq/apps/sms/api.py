@@ -47,6 +47,7 @@ from corehq.apps.sms.util import (
     clean_text,
     get_sms_backend_classes,
     is_contact_active,
+    is_granted_messaging_access,
     register_sms_contact,
     strip_plus,
 )
@@ -319,6 +320,10 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
                 ("Domain '%s' does not have permission to send SMS."
                  "  Please investigate why this function was called.") % msg.domain
             )
+
+        if msg.domain and not is_granted_messaging_access(Domain.get_by_name(msg.domain)):
+            msg.set_system_error(SMS.ERROR_MESSAGING_NOT_ENABLED)
+            return False
 
         phone_obj = PhoneBlacklist.get_by_phone_number_or_none(msg.phone_number)
         if phone_obj and not phone_obj.send_sms:

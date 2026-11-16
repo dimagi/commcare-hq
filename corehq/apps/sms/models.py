@@ -179,6 +179,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
     ERROR_FAULTY_GATEWAY_CONFIGURATION = 'FAULTY_GATEWAY_CONFIGURATION'
+    ERROR_MESSAGING_NOT_ENABLED = 'MESSAGING_NOT_ENABLED'
     STATUS_PENDING = 'STATUS_PENDING'  # special value for pending status
 
     STATUS_SENT = "sent"
@@ -224,7 +225,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
         ERROR_TRIAL_SMS_EXCEEDED:
             gettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
         ERROR_MESSAGE_FORMAT_INVALID:
-            gettext_noop("The message format was invalid.")
+            gettext_noop("The message format was invalid."),
+        ERROR_MESSAGING_NOT_ENABLED:
+            gettext_noop("Messaging is not enabled for this project."),
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
