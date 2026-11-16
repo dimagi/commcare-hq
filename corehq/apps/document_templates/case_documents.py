@@ -49,7 +49,7 @@ def render_case_documents(domain, case_ids, couch_user):
         try:
             documents.append(generate_document(
                 templates[case.get_case_property(SLUG_PROPERTY)].areas,
-                case.get_properties_in_api_format(),
+                {**case.get_properties_in_api_format(), 'case_id': case_id},
             ))
         except DocumentRenderError as error:
             raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case_id, error=error))

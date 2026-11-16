@@ -25,5 +25,5 @@ urlpatterns = [
     ),
     path('templates/preview/variables/', preview_document_variables, name='preview_document_variables'),
     path('templates/preview/', preview_document, name='preview_document'),
-    path('templates/render', render_document, name='render_document'),
+    path('templates/render/', render_document, name='render_document'),
 ]
