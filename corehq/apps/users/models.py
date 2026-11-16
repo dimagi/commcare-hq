@@ -199,6 +199,9 @@ class HqPermissions(DocumentSchema):
     view_data_dict = BooleanProperty(default=False)
     edit_data_dict = BooleanProperty(default=False)
 
+    view_document_templates = BooleanProperty(default=False)
+    edit_document_templates = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
 
@@ -278,6 +281,8 @@ class HqPermissions(DocumentSchema):
             self.edit_billing = False
             self.edit_data_dict = False
             self.view_data_dict = False
+            self.edit_document_templates = False
+            self.view_document_templates = False
 
         if self.edit_web_users:
             self.view_web_users = True
@@ -309,6 +314,9 @@ class HqPermissions(DocumentSchema):
 
         if self.edit_data_dict:
             self.view_data_dict = True
+
+        if self.edit_document_templates:
+            self.view_document_templates = True
 
         if self.edit_apps:
             self.view_apps = True
