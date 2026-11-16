@@ -109,7 +109,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     port = 8082
 
     def create_domain(self, domain):
-        domain_obj = Domain(name=domain)
+        domain_obj = Domain(name=domain, granted_messaging_access=True)
         domain_obj.use_default_sms_response = True
         domain_obj.default_sms_response = "Default SMS Response"
         domain_obj.save()

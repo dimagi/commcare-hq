@@ -62,7 +62,7 @@ class QueueingTestCase(BaseSMSTest):
     def setUp(self):
         super(QueueingTestCase, self).setUp()
         self.domain = 'test-sms-queueing'
-        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj = Domain(name=self.domain, granted_messaging_access=True)
         self.domain_obj.save()
         self.create_account_and_subscription(self.domain)
         self.domain_obj = Domain.get(self.domain_obj._id)

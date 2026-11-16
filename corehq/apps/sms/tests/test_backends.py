@@ -69,7 +69,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         super(AllBackendTest, cls).setUpClass()
-        cls.domain_obj = Domain(name='all-backend-test')
+        cls.domain_obj = Domain(name='all-backend-test', granted_messaging_access=True)
         cls.domain_obj.save()
         cls.setup_subscription(cls.domain_obj.name, SoftwarePlanEdition.ADVANCED)
 
@@ -534,7 +534,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
         cls.domain = "outgoing-framework-test"
         cls.domain2 = "outgoing-framework-test-2"
 
-        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj = Domain(name=cls.domain, granted_messaging_access=True)
         cls.domain_obj.save()
 
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
@@ -1305,7 +1305,7 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
     def setUp(self):
         super(LoadBalancingAndRateLimitingTestCase, self).setUp()
         self.domain = 'load-balance-rate-limit'
-        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj = Domain(name=self.domain, granted_messaging_access=True)
         self.domain_obj.save()
         self.create_account_and_subscription(self.domain)
         self.domain_obj = Domain.get(self.domain_obj.get_id)

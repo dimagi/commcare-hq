@@ -23,7 +23,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
     def setUpClass(cls):
         super(OptTestCase, cls).setUpClass()
         cls.domain = 'opt-test'
-        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj = Domain(name=cls.domain, granted_messaging_access=True)
         cls.domain_obj.sms_case_registration_enabled = True
         cls.domain_obj.save()
 
