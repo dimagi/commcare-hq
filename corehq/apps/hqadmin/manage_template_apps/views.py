@@ -7,7 +7,7 @@ from django.views import View
 
 from corehq.apps.app_manager.models import TemplateAppSector
 from corehq.apps.domain.decorators import require_superuser
-from corehq.apps.hqadmin.template_apps.forms import TemplateAppSectorForm
+from corehq.apps.hqadmin.manage_template_apps.forms import TemplateAppSectorForm
 from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
@@ -17,7 +17,7 @@ from corehq.util.htmx_action import HqHtmxActionMixin, hq_hx_action
 class ManageTemplateAppsView(BaseAdminSectionView):
     urlname = 'manage_template_apps'
     page_title = gettext_lazy('Manage Template Apps')
-    template_name = 'hqadmin/template_apps/manage_template_apps.html'
+    template_name = 'hqadmin/manage_template_apps/manage_template_apps.html'
 
 
 @method_decorator([require_superuser, use_bootstrap5], name='dispatch')
@@ -67,7 +67,7 @@ class TemplateAppSectorsView(HqHtmxActionMixin, View):
             add_new_sector_form = TemplateAppSectorForm()
         if success_message:
             add_new_sector_form.fields['name'].widget.attrs['autofocus'] = True
-        return render(request, 'hqadmin/template_apps/sectors/manage_sector_modal_body.html', {
+        return render(request, 'hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html', {
             'sectors': sectors,
             'add_new_sector_form': add_new_sector_form,
             'rename_sector_form': rename_sector_form,

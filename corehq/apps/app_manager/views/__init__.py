@@ -22,7 +22,6 @@ from corehq.apps.app_manager.views.apps import (
     edit_app_langs,
     edit_app_ui_translations,
     get_app_ui_translations,
-    new_app,
     pull_upstream_app,
     rearrange,
     undo_delete_app,

@@ -6,13 +6,11 @@ its Atom Feed (daily or more) to track changes.
 import re
 import uuid
 from collections import namedtuple
-from datetime import datetime
 
 from django.conf import settings
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
 from casexml.apps.case.mock import CaseBlock
@@ -42,40 +40,37 @@ from corehq.motech.openmrs.const import (
 )
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.exceptions import OpenmrsException
-from corehq.motech.openmrs.models import OpenmrsImporter, deserialize
+from corehq.motech.openmrs.models import (
+    OpenmrsImporter,
+    deserialize,
+    parse_params,
+    validate_report_params,
+)
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.requests import get_basic_requests
 from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
 
 RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
-# The location metadata key that maps to its corresponding OpenMRS location UUID
-LOCATION_OPENMRS = 'openmrs_uuid'
 
-
-def parse_params(params, location=None):
-    """
-    Inserts date and OpenMRS location UUID into report params
-    """
-    today = datetime.today().strftime('%Y-%m-%d')
-    location_uuid = location.metadata[LOCATION_OPENMRS] if location else None
-
-    parsed = {}
-    for key, value in params.items():
-        if isinstance(value, str) and '{{' in value:
-            template = Template(value)
-            value = template.render(today=today, location=location_uuid)
-        parsed[key] = value
-    return parsed
 
 
 def get_openmrs_patients(requests, importer, location=None):
     """
     Send request to OpenMRS Reporting API and return results
 
+    raises ConfigurationError if report params are invalid
     raises RequestException on request error
     raises ValueError if response is not JSON
     raises IndexError, KeyError, TypeError on unexpected JSON format
     """
+    try:
+        # Importers saved before report params were validated could
+        # still hold template syntax that would be sent as literal text
+        validate_report_params(importer.report_params)
+    except ValueError as err:
+        raise ConfigurationError(
+            f'Unable to import patients using OpenMRS Importer "{importer}": {err}'
+        )
     endpoint = f'/ws/rest/v1/reportingrest/reportdata/{importer.report_uuid}'
     params = parse_params(importer.report_params, location)
 

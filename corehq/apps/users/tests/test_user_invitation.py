@@ -7,9 +7,11 @@ from corehq.apps.users.views.web import UserInvitationView, AcceptedWebUserInvit
 
 from django import forms
 from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.domain.models import Domain
+from corehq.apps.sso.models import AuthenticatedEmailDomain, LoginEnforcementType
+from corehq.apps.sso.tests import generator
 from corehq.apps.users.models import InvitationHistory
 from corehq.apps.users.model_log import InviteModelAction
 from corehq.apps.users.models_role import UserRole
@@ -39,20 +41,11 @@ class TestUserInvitation(TestCase):
         cls.domain = "domain"
         cls.factory = RequestFactory()
         cls.project = bootstrap_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
         cls.role1 = UserRole.objects.create(
             domain=cls.domain,
             name="role1"
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.project.delete()
-        delete_all_users()
-        return super().tearDownClass()
-
-    def tearDown(cls):
-        delete_all_users()
-        return super().tearDown()
 
     def test_redirect_if_invite_does_not_exist(self):
         request = Mock()
@@ -62,20 +55,19 @@ class TestUserInvitation(TestCase):
         self.assertEqual(302, response.status_code)
         self.assertEqual("/accounts/login/", response.url)
 
+    def test_redirect_if_invite_is_in_other_domain(self):
+        request = Mock()
+        invitation = self._create_invitation('test@dimagi.com', domain='other-domain')
+
+        response = UserInvitationView()(request, invitation.uuid, domain=self.domain)
+        self.assertEqual(302, response.status_code)
+        self.assertEqual("/accounts/login/", response.url)
+
     def test_redirect_if_invite_is_already_accepted(self):
         request = Mock()
-        invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
+        invitation = self._create_invitation('test@dimagi.com', is_accepted=True)
 
-        Invitation.objects.create(
-            email='test@dimagi.com',
-            uuid=invite_uuid,
-            domain=self.domain,
-            is_accepted=True,
-            invited_on=datetime.date(2023, 9, 1),
-            invited_by="system@dimagi.com",
-        )
-
-        response = UserInvitationView()(request, invite_uuid, domain=self.domain)
+        response = UserInvitationView()(request, invitation.uuid, domain=self.domain)
         self.assertEqual(302, response.status_code)
         self.assertEqual("/accounts/login/", response.url)
 
@@ -111,7 +103,6 @@ class TestUserInvitation(TestCase):
             invite_email="test@dimagi.com",
         )
 
-        print(form.errors)
         self.assertTrue(form.is_valid())
 
         form = AcceptedWebUserInvitationForm(
@@ -128,27 +119,6 @@ class TestUserInvitation(TestCase):
 
         self.assertTrue(form.is_valid())
 
-    def _setup_invitation_and_request(self):
-        invite_uuid = "e1bd37f5-9ff8-4853-b953-fd75483a0ec7"
-        request = self.factory.post(f"/join/{invite_uuid}")
-        request.user = AnonymousUser()
-        request.POST = {
-            "email": "test5@dimagi.com",
-            "full_name": "Testy Tester",
-            "password": "pass12342&*LKJ",
-            "eula_confirmed": True
-        }
-        Invitation.objects.create(
-            email='test5@dimagi.com',
-            uuid=invite_uuid,
-            domain=self.domain,
-            is_accepted=False,
-            invited_on=(datetime.datetime.now() - datetime.timedelta(days=1)),
-            invited_by="system@dimagi.com",
-            role=self.role1.get_qualified_id()
-        )
-        return request, invite_uuid
-
     @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
     @patch('corehq.apps.users.views.web.login')
     @patch('corehq.apps.users.views.web.messages')
@@ -157,8 +127,10 @@ class TestUserInvitation(TestCase):
         self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
         request, invite_uuid = self._setup_invitation_and_request()
         response = UserInvitationView()(request, invite_uuid, domain=self.domain)
+        user = WebUser.get_by_username('test5@dimagi.com')
+        self.assertTrue(user)
+        self.addCleanup(user.delete, self.domain, None)
         self.assertEqual(302, response.status_code)
-        self.assertTrue(WebUser.get_by_username('test5@dimagi.com'))
 
     @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
     @patch('corehq.apps.users.views.web.login')
@@ -169,8 +141,7 @@ class TestUserInvitation(TestCase):
         accept_invitation_mock.side_effect = Mock(side_effect=InvitationTestException())
         request, invite_uuid = self._setup_invitation_and_request()
         with self.assertRaises(InvitationTestException):
-            response = UserInvitationView()(request, invite_uuid, domain=self.domain)
-            self.assertEqual(400, response.status_code)
+            UserInvitationView()(request, invite_uuid, domain=self.domain)
         self.assertIsNone(WebUser.get_by_username('test5@dimagi.com'))
 
     def test_invitation_save_logging(self):
@@ -188,3 +159,95 @@ class TestUserInvitation(TestCase):
         InvitationHistory.objects.get(invitation_id=invitation.pk, action=3)
         with self.assertRaises(Invitation.DoesNotExist):
             Invitation.objects.get(uuid=invite_uuid)
+
+    @patch.object(Domain, 'allow_invite_email_only', True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_allow_invite_email_only_blocks_other_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("other@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertFalse(WebUser.get_by_username("other@dimagi.com").is_member_of(self.domain))
+
+    @patch.object(Domain, 'allow_invite_email_only', True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_allow_invite_email_only_accepts_invited_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("invitee@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertTrue(WebUser.get_by_username("invitee@dimagi.com").is_member_of(self.domain))
+
+    @override_settings(ENFORCE_SSO_LOGIN=True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_required_sso_blocks_other_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        self._require_sso_for_invited_email()
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("other@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertFalse(WebUser.get_by_username("other@dimagi.com").is_member_of(self.domain))
+
+    @override_settings(ENFORCE_SSO_LOGIN=True)
+    @patch('corehq.apps.users.models.Invitation._send_confirmation_email')
+    @patch('corehq.apps.users.views.web.messages')
+    def test_required_sso_accepts_invited_signed_in_user(
+        self, mock_messages, mock_confirmation_email
+    ):
+        self._require_sso_for_invited_email()
+        request, invite_uuid = self._setup_signed_in_invitation_and_request("invitee@dimagi.com")
+        UserInvitationView()(request, invite_uuid, domain=self.domain)
+        self.assertTrue(WebUser.get_by_username("invitee@dimagi.com").is_member_of(self.domain))
+
+    def _setup_invitation_and_request(self):
+        invitation = self._create_invitation('test5@dimagi.com')
+        request = self.factory.post(f"/join/{invitation.uuid}")
+        request.user = AnonymousUser()
+        request.POST = {
+            "email": "test5@dimagi.com",
+            "full_name": "Testy Tester",
+            "password": "pass12342&*LKJ",
+            "eula_confirmed": True
+        }
+        return request, invitation.uuid
+
+    def _setup_signed_in_invitation_and_request(self, username):
+        inviter = self._create_web_user('inviter@dimagi.com')
+        user = self._create_web_user(username)
+        invitation = self._create_invitation('invitee@dimagi.com', invited_by=inviter.user_id)
+        request = self.factory.post(f"/join/{invitation.uuid}")
+        request.user = user.get_django_user()
+        request.couch_user = user
+        return request, invitation.uuid
+
+    def _create_invitation(self, email, **kwargs):
+        return Invitation.objects.create(**{
+            'email': email,
+            'domain': self.domain,
+            'invited_on': datetime.datetime.now() - datetime.timedelta(days=1),
+            'invited_by': "system@dimagi.com",
+            'role': self.role1.get_qualified_id(),
+            **kwargs,
+        })
+
+    def _create_web_user(self, username):
+        web_user = WebUser.create(
+            None,
+            username,
+            'pass12342&*LKJ',
+            None,
+            None,
+            by_domain_required_for_log=False,
+        )
+        self.addCleanup(web_user.delete, self.domain, None)
+        return web_user
+
+    def _require_sso_for_invited_email(self):
+        idp = generator.create_idp('dimagi', generator.get_billing_account_for_idp())
+        idp.is_active = True
+        idp.login_enforcement_type = LoginEnforcementType.GLOBAL
+        idp.save()
+        AuthenticatedEmailDomain.objects.create(email_domain="dimagi.com", identity_provider=idp)

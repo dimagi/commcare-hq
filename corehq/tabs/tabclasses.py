@@ -56,7 +56,7 @@ from corehq.apps.hqadmin.reports import (
     UserAuditReport,
     UserListReport,
 )
-from corehq.apps.hqadmin.template_apps.views import ManageTemplateAppsView
+from corehq.apps.hqadmin.manage_template_apps.views import ManageTemplateAppsView
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports

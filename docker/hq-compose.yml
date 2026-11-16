@@ -6,6 +6,7 @@ services:
     environment:
       CI: "${CI}"
       CODECOV_TOKEN: "${CODECOV_TOKEN}"
+      COVERAGE: "${COVERAGE}"
       DATADOG_API_KEY: "${DATADOG_API_KEY}"
       DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"

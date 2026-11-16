@@ -3,6 +3,7 @@ from datetime import datetime
 from functools import partial
 
 from memoized import memoized
+from settings import UNIT_TESTING
 
 from dimagi.ext.couchdbkit import (
     DictProperty,
@@ -23,8 +24,10 @@ from corehq.motech.const import (
     IMPORT_FREQUENCY_MONTHLY,
     IMPORT_FREQUENCY_WEEKLY,
 )
+from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.utils import b64_aes_cbc_decrypt
 from corehq.motech.openmrs.const import (
+    LOCATION_OPENMRS_UUID,
     OPENMRS_DATA_TYPE_MILLISECONDS,
     OPENMRS_DATA_TYPES,
 )
@@ -37,6 +40,9 @@ from corehq.util.timezones.utils import (
     coerce_timezone_value,
     get_timezone_for_domain,
 )
+
+if UNIT_TESTING:
+    import time_machine  # noqa: F401 used by doctest
 
 
 class ColumnMapping(DocumentSchema):
@@ -69,6 +75,84 @@ def deserialize(mapping, external_value, timezone=None):
     )
     return serializer(external_value) if serializer else external_value
 
+
+# The placeholders that may be used in ``OpenmrsImporter.report_params``
+# values. Report params are user-supplied and must never be passed to a
+# template engine, so only these are substituted.
+REPORT_PARAM_PLACEHOLDERS = ('today', 'location')
+_placeholder_re = re.compile(r'\{\{\s*(\w+)\s*\}\}')
+_template_markers = ('{{', '{%', '{#')
+
+
+def parse_params(params, location=None):
+    """
+    Returns ``params`` with the ``{{ today }}`` and ``{{ location }}``
+    placeholders in string values replaced. ``{{ location }}`` is the
+    OpenMRS location UUID in ``location``'s metadata. Other values are
+    returned unchanged.
+
+    Raises ``ConfigurationError`` if a param uses ``{{ location }}``
+    and ``location`` has no OpenMRS location UUID.
+
+    >>> params = {'endDate': '{{ today }}', 'n': 1}
+    >>> with time_machine.travel('2026-10-23 12:00', tick=False):
+    ...     parse_params(params)
+    {'endDate': '2026-10-23', 'n': 1}
+    """
+    def get_today():
+        return datetime.today().strftime('%Y-%m-%d')
+
+    def get_location_uuid():
+        if location is None:
+            return None  # Rendered as "None", as Jinja2 rendered it
+        try:
+            return location.metadata[LOCATION_OPENMRS_UUID]
+        except KeyError:
+            raise ConfigurationError(
+                f'Location "{location.name}" has no "{LOCATION_OPENMRS_UUID}" '
+                'metadata for the {{ location }} report param.'
+            )
+
+    resolvers = {'today': get_today, 'location': get_location_uuid}
+
+    def substitute(match):
+        name = match.group(1)
+        if name in resolvers:
+            return str(resolvers[name]())
+        return match.group(0)
+
+    parsed = {}
+    for key, value in params.items():
+        if isinstance(value, str):
+            value = _placeholder_re.sub(substitute, value)
+        parsed[key] = value
+    return parsed
+
+
+def validate_report_params(params):
+    """
+    Raises ValueError if a report param value contains anything that
+    looks like a template other than the allowed placeholders.
+
+    >>> validate_report_params({'endDate': '{{ today }}'})
+    >>> validate_report_params({'endDate': '{{ today | upper }}'})
+    Traceback (most recent call last):
+      ...
+    ValueError: Invalid template in report param "endDate". Only {{ today }} and {{ location }} are allowed.
+    """
+    for key, value in params.items():
+        if not isinstance(value, str):
+            continue
+        # Remove allowed placeholders, then check for any template syntax left over
+        remainder = _placeholder_re.sub(
+            lambda m: '' if m.group(1) in REPORT_PARAM_PLACEHOLDERS else m.group(0),
+            value,
+        )
+        if any(marker in remainder for marker in _template_markers):
+            allowed = ' and '.join(f'{{{{ {p} }}}}' for p in REPORT_PARAM_PLACEHOLDERS)
+            raise ValueError(
+                f'Invalid template in report param "{key}". Only {allowed} are allowed.'
+            )
 
 class OpenmrsImporter(Document):
     """

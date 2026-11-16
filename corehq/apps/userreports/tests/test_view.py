@@ -8,9 +8,11 @@ from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
+from dimagi.utils.couch.undo import soft_delete
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import es_test, populate_case_search_index
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -48,6 +50,7 @@ from corehq.util.test_utils import flag_enabled
 class ConfigurableReportTestMixin(object):
     domain = "TEST_DOMAIN"
     case_type = "CASE_TYPE"
+    password = "Passw0rd!"
 
     @classmethod
     def _sample_data_source_config(cls):
@@ -109,6 +112,22 @@ class ConfigurableReportTestMixin(object):
         with drop_connected_signals(sql_case_post_save):
             submit_case_blocks(case_block, domain=cls.domain)
         return CommCareCase.objects.get_case(id, cls.domain)
+
+    @classmethod
+    def _create_domain(cls):
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+
+    @classmethod
+    def _create_user(cls, username, can_edit_ucrs=True, can_edit_reports=False):
+        role = UserRole.create(
+            domain=cls.domain,
+            name=f'{username}_role',
+            permissions=HqPermissions(edit_ucrs=can_edit_ucrs, edit_reports=can_edit_reports),
+        )
+        user = WebUser.create(cls.domain, username, cls.password, None, None, role_id=role.get_id)
+        cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
+        return user
 
     @classmethod
     def _delete_everything(cls):
@@ -479,6 +498,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
 @es_test(requires=[case_search_adapter], setup_class=True)
 class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
+    domain = 'ucr-data-source-views'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -492,11 +513,17 @@ class TestDataSourceRebuild(ConfigurableReportTestMixin, TestCase):
 
         cls.data_source_config = cls._sample_data_source_config()
         cls.data_source_config.save()
+        cls._create_domain()
+        cls.user = cls._create_user('ucr-editor@example.com')
 
     @classmethod
     def tearDownClass(cls):
         cls._delete_everything()
         super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.user.username, password=self.password)
 
     def _send_data_source_rebuild_request(self):
         path = reverse("rebuild_configurable_data_source", args=(self.domain, self.data_source_config.get_id))
@@ -596,16 +623,24 @@ class TestPrepDataSourceForRebuild(ConfigurableReportTestMixin, TestCase):
 
 
 class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
+    domain = 'ucr-data-source-views'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.data_source_config = cls._sample_data_source_config()
         cls.data_source_config.save()
+        cls._create_domain()
+        cls.user = cls._create_user('ucr-editor@example.com')
 
     @classmethod
     def tearDownClass(cls):
         cls._delete_everything()
         super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.user.username, password=self.password)
 
     def _send_build_data_source_in_place_request(self):
         path = reverse("build_in_place", args=(self.domain, self.data_source_config.get_id))
@@ -628,7 +663,8 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
 
         mock_prep_data_source_for_rebuild.assert_called_once()
         mock_rebuild_indicators_in_place.assert_has_calls([
-            call.delay(self.data_source_config.get_id, '', source='edit_data_source_build_in_place',
+            call.delay(self.data_source_config.get_id, self.user.username,
+                       source='edit_data_source_build_in_place',
                        domain=self.domain)
         ])
         mock_report_ucr_rebuild_metrics.assert_called_once()
@@ -650,6 +686,160 @@ class TestBuildDataSourceInPlace(ConfigurableReportTestMixin, TestCase):
         # reset for other tests
         self.data_source_config.meta.build.awaiting = False
         self.data_source_config.save()
+
+
+@flag_enabled('USER_CONFIGURABLE_REPORTS')
+@patch('corehq.apps.userreports.views.rebuild_indicators_in_place')
+@patch('corehq.apps.userreports.views.rebuild_indicators')
+class TestDataSourceViewsAccess(ConfigurableReportTestMixin, TestCase):
+    """
+    Data source views that change data must not be reachable by
+    anonymous users or by users without the ``edit_ucrs`` permission.
+    """
+    domain = 'ucr-data-source-access'
+    url_names = [
+        'delete_configurable_data_source',
+        'undo_delete_data_source',
+        'rebuild_configurable_data_source',
+        'build_in_place',
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._create_domain()
+        cls.editor = cls._create_user('ucr-editor@example.com')
+        cls.non_editor = cls._create_user('ucr-non-editor@example.com', can_edit_ucrs=False)
+
+    def _create_data_source(self, deleted=False):
+        config = self._sample_data_source_config()
+        config.save()
+        self.addCleanup(config.delete)
+        adapter = get_indicator_adapter(config)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        if deleted:
+            soft_delete(config)
+        return config
+
+    def _post(self, url_name, config):
+        return self.client.post(reverse(url_name, args=(self.domain, config.get_id)))
+
+    def _assert_unchanged(self, config, was_deleted, *task_mocks):
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'].endswith('-Deleted') == was_deleted
+        assert not doc['meta']['build']['awaiting']
+        assert get_indicator_adapter(config).table_exists
+        for task_mock in task_mocks:
+            task_mock.delay.assert_not_called()
+
+    def test_anonymous_user_is_redirected_to_login(self, rebuild_mock, in_place_mock):
+        login_url = reverse('domain_login', kwargs={'domain': self.domain})
+        for url_name in self.url_names:
+            with self.subTest(url_name=url_name):
+                was_deleted = url_name == 'undo_delete_data_source'
+                config = self._create_data_source(deleted=was_deleted)
+
+                response = self._post(url_name, config)
+
+                assert response.status_code == 302
+                assert response.url.startswith(login_url)
+                self._assert_unchanged(config, was_deleted, rebuild_mock, in_place_mock)
+
+    def test_user_without_edit_ucrs_is_forbidden(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.non_editor.username, password=self.password)
+        for url_name in self.url_names:
+            with self.subTest(url_name=url_name):
+                was_deleted = url_name == 'undo_delete_data_source'
+                config = self._create_data_source(deleted=was_deleted)
+
+                response = self._post(url_name, config)
+
+                assert response.status_code == 403
+                self._assert_unchanged(config, was_deleted, rebuild_mock, in_place_mock)
+
+    def test_editor_can_delete(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.editor.username, password=self.password)
+        config = self._create_data_source()
+
+        response = self._post('delete_configurable_data_source', config)
+
+        assert response.status_code == 302
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'] == 'DataSourceConfiguration-Deleted'
+        assert not get_indicator_adapter(config).table_exists
+
+    def test_editor_can_undelete(self, rebuild_mock, in_place_mock):
+        self.client.login(username=self.editor.username, password=self.password)
+        config = self._create_data_source(deleted=True)
+
+        response = self._post('undo_delete_data_source', config)
+
+        assert response.status_code == 302
+        doc = DataSourceConfiguration.get_db().get(config.get_id)
+        assert doc['doc_type'] == 'DataSourceConfiguration'
+
+
+class TestUpdateReportDescriptionAccess(ConfigurableReportTestMixin, TestCase):
+    """
+    Only users with the ``edit_reports`` permission may change a
+    report's description.
+    """
+    domain = 'ucr-report-description-access'
+    original_description = 'Original description'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._create_domain()
+        cls.editor = cls._create_user('report-editor@example.com', can_edit_reports=True)
+        cls.non_editor = cls._create_user('report-non-editor@example.com')
+
+    def setUp(self):
+        super().setUp()
+        self.report = ReportConfiguration(
+            domain=self.domain,
+            config_id=uuid.uuid4().hex,
+            title='Report',
+            description=self.original_description,
+        )
+        self.report.save()
+        self.addCleanup(self.report.delete)
+        self.url = reverse('update_report_description', args=(self.domain, self.report.get_id))
+
+    def _get_description(self):
+        return ReportConfiguration.get(self.report.get_id).description
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 302
+        assert response.url.startswith(reverse('domain_login', kwargs={'domain': self.domain}))
+        assert self._get_description() == self.original_description
+
+    def test_user_without_edit_reports_is_forbidden(self):
+        self.client.login(username=self.non_editor.username, password=self.password)
+
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 403
+        assert self._get_description() == self.original_description
+
+    def test_get_is_not_allowed(self):
+        self.client.login(username=self.editor.username, password=self.password)
+
+        response = self.client.get(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 405
+        assert self._get_description() == self.original_description
+
+    def test_editor_can_update_description(self):
+        self.client.login(username=self.editor.username, password=self.password)
+
+        response = self.client.post(self.url, {'value': 'Changed'})
+
+        assert response.status_code == 200
+        assert self._get_description() == 'Changed'
 
 
 class TestSubscribeToDataSource(TestCase):

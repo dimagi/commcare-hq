@@ -1327,14 +1327,6 @@ msgstr[1] ""
 msgid "Payment Received - Thank You!"
 msgstr "Malipo Yamepokelewa - Asante!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Malipo ya Usajili kwa Ankara ya CommCare {context['invoice_number']} "
-"yalikataliwa"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "Simamia Wasimamizi wa Uhasibu"
@@ -5440,9 +5432,10 @@ msgstr "'role' inahitajika kwa kila mtumiaji"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' imetolewa na wasifu hivyo haiwezi kuwekwa moja kwa moja"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Kigezo batili: {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -7012,6 +7005,7 @@ msgstr "Hapana"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -14431,11 +14425,15 @@ msgid "Not set"
 msgstr "Haijawekwa"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
+#, fuzzy
+#| msgid "U\\u200BI translation"
+msgid "U​I translation"
 msgstr "Tafsiri ya U\\u200BI"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
+#, fuzzy
+#| msgid "U\\u200BI translations"
+msgid "U​I translations"
 msgstr "Tafsiri za U\\u200BI"
 
 #: corehq/apps/app_manager/views/apps.py
@@ -14907,10 +14905,6 @@ msgstr ""
 #: corehq/apps/app_manager/views/releases.py
 msgid "App diff"
 msgstr "Tofauti ya programu"
-
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
@@ -15416,13 +15410,6 @@ msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Mfano: Seli katika safu {row_num} ina \"{sample}\""
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"Uingizaji wa kesi unaweza kuwa na safu nyingi zaidi ya "
-"{MAX_CASE_IMPORTER_ROWS}. "
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
 msgstr "Jina la Mmiliki Batili"
 
@@ -15587,23 +15574,8 @@ msgid "Name Too Long"
 msgstr "Jina Refu Kupita Kiasi"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Jina la kesi haliwezi kuwa na herufi zaidi ya {STANDARD_CHARFIELD_LENGTH}"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "Kitambulisho cha Nje Kirefu Kupita Kiasi"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Kitambulisho cha nje hakiwezi kuwa na herufi zaidi ya "
-"{STANDARD_CHARFIELD_LENGTH}"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -16359,10 +16331,6 @@ msgid "{param} must be a string"
 msgstr "{param} lazima iwe mfuatano wa herufi"
 
 #: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Operator batili \"{criteria[\"operator\"]}\". Thamani zinazokubalika ni "
-
-#: corehq/apps/case_search/models.py
 msgid "Project Database"
 msgstr "Hifadhidata ya Mradi"
 
@@ -16789,12 +16757,10 @@ msgid "Endpoint '{}' parameters are invalid"
 msgstr "Vigezo vya mwisho wa '{}' si sahihi"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' query timed out"
 msgstr "Muda wa kuuliza endpoint '{}' umeisha"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' query failed"
 msgstr "Hoja kwa endpoint '{}' imeshindwa"
 
@@ -16830,11 +16796,6 @@ msgid "Profile Case Search"
 msgstr "Utafutaji wa Kesi wa Wasifu"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} haiungwa mkono na ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -16853,51 +16814,6 @@ msgid ""
 msgstr ""
 "Upande wa kulia wa kulinganisha lazima uwe nambari au tarehe. Tarehe lazima "
 "ziwekwe kwenye alama za nukuu"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} si tarehe au muda uliowekwa kwa usahihi."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} si tarehe halali."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} si tarehe na muda halali."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "Hoja ya pili kwa '{node.name}' lazima iwe kuratibu sahihi"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Hoja ya tatu kwa '{node.name}' lazima iwe nambari, imepokelewa '{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' si kipimo halali cha umbali. Inatarajiwa mojawapo ya {', "
-"'.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' si tarehe halali. Inayotarajiwa 'YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Hoja ya kwanza kwa '{node.name}' lazima iwe jina halali la sifa ya kesi"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -16934,14 +16850,6 @@ msgstr "'{name}' inatarajia hoja moja au mbili"
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 "'{name}' kosa. Kitambulisho cha faharasa lazima kiwe mfuatano wa herufi"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"Kazi ya '{node.name}' inakubali hoja {expected} tu, imepokelewa {actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -17770,7 +17678,6 @@ msgstr "Lebo inahitajika kwa kila sehemu."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 #, python-format
-#| msgid "Table ID must be between 1 and %(max_length)s characters."
 msgid "Labels must be at most %(limit_value)d characters."
 msgstr "Lebo lazima ziwe na urefu usiozidi herufi %(limit_value)d."
 
@@ -20568,7 +20475,7 @@ msgstr "Ongeza Sheria ya Kuondoa Marudio"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -21463,27 +21370,19 @@ msgstr "Slug"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
-#| msgid "Document Template"
 msgid "Document Templates"
 msgstr "Violezo vya Hati"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "Document Template"
 msgid "New Document Template"
 msgstr "Kiolezo Kipya cha Hati"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "Document Template"
 msgid "Delete Document Template"
 msgstr "Futa Kiolezo cha Hati"
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "                  Are you sure you want to permanently delete\n"
-#| "                  <strong>%(friendly_name)s</strong>?\n"
-#| "                "
 msgid ""
 "\n"
 "                  Are you sure you want to delete the document template\n"
@@ -21496,22 +21395,18 @@ msgstr ""
 "                "
 
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
-#| msgid "No endpoints configured."
 msgid "No document templates configured."
 msgstr "Hakuna violezo vya hati vilivyosanidiwa."
 
 #: corehq/apps/document_templates/views.py
-#| msgid "A sector with this name already exists."
 msgid "A template with this slug already exists."
 msgstr "Kiolezo chenye slug hii tayari kipo."
 
 #: corehq/apps/document_templates/views.py
-#| msgid "Chat Template"
 msgid "New Template"
 msgstr "Kiolezo Kipya"
 
 #: corehq/apps/document_templates/views.py
-#| msgid "Document Template"
 msgid "Edit Document Template"
 msgstr "Hariri Kiolezo cha Hati"
 
@@ -22173,11 +22068,6 @@ msgstr ""
 "Vikomo vya kanuni za masasisho ya kesi vinaweza kubadilishwa na wasimamizi "
 "wa Dimagi pekee. Tafadhali wasiliana na {support_email} ikiwa ungependa "
 "kusasisha mpangilio huu."
-
-#: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Kielezi kisichojulikana {expr}"
 
 #: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
@@ -26778,11 +26668,6 @@ msgstr ""
 msgid "Select A Project"
 msgstr "Chagua Mradi"
 
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Umeongezwa kwenye nafasi ya mradi ya \"{invitation.domain}\"."
-
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
 msgstr "Fixture ya Mahali"
@@ -29412,6 +29297,7 @@ msgstr "Ficha Chaguo"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Ongeza"
 
@@ -32556,8 +32442,16 @@ msgid "UCR rebuild restriction status"
 msgstr "Hali ya kizuizi cha ujenzi upya wa UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "Kizuizi cha ujenzi upya kinahitajika"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Ujenzi upya umepigwa marufuku"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "Kizuizi cha ujenzi upya hakihitajiki"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -37758,12 +37652,8 @@ msgstr ""
 "faharasa '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Haiwezi kufuta aina ya eneo '{deleted_type.code}'. Inarejelewa na aina "
+msgid " and try again."
+msgstr " na jaribu tena."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -37921,17 +37811,8 @@ msgstr ""
 "wa mradi wako. <a href=\"{}\">Maelezo zaidi yanapatikana hapa</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Nambari ya tovuti ya eneo: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Imeshindikana kusasisha: haikuweza kupata eneo lenye"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "Sehemu batili zimejumuishwa kwenye ombi: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -39105,8 +38986,22 @@ msgstr ""
 "vilivyotumwa tayari vinaweza kutumika hadi vimalizike muda wake."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Barua pepe yenye chapa na kiungo cha matumizi mara moja."
+#| msgid "How Respondents Receive Their One-time Link"
+msgid "How Respondents Open the Form"
+msgstr "Jinsi Washiriki Wanavyofungua Fomu"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "One-time link by email or text message"
+msgstr "Kiungo cha matumizi ya mara moja kupitia barua pepe au ujumbe mfupi"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Anyone with the link"
+msgstr "Mtu yeyote aliye na kiungo"
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "A branded email with a single-use link."
+msgid "A branded email with a one-time-use link."
+msgstr "Barua pepe yenye chapa na kiungo cha matumizi ya mara moja."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "A short text with a shortened link. Billed per message sent."
@@ -39115,24 +39010,49 @@ msgstr ""
 "uliotumwa."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Open to Requests"
-msgstr "Fungua kwa Maombi"
+#| msgid "Open to Requests"
+msgid "Open to Respondents"
+msgstr "Wazi kwa Washiriki"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Immediately open this public webform to one-time link requests."
+#| msgid ""
+#| "Immediately open this public webform to one-time link requests."
+msgid "Open this public webform to respondents."
+msgstr "Fungua fomu hii ya wavuti ya umma kwa washiriki."
+
+#: corehq/apps/public_webforms/forms.py
+#| msgid "Verification"
+msgid "Verification Method"
+msgstr "Mbinu ya Uthibitishaji"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"To protect your data and project, CommCare runs automated checks on every "
+"respondent who starts the form. If a check flags a respondent, CommCare "
+"sends them a one-time link to open before the form starts. Choose how "
+"CommCare can send that link."
 msgstr ""
-"Fungua mara moja fomu hii ya umma ya wavuti kwa maombi ya kiungo cha mara "
-"moja."
+"Ili kulinda data na mradi wako, CommCare hufanya ukaguzi wa kiotomatiki kwa "
+"kila mshiriki anayeanza kujaza fomu. Ukaguzi ukimwekea mshiriki alama ya "
+"tahadhari, CommCare humtumia kiungo cha matumizi ya mara moja ambacho lazima"
+" afungue kabla ya kuanza kujaza fomu. Chagua jinsi CommCare inavyoweza "
+"kutuma kiungo hicho."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Jinsi Wajibu Wanavyopokea Kiungo Chao cha Mara Moja"
+#| msgid "The send date must be in the future."
+msgid "Webform must close in the future."
+msgstr "Fomu ya wavuti lazima ifungwe katika tarehe ya baadaye."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Choose at least one way for respondents to receive one-time links."
+#| msgid "Choose at least one project space."
+msgid "Choose at least one verification method."
+msgstr "Chagua angalau mbinu moja ya uthibitishaji."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webforms open to anyone with the link must close within 90 days."
 msgstr ""
-"Chagua angalau njia moja ambayo washiriki watatumia kupokea viungo vya "
-"matumizi ya mara moja."
+"Fomu za wavuti zilizo wazi kwa mtu yeyote aliye na kiungo lazima zifungwe "
+"ndani ya siku 90."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -39491,7 +39411,7 @@ msgid "Check Your Messages"
 msgstr "Angalia Ujumbe Wako"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "        Welcome Back to %(cc_name)s\n"
@@ -39502,11 +39422,11 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Karibu Tena kwenye %(cc_name)s\n"
+"        Tumetuma kiungo kwa ujumbe mfupi kwa %(masked_phone_number)s.\n"
 "      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "        Welcome Back to %(cc_name)s\n"
@@ -39517,14 +39437,10 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Karibu Tena kwenye %(cc_name)s\n"
+"        Tumetuma kiungo kwa barua pepe kwa %(masked_email)s.\n"
 "      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
-#| msgid ""
-#| "\n"
-#| "      We sent a link using the contact information you provided.\n"
-#| "    "
 msgid ""
 "\n"
 "        We sent a link using the contact information you provided.\n"
@@ -40789,9 +40705,8 @@ msgstr ""
 "dakika chache. Ikiwa tatizo litaendelea, tafadhali wasiliana na msaada."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Tafadhali subiri angalau sekunde {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "sekunde kabla ya kuomba tena."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -42810,6 +42725,14 @@ msgstr "Idadi ya fomu ambazo hazijatumwa kwenye simu ya mtumiaji"
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr ""
 "Idadi ya fomu ambazo hazijatumwa kwenye simu za watumiaji kwa {app_info}"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...Tazama zaidi"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Fupisha"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -45133,13 +45056,6 @@ msgstr ""
 "Haiwezi kuhifadhi kwenye kumbukumbu nyaraka za aina %s. Umefikaje hapa??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr ""
-"Haiwezi kufuta fomu {instance_id} kwa sababu haijahifadhiwa kwenye "
-"kumbukumbu."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (kesi hii)"
 
@@ -45707,11 +45623,6 @@ msgstr "Nakili hii mahali salama. Haitaonyeshwa tena."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Anwani Zote za IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-"Ufunguo wa Api wenye jina \"{create_form.cleaned_data['name']}\" tayari upo."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -46832,7 +46743,6 @@ msgid "Connect user not found for recipient."
 msgstr "Mtumiaji wa Connect hakupatikana kwa mpokeaji."
 
 #: corehq/apps/sms/models.py
-#| msgid "Connect Messaging Users"
 msgid "Connect Messaging Gateway Error"
 msgstr "Hitilafu ya Lango la Ujumbe la Connect"
 
@@ -48952,11 +48862,6 @@ msgid "today!"
 msgstr "leo!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "mnamo {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -48964,11 +48869,6 @@ msgid ""
 msgstr ""
 "Arifa ya CommCare: Cheti cha Mtoa Utambulisho %(idp_name)s kitakwisha muda "
 "wake %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Akaunti za Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -50054,15 +49954,6 @@ msgid "Missing translations for {} in uploaded sheet"
 msgstr "Tafsiri zinazokosekana kwa {} kwenye karatasi iliyopakiwa"
 
 #: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Haikuweza kupata moduli au fomu yenye ID '{module_or_form_id}' kwenye "
-"programu '{self.app.name}'"
-
-#: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
 msgstr "Haikuweza kupata safu wima '{}'"
 
@@ -50209,11 +50100,6 @@ msgid ""
 msgstr ""
 "Barua pepe imerudishwa kwa mwaliko wa mtumiaji huyu: {}. Tafadhali jaribu "
 "tena kwa jina la mtumiaji tofauti"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Domeni haiwezi kuwekwa kuwa '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -50497,16 +50383,6 @@ msgstr "Jenga upya"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Ondoa"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression hairuhusiwi kwa domeni {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} hairuhusiwi kwa domain {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -52319,21 +52195,8 @@ msgid "UCR Expressions"
 msgstr "Ufafanuzi wa UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr ""
-"Ufafanuzi wa UCR wenye jina \"{create_form.cleaned_data['name']}\" tayari "
-"upo."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Hariri Ufafanuzi wa UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Thibitisha akaunti yako ya CommCare kwa {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -55658,13 +55521,9 @@ msgid "is_active"
 msgstr "ni_aktif"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Umefanikiwa kuthibitisha akaunti ya {user.raw_username}. Sasa unaweza "
-"kuingia"
+#| msgid "You can now log into the mobile app."
+msgid "You can now login"
+msgstr "Sasa unaweza kuingia"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -58508,24 +58367,25 @@ msgstr ""
 "robo kwa muundo yyyyQn (mf. \"2004Q1\" kwa Januari-Machi 2004), au weka safu"
 " halali."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Ongeza/Hariri Mipangilio ya Muunganisho</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Ripoti Inayoweza Kusanidiwa na Mtumiaji"
 
 #: corehq/motech/dhis2/forms.py
+#| msgid ""
+#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
+#| "href=\"https://github.com/dimagi/commcare-"
+#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
-"Ramani za DataSet zinaunganisha UCR za CommCare na DataSet za DHIS2. <a "
+"Ramani za DataSet huunganisha UCR za CommCare na DataSet za DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
 "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"target=\"_new\">Maelezo zaidi</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -58999,12 +58859,9 @@ msgid "There is an error in your data API validations"
 msgstr "Kuna hitilafu kwenye uthibitishaji wa data ya API yako"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Imeshindikana kutatua viambatisho vya API {self.api_auth_settings!r}. "
-"Tafadhali chagua mipangilio sahihi ya uthibitisho wa API kwa "
+#| msgid "Please select the applicable day(s) of the week."
+msgid "Please select the applicable API auth settings for the "
+msgstr "Tafadhali chagua mipangilio inayofaa ya uthibitishaji wa API kwa "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -59039,50 +58896,19 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "Kuna hitilafu ya sintaksia ya XML kwenye Atom feed ya OpenMRS katika "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"Hakuna watumiaji waliopatikana katika eneo \"{repeater.location_id}\" "
-"kumiliki wagonjwa waliowekwa kutoka OpenMRS Atom feed."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "wagonjwa wameongezwa kutoka kwenye Atom feed ya OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: Hitilafu kwenye mipangilio: Imeshindikana "
-"kusasisha "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "wagonjwa kutoka OpenMRS isipokuwa aina moja tu ya kesi imeainishwa."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Mgonjwa "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Tukio "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana inayolingana "
-"na OpenMRS UUID ya kipekee. case external_id: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Imeshindikana kubaini mfanyakazi wa simu wa kumiliki \"{case_type}\" mpya "
+#| msgid ""
+#| "{repeater.domain}: {repeater}: More than one case found matching unique "
+#| "OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "UUID ya kipekee inayolingana ya OpenMRS. case external_id: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -60327,7 +60153,6 @@ msgid "WhatsApp Settings"
 msgstr "Mipangilio ya WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-#| msgid "Connect Messsaging"
 msgid "Connect Messaging"
 msgstr "Ujumbe wa Connect"
 
@@ -61192,6 +61017,219 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "Malipo ya Usajili kwa Ankara ya CommCare {context['invoice_number']} "
+#~ "yalikataliwa"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Kigezo batili: {', '.join(invalid_params)}"
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Imerejeshwa kwenye toleo {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "Uingizaji wa kesi unaweza kuwa na safu nyingi zaidi ya "
+#~ "{MAX_CASE_IMPORTER_ROWS}. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Jina la kesi haliwezi kuwa na herufi zaidi ya {STANDARD_CHARFIELD_LENGTH}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Kitambulisho cha nje hakiwezi kuwa na herufi zaidi ya "
+#~ "{STANDARD_CHARFIELD_LENGTH}"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Operator batili \"{criteria[\"operator\"]}\". Thamani zinazokubalika ni "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} haiungwa mkono na ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} si tarehe au muda uliowekwa kwa usahihi."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} si tarehe halali."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} si tarehe na muda halali."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "Hoja ya pili kwa '{node.name}' lazima iwe kuratibu sahihi"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Hoja ya tatu kwa '{node.name}' lazima iwe nambari, imepokelewa '{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' si kipimo halali cha umbali. Inatarajiwa mojawapo ya {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' si tarehe halali. Inayotarajiwa 'YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Hoja ya kwanza kwa '{node.name}' lazima iwe jina halali la sifa ya kesi"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "Kazi ya '{node.name}' inakubali hoja {expected} tu, imepokelewa {actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Kielezi kisichojulikana {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Umeongezwa kwenye nafasi ya mradi ya \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Haiwezi kufuta aina ya eneo '{deleted_type.code}'. Inarejelewa na aina "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Nambari ya tovuti ya eneo: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "Sehemu batili zimejumuishwa kwenye ombi: {list(data.keys())}."
+
+#~ msgid "Choose at least one way for respondents to receive one-time links."
+#~ msgstr ""
+#~ "Chagua angalau njia moja ambayo washiriki watatumia kupokea viungo vya "
+#~ "matumizi ya mara moja."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Tafadhali subiri angalau sekunde {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr ""
+#~ "Haiwezi kufuta fomu {instance_id} kwa sababu haijahifadhiwa kwenye "
+#~ "kumbukumbu."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr ""
+#~ "Ufunguo wa Api wenye jina \"{create_form.cleaned_data['name']}\" tayari upo."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "mnamo {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Akaunti za Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Haikuweza kupata moduli au fomu yenye ID '{module_or_form_id}' kwenye "
+#~ "programu '{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Domeni haiwezi kuwekwa kuwa '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression hairuhusiwi kwa domeni {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} hairuhusiwi kwa domain {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr ""
+#~ "Ufafanuzi wa UCR wenye jina \"{create_form.cleaned_data['name']}\" tayari "
+#~ "upo."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Thibitisha akaunti yako ya CommCare kwa {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Umefanikiwa kuthibitisha akaunti ya {user.raw_username}. Sasa unaweza "
+#~ "kuingia"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Ongeza/Hariri Mipangilio ya Muunganisho</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "Imeshindikana kutatua viambatisho vya API {self.api_auth_settings!r}. "
+#~ "Tafadhali chagua mipangilio sahihi ya uthibitisho wa API kwa "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "Hakuna watumiaji waliopatikana katika eneo \"{repeater.location_id}\" "
+#~ "kumiliki wagonjwa waliowekwa kutoka OpenMRS Atom feed."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Hitilafu kwenye mipangilio: Imeshindikana "
+#~ "kusasisha "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Mgonjwa "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Kesi zaidi ya moja imepatikana "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: Hitilafu wakati wa kuchukua Tukio "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr ""
+#~ "Imeshindikana kubaini mfanyakazi wa simu wa kumiliki \"{case_type}\" mpya "
 
 #~ msgid "The selected form can't be used for a public webform."
 #~ msgstr "Fomu iliyochaguliwa haiwezi kutumika kwa fomu ya umma ya wavuti."
@@ -64418,35 +64456,8 @@ msgstr "Weka JSON halali"
 #~ "      waliopo kwenye mpango wako, utatozwa kulingana na masharti ya mpango.\n"
 #~ "    "
 
-#~ msgid ", "
-#~ msgstr ", "
-
 #~ msgid "Workflow:"
 #~ msgstr "Mtiririko wa kazi:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Kizuizi cha ujenzi upya kinahitajika"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Kizuizi cha ujenzi upya hakihitajiki"
-
-#~ msgid " and try again."
-#~ msgstr " na jaribu tena."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "sekunde kabla ya kuomba tena."
-
-#~ msgid "...See more"
-#~ msgstr "...Tazama zaidi"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Fupisha"
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "wagonjwa wameongezwa kutoka kwenye Atom feed ya OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "wagonjwa kutoka OpenMRS isipokuwa aina moja tu ya kesi imeainishwa."
 
 #~ msgid "Data cleaning action"
 #~ msgstr "Hatua ya kusafisha data"

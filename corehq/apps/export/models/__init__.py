@@ -43,6 +43,7 @@ from .new import (
     TableConfiguration,
     UserDefinedExportColumn,
     DataSourceExportInstance,
+    get_export_data_schema_class,
 )
 
 from .deid_export import (
