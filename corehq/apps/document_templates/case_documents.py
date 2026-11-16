@@ -31,40 +31,43 @@ def render_case_documents(domain, case_ids, couch_user):
 
     :param case_ids: IDs of cases in ``domain``
     :param couch_user: only cases this user has access to are rendered
-    :returns: one PDF (bytes) with a document for each case, in the order of ``case_ids``
+    :returns: one PDF (bytes) with a document for each case ID, in the
+        order of ``case_ids``. A repeated case ID gets a document each time.
     :raises CaseDocumentError: if any case cannot be rendered, or the user
         has no access to it. Nothing is returned for the cases that could.
     """
-    case_ids = list(dict.fromkeys(case_ids))
     if not case_ids:
         raise CaseDocumentError(_('No cases given'))
     if len(case_ids) > MAX_CASES:
         raise CaseDocumentError(_('At most {max} cases can be rendered at once').format(max=MAX_CASES))
 
-    cases = _get_cases(domain, case_ids, couch_user)
-    templates = _get_templates(domain, cases)
+    cases_by_id = _get_cases(domain, case_ids, couch_user)
+    templates = _get_templates(domain, cases_by_id.values())
     documents = []
-    for case in cases:
+    for case_id in case_ids:
+        case = cases_by_id[case_id]
         try:
             documents.append(generate_document(
                 templates[case.get_case_property(SLUG_PROPERTY)].areas,
                 case.get_properties_in_api_format(),
             ))
         except DocumentRenderError as error:
-            raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case.case_id, error=error))
+            raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case_id, error=error))
     return render_pdf(documents)
 
 
 def _get_cases(domain, case_ids, couch_user):
-    cases = CommCareCase.objects.get_cases(case_ids, ordered=True)
-    cases = [case for case in cases if case.domain == domain and not case.is_deleted]
+    unique_ids = list(dict.fromkeys(case_ids))
     accessible_ids = _get_live_case_ids(domain, couch_user)
-    cases = [case for case in cases if case.case_id in accessible_ids]
-    found = {case.case_id for case in cases}
-    missing = [case_id for case_id in case_ids if case_id not in found]
+    cases_by_id = {
+        case.case_id: case
+        for case in CommCareCase.objects.get_cases(unique_ids)
+        if case.domain == domain and not case.is_deleted and case.case_id in accessible_ids
+    }
+    missing = [case_id for case_id in unique_ids if case_id not in cases_by_id]
     if missing:
         raise CaseDocumentError(_('Cases not found: {ids}').format(ids=', '.join(missing)))
-    return cases
+    return cases_by_id
 
 
 def _get_live_case_ids(domain, couch_user):

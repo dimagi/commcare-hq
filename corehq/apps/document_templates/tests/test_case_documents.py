@@ -69,13 +69,23 @@ class TestBuildCasePdf(TestCase):
         assert [call.args[1]['first_name'] for call in generate.call_args_list] == ['Bob', 'Alice']
         assert pdf.startswith(b'%PDF')
 
-    def test_repeated_case_ids_are_rendered_once(self):
+    def test_repeated_case_ids_are_rendered_each_time_in_order(self):
         alice = self._case(document_template_slug='welcome', first_name='Alice')
+        bob = self._case(document_template_slug='welcome', first_name='Bob')
         with patch(
             'corehq.apps.document_templates.case_documents.generate_document', wraps=generate_document,
         ) as generate:
-            self._build(alice, alice)
-        assert generate.call_count == 1
+            self._build(alice, bob, alice)
+        assert [call.args[1]['first_name'] for call in generate.call_args_list] == ['Alice', 'Bob', 'Alice']
+
+    def test_repeated_case_ids_count_towards_the_limit(self):
+        alice = self._case(document_template_slug='welcome', first_name='Alice')
+        with pytest.raises(CaseDocumentError, match=f'At most {MAX_CASES}'):
+            self._build(*[alice] * (MAX_CASES + 1))
+
+    def test_repeated_missing_case_id_is_reported_once(self):
+        with pytest.raises(CaseDocumentError, match='not found: nope$'):
+            render_case_documents(DOMAIN, ['nope', 'nope'], USER)
 
     def test_case_without_a_slug_fails_the_request(self):
         good = self._case(document_template_slug='welcome', first_name='Alice')
