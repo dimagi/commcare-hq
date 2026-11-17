@@ -20,7 +20,7 @@
     autocomplete="off"
     class="form form-horizontal"
     method="post"
-    x-data="requiredBillingDetails({{ is_autopay_required|BOOL }})"
+    x-data="requiredBillingDetails"
   >
     <div class="card card-modern-gray card-form-only mb-3" id="billing-info">
       <div class="card-body">
@@ -110,28 +110,6 @@
                     subscription will be paused. The selected autopay card will
                     not be automatically charged to pay this invoice&mdash;it
                     must be paid directly.
-                  {% endblocktrans %}
-                </p>
-              </div>
-
-              <div
-                class="alert alert-info"
-                x-show="showAnnualConfirmNotice"
-                x-cloak=""
-              >
-                {% blocktrans %}
-                  By subscribing to this <strong>annual subscription</strong>,
-                  you acknowledge that you understand an annual invoice for the
-                  product cost will be generated and sent to the contact emails
-                  above. This invoice must be paid within
-                  {{ days_date_due_annual }} days or the subscription will be
-                  paused.
-                {% endblocktrans %}
-                <p class="mt-2 mb-0">
-                  {% blocktrans %}
-                    You also acknowledge that by not selecting an autopay card,
-                    you must manually pay for any on-demand fees (excess users,
-                    SMS) on a monthly basis or the subscription will be paused.
                   {% endblocktrans %}
                 </p>
               </div>
