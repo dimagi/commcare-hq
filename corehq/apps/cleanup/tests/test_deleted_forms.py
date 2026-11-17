@@ -44,12 +44,6 @@ def hard_delete(form_id, domain=DOMAIN):
     XFormInstance.objects.hard_delete_forms(domain, [form_id])
 
 
-def delete_all_cases_and_forms():
-    # plproxy writes are not rolled back with the test transaction
-    for domain in (DOMAIN, 'other-domain'):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(domain)
-
-
 def scan(domain=DOMAIN, **kwargs):
     deleted = {}
     for page in iter_scan_pages(domain, **kwargs):
@@ -63,10 +57,10 @@ class TestIterScanPages(TestCase):
         self.case_id, self.create_form_id, self.update_form_id = (
             create_case_with_update()
         )
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
 
-    def tearDown(self):
-        delete_all_cases_and_forms()
-        super().tearDown()
 
     def test_healthy_case_is_not_reported(self):
         assert scan() == {}
@@ -104,9 +98,10 @@ class TestIterScanPages(TestCase):
 
 @sharded
 class TestFindDeletedFormIdsForCases(TestCase):
-    def tearDown(self):
-        delete_all_cases_and_forms()
-        super().tearDown()
+    def setUp(self):
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
 
     def test_only_listed_cases_are_reported(self):
         listed = self.broken_case()
@@ -118,6 +113,10 @@ class TestFindDeletedFormIdsForCases(TestCase):
         assert result == dict([listed])
 
     def test_cases_in_other_domains_and_unknown_ids_are_ignored(self):
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers,
+            'other-domain',
+        )
         other_case_id, _, other_form_id = create_case_with_update(
             domain='other-domain'
         )
@@ -139,10 +138,10 @@ class TestRepairCase(TestCase):
         self.case_id, self.create_form_id, self.update_form_id = (
             create_case_with_update()
         )
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
 
-    def tearDown(self):
-        delete_all_cases_and_forms()
-        super().tearDown()
 
     def test_repaired_case_can_be_rebuilt(self):
         hard_delete(self.update_form_id)

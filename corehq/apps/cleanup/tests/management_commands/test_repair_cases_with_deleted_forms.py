@@ -9,11 +9,10 @@ from django.test import TestCase
 from corehq.apps.cleanup.tests.test_deleted_forms import (
     DOMAIN,
     create_case_with_update,
-    delete_all_cases_and_forms,
     hard_delete,
 )
 from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.tests.utils import sharded
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 COMMAND = 'repair_cases_with_deleted_forms'
 
@@ -21,13 +20,13 @@ COMMAND = 'repair_cases_with_deleted_forms'
 @sharded
 class TestScan(TestCase):
     def setUp(self):
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
         tmp = TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.cases_csv = Path(tmp.name) / 'cases.csv'
 
-    def tearDown(self):
-        delete_all_cases_and_forms()
-        super().tearDown()
 
     def test_writes_affected_cases(self):
         expected = [self.broken_case() for _ in range(2)]
@@ -88,14 +87,14 @@ class TestScan(TestCase):
 @sharded
 class TestFix(TestCase):
     def setUp(self):
+        self.addCleanup(
+            FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
         tmp = TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.cases_csv = Path(tmp.name) / 'cases.csv'
         self.done_csv = Path(tmp.name) / 'done.csv'
 
-    def tearDown(self):
-        delete_all_cases_and_forms()
-        super().tearDown()
 
     def test_repairs_cases(self):
         case_ids = self.scan_broken_cases(2)
