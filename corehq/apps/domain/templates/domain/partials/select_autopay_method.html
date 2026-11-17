@@ -2,25 +2,24 @@
 {% load i18n %}
 
 {% if error %}
-  <div class="alert alert-danger">
-    {{ error }}
-  </div>
+  <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
 
 <div class="htmx-indicator">
   <div class="position-relative">
     <div class="position-absolute top-0 end-0 pt-1 pe-2">
-      <i class="fa-solid fa-spinner fa-spin"></i> {% trans "Refreshing, please wait..." %}
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      {% trans "Refreshing, please wait..." %}
     </div>
   </div>
 </div>
 
-<fieldset
-  x-init="hasAutopay = {{ has_autopay|BOOL }}"
->
+<fieldset x-init="hasAutopay = {{ has_autopay|BOOL }}">
   <legend>
     {% trans "Select Autopay Card" %}
-    {% if has_autopay %}<span class="text-success ms-2"><i class="fa fa-check"></i></span>{% endif %}
+    {% if has_autopay %}
+      <span class="text-success ms-2"><i class="fa fa-check"></i></span>
+    {% endif %}
   </legend>
   <div class="alert alert-info">
     {% if has_autopay %}
@@ -60,8 +59,12 @@
                 </span>
               {% endif %}
             </td>
-            <td class="align-middle">************<strong>{{ card.last4 }}</strong></td>
-            <td class="align-middle">{{ card.exp_month }}/{{ card.exp_year }}</td>
+            <td class="align-middle">
+              ************<strong>{{ card.last4 }}</strong>
+            </td>
+            <td class="align-middle">
+              {{ card.exp_month }}/{{ card.exp_year }}
+            </td>
             <td class="align-middle">
               {% if not card.is_autopay %}
                 <button
