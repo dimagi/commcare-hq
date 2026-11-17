@@ -2387,9 +2387,12 @@ cacheable@^2.5.0:
     keyv "^5.6.0"
     qified "^0.10.1"
 
-calendars@kbwood/calendars#2.1.2:
-  version "2.1.2"
-  resolved "https://codeload.github.com/kbwood/calendars/tar.gz/53b0ea75e648fa7e8b0d263be8f321fd3630328c"
+calendars@kbwood/calendars#2.2.1:
+  version "2.2.1"
+  uid e3efde11800fa82fdf138c9f4e170fa5097653c3
+  resolved "https://codeload.github.com/kbwood/calendars/tar.gz/e3efde11800fa82fdf138c9f4e170fa5097653c3"
+  dependencies:
+    grunt-cli "^1.5.0"
 
 call-bind-apply-helpers@^1.0.0, call-bind-apply-helpers@^1.0.1:
   version "1.0.1"
@@ -3626,7 +3629,7 @@ grunt-cli@1.4.3:
     nopt "~4.0.1"
     v8flags "~3.2.0"
 
-grunt-cli@^1.4.3:
+grunt-cli@^1.4.3, grunt-cli@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/grunt-cli/-/grunt-cli-1.5.0.tgz#24fa92225946b2002c535c7583a003e15203876f"
   integrity sha512-rILKAFoU0dzlf22SUfDtq2R1fosChXXlJM5j7wI6uoW8gwmXDXzbUvirlKZSYCdXl3LXFbR+8xyS+WFo+b6vlA==
