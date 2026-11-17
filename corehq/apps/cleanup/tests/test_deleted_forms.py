@@ -78,6 +78,14 @@ class TestIterScanPages(TestCase):
         hard_delete(self.update_form_id)
         assert scan() == {}
 
+    def test_deleted_case_is_reported_only_with_include_deleted(self):
+        hard_delete(self.update_form_id)
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [self.case_id])
+        assert scan() == {}
+        assert scan(include_deleted=True) == {
+            self.case_id: {self.update_form_id}
+        }
+
     def test_resume_from_each_position_finds_remaining_cases(self):
         broken = {self.case_id: {self.update_form_id}}
         hard_delete(self.update_form_id)
@@ -111,6 +119,12 @@ class TestFindDeletedFormIdsForCases(TestCase):
             DOMAIN, [listed[0], healthy_case_id]
         )
         assert result == dict([listed])
+
+    def test_deleted_case_is_reported(self):
+        case_id, form_ids = self.broken_case()
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [case_id])
+        result = find_deleted_form_ids_for_cases(DOMAIN, [case_id])
+        assert result == {case_id: form_ids}
 
     def test_cases_in_other_domains_and_unknown_ids_are_ignored(self):
         self.addCleanup(

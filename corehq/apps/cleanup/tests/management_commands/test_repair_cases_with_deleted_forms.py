@@ -49,6 +49,18 @@ class TestScan(TestCase):
         call_command(*scan)  # complete: nothing new
         assert len(self.rows()) == 3
 
+    def test_include_deleted_writes_deleted_cases(self):
+        expected = self.broken_case()
+        CommCareCase.objects.soft_delete_cases(DOMAIN, [expected[0]])
+
+        call_command(COMMAND, 'scan', DOMAIN, self.cases_csv)
+        assert self.rows() == []
+
+        deleted_csv = self.cases_csv.with_name('deleted.csv')
+        call_command(COMMAND, 'scan', DOMAIN, deleted_csv, '--include-deleted')
+        with open(deleted_csv) as f:
+            assert list(csv.reader(f)) == [expected]
+
     def test_checkpoint_for_other_arguments_is_rejected(self):
         call_command(COMMAND, 'scan', DOMAIN, self.cases_csv)
         with self.assertRaisesRegex(CommandError, 'include_deleted=False'):
