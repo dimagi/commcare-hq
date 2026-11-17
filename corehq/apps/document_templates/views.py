@@ -33,7 +33,7 @@ from corehq.apps.document_templates.rendering import (
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
-from corehq.apps.locations.permissions import location_safe_bypass
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import BaseMessagingSectionView
 
 
@@ -222,7 +222,7 @@ def preview_document(request, domain):
     return response
 
 
-@location_safe_bypass
+@location_safe
 @login_and_domain_required
 @require_cloudcare_access
 @toggles.DOCUMENT_TEMPLATES.required_decorator()
