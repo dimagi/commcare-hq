@@ -43,6 +43,7 @@ jobs:
   # If this is in the same step as python linting the annotations don't show up
   lint-javascript:
     name: Lint Javascript
+    if: github.repository == 'dimagi/commcare-hq'
     runs-on: ubuntu-latest
 
     steps:
