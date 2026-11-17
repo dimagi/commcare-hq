@@ -44,6 +44,10 @@
 - When adding PR descriptions, avoid restating the code diff. Focus on
   useful context for the reviewer.
 
+- This repository is public. Never name customer domains or projects in
+  commit messages, PR titles or PR descriptions. Link the Jira ticket and
+  refer to "the affected domain" instead.
+
 ## Testing
 
 - **Coverage**: Changes must be covered by appropriate tests. Tests need
