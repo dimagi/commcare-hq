@@ -1305,11 +1305,30 @@ class MessagingTab(UITab):
 
     @property
     def _is_viewable(self):
-        return ((self.can_access_reminders or self.can_use_outbound_sms)
-                and (self.project
-                     and not (self.project.is_snapshot
-                              or self.couch_user.is_commcare_user()))
-                and self.couch_user.can_edit_messaging())
+        if not (self.project and not (self.project.is_snapshot or self.couch_user.is_commcare_user())):
+            return False
+        return self._can_edit_messaging_section or self._can_view_document_templates
+
+    @property
+    def _can_edit_messaging_section(self):
+        return bool(
+            (self.can_access_reminders or self.can_use_outbound_sms)
+            and self.couch_user.can_edit_messaging()
+        )
+
+    @property
+    def _can_view_document_templates(self):
+        return toggles.DOCUMENT_TEMPLATES.enabled(self.domain) and self.couch_user.has_permission(
+            self.domain, get_permission_name(HqPermissions.view_document_templates)
+        )
+
+    @property
+    def url(self):
+        # Document templates have their own permissions, so their users may not have the dashboard
+        if self._can_edit_messaging_section:
+            return super().url
+        from corehq.apps.document_templates.views import DocumentTemplatesView
+        return reverse(DocumentTemplatesView.urlname, args=[self.domain])
 
     @property
     @memoized
@@ -1545,16 +1564,21 @@ class MessagingTab(UITab):
     def document_templates_urls(self):
         from corehq.apps.document_templates.views import DocumentTemplatesView
 
-        document_templates_urls = []
-        if toggles.DOCUMENT_TEMPLATES.enabled(self.domain):
-            document_templates_urls.append({
-                'title': DocumentTemplatesView.page_title,
-                'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
-            })
-        return document_templates_urls
+        if not self._can_view_document_templates:
+            return []
+        return [{
+            'title': DocumentTemplatesView.page_title,
+            'url': reverse(DocumentTemplatesView.urlname, args=[self.domain]),
+        }]
 
     @property
     def dropdown_items(self):
+        if not self._can_edit_messaging_section:
+            return [dropdown_dict(
+                _("Document Templates"),
+                url=self.url,
+            )]
+
         result = []
 
         result.append(dropdown_dict(_("Dashboard"), is_header=True))
@@ -1588,6 +1612,9 @@ class MessagingTab(UITab):
 
     @property
     def sidebar_items(self):
+        if not self._can_edit_messaging_section:
+            return [(_("Document Templates"), self.document_templates_urls)]
+
         items = []
 
         items.append((

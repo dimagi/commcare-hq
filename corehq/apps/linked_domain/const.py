@@ -19,6 +19,7 @@ MODEL_AUTO_UPDATE_RULES = 'auto_update_rules'
 MODEL_AUTO_UPDATE_RULE = 'auto_update_rule'
 MODEL_UCR_EXPRESSION = 'ucr_expression'
 MODEL_CASE_SEARCH_ENDPOINT = 'case_search_endpoint'
+MODEL_DOCUMENT_TEMPLATE = 'document_template'
 
 INDIVIDUAL_DATA_MODELS = [
     (MODEL_APP, gettext_lazy('Application')),
@@ -28,6 +29,7 @@ INDIVIDUAL_DATA_MODELS = [
     (MODEL_UCR_EXPRESSION, gettext_lazy('Data Expressions and Filters')),
     (MODEL_AUTO_UPDATE_RULE, gettext_lazy("Automatic Update Rule")),
     (MODEL_CASE_SEARCH_ENDPOINT, gettext_lazy('Case Search Endpoint')),
+    (MODEL_DOCUMENT_TEMPLATE, gettext_lazy('Document Template')),
 ]
 
 DOMAIN_LEVEL_DATA_MODELS = [
@@ -59,4 +61,5 @@ FEATURE_FLAG_DATA_MODEL_TOGGLES = {
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: toggles.EMBEDDED_TABLEAU,
     MODEL_PRODUCT_DATA: toggles.COMMTRACK,
     MODEL_CASE_SEARCH_ENDPOINT: toggles.CASE_SEARCH_ENDPOINTS,
+    MODEL_DOCUMENT_TEMPLATE: toggles.DOCUMENT_TEMPLATES,
 }

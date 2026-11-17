@@ -1250,6 +1250,111 @@ function GeoPointEntry(question, options) {
 GeoPointEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 
+/**
+ * An entry that sends the answer (space separated case IDs) to the
+ * 'render_document' HQ endpoint. Once the PDF is generated, the button is
+ * replaced by a link that opens it, so no popup blocker gets in the way.
+ *
+ * If some cases fail, they are listed in a modal, and the user can generate
+ * the PDF for the remaining cases. The answer is then replaced with their
+ * IDs, so the form acts on the cases that were printed.
+ */
+function RenderDocumentEntry(question, options) {
+    const self = this;
+    EntrySingleAnswer.call(self, question, options);
+    self.templateType = 'fetch_value';
+
+    const url = initialPageData.reverse('render_document');
+    // The answer the PDF was generated for
+    let renderedAnswer = null;
+
+    self.isLoading = ko.observable(false);
+    // {error: String, failed: [{case_id, name, reason}]} or null
+    self.failure = ko.observable(null);
+    self.pdfUrl = ko.observable(null);
+
+    self.buttonLabel = ko.pureComputed(function () {
+        return (
+            ko.utils.unwrapObservable(question.caption_markdown) ||
+            ko.utils.unwrapObservable(question.caption)
+        );
+    });
+
+    self.hasFailedCases = ko.pureComputed(function () {
+        return Boolean(self.failure() && self.failure().failed.length);
+    });
+
+    const remainingCaseIds = ko.pureComputed(function () {
+        const caseIds = _.uniq(_.compact(String(self.answer() || '').split(/\s+/)));
+        const failedIds = self.failure() ? _.pluck(self.failure().failed, 'case_id') : [];
+        return _.difference(caseIds, failedIds);
+    });
+
+    self.canGenerateRemaining = ko.pureComputed(function () {
+        return self.hasFailedCases() && remainingCaseIds().length > 0;
+    });
+
+    // The PDF no longer matches the answer
+    self.answer.subscribe(function (value) {
+        if (value !== renderedAnswer && self.pdfUrl()) {
+            URL.revokeObjectURL(self.pdfUrl());
+            self.pdfUrl(null);
+        }
+    });
+
+    const generate = function (caseIds) {
+        self.isLoading(true);
+        self.failure(null);
+        return fetch(url, {
+            method: 'POST',
+            body: caseIds,
+            headers: {
+                "X-CSRFToken": document.getElementById("csrfTokenContainer").value,
+            },
+        })
+            .then(function (response) {
+                if (response.ok) {
+                    return response.blob().then(function (blob) {
+                        renderedAnswer = caseIds;
+                        // Goes through onAnswerChange, which sends the answer to formplayer
+                        self.answer(caseIds);
+                        self.pdfUrl(URL.createObjectURL(blob));
+                    });
+                }
+                if (response.status === 400) {
+                    return response.json().then(function (data) {
+                        self.failure({
+                            error: data.error || gettext("Generation Failed"),
+                            failed: data.failed || [],
+                        });
+                    });
+                }
+                throw new Error("Request failed: " + response.status);
+            })
+            .catch(function (error) {
+                window.console.error(error);
+                self.failure({error: gettext("Generation Failed"), failed: []});
+            })
+            .finally(function () {
+                self.isLoading(false);
+            });
+    };
+
+    self.onClickGenerate = function () {
+        return generate(self.answer());
+    };
+
+    self.onClickGenerateRemaining = function () {
+        return generate(remainingCaseIds().join(' '));
+    };
+
+    self.onFailuresHidden = function () {
+        self.failure(null);
+    };
+}
+
+RenderDocumentEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+RenderDocumentEntry.prototype.constructor = EntrySingleAnswer;
 
 /**
  * Gets the entry based on the datatype of the Question
@@ -1290,6 +1395,8 @@ function getEntry(question) {
                     window.console.warn('No active entry for: ' + question.datatype());
                     entry = new UnsupportedEntry(question, options);
                 }
+            } else if (question.stylesContains(constants.RENDER_DOCUMENT)) {
+                entry = new RenderDocumentEntry(question, options);
             } else if (question.stylesContains(constants.NUMERIC)) {
                 entry = new PhoneEntry(question, options);
             } else {

@@ -595,4 +595,167 @@ describe('Entries', function () {
         entry = formUI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof entries.UnsupportedEntry);
     });
+
+    describe('RenderDocumentEntry', function () {
+        var csrfInput,
+            entry,
+            fetchStub,
+            revokeStub;
+
+        var pdfResponse = function () {
+            return new Response(new Blob(['%PDF']), {status: 200});
+        };
+
+        var failureResponse = function (failed) {
+            return new Response(
+                JSON.stringify({error: "Some cases could not be rendered", failed: failed}),
+                {status: 400, headers: {'Content-Type': 'application/json'}},
+            );
+        };
+
+        before(function () {
+            initialPageData.registerUrl('render_document', '/render_document/');
+            csrfInput = document.createElement('input');
+            csrfInput.id = 'csrfTokenContainer';
+            csrfInput.value = 'token';
+            document.body.appendChild(csrfInput);
+        });
+
+        after(function () {
+            csrfInput.remove();
+        });
+
+        beforeEach(function () {
+            questionJSON.datatype = constants.STRING;
+            questionJSON.style = { raw: constants.RENDER_DOCUMENT };
+            questionJSON.answer = 'a b c';
+            entry = formUI.Question(questionJSON).entry;
+            fetchStub = sinon.stub(window, 'fetch');
+            sinon.stub(URL, 'createObjectURL').returns('blob:pdf');
+            revokeStub = sinon.stub(URL, 'revokeObjectURL');
+            sinon.stub(window.console, 'error');
+        });
+
+        afterEach(function () {
+            sinon.restore();
+        });
+
+        it('Should link to the PDF and leave the answer unchanged', async function () {
+            assert.equal(entry.templateType, 'fetch_value');
+            fetchStub.resolves(pdfResponse());
+
+            await entry.onClickGenerate();
+            this.clock.tick(1000);
+
+            assert.equal(fetchStub.firstCall.args[0], '/render_document/');
+            assert.equal(fetchStub.firstCall.args[1].body, 'a b c');
+            assert.equal(entry.pdfUrl(), 'blob:pdf');
+            assert.equal(entry.answer(), 'a b c');
+            assert.isFalse(spy.called);
+            assert.isNull(entry.failure());
+            assert.isFalse(entry.isLoading());
+        });
+
+        it('Should list failed cases and offer to generate the remaining ones', async function () {
+            const failed = [{case_id: 'b', name: 'Bob', reason: 'Missing property'}];
+            fetchStub.resolves(failureResponse(failed));
+
+            await entry.onClickGenerate();
+            this.clock.tick(1000);
+
+            assert.equal(entry.failure().error, "Some cases could not be rendered");
+            assert.deepEqual(entry.failure().failed, failed);
+            assert.isTrue(entry.hasFailedCases());
+            assert.isTrue(entry.canGenerateRemaining());
+            assert.isNull(entry.pdfUrl());
+            assert.equal(entry.answer(), 'a b c');
+            assert.isFalse(spy.called);
+        });
+
+        it('Should not offer to generate the remaining cases when every case failed', async function () {
+            questionJSON.answer = 'a b a';
+            entry = formUI.Question(questionJSON).entry;
+            fetchStub.resolves(failureResponse([
+                {case_id: 'a', name: '', reason: 'Not found'},
+                {case_id: 'b', name: 'Bob', reason: 'Missing property'},
+            ]));
+
+            await entry.onClickGenerate();
+
+            assert.isTrue(entry.hasFailedCases());
+            assert.isFalse(entry.canGenerateRemaining());
+        });
+
+        it('Should generate the remaining cases and set the answer to them', async function () {
+            questionJSON.answer = 'a b c a';
+            entry = formUI.Question(questionJSON).entry;
+            fetchStub.onFirstCall().resolves(failureResponse([
+                {case_id: 'b', name: 'Bob', reason: 'Missing property'},
+            ]));
+            fetchStub.onSecondCall().resolves(pdfResponse());
+
+            await entry.onClickGenerate();
+            await entry.onClickGenerateRemaining();
+            this.clock.tick(1000);
+
+            assert.equal(fetchStub.secondCall.args[0], '/render_document/');
+            assert.equal(fetchStub.secondCall.args[1].body, 'a c');
+            assert.equal(entry.answer(), 'a c');
+            assert.isTrue(spy.calledOnce);
+            assert.equal(entry.pdfUrl(), 'blob:pdf');
+            assert.isNull(entry.failure());
+            assert.isFalse(revokeStub.called);
+        });
+
+        it('Should forget the failures when the modal is closed', async function () {
+            fetchStub.resolves(failureResponse([{case_id: 'b', name: 'Bob', reason: 'Missing property'}]));
+
+            await entry.onClickGenerate();
+            entry.onFailuresHidden();
+
+            assert.isNull(entry.failure());
+            assert.isFalse(entry.hasFailedCases());
+            assert.isNull(entry.pdfUrl());
+        });
+
+        it('Should drop the PDF when the answer changes', async function () {
+            fetchStub.resolves(pdfResponse());
+
+            await entry.onClickGenerate();
+            entry.answer('d');
+
+            assert.isNull(entry.pdfUrl());
+            assert.isTrue(revokeStub.calledOnceWith('blob:pdf'));
+        });
+
+        it('Should show the error inline for request-level errors', async function () {
+            fetchStub.resolves(failureResponse([]));
+
+            await entry.onClickGenerate();
+
+            assert.equal(entry.failure().error, "Some cases could not be rendered");
+            assert.isFalse(entry.hasFailedCases());
+            assert.isFalse(entry.canGenerateRemaining());
+        });
+
+        it('Should show a generic message for a non-JSON failure', async function () {
+            fetchStub.resolves(new Response('Server Error', {status: 500}));
+
+            await entry.onClickGenerate();
+
+            assert.equal(entry.failure().error, "Generation Failed");
+            assert.isFalse(entry.hasFailedCases());
+            assert.isNull(entry.pdfUrl());
+            assert.equal(entry.answer(), 'a b c');
+        });
+
+        it('Should show a generic message for a 400 without JSON', async function () {
+            fetchStub.resolves(new Response('Bad Request', {status: 400}));
+
+            await entry.onClickGenerate();
+
+            assert.equal(entry.failure().error, "Generation Failed");
+            assert.isFalse(entry.hasFailedCases());
+        });
+    });
 });
