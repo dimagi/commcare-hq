@@ -1602,9 +1602,6 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             self.current_subscription,
         )
 
-    def is_autopay_required(self):
-        return not self.is_annual_plan or self.account.require_auto_pay
-
     @property
     def page_context(self):
         return {
@@ -1612,7 +1609,7 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'downgrade_email_note': self.downgrade_email_note,
             'cancel_url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-            'is_autopay_required': self.is_autopay_required(),
+            'is_autopay_required': True,
             'is_annual_plan': self.is_annual_plan,
             'days_date_due_annual': SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
         }
