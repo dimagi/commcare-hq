@@ -197,6 +197,7 @@ app_manager
  0032_publicwebform_publicformsession
  0033_delete_publicformsession_delete_publicwebform
  0034_template_app_catalog
+ 0035_template_app_help_link_url
 auditcare
  0001_sqlmodels
  0002_uniques
