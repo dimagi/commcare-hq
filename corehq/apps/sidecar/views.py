@@ -1,5 +1,6 @@
 from functools import cached_property
 
+from attrs import asdict
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -35,4 +36,7 @@ class SidecarAppView(BaseProjectDataView):
 
     @property
     def page_context(self):
-        return {'sidecar_app': self.sidecar_app}
+        return {
+            'sidecar_app': self.sidecar_app,
+            'api_allowlist': [asdict(entry) for entry in self.sidecar_app.api_allowlist],
+        }

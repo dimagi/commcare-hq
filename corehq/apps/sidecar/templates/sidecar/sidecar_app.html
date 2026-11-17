@@ -8,6 +8,7 @@
 {% block page_content %}
   {% initial_page_data 'domain' domain %}
   {% initial_page_data 'sidecar_app_url' sidecar_app.url %}
+  {% initial_page_data 'sidecar_api_allowlist' api_allowlist %}
   <iframe
     id="sidecar-app"
     title="{{ sidecar_app.name }}"

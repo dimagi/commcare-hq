@@ -21,6 +21,7 @@ class Migration(migrations.Migration):
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
                 ('url', models.URLField()),
+                ('api_allowlist', models.JSONField(blank=True, default=list, help_text='List of {"method": "GET", "path": "/api/case/v2/"} entries. Paths are prefixes, relative to the project.')),
             ],
             options={
                 'unique_together': {('domain', 'slug')},
