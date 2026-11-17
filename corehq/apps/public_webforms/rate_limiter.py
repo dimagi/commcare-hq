@@ -24,7 +24,7 @@ SHOULD_RATE_LIMIT_LINK_REQUESTS = not settings.UNIT_TESTING
 @silence_and_report_error(
     "Exception raised in the public webform link request rate limiter",
     'commcare.public_webforms.link_request_rate_limiter_errors')
-def rate_limit_link_request(domain, contact):
+def rate_limit_link_request(domain, contact=None):
     ip_address = _get_ip_address()
     status, window = _check_for_exceeded_rate_limits(
         domain, contact, ip_address
@@ -61,10 +61,11 @@ def _check_for_exceeded_rate_limits(domain, contact, ip_address):
         if window:
             return STATUS_IP_RATE_LIMITED, window
 
-    window = link_requests_per_contact.get_window_of_first_exceeded_limit(
-        'contact:{}'.format(contact))
-    if window:
-        return STATUS_CONTACT_RATE_LIMITED, window
+    if contact:
+        window = link_requests_per_contact.get_window_of_first_exceeded_limit(
+            'contact:{}'.format(contact))
+        if window:
+            return STATUS_CONTACT_RATE_LIMITED, window
 
     return STATUS_ACCEPTED, None
 
@@ -74,7 +75,8 @@ def _report_usage(domain, contact, ip_address):
     link_requests_per_domain.report_usage('domain:{}'.format(domain))
     if ip_address:
         link_requests_per_ip.report_usage('ip:{}'.format(ip_address))
-    link_requests_per_contact.report_usage('contact:{}'.format(contact))
+    if contact:
+        link_requests_per_contact.report_usage('contact:{}'.format(contact))
 
 
 link_requests_per_contact = RateLimiter(

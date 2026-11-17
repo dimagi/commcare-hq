@@ -130,3 +130,14 @@ def test_refused_request_does_not_count_toward_limits():
             rate_limit_link_request(_a_domain(), _a_contact())
 
     assert not per_contact.called
+
+
+@use('db', limiter_on)
+def test_request_without_a_contact_skips_the_contact_limit():
+    with (
+        _exhausted(link_requests_per_contact),
+        mock.patch.object(link_requests_per_contact, 'report_usage') as per_contact,
+    ):
+        assert rate_limit_link_request(_a_domain()) is False
+
+    assert not per_contact.called

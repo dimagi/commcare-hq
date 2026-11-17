@@ -95,10 +95,34 @@ class PublicWebformLinkRequestForm(forms.Form):
         email = self.cleaned_data['email']
         phone_number = self.cleaned_data['phone_number']
         contact = {'email': email} if email else {'phone_number': phone_number}
-        session = PublicFormSession.get_active_session_for_contact(
+        session = PublicFormSession.get_reusable_session_for_contact(
             self.webform, **contact)
         return session or PublicFormSession.objects.create(
             public_webform=self.webform,
             expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
             **contact,
+        )
+
+
+class PublicWebformDirectAccessForm(forms.Form):
+
+    turnstile = TurnstileField()
+
+    def __init__(self, webform, *args, session_key=None, **kwargs):
+        self.webform = webform
+        self.session_key = session_key
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if rate_limit_link_request(self.webform.domain):
+            self.add_error(None, _("Please wait a moment before trying again."))
+        return cleaned_data
+
+    def get_or_create_session(self):
+        session = PublicFormSession.get_reusable_session_by_key(
+            self.webform, self.session_key)
+        return session or PublicFormSession.objects.create(
+            public_webform=self.webform,
+            expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
         )

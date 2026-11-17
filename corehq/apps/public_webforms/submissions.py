@@ -4,6 +4,7 @@ from casexml.apps.case.xform import get_case_updates
 
 from corehq.apps.analytics.tasks import record_google_analytics_event_for_client
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebformType
+from corehq.apps.public_webforms.utils import get_analytics_delivery
 from corehq.apps.users.util import PUBLIC_USER_ID
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils.xform import extract_meta_user_id
@@ -79,6 +80,6 @@ def consume_public_form_session(session, xform):
             'public_webform_form_completed', session.analytics_id, {
                 'domain': session.public_webform.domain,
                 'webform_id': session.public_webform_id,
-                'delivery': 'email' if session.email else 'sms',
+                'delivery': get_analytics_delivery(session),
             })
     return bool(consumed)
