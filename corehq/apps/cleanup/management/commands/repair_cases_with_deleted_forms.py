@@ -61,8 +61,9 @@ class Command(BaseCommand):
         fix.add_argument('cases_csv', help='Output of scan')
         fix.add_argument(
             'done_csv',
-            help='Results are appended here, and cases already in it are '
-            'skipped. Create <done_csv>.stop to stop after the current case.',
+            help='Results are appended here, and cases already repaired '
+            'are skipped. Cases with errors are retried. Create '
+            '<done_csv>.stop to stop after the current case.',
         )
         fix.add_argument(
             '--max-cases',
@@ -153,7 +154,12 @@ class Command(BaseCommand):
             raise CommandError(
                 f'{cases_csv} is not the output of a scan of domain {domain!r}'
             )
-        done = {row[0] for row in read_csv(done_csv)}
+        # cases with errors were left unchanged, so they are retried
+        done = {
+            case_id
+            for case_id, status in read_csv(done_csv)
+            if not status.startswith('error')
+        }
         # a dict drops cases repeated by a scan resumed from its checkpoint
         cases = {
             case_id: form_ids.split()

@@ -152,7 +152,9 @@ def repair_case(domain, case_id, form_ids):
     deleted, then rebuild the case.
 
     Revoking is what archiving the forms would have done. It can be
-    reversed with ``revoke_restore_case_transactions_for_form``.
+    reversed with ``revoke_restore_case_transactions_for_form``. If the
+    rebuild fails, the transactions are restored so that the next run
+    can retry repairing the case.
 
     :returns: the number of transactions revoked. Zero means there was
     nothing to repair and the case was not rebuilt.
@@ -160,7 +162,7 @@ def repair_case(domain, case_id, form_ids):
     deleted_form_ids = set(form_ids) - get_live_form_ids(form_ids)
     if not deleted_form_ids:
         return 0
-    revoked = (
+    transaction_ids = list(
         CaseTransaction.objects.partitioned_query(case_id)
         .filter(
             case_id=case_id,
@@ -168,10 +170,19 @@ def repair_case(domain, case_id, form_ids):
             form_id__in=deleted_form_ids,
             revoked=False,
         )
-        .update(revoked=True)
+        .values_list('id', flat=True)
     )
-    if revoked:
+    if not transaction_ids:
+        return 0
+    transactions = CaseTransaction.objects.partitioned_query(case_id).filter(
+        id__in=transaction_ids
+    )
+    transactions.update(revoked=True)
+    try:
         rebuild_case_from_forms(
             domain, case_id, RebuildWithReason(reason=REBUILD_REASON)
         )
-    return revoked
+    except Exception:
+        transactions.update(revoked=False)
+        raise
+    return len(transaction_ids)

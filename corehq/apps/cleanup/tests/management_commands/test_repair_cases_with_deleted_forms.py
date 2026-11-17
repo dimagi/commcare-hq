@@ -177,6 +177,20 @@ class TestFix(TestCase):
         assert statuses == ["error: ValueError('boom')", 'revoked: 1']
         assert sorted(row[0] for row in self.done()) == sorted(case_ids)
 
+    def test_case_with_error_is_retried(self):
+        [case_id] = self.scan_broken_cases(1)
+        with patch(
+            'corehq.apps.cleanup.management.commands'
+            '.repair_cases_with_deleted_forms.repair_case',
+            side_effect=ValueError('boom'),
+        ):
+            self.fix('--max-cases', '10')
+        self.fix('--max-cases', '10')
+        assert self.done() == [
+            [case_id, "error: ValueError('boom')"],
+            [case_id, 'revoked: 1'],
+        ]
+
     def scan_broken_cases(self, count):
         case_ids = []
         for _ in range(count):

@@ -182,6 +182,23 @@ class TestRepairCase(TestCase):
         assert repair_case(DOMAIN, self.case_id, [self.update_form_id]) == 0
         assert self.case().server_modified_on == modified_on
 
+    def test_failed_rebuild_restores_transactions(self):
+        # another form on the case was hard deleted after the scan
+        other_form_id = submit_form(self.case_id, update={'prop': 'other'})
+        hard_delete(self.update_form_id)
+        hard_delete(other_form_id)
+        with self.assertRaises(XFormNotFound):
+            repair_case(DOMAIN, self.case_id, [self.update_form_id])
+        assert not self.transaction(self.update_form_id).revoked
+
+        assert (
+            repair_case(
+                DOMAIN, self.case_id, [self.update_form_id, other_form_id]
+            )
+            == 2
+        )
+        assert self.case().get_case_property('prop') == 'created'
+
     def test_case_in_other_domain_is_not_revoked(self):
         hard_delete(self.update_form_id)
         assert (
