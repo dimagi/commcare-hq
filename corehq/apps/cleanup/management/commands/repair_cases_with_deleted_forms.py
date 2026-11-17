@@ -1,8 +1,10 @@
 import csv
 import json
 import os
+import signal
 import time
 from collections import Counter
+from contextlib import contextmanager
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -24,7 +26,8 @@ class Command(BaseCommand):
     scan: read-only. Appends affected cases to a CSV. Resumable. Scans the
     whole domain, or only the cases listed with --case-ids.
     fix: revokes those transactions and rebuilds the cases listed in the
-    CSV, at a limited rate. Resumable.
+    CSV, at a limited rate. Resumable. Ctrl-C (SIGINT) or SIGTERM stops it
+    after the current case.
     """
 
     def add_arguments(self, parser):
@@ -62,8 +65,7 @@ class Command(BaseCommand):
         fix.add_argument(
             'done_csv',
             help='Results are appended here, and cases already repaired '
-            'are skipped. Cases with errors are retried. Create '
-            '<done_csv>.stop to stop after the current case.',
+            'are skipped. Cases with errors are retried.',
         )
         fix.add_argument(
             '--max-cases',
@@ -174,14 +176,16 @@ class Command(BaseCommand):
             f'{len(done)} cases already done, {len(todo)} to repair now'
         )
 
-        stop_file = f'{done_csv}.stop'
         interval = 60 / per_minute
         counts = Counter()
-        with open(done_csv, 'a', newline='') as f:
+        with (
+            open(done_csv, 'a', newline='') as f,
+            stop_after_current_case() as stop_requested,
+        ):
             writer = csv.writer(f)
             for i, (case_id, form_ids) in enumerate(todo, start=1):
-                if os.path.exists(stop_file):
-                    self.stdout.write(f'Found {stop_file}, stopping')
+                if stop_requested():
+                    self.stdout.write('Stopping. Rerun to continue.')
                     break
                 started = time.monotonic()
                 status = self._repair(domain, case_id, form_ids)
@@ -199,6 +203,24 @@ class Command(BaseCommand):
         except Exception as e:
             return f'error: {e!r}'
         return f'revoked: {revoked}' if revoked else 'nothing to repair'
+
+
+@contextmanager
+def stop_after_current_case():
+    """Catch Ctrl-C (SIGINT) and SIGTERM to finish repairing the current case."""
+    stop_requested = False
+
+    def request_stop(signal_number, frame):
+        nonlocal stop_requested
+        stop_requested = True
+
+    old_sigint_handler = signal.signal(signal.SIGINT, request_stop)
+    old_sigterm_handler = signal.signal(signal.SIGTERM, request_stop)
+    try:
+        yield lambda: stop_requested
+    finally:
+        signal.signal(signal.SIGINT, old_sigint_handler)
+        signal.signal(signal.SIGTERM, old_sigterm_handler)
 
 
 def read_csv(path):

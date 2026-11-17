@@ -1,4 +1,6 @@
 import csv
+import os
+import signal
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -159,11 +161,21 @@ class TestFix(TestCase):
         self.fix('--max-cases', '10')
         assert self.done() == [[case_id, 'revoked: 1']]
 
-    def test_stop_file(self):
-        self.scan_broken_cases(1)
-        Path(f'{self.done_csv}.stop').touch()
-        self.fix('--max-cases', '10')
-        assert self.done() == []
+    def test_signal_stops_after_current_case(self):
+        self.scan_broken_cases(2)
+
+        def interrupt(*args):
+            os.kill(os.getpid(), signal.SIGINT)
+            return 1
+
+        with patch(
+            'corehq.apps.cleanup.management.commands'
+            '.repair_cases_with_deleted_forms.repair_case',
+            side_effect=interrupt,
+        ):
+            self.fix('--max-cases', '10')
+        assert [status for _, status in self.done()] == ['revoked: 1']
+        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
 
     def test_error_is_recorded_and_run_continues(self):
         case_ids = self.scan_broken_cases(2)
