@@ -1,8 +1,11 @@
 import pytest
+from reportlab.pdfbase import pdfmetrics
 from reportlab.platypus import ListFlowable, Paragraph, Table
 
 from corehq.apps.document_templates.models import Area
 from corehq.apps.document_templates.rendering import (
+    BOLD_FONT,
+    FONT,
     DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
@@ -217,6 +220,18 @@ def _document(**areas):
 
 def test_render_pdf_returns_a_pdf():
     assert render_pdf([_document(body='Hello')]).startswith(b'%PDF')
+
+
+def test_render_pdf_embeds_padauk_for_latin_and_burmese_text():
+    pdf = render_pdf([_document(header='# ¡Hola, señor!', body='**မင်္ဂလာပါ** _ok_')])
+    assert b'+Padauk' in pdf
+    assert b'+Padauk-Bold' in pdf
+
+
+def test_fonts_are_shaped():
+    # ReportLab silently renders unshaped text if uharfbuzz cannot be imported
+    assert pdfmetrics.getFont(FONT).isShaped
+    assert pdfmetrics.getFont(BOLD_FONT).isShaped
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
