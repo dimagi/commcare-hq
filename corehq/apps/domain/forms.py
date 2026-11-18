@@ -2042,7 +2042,7 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
-                if self.is_autopay_required() and not self.account.require_auto_pay:
+                if not self.account.require_auto_pay:
                     self.account.require_auto_pay = True
                     self.account.save(update_fields=['require_auto_pay'])
 
@@ -2137,12 +2137,8 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 next_edition=self.plan_version.plan.edition
             )
 
-    def is_autopay_required(self):
-        # always require auto-pay for new monthly subscriptions
-        return self.account.require_auto_pay or not self.is_annual_plan_selected()
-
     def clean(self):
-        if self.is_autopay_required() and not self.account.auto_pay_enabled:
+        if not self.account.auto_pay_enabled:
             raise ValidationError(_("Please provide an autopay card before continuing."))
 
 

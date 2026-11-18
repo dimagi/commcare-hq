@@ -18,7 +18,7 @@ $('a.breadcrumb-2').click(function (e) {
 
 Alpine.data('newStripeCardManager', stripeCardManager);
 
-Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
+Alpine.data('requiredBillingDetails', () => ({
     firstName: '',
     lastName: '',
     firstLine: '',
@@ -26,7 +26,6 @@ Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
     postalCode: '',
     country: '',
     emailList: [],
-    isAutopayRequired: isAutopayRequired,
     hasAutopay: false,
     isSubmitting: false,
     basicInfoComplete() {
@@ -35,29 +34,20 @@ Alpine.data('requiredBillingDetails', (isAutopayRequired) => ({
             && this.postalCode && this.country && this.emailList
         );
     },
-    autopayRequirementsMet() {
-        return !this.isAutopayRequired || this.hasAutopay;
-    },
-    canRemoveAutopay() {
-        return !this.isAutopayRequired;
-    },
     showAutopayAndInfoRequiredNotice() {
-        return this.isAutopayRequired && !this.hasAutopay && !this.basicInfoComplete();
+        return !this.hasAutopay && !this.basicInfoComplete();
     },
     showAutopayRequiredNotice() {
-        return this.isAutopayRequired && !this.hasAutopay && this.basicInfoComplete();
+        return !this.hasAutopay && this.basicInfoComplete();
     },
     showBillingInfoRequiredNotice() {
-        return !this.basicInfoComplete() && this.autopayRequirementsMet();
+        return !this.basicInfoComplete() && this.hasAutopay;
     },
     showAutopayConfirmNotice() {
         return this.hasAutopay && this.basicInfoComplete();
     },
-    showAnnualConfirmNotice() {
-        return this.basicInfoComplete() && !this.hasAutopay && !this.isAutopayRequired;
-    },
     isSubmitDisabled() {
-        return !this.basicInfoComplete() || !this.autopayRequirementsMet();
+        return !this.basicInfoComplete() || !this.hasAutopay;
     },
 }));
 
