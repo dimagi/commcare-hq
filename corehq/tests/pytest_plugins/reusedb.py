@@ -79,6 +79,12 @@ def pytest_addoption(parser):
         choices=["skip", "only"],
         help="Skip or only run database tests."
     )
+    parser.addoption(
+        "--snapshot-test-dbs",
+        action="store_true",
+        help="After creating test databases, copy each to <name>_snapshot "
+             "before running tests. Used by CI to cache database setup.",
+    )
 
 
 @pytest.hookimpl
@@ -275,6 +281,8 @@ def couch_sql_context(config):
                 keepdb=config.skip_setup_for_reuse_db,
                 serialized_aliases=(),
             )
+        if config.getoption("--snapshot-test-dbs"):
+            snapshot_test_databases()
 
     try:
         yield
@@ -315,6 +323,18 @@ def log_elapsed(label):
         reporter = config.pluginmanager.getplugin("terminalreporter")
         with capture.global_and_fixture_disabled():
             reporter.write_line(f"[db] {label}: {time.monotonic() - start:.1f}s")
+
+
+@unit_testing_only
+def snapshot_test_databases():
+    """Copy each newly created test database to ``<name>_snapshot``
+
+    The copies hold the state right after setup, before any test has
+    run, for CI to dump and restore in later runs. See
+    .github/actions/test-db-snapshot/.
+    """
+    for connection, _, _ in get_sql_databases():
+        connection.creation.clone_test_db(suffix="snapshot", verbosity=0)
 
 
 def sql_databases_ok():
