@@ -1,7 +1,9 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase, override_settings
 
+import pytest
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock
@@ -23,6 +25,7 @@ from corehq.apps.userreports.reports.factory import ReportColumnFactory
 from corehq.apps.userreports.reports.specs import (
     AggregateDateColumn,
     FieldColumn,
+    IntegerBucketsColumn,
     PercentageColumn,
     SumWhenColumn,
     SumWhenTemplateColumn,
@@ -523,3 +526,53 @@ class TestSumWhenColumnsRestrictedToStatic(SimpleTestCase):
         }
         with self.assertRaises(BadSpecError):
             ReportColumnFactory.from_spec(spec, is_static=False, domain='some-domain')
+
+
+def _integer_buckets_spec(field):
+    return {
+        'type': 'integer_buckets',
+        'column_id': 'age_range',
+        'field': field,
+        'ranges': {'0-6': [0, 6]},
+    }
+
+
+@pytest.mark.parametrize('field', [
+    'age',
+    'age_at_registration',
+    'count-of-visits',
+    '2nd_visit',
+])
+def test_integer_buckets_accepts_column_name(field):
+    column = ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
+    assert column.field == field
+
+
+@pytest.mark.parametrize('field', [
+    '',
+    '(select count(*) from auth_user)',
+    'age or (select 1) = 1',
+    'x" between 0 and 0 or (select 1) = 1 or "x',
+    'age; drop table auth_user',
+    'age -- comment',
+    'age\n',
+    'a:b',
+    'a%b',
+])
+def test_integer_buckets_rejects_non_column_name(field):
+    with pytest.raises(BadSpecError):
+        ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
+
+
+def test_integer_buckets_quotes_field_as_identifier():
+    column = IntegerBucketsColumn.wrap(_integer_buckets_spec('age'))
+    [(when, _)] = column.get_whens()
+    assert when == '"age" between 0 and 6'
+
+
+def test_integer_buckets_escapes_quotes_in_field():
+    # Bypass validation to check the quoting holds on its own
+    column = IntegerBucketsColumn.wrap(_integer_buckets_spec('age'))
+    with patch.object(IntegerBucketsColumn, 'field', 'x" or (select 1) = 1 or "y'):
+        [(when, _)] = column.get_whens()
+    assert when == '"x"" or (select 1) = 1 or ""y" between 0 and 6'
