@@ -264,6 +264,16 @@ def test_jsonattrs_formfield__attrsobject():
     )
 
 
+def test_jsonattrs_formfield_rerenders_invalid_value_as_submitted():
+    @unregistered_django_model
+    class Check(models.Model):
+        points = AttrsList(Point)
+
+    form_cls = modelform_factory(Check, fields=["points"])
+    form = form_cls({"points": '[{"x": 0}]'}, instance=Check(points=[]))
+    eq(form["points"].field.prepare_value(form["points"].value()), '[{"x": 0}]')
+
+
 def _check_jsonattrs_formfield(model, field_name, raw_value, empty_value, expected):
     obj = model(**{field_name: empty_value})
     form_cls = modelform_factory(model, fields=[field_name])
@@ -274,6 +284,10 @@ def _check_jsonattrs_formfield(model, field_name, raw_value, empty_value, expect
     form = form_cls({field_name: raw_value}, instance=obj)
     assert form.is_valid(), form.errors.as_data()
     eq(getattr(form.instance, field_name), expected)
+
+    formfield = form.fields[field_name]
+    eq(json.loads(formfield.prepare_value(expected)), json.loads(raw_value))
+    eq(json.loads(formfield.prepare_value(form[field_name].value())), json.loads(raw_value))
 
 
 def get_json_value(model, field_name):
