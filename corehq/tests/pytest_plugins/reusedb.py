@@ -314,7 +314,7 @@ def log_elapsed(label):
         capture = config.pluginmanager.getplugin("capturemanager")
         reporter = config.pluginmanager.getplugin("terminalreporter")
         with capture.global_and_fixture_disabled():
-            reporter.write_line(f"[reusedb] {label}: {time.monotonic() - start:.1f}s")
+            reporter.write_line(f"[db] {label}: {time.monotonic() - start:.1f}s")
 
 
 def sql_databases_ok():
