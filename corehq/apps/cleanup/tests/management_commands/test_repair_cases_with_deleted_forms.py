@@ -180,6 +180,7 @@ class TestFix(TestCase):
             os.kill(os.getpid(), signal.SIGINT)
             return 1
 
+        sigint_handler = signal.getsignal(signal.SIGINT)
         with patch(
             'corehq.apps.cleanup.management.commands'
             '.repair_cases_with_deleted_forms.repair_case',
@@ -187,7 +188,7 @@ class TestFix(TestCase):
         ):
             self.fix('--max-cases', '10')
         assert [status for _, status in self.done()] == ['revoked: 1']
-        assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+        assert signal.getsignal(signal.SIGINT) is sigint_handler
 
     def test_error_is_recorded_and_run_continues(self):
         case_ids = self.scan_broken_cases(2)
