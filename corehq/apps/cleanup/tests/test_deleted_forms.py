@@ -54,11 +54,11 @@ def scan(domain=DOMAIN, **kwargs):
 @sharded
 class TestIterScanPages(TestCase):
     def setUp(self):
-        self.case_id, self.create_form_id, self.update_form_id = (
-            create_case_with_update()
-        )
         self.addCleanup(
             FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
+        self.case_id, self.create_form_id, self.update_form_id = (
+            create_case_with_update()
         )
 
 
@@ -149,11 +149,11 @@ class TestFindDeletedFormIdsForCases(TestCase):
 @sharded
 class TestRepairCase(TestCase):
     def setUp(self):
-        self.case_id, self.create_form_id, self.update_form_id = (
-            create_case_with_update()
-        )
         self.addCleanup(
             FormProcessorTestUtils.delete_all_cases_forms_ledgers, DOMAIN
+        )
+        self.case_id, self.create_form_id, self.update_form_id = (
+            create_case_with_update()
         )
 
 
