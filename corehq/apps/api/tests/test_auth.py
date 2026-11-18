@@ -1,15 +1,18 @@
 import base64
 from datetime import datetime, timedelta
 
-from django.contrib.auth.models import AnonymousUser
+import pytest
+from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
+from django.middleware.csrf import get_token
 from django.test import TestCase, RequestFactory
 
 from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAuthentication, \
-    RequirePermissionAuthentication
+    RequirePermissionAuthentication, is_sidecar_request, passes_csrf_check
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, HQApiKey, HqPermissions, UserRole
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import flag_disabled, flag_enabled, softer_assert
 
 
 class AuthenticationTestBase(TestCase):
@@ -493,3 +496,42 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                 HTTP_AUTHORIZATION=self._construct_basic_auth_header(self.domain_admin.username, self.password)
             )
         )
+
+
+
+class SidecarSessionAuthenticationTest(AuthenticationTestBase):
+    @flag_enabled('SIDECAR')
+    def test_session_auth(self):
+        request = make_csrf_request(path=self._get_domain_path())
+        request.user = WebUser.get_django_user(self.user)
+        request.domain = self.domain
+        self.assertAuthenticationSuccess(LoginAndDomainAuthentication(), request)
+
+
+def make_csrf_request(method='post', path='/', send_token=True):
+    """Return a request, optionally with a CSRF cookie and matching token header"""
+    request = getattr(RequestFactory(), method)(path)
+    if send_token:
+        cookie_source = RequestFactory().get('/')
+        request.META['HTTP_X_CSRFTOKEN'] = get_token(cookie_source)
+        request.COOKIES[settings.CSRF_COOKIE_NAME] = cookie_source.META['CSRF_COOKIE']
+    return request
+
+
+def test_passes_csrf_check():
+    assert passes_csrf_check(make_csrf_request('get', send_token=False))
+    assert not passes_csrf_check(make_csrf_request('post', send_token=False))
+    assert passes_csrf_check(make_csrf_request('post', send_token=True))
+
+
+@pytest.mark.parametrize("flag, user, is_sidecar", [
+    (flag_enabled, User(), True),
+    (flag_enabled, AnonymousUser(), False),
+    (flag_disabled, User(), False),
+])
+def test_is_sidecar_request(flag, user, is_sidecar):
+    request = make_csrf_request()
+    request.user = user
+    request.domain = 'sidecar-test'
+    with flag('SIDECAR'):
+        assert is_sidecar_request(request) == is_sidecar
