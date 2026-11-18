@@ -215,3 +215,12 @@ def test_refused_session_request_does_not_count_toward_its_limit():
         assert rate_limit_session_request(uuid4().hex) is True
 
     assert not report_usage.called
+
+def test_request_without_a_contact_skips_the_contact_limit():
+    with (
+        _exhausted(access_requests_per_contact),
+        mock.patch.object(access_requests_per_contact, 'report_usage') as per_contact,
+    ):
+        assert rate_limit_access_request(_a_domain()) is False
+
+    assert not per_contact.called
