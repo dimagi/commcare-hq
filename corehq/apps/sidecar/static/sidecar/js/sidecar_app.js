@@ -15,13 +15,23 @@ function isAllowed(allowlist, projectRoot, method, url) {
     return allowlist.some((entry) => entry.method === method.toUpperCase() && path.startsWith(entry.path));
 }
 
-async function relay(projectRoot, allowlist, { method, path, query }) {
+async function relay(projectRoot, allowlist, { method, path, query, body }) {
     const url = buildApiUrl(projectRoot, path, query);
-    if (method !== "GET" || !url || !isAllowed(allowlist, projectRoot, method, url)) {
+    if (!url || !isAllowed(allowlist, projectRoot, method, url)) {
         return { status: 403, body: null };
     }
+    const headers = { "X-CSRFToken": document.getElementById("csrfTokenContainer").value };
+    const hasBody = body !== undefined && body !== null;
+    if (hasBody) {
+        headers["Content-Type"] = "application/json";
+    }
     try {
-        const response = await fetch(url, { redirect: "error" });
+        const response = await fetch(url, {
+            method,
+            headers,
+            body: hasBody ? JSON.stringify(body) : undefined,
+            redirect: "error",
+        });
         const contentType = response.headers.get("Content-Type") || "";
         const isJson = contentType.startsWith("application/json");
         return { status: response.status, body: isJson ? await response.json() : null };
