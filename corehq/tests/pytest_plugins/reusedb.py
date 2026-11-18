@@ -15,6 +15,7 @@ The `REUSE_DB` environment variable may be overridden with
 import logging
 import os
 import sys
+import time
 import warnings
 from contextlib import ExitStack, contextmanager, nullcontext
 from functools import partial
@@ -30,7 +31,10 @@ from unmagic import get_request, use
 from django.conf import settings
 from django.core import cache
 from django.core.management import call_command
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import (
+    TEST_DATABASE_PREFIX,
+    BaseDatabaseCreation,
+)
 from django.db.utils import OperationalError
 from django.test import utils as djutils
 from django.test.utils import get_unique_databases_and_mirrors
@@ -237,7 +241,8 @@ class DeferredDatabaseContext:
         session = get_request().session
         with ExitStack() as stack:
             try:
-                setup(stack.enter_context, stack.callback)
+                with log_elapsed("database setup"):
+                    setup(stack.enter_context, stack.callback)
             except BaseException:
                 session.shouldfail = "Abort: database setup failed"
                 raise
@@ -262,13 +267,14 @@ def couch_sql_context(config):
     else:
         if config.reuse_db == "reset":
             reset_databases(config.option.verbose)
-        dbs = djutils.setup_databases(
-            interactive=False,
-            verbosity=config.option.verbose,
-            # avoid re-creating databases that already exist
-            keepdb=config.skip_setup_for_reuse_db,
-            serialized_aliases=(),
-        )
+        with granular_create_test_db_timing():
+            dbs = djutils.setup_databases(
+                interactive=False,
+                verbosity=config.option.verbose,
+                # avoid re-creating databases that already exist
+                keepdb=config.skip_setup_for_reuse_db,
+                serialized_aliases=(),
+            )
 
     try:
         yield
@@ -278,6 +284,37 @@ def couch_sql_context(config):
                 reversed(dbs),  # tear down in reverse setup order
                 verbosity=config.option.verbose,
             )
+
+
+@contextmanager
+def granular_create_test_db_timing():
+    """Report how long each test database takes to create"""
+    create_test_db = BaseDatabaseCreation.create_test_db
+
+    def timed_create_test_db(self, *args, **kwargs):
+        with log_elapsed(f"create test database {self.connection.alias!r}"):
+            return create_test_db(self, *args, **kwargs)
+
+    with patch.object(BaseDatabaseCreation, "create_test_db", timed_create_test_db):
+        yield
+
+
+@contextmanager
+def log_elapsed(label):
+    """Report how long the block took
+
+    Suspends output capturing to write the report, because database
+    setup happens inside the first database test.
+    """
+    start = time.monotonic()
+    try:
+        yield
+    finally:
+        config = get_request().config
+        capture = config.pluginmanager.getplugin("capturemanager")
+        reporter = config.pluginmanager.getplugin("terminalreporter")
+        with capture.global_and_fixture_disabled():
+            reporter.write_line(f"[reusedb] {label}: {time.monotonic() - start:.1f}s")
 
 
 def sql_databases_ok():
