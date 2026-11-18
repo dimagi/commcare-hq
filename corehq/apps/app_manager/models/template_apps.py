@@ -31,7 +31,7 @@ class ExchangeApplication(models.Model):
 
     domain = models.CharField(max_length=255, null=False)
     app_id = models.CharField(max_length=255, null=False)
-    help_link = models.CharField(max_length=255, null=True)
+    help_link = models.URLField(max_length=255, null=True, blank=True)
     category = models.CharField(max_length=32, choices=Category.choices)
     sectors = models.ManyToManyField(TemplateAppSector, related_name='exchange_applications', blank=True)
     description = models.TextField(null=True, blank=True)
