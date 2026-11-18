@@ -63,6 +63,16 @@ jobs:
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    # `yarn install` in the test container still runs on top of the restored
+    # node_modules, applying any difference from yarn.lock. A stale or
+    # partial cache only makes it slower, not wrong.
+    - name: Restore node_modules
+      id: node-modules
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc') }}
+        restore-keys: node-modules-${{ runner.os }}-
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
@@ -81,6 +91,18 @@ jobs:
         --max-test-time=29
         --durations=50
         -p no:cacheprovider
+    # Save only from scheduled and manual runs: PR runs can restore caches
+    # saved on master, but a cache saved by a PR run is only visible to that
+    # PR. One job saves, since every job installs the same node_modules.
+    - name: Save node_modules
+      if: >-
+        github.event_name != 'pull_request'
+        && matrix.DIVIDED_WE_RUN == '05'
+        && steps.node-modules.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      with:
+        path: node_modules
+        key: ${{ steps.node-modules.outputs.cache-primary-key }}
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
