@@ -73,6 +73,12 @@ jobs:
         path: node_modules
         key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc') }}
         restore-keys: node-modules-${{ runner.os }}-
+    # An older cache's .yarn-integrity doesn't match yarn.lock, so yarn ignores
+    # it anyway. Remove it so that "Save node_modules" only sees one written by
+    # this run's install, and can't save a failed install under the new key.
+    - name: Discard stale yarn integrity marker
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      run: rm -f node_modules/.yarn-integrity
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
