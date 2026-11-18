@@ -94,9 +94,13 @@ jobs:
     # Save only from scheduled and manual runs: PR runs can restore caches
     # saved on master, but a cache saved by a PR run is only visible to that
     # PR. One job saves, since every job installs the same node_modules.
+    # `yarn install` runs inside "Run tests", so save even if tests failed,
+    # as long as the install finished (it writes .yarn-integrity last).
     - name: Save node_modules
       if: >-
-        github.event_name != 'pull_request'
+        always()
+        && hashFiles('node_modules/.yarn-integrity') != ''
+        && github.event_name != 'pull_request'
         && matrix.DIVIDED_WE_RUN == '05'
         && steps.node-modules.outputs.cache-hit != 'true'
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
