@@ -116,6 +116,7 @@ dependencies = [
     "tropo-webapi-python",
     "turn-python",
     "twilio",
+    "uharfbuzz>=0.57.0",
     "xlrd",
     "xlwt",
 ]
