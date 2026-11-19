@@ -75,10 +75,10 @@ def test_preview_view_reports_a_template_error():
     assert 'syntax error in body' in response.content.decode()
 
 
-def test_preview_view_escapes_errors():
-    response = _post(preview_document, {**VALUES, 'area_body': '{% if <script> %}'})
+def test_preview_view_reports_errors_as_plain_text():
+    response = _post(preview_document, {**VALUES, 'area_body': '{{ 1/0 }}'})
     assert response.status_code == 400
-    assert '<script>' not in response.content.decode()
+    assert response['Content-Type'] == 'text/plain'
 
 
 def test_variables_view_ignores_the_markdown_of_an_image_area():
