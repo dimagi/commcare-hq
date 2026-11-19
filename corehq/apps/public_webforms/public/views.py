@@ -24,9 +24,13 @@ from corehq.apps.public_webforms.decorators import (
 from corehq.apps.public_webforms.messaging import send_one_time_link
 from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.public_webforms.public.forms import (
+    PublicWebformDirectAccessForm,
     PublicWebformLinkRequestForm,
 )
-from corehq.apps.public_webforms.utils import public_webforms_enabled
+from corehq.apps.public_webforms.utils import (
+    get_analytics_delivery,
+    public_webforms_enabled,
+)
 from corehq.util.strings import get_masked_email, get_masked_string
 
 
@@ -55,10 +59,9 @@ class BasePublicWebformView(BasePageView):
 @method_decorator(use_bootstrap5, name='dispatch')
 class PublicWebformRequestView(BasePublicWebformView):
     urlname = 'public_webform_request'
-    template_name = 'public_webforms/public/webform_request.html'
 
     def dispatch(self, request, *args, **kwargs):
-        is_open = self.webform.is_open and self.form.can_deliver
+        is_open = self.webform.is_open and (self.webform.direct_access or self.form.can_deliver)
         if request.method == 'GET':
             record_google_analytics_event_for_client(
                 'public_webform_public_link_accessed', self.webform.public_id.hex, {
@@ -85,10 +88,22 @@ class PublicWebformRequestView(BasePublicWebformView):
     def page_title(self):
         return self.form_name
 
+    @property
+    def template_name(self):
+        if self.webform.direct_access:
+            return 'public_webforms/public/webform_start.html'
+        return 'public_webforms/public/webform_request.html'
+
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
         session = self.form.get_or_create_session()
+        if self.webform.direct_access:
+            return HttpResponseRedirect(reverse(PublicFormView.urlname, kwargs={
+                'public_id': self.webform.public_id.hex,
+                'session_id': session.id.hex,
+            }))
+
         send_one_time_link(session, self.form_name)
         record_google_analytics_event_for_client(
             'public_webform_one_time_link_requested', session.analytics_id, {
@@ -119,6 +134,11 @@ class PublicWebformRequestView(BasePublicWebformView):
     @memoized
     def form(self):
         data = [self.request.POST] if self.request.method == 'POST' else []
+        if self.webform.direct_access:
+            return PublicWebformDirectAccessForm(
+                self.webform, *data,
+                session_key=self.request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME),
+            )
         return PublicWebformLinkRequestForm(self.webform, *data)
 
 
@@ -184,7 +204,7 @@ class PublicFormView(BasePublicWebformView):
                 'public_webform_one_time_link_accessed', self.session.analytics_id, {
                     'domain': self.webform.domain,
                     'webform_id': self.webform.id,
-                    'delivery': 'email' if self.session.email else 'sms',
+                    'delivery': get_analytics_delivery(self.session),
                 })
         request.public_form_session = self.session
 
