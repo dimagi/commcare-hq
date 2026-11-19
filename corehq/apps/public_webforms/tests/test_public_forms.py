@@ -2,6 +2,8 @@ import pytest
 from unmagic import use
 from unittest.mock import patch
 
+from django.test import override_settings
+
 from corehq.apps.public_webforms.models import PublicWebform
 from corehq.apps.public_webforms.public.forms import (
     PublicWebformDirectAccessForm,
@@ -146,6 +148,28 @@ class TestPublicWebformLinkRequestForm:
 
         assert second == first
 
+    def test_is_refused_when_rate_limited(self):
+        form = self._form(data={'delivery': 'email', 'email': 'respondent@example.com'})
+
+        with patch(
+            'corehq.apps.public_webforms.public.forms.rate_limit_access_request',
+            return_value=True,
+        ):
+            assert not form.is_valid()
+
+    def test_form_with_errors_is_not_rate_limited(self):
+        form = self._form(data={'delivery': 'email', 'email': 'respondent@example.com'})
+
+        with (
+            override_settings(TURNSTILE_SECRET_KEY='secret'),
+            patch(
+                'corehq.apps.public_webforms.public.forms.rate_limit_access_request',
+            ) as rate_limiter,
+        ):
+            assert 'turnstile' in form.errors
+
+        assert not rate_limiter.called
+
     def _form(self, allow_email=True, allow_sms=True, project_can_send_sms=True, data=None):
         webform = PublicWebform(allow_email=allow_email, allow_sms=allow_sms)
         with patch(
@@ -188,3 +212,16 @@ class TestPublicWebformDirectAccessForm:
             return_value=True,
         ):
             assert not form.is_valid()
+
+    def test_form_with_errors_is_not_rate_limited(self):
+        form = PublicWebformDirectAccessForm(PublicWebform(), {})
+
+        with (
+            override_settings(TURNSTILE_SECRET_KEY='secret'),
+            patch(
+                'corehq.apps.public_webforms.public.forms.rate_limit_access_request',
+            ) as rate_limiter,
+        ):
+            assert 'turnstile' in form.errors
+
+        assert not rate_limiter.called

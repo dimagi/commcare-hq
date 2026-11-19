@@ -77,7 +77,7 @@ class PublicWebformLinkRequestForm(forms.Form):
                 )
 
         contact = cleaned_data.get('email') or cleaned_data.get('phone_number')
-        if contact and rate_limit_access_request(self.webform.domain, contact):
+        if not self.errors and rate_limit_access_request(self.webform.domain, contact):
             self.add_error(None, _("Please wait a moment before trying again."))
         return cleaned_data
 
@@ -115,7 +115,7 @@ class PublicWebformDirectAccessForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        if rate_limit_access_request(self.webform.domain):
+        if not self.errors and rate_limit_access_request(self.webform.domain):
             self.add_error(None, _("Please wait a moment before trying again."))
         return cleaned_data
 
