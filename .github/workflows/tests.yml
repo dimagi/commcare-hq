@@ -18,9 +18,9 @@ jobs:
   tests:
     runs-on: ubuntu-22.04
     # A hung job holds a runner slot (blocking other PRs) until this timeout,
-    # so keep it tight. PR jobs (no coverage) finish in about 15 minutes;
-    # scheduled and manual runs collect coverage and take up to 30.
-    timeout-minutes: ${{ github.event_name == 'pull_request' && 30 || 40 }}
+    # so keep it tight. PR jobs (no coverage) take up to 20 minutes;
+    # scheduled and manual runs collect coverage and take up to 35.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 40 }}
     strategy:
       fail-fast: false
       matrix:
