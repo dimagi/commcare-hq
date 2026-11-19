@@ -76,13 +76,15 @@ _BODY_HEIGHT = _PAGE_HEIGHT - 2 * _MARGIN - _FOOTER_HEIGHT  # on the pages after
 # Padauk has no italic, so italic text is set upright.
 _FONTS_DIR = Path(__file__).parent / 'fonts'
 FONT = 'Padauk'
+FONT_SIZE = 12
 BOLD_FONT = 'Padauk-Bold'
 pdfmetrics.registerFont(TTFont(FONT, _FONTS_DIR / 'Padauk-Regular.ttf', shaped=True))
 pdfmetrics.registerFont(TTFont(BOLD_FONT, _FONTS_DIR / 'Padauk-Bold.ttf', shaped=True))
 pdfmetrics.registerFontFamily(FONT, normal=FONT, bold=BOLD_FONT, italic=FONT, boldItalic=BOLD_FONT)
 
 _sheet = getSampleStyleSheet()
-BODY = ParagraphStyle('BodyText', parent=_sheet['BodyText'], fontName=FONT)
+BODY = ParagraphStyle('BodyText', parent=_sheet['BodyText'], fontName=FONT, fontSize=FONT_SIZE,
+                      leading=FONT_SIZE * 1.5)
 QUOTE = ParagraphStyle('quote', parent=BODY, leftIndent=18, textColor=colors.HexColor('#555555'))
 TABLE_HEADER = ParagraphStyle('table_header', parent=BODY, fontName=BOLD_FONT)
 HEADINGS = {
