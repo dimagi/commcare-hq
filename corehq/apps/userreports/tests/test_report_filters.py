@@ -4,6 +4,9 @@ from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
+import pytest
+from sqlalchemy.dialects import postgresql
+
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -948,3 +951,83 @@ class QueryDictUtilTest(SimpleTestCase):
                 'non_string_int': 2,
             }
         )
+
+
+INVALID_SQL_PARAM_NAMES = [
+    '',
+    "x)s OR (select count(*) from pg_database) > 0 OR 'a'=%(x",
+    'x)s',
+    'a%b',
+    'a b',
+    'slug\n',
+    'a;b',
+    "a'b",
+]
+
+VALID_SQL_PARAM_NAMES = [
+    'at_risk_slug',
+    'owner_id_0',
+    'count-of-visits',
+    'q.1_abc12345_0',
+    'número',
+]
+
+
+def _pre_filter_spec(slug):
+    return {
+        'type': 'pre',
+        'field': 'owner_id',
+        'slug': slug,
+        'datatype': 'string',
+        'pre_value': 'abc',
+    }
+
+
+def _location_drilldown_spec(ancestor_field):
+    return {
+        'type': 'location_drilldown',
+        'field': 'block_id',
+        'slug': 'block_id_drill',
+        'ancestor_expression': {'field': ancestor_field, 'location_type': 'state'},
+    }
+
+
+@pytest.mark.parametrize('slug', VALID_SQL_PARAM_NAMES)
+def test_filter_slug_accepted(slug):
+    filter_ = ReportFilterFactory.from_spec(_pre_filter_spec(slug))
+    assert filter_.name == slug
+
+
+@pytest.mark.parametrize('slug', INVALID_SQL_PARAM_NAMES)
+def test_filter_slug_rejected(slug):
+    with pytest.raises(BadSpecError):
+        ReportFilterFactory.from_spec(_pre_filter_spec(slug))
+
+
+@pytest.mark.parametrize('slug', INVALID_SQL_PARAM_NAMES)
+def test_filter_value_rejects_slug(slug):
+    # Filter values are also built from raw filter specs, without the spec wrapper
+    with pytest.raises(BadSpecError):
+        PreFilterValue(_pre_filter_spec(slug), {'operator': '=', 'operand': 'abc'})
+
+
+@pytest.mark.parametrize('field', INVALID_SQL_PARAM_NAMES)
+def test_ancestor_expression_field_rejected(field):
+    report = ReportConfiguration(domain='test-domain')
+    with pytest.raises(BadSpecError):
+        ReportFilterFactory.from_spec(_location_drilldown_spec(field), report)
+
+
+@pytest.mark.parametrize('field', INVALID_SQL_PARAM_NAMES)
+def test_location_filter_value_rejects_ancestor_expression_field(field):
+    with pytest.raises(BadSpecError):
+        LocationDrilldownFilterValue(_location_drilldown_spec(field), ['location-id'])
+
+
+def test_filter_slug_is_sql_param_name():
+    filter_value = PreFilterValue(_pre_filter_spec('owner_id_0'), {'operator': '=', 'operand': 'abc'})
+    sql = str(filter_value.to_sql_filter().build_expression().compile(
+        dialect=postgresql.psycopg2.dialect()
+    ))
+    assert sql == 'owner_id = %(owner_id_0)s'
+    assert filter_value.to_sql_values() == {'owner_id_0': 'abc'}
