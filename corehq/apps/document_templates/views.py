@@ -15,7 +15,6 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy, gettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
@@ -345,13 +344,13 @@ def preview_document_variables(request, domain):
 @toggles.DOCUMENT_TEMPLATES.required_decorator()
 @require_POST
 def preview_document(request, domain):
-    """The rendered document as a PDF, for opening in a new tab"""
+    """The rendered document as a PDF, or status 400 with the error as plain text"""
     try:
         areas = _posted_areas(request, domain)
         context = _posted_context(request, get_variable_names(areas))
         pdf = render_pdf([generate_document(areas, context)])
     except DocumentRenderError as error:
-        return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
+        return HttpResponseBadRequest(str(error), content_type='text/plain')
     response = FileResponse(BytesIO(pdf), filename='preview.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
