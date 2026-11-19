@@ -216,6 +216,7 @@ def test_refused_session_request_does_not_count_toward_its_limit():
 
     assert not report_usage.called
 
+@use('db', limiter_on)
 def test_request_without_a_contact_skips_the_contact_limit():
     with (
         _exhausted(access_requests_per_contact),
