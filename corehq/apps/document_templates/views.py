@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext, gettext_lazy, gettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
@@ -32,14 +32,27 @@ from corehq.apps.document_templates.rendering import (
     render_pdf,
 )
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+
+
+class BaseDocumentTemplatesView(BaseDomainView):
+    """Document templates sit in the messaging section but have permissions of their own"""
+
+    section_name = gettext_noop("Messaging")
+
+    @property
+    def section_url(self):
+        return reverse(DocumentTemplatesView.urlname, args=[self.domain])
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class DocumentTemplatesView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.edit_document_templates), name='dispatch')
+class DocumentTemplatesView(BaseDocumentTemplatesView):
     urlname = 'document_templates'
     page_title = gettext_lazy('Document Templates')
     template_name = 'document_templates/template_list.html'
@@ -111,7 +124,8 @@ class TemplateForm(forms.ModelForm):
 
 @method_decorator(use_bootstrap5, name='dispatch')
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class BaseDocumentTemplateFormView(BaseMessagingSectionView, ModelFormMixin, ProcessFormView):
+@method_decorator(require_permission(HqPermissions.edit_document_templates), name='dispatch')
+class BaseDocumentTemplateFormView(BaseDocumentTemplatesView, ModelFormMixin, ProcessFormView):
     template_name = 'document_templates/template_form.html'
     form_class = TemplateForm
 
@@ -159,7 +173,8 @@ class EditDocumentTemplateView(BaseDocumentTemplateFormView):
 
 
 @method_decorator(toggles.DOCUMENT_TEMPLATES.required_decorator(), name='dispatch')
-class DeleteDocumentTemplateView(BaseMessagingSectionView):
+@method_decorator(require_permission(HqPermissions.edit_document_templates), name='dispatch')
+class DeleteDocumentTemplateView(BaseDocumentTemplatesView):
     urlname = 'delete_document_template'
     http_method_names = ['post']
 
@@ -189,7 +204,7 @@ def _posted_context(request, names):
     return {name: request.POST.get(f'{CONTEXT_FIELD_PREFIX}{name}', '') for name in names}
 
 
-@login_and_domain_required
+@require_permission(HqPermissions.edit_document_templates)
 @toggles.DOCUMENT_TEMPLATES.required_decorator()
 @require_POST
 def preview_document_variables(request, domain):
@@ -206,7 +221,7 @@ def preview_document_variables(request, domain):
     return HttpResponse(render_to_string('document_templates/partials/preview_modal_body.html', template_context))
 
 
-@login_and_domain_required
+@require_permission(HqPermissions.edit_document_templates)
 @toggles.DOCUMENT_TEMPLATES.required_decorator()
 @require_POST
 def preview_document(request, domain):
