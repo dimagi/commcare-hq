@@ -1,6 +1,7 @@
 from memoized import memoized
 
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -27,6 +28,7 @@ from corehq.apps.public_webforms.public.forms import (
     PublicWebformDirectAccessForm,
     PublicWebformLinkRequestForm,
 )
+from corehq.apps.public_webforms.rate_limiter import is_soft_rate_limited
 from corehq.apps.public_webforms.utils import (
     get_analytics_delivery,
     public_webforms_enabled,
@@ -77,7 +79,11 @@ class BasePublicWebformAccessView(BasePublicWebformView):
 
     @property
     def can_start_directly(self):
-        return self.webform.is_open and self.webform.direct_access
+        return (
+            self.webform.is_open
+            and self.webform.direct_access
+            and not is_soft_rate_limited(self.webform.domain)
+        )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -108,6 +114,8 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
                 PublicWebformStartView.urlname,
                 kwargs={'public_id': self.webform.public_id.hex},
             ))
+        if self.webform.direct_access:
+            messages.info(request, _("For added security, please provide your contact information."))
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):

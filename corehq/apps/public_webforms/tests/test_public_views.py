@@ -2,6 +2,7 @@ import datetime
 from unittest import mock
 from uuid import uuid4
 
+from django.contrib import messages
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
@@ -245,6 +246,27 @@ class TestDirectAccessWebform:
 
         session = PublicFormSession.objects.get(public_webform=webform)
         assert send.call_args.args[0] == session
+
+    def test_shows_the_link_request_page_when_soft_rate_limited(self):
+        webform = create_webform(direct_access=True, is_disabled=False)
+
+        with (
+            mock.patch('corehq.apps.public_webforms.public.views.is_soft_rate_limited', return_value=True),
+            mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None),
+        ):
+            response = _get(webform.public_id)
+
+        assert 'public_webforms/public/webform_request.html' in [t.name for t in response.templates]
+        assert [m.level for m in response.context['messages']] == [messages.INFO]
+
+    def test_starting_when_soft_rate_limited_redirects_to_the_link_request_page(self):
+        webform = create_webform(direct_access=True, is_disabled=False)
+
+        with mock.patch('corehq.apps.public_webforms.public.views.is_soft_rate_limited', return_value=True):
+            response = Client().post(_url(PublicWebformStartView.urlname, webform.public_id))
+
+        assert response.url == _url(PublicWebformRequestView.urlname, webform.public_id)
+        assert not PublicFormSession.objects.filter(public_webform=webform).exists()
 
     def _form_url(self, session):
         return reverse(PublicFormView.urlname, kwargs={
