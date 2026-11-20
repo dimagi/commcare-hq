@@ -1,4 +1,6 @@
 import inspect
+
+import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 
@@ -8,6 +10,8 @@ from corehq.apps.document_templates.views import (
     preview_document,
     preview_document_variables,
 )
+
+pytestmark = pytest.mark.django_db  # the template form checks the slug
 
 DOMAIN = 'document-templates-preview-test'
 
@@ -84,9 +88,15 @@ def test_variables_view_ignores_the_markdown_of_an_image_area():
     assert 'context_name' not in content
 
 
-def test_variables_view_treats_an_unknown_type_as_markdown():
+def test_variables_view_reports_an_unknown_type():
     content = _post(preview_document_variables, {**VALUES, 'area_body_type': 'video'}).content.decode()
-    assert 'name="context_name"' in content
+    assert 'body: Select a valid choice.' in content
+    assert '<input' not in content
+
+
+def test_preview_ignores_errors_outside_the_areas():
+    response = _post(preview_document, {**VALUES, 'name': '', 'slug': 'not a slug!'})
+    assert response.status_code == 200
 
 
 class TestPreviewWithImages(TestCase):

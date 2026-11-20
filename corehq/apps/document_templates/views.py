@@ -180,6 +180,13 @@ class TemplateForm(forms.ModelForm):
     def _image_field_name(area_name):
         return f'{AREA_FIELD_PREFIX}{area_name}_image'
 
+    def _area_field_names(self, area_name):
+        return [
+            self._field_name(area_name),
+            self._type_field_name(area_name),
+            self._image_field_name(area_name),
+        ]
+
     def areas(self):
         """The fields of each area, for the editor"""
         return [self._area_fields(area_name) for area_name in self.area_names]
@@ -208,6 +215,22 @@ class TemplateForm(forms.ModelForm):
             else:
                 areas[area_name] = Area(value=self.cleaned_data[self._field_name(area_name)])
         return areas
+
+    def preview_areas(self):
+        """The areas as posted, for a preview: errors of other fields, like a missing name, are ignored
+
+        :raises DocumentRenderError: if an area field is invalid; the message names the area
+        """
+        self.full_clean()
+        errors = [
+            f'{area_name}: {error}'
+            for area_name in self.area_names
+            for field_name in self._area_field_names(area_name)
+            for error in self.errors.get(field_name, [])
+        ]
+        if errors:
+            raise DocumentRenderError('\n'.join(errors))
+        return self.get_areas()
 
     def save(self, commit=True):
         old_areas = self.instance.areas
@@ -289,35 +312,12 @@ class DeleteDocumentTemplateView(BaseDocumentTemplatesView):
         )
 
 
-def _posted_area_type(request, area_name):
-    area_type = request.POST.get(f'{AREA_FIELD_PREFIX}{area_name}_type')
-    return area_type if area_type in AREA_TYPES else MARKDOWN
-
-
-def _posted_markdown_areas(request):
-    """The areas that are markdown, as posted (the rest of the form is ignored)"""
-    return {
-        name: Area(value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}', ''))
-        for name in get_area_names()
-        if _posted_area_type(request, name) == MARKDOWN
-    }
-
-
 def _posted_areas(request, domain):
-    """The areas as posted, for :func:`generate_document`: the image of an image area is looked up
+    """The areas of the template form as posted, for a preview
 
-    :raises DocumentRenderError: if an image cannot be used
+    :raises DocumentRenderError: if an area is invalid
     """
-    areas = {}
-    for name in get_area_names():
-        if _posted_area_type(request, name) == IMAGE:
-            areas[name] = Area(type=IMAGE, value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}_image', ''))
-        else:
-            areas[name] = Area(value=request.POST.get(f'{AREA_FIELD_PREFIX}{name}', ''))
-    try:
-        return load_images(domain, areas)
-    except ImageError as error:
-        raise DocumentRenderError(str(error))
+    return TemplateForm(request.POST, domain=domain, area_names=get_area_names()).preview_areas()
 
 
 def _posted_context(request, names):
@@ -334,7 +334,7 @@ def preview_document_variables(request, domain):
     The form is posted with the request, so values already typed into the modal are kept.
     """
     try:
-        names = get_variable_names(_posted_markdown_areas(request))
+        names = get_variable_names(_posted_areas(request, domain))
     except DocumentRenderError as error:
         template_context = {'error': str(error)}
     else:
@@ -350,8 +350,8 @@ def preview_document(request, domain):
     try:
         areas = _posted_areas(request, domain)
         context = _posted_context(request, get_variable_names(areas))
-        pdf = render_pdf([generate_document(areas, context)])
-    except DocumentRenderError as error:
+        pdf = render_pdf([generate_document(load_images(domain, areas), context)])
+    except (DocumentRenderError, ImageError) as error:
         return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
     response = FileResponse(BytesIO(pdf), filename='preview.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
