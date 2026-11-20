@@ -1,0 +1,31 @@
+{% load i18n %}
+{# The image fields of an area; replaced by the response of the upload #}
+<div id="area-image-{{ area }}" class="d-flex align-items-start gap-3">
+  <input type="hidden" name="area_{{ area }}_image" value="{{ image_id }}" />
+  {% if thumbnail_url %}
+    <img
+      src="{{ thumbnail_url }}"
+      alt="{% trans 'The image of this area' %}"
+      class="border"
+    />
+  {% endif %}
+  <div class="flex-grow-1">
+    <input
+      type="file"
+      name="image_file"
+      accept="image/png,image/jpeg"
+      class="form-control {{ error|yesno:'is-invalid,' }}"
+      aria-label="{% trans 'Upload an image' %}"
+      hx-post="{% url 'upload_document_template_image' domain area %}"
+      hx-trigger="change"
+      hx-encoding="multipart/form-data"
+      hx-target="#area-image-{{ area }}"
+      hx-swap="outerHTML"
+    />
+    {% if error %}
+      <div class="invalid-feedback">{{ error }}</div>
+    {% else %}
+      <div class="form-text">{% trans "PNG or JPEG" %}</div>
+    {% endif %}
+  </div>
+</div>
