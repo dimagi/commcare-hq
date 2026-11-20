@@ -18,6 +18,7 @@ from corehq.apps.public_webforms.public.views import (
     PublicFormView,
     PublicWebformLinkSentView,
     PublicWebformRequestView,
+    PublicWebformStartView,
 )
 from corehq.apps.public_webforms.tests.utils import (
     create_session,
@@ -194,7 +195,8 @@ class TestDirectAccessWebform:
             direct_access=True, is_disabled=False, allow_email=False, allow_sms=False)
 
         with mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None):
-            response = _get(webform.public_id)
+            response = Client().get(
+                _url(PublicWebformRequestView.urlname, webform.public_id), follow=True)
 
         assert response.status_code == 200
         assert 'public_webforms/public/webform_start.html' in [t.name for t in response.templates]
@@ -202,7 +204,7 @@ class TestDirectAccessWebform:
     def test_starting_redirects_into_a_new_session(self):
         webform = create_webform(direct_access=True, is_disabled=False)
 
-        response = Client().post(_url(PublicWebformRequestView.urlname, webform.public_id))
+        response = Client().post(_url(PublicWebformStartView.urlname, webform.public_id))
 
         session = PublicFormSession.objects.get(public_webform=webform)
         assert response.status_code == 302
@@ -214,9 +216,35 @@ class TestDirectAccessWebform:
         client = Client()
         client.cookies[PUBLIC_FORM_SESSION_COOKIE_NAME] = started.session_key.hex
 
-        response = client.post(_url(PublicWebformRequestView.urlname, webform.public_id))
+        response = client.post(_url(PublicWebformStartView.urlname, webform.public_id))
 
         assert response.url == self._form_url(started)
+
+    @pytest.mark.parametrize('direct_access, is_disabled', [
+        (False, False),
+        (True, True),
+    ], ids=['link-only', 'closed'])
+    def test_starting_a_webform_that_cannot_start_directly_redirects_to_its_public_link(
+        self, direct_access, is_disabled
+    ):
+        webform = create_webform(direct_access=direct_access, is_disabled=is_disabled)
+
+        response = Client().post(_url(PublicWebformStartView.urlname, webform.public_id))
+
+        assert response.url == _url(PublicWebformRequestView.urlname, webform.public_id)
+        assert not PublicFormSession.objects.filter(public_webform=webform).exists()
+
+    def test_asking_for_a_link_sends_one(self):
+        webform = create_webform(direct_access=True, is_disabled=False)
+
+        with (
+            mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None),
+            mock.patch('corehq.apps.public_webforms.public.views.send_one_time_link') as send,
+        ):
+            _request_a_link(webform.public_id)
+
+        session = PublicFormSession.objects.get(public_webform=webform)
+        assert send.call_args.args[0] == session
 
     def _form_url(self, session):
         return reverse(PublicFormView.urlname, kwargs={

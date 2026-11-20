@@ -75,10 +75,15 @@ class BasePublicWebformAccessView(BasePublicWebformView):
         context['form'] = self.form
         return context
 
+    @property
+    def can_start_directly(self):
+        return self.webform.is_open and self.webform.direct_access
+
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class PublicWebformRequestView(BasePublicWebformAccessView):
     urlname = 'public_webform_request'
+    template_name = 'public_webforms/public/webform_request.html'
 
     def dispatch(self, request, *args, **kwargs):
         is_open = self.webform.is_open and (self.webform.direct_access or self.form.can_deliver)
@@ -97,22 +102,18 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
             )
         return super().dispatch(request, *args, **kwargs)
 
-    @property
-    def template_name(self):
-        if self.webform.direct_access:
-            return 'public_webforms/public/webform_start.html'
-        return 'public_webforms/public/webform_request.html'
+    def get(self, request, *args, **kwargs):
+        if self.can_start_directly:
+            return HttpResponseRedirect(reverse(
+                PublicWebformStartView.urlname,
+                kwargs={'public_id': self.webform.public_id.hex},
+            ))
+        return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
-            return self.get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)
         session = self.form.get_or_create_session()
-        if self.webform.direct_access:
-            return HttpResponseRedirect(reverse(PublicFormView.urlname, kwargs={
-                'public_id': self.webform.public_id.hex,
-                'session_id': session.id.hex,
-            }))
-
         send_one_time_link(session, self.form_name)
         record_google_analytics_event_for_client(
             'public_webform_one_time_link_requested', session.analytics_id, {
@@ -137,12 +138,39 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
     @memoized
     def form(self):
         data = [self.request.POST] if self.request.method == 'POST' else []
-        if self.webform.direct_access:
-            return PublicWebformDirectAccessForm(
-                self.webform, *data,
-                session_key=self.request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME),
-            )
         return PublicWebformLinkRequestForm(self.webform, *data)
+
+
+@method_decorator(use_bootstrap5, name='dispatch')
+class PublicWebformStartView(BasePublicWebformAccessView):
+    urlname = 'public_webform_start'
+    template_name = 'public_webforms/public/webform_start.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.can_start_directly:
+            return HttpResponseRedirect(reverse(
+                PublicWebformRequestView.urlname,
+                kwargs={'public_id': self.webform.public_id.hex},
+            ))
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not self.form.is_valid():
+            return self.get(request, *args, **kwargs)
+        session = self.form.get_or_create_session()
+        return HttpResponseRedirect(reverse(PublicFormView.urlname, kwargs={
+            'public_id': self.webform.public_id.hex,
+            'session_id': session.id.hex,
+        }))
+
+    @property
+    @memoized
+    def form(self):
+        data = [self.request.POST] if self.request.method == 'POST' else []
+        return PublicWebformDirectAccessForm(
+            self.webform, *data,
+            session_key=self.request.COOKIES.get(PUBLIC_FORM_SESSION_COOKIE_NAME),
+        )
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
