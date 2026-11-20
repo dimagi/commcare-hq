@@ -90,10 +90,10 @@ class TestBuildCasePdf(TestCase):
         case = self._case(document_template_slug='logo')
         assert b'/Subtype /Image' in self._build(case)
 
-    def test_image_of_another_domain_fails_with_the_case_id(self):
+    def test_image_of_another_domain_fails_with_the_template_slug(self):
         self._image_template(domain=OTHER_DOMAIN)
         case = self._case(document_template_slug='logo')
-        with pytest.raises(CaseDocumentError, match=f'{case.case_id}.*header.*does not exist'):
+        with pytest.raises(CaseDocumentError, match='Template logo: header: The image does not exist'):
             self._build(case)
 
     def test_repeated_case_ids_are_rendered_each_time_in_order(self):

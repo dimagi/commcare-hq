@@ -19,6 +19,7 @@ from corehq.apps.document_templates.images import (
     save_image,
 )
 from corehq.apps.document_templates.models import Area
+from corehq.apps.document_templates.rendering import ImageContent
 from corehq.blobs import CODES
 
 from .utils import delete_image, make_image
@@ -117,8 +118,8 @@ class TestStoredImages(TestCase):
         with self.assertRaisesMessage(ImageError, 'does not exist'):
             get_image(DOMAIN, uuid.uuid4().hex)
 
-    def test_load_images_replaces_image_keys_with_bytes(self):
-        data = make_image()
+    def test_load_images_replaces_image_areas_with_their_content(self):
+        data = make_image(size=(10, 20))
         markdown = Area(value='Hello')
         areas = {
             'header': Area(type='image', value=self._save(data=data)),
@@ -126,15 +127,21 @@ class TestStoredImages(TestCase):
             'body': markdown,
         }
         loaded = load_images(DOMAIN, areas)
-        assert loaded['header'] == Area(type='image', value=data)
-        assert loaded['address'] == areas['address']
-        assert loaded['body'] is markdown
-        assert areas['header'].value != data  # the areas given are not changed
+        assert loaded == {'header': ImageContent(data, (10, 20)), 'body': markdown}
+        assert isinstance(areas['header'], Area)  # the areas given are not changed
 
     def test_load_images_names_the_area_of_an_unusable_image(self):
         areas = {'header': Area(type='image', value=self._save())}
         with self.assertRaisesMessage(ImageError, 'header: The image does not exist.'):
             load_images(OTHER_DOMAIN, areas)
+
+    def test_load_images_names_the_area_of_an_image_that_cannot_be_read(self):
+        areas = {'header': Area(type='image', value=self._save())}
+        with (
+            patch('corehq.apps.document_templates.images.get_image_data', return_value=b'not an image'),
+            self.assertRaisesMessage(ImageError, 'header: The image cannot be read.'),
+        ):
+            load_images(DOMAIN, areas)
 
 
 class TestImageExpiry(TestCase):

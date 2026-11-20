@@ -1,11 +1,11 @@
 from io import BytesIO
-import attrs
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 from PIL import ExifTags, Image, ImageOps
 
 from corehq.apps.document_templates.models import IMAGE
+from corehq.apps.document_templates.rendering import DocumentRenderError, ImageContent
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.blobs.models import BlobMeta
 
@@ -118,17 +118,20 @@ def read_image(meta):
 
 
 def load_images(domain, areas):
-    """:returns: ``areas`` (``{name: Area}``) with the key of each image area replaced by the bytes of the image
+    """:returns: ``areas`` (``{name: Area}``) with each image area replaced by its
+        :class:`~corehq.apps.document_templates.rendering.ImageContent`; an image area
+        without an image is left out
     :raises ImageError: if an image cannot be used; the message names the area
     """
     loaded = {}
     for name, area in areas.items():
-        if area.type == IMAGE and area.value:
+        if area.type != IMAGE:
+            loaded[name] = area
+        elif area.value:
             try:
-                area = attrs.evolve(area, value=get_image_data(domain, area.value))
-            except ImageError as error:
+                loaded[name] = ImageContent.from_data(get_image_data(domain, area.value))
+            except (ImageError, DocumentRenderError) as error:
                 raise ImageError(f'{name}: {error}')
-        loaded[name] = area
     return loaded
 
 

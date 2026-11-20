@@ -7,7 +7,8 @@ from corehq.apps.document_templates.rendering import (
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
     Document,
-    _image_flowable,
+    ImageContent,
+    MarkdownContent,
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
@@ -28,7 +29,7 @@ def _areas(values):
 
 def _generate(values, context):
     document = generate_document(_areas(values), context)
-    return {name: area.value for name, area in document.areas.items()}
+    return {name: content.text for name, content in document.areas.items()}
 
 
 def test_get_area_names():
@@ -205,7 +206,7 @@ def test_render_pdf_lays_out_a_table():
 def _document(**areas):
     """Areas given as text are markdown"""
     return Document({
-        name: area if isinstance(area, Area) else Area(value=area)
+        name: MarkdownContent(area) if isinstance(area, str) else area
         for name, area in {**VALUES, **areas}.items()
     })
 
@@ -214,10 +215,13 @@ def test_render_pdf_returns_a_pdf():
     assert render_pdf([_document(body='Hello')]).startswith(b'%PDF')
 
 
-def test_render_pdf_rejects_an_unknown_area_type():
-    document = _document(body=Area(type='unknown', value='x'))
-    with pytest.raises(ValueError, match="Unknown area type: 'unknown'"):
-        render_pdf([document])
+@pytest.mark.parametrize('area', [
+    Area(type='unknown', value='x'),
+    Area(type='image', value='a-key'),  # images not loaded
+])
+def test_generate_document_rejects_an_area_it_cannot_render(area):
+    with pytest.raises(TypeError, match='body: an area of type'):
+        generate_document({**_areas(VALUES), 'body': area}, {})
 
 
 def test_render_pdf_starts_each_document_on_a_new_page():
@@ -244,19 +248,36 @@ def test_render_pdf_flows_the_body_over_pages():
     assert long.count(b'/Type /Page\n') > short.count(b'/Type /Page\n')
 
 
-def test_generate_document_keeps_other_area_types():
-    image = Area(type='image', value=make_image())
+def test_generate_document_keeps_images():
+    image = _image(make_image())
     document = generate_document({**_areas(VALUES), 'body': image}, {})
     assert document.areas['body'] is image
 
 
-def test_variable_names_ignores_other_area_types():
-    areas = {**_areas(VALUES), 'body': Area(type='image', value='{{ name }}')}
-    assert get_variable_names(areas) == []
+@pytest.mark.parametrize('area', [
+    Area(type='image', value='{{ name }}'),
+    ImageContent(b'{{ name }}', (1, 1)),
+])
+def test_variable_names_ignores_other_area_types(area):
+    assert get_variable_names({**_areas(VALUES), 'body': area}) == []
 
 
 def _image(data):
-    return Area(type='image', value=data)
+    return ImageContent.from_data(data)
+
+
+def _image_flowable(data, width, height, alignment):
+    [flowable] = _image(data).flowables(width, height, alignment)
+    return flowable
+
+
+def test_image_content_reads_the_size():
+    assert _image(make_image(size=(10, 20))).size == (10, 20)
+
+
+def test_image_content_rejects_an_image_that_cannot_be_read():
+    with pytest.raises(DocumentRenderError, match='The image cannot be read'):
+        _image(b'not an image')
 
 
 @pytest.mark.parametrize('image_size, frame, expected', [
@@ -281,10 +302,6 @@ def test_render_pdf_draws_an_image_in_any_area(area_name):
     assert b'/Subtype /Image' in pdf
 
 
-def test_render_pdf_draws_an_empty_image_area_as_blank():
-    assert b'/Subtype /Image' not in render_pdf([_document(header=_image(b''))])
-
-
 @pytest.mark.parametrize('area_name', list(VALUES))
 def test_render_pdf_fits_an_image_that_is_larger_than_the_area(area_name):
     render_pdf([_document(**{area_name: _image(make_image(size=(4000, 4000)))})])
@@ -301,10 +318,11 @@ def test_generate_document_renders_markdown_around_an_image():
     areas = {**_areas(VALUES), 'header': _image(make_image()), 'body': Area(value='Dear {{ name }}')}
     document = generate_document(areas, {'name': 'Ada'})
     assert document.areas['header'] is areas['header']
-    assert document.areas['body'].value == 'Dear Ada'
+    assert document.areas['body'] == MarkdownContent('Dear Ada')
     assert b'/Subtype /Image' in render_pdf([document])
 
 
-def test_generate_document_reports_an_image_that_cannot_be_read():
-    with pytest.raises(DocumentRenderError, match='header: the image cannot be read'):
-        generate_document({**_areas(VALUES), 'header': _image(b'not an image')}, {})
+def test_render_pdf_leaves_a_missing_area_blank():
+    document = _document()
+    del document.areas['header']
+    assert render_pdf([document]).startswith(b'%PDF')

@@ -1,18 +1,21 @@
 """
 Renders document templates to PDF.
 
-A template's areas (``{name: Area}``) hold author-written Jinja. A
-:class:`Document` holds the same areas with the variables rendered.
-Rendering takes two steps:
+A template's areas (``{name: Area}``) hold author-written Jinja or the key
+of an image. Rendering takes three steps:
 
-1. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
-   in the markdown areas of a template with a context of values for those
-   variables. Area text is author-written, so it runs in a sandbox. Context
-   values are escaped, so they cannot add markup of their own.
-2. :func:`render_pdf` lays the markdown of one or more documents out on the
-   page with reportlab. The markdown is converted to HTML and then to
-   reportlab flowables. HTML in the markdown is not supported: it is escaped
-   and shown as text.
+1. :func:`~corehq.apps.document_templates.images.load_images` replaces each
+   image area with an :class:`ImageContent`. It is done once per template,
+   however many documents are rendered from it.
+2. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
+   in the markdown areas with a context of values for those variables, giving
+   a :class:`Document` of :class:`MarkdownContent` and :class:`ImageContent`.
+   Area text is author-written, so it runs in a sandbox. Context values are
+   escaped, so they cannot add markup of their own.
+3. :func:`render_pdf` lays the content of one or more documents out on the
+   page with reportlab. Markdown is converted to HTML and then to reportlab
+   flowables. HTML in the markdown is not supported: it is escaped and shown
+   as text.
 
 The layout lives in a single function (:func:`_us_letter`) so that another
 can be added next to it.
@@ -53,7 +56,7 @@ from reportlab.platypus import (
     Table,
 )
 
-from corehq.apps.document_templates.models import IMAGE, MARKDOWN
+from corehq.apps.document_templates.models import MARKDOWN, Area
 
 # The US letter layout, see :func:`_us_letter`. Distances from the top edge of the page are in points.
 _MARGIN = 0.75 * inch
@@ -168,7 +171,7 @@ def get_variable_names(areas):
     """
     names = {}
     for name, area in areas.items():
-        if area.type != MARKDOWN:
+        if not isinstance(area, Area) or area.type != MARKDOWN:
             continue
         _check_area_length(name, area.value)
         try:
@@ -178,27 +181,65 @@ def get_variable_names(areas):
     return list(names)
 
 
+@define(frozen=True)
+class MarkdownContent:
+    """The markdown of an area with the variables rendered"""
+    text: str
+
+    def flowables(self, width, height, alignment):
+        return _markdown_to_flowables(self.text)
+
+
+@define(frozen=True)
+class ImageContent:
+    """The image of an area, ready to draw
+
+    :param size: ``(width, height)`` in pixels
+    """
+    data: bytes
+    size: tuple
+
+    @classmethod
+    def from_data(cls, data):
+        """:raises DocumentRenderError: if reportlab cannot read ``data``"""
+        try:
+            size = ImageReader(BytesIO(data)).getSize()
+        except Exception:
+            raise DocumentRenderError(gettext('The image cannot be read.'))
+        return cls(data, size)
+
+    def flowables(self, width, height, alignment):
+        """The image scaled down to fit within ``width`` and ``height``, with a pixel as a point"""
+        image_width, image_height = self.size
+        scale = min(width / image_width, height / image_height, 1)
+        image = Image(BytesIO(self.data), image_width * scale, image_height * scale, hAlign=alignment, mask='auto')
+        return [image]
+
+
 @attrs.define
 class Document:
     """A template's areas with the variables rendered, ready for :func:`render_pdf`"""
-    areas = attrs.field()  # {name: Area}
+    areas = attrs.field()  # {name: MarkdownContent | ImageContent}
 
 
 def generate_document(areas, context):
-    """Render the Jinja in the markdown areas of a template; other area types are kept as they are
+    """Render the Jinja in the markdown areas of a template
 
-    :param areas: ``{name: Area}``. The value of an area of type ``image`` is the bytes of the image.
+    :param areas: ``{name: Area | ImageContent}`` as
+        :func:`~corehq.apps.document_templates.images.load_images` returns them
     :param context: values for the variables the areas use
     :returns: a :class:`Document`
     :raises DocumentRenderError: if an area is invalid or fails to render
     """
-    document = Document({
-        name: attrs.evolve(area, value=_render_area(name, area.value, context))
-        if area.type == MARKDOWN else area
-        for name, area in areas.items()
-    })
-    _check_images(document)
-    return document
+    return Document({name: _generate_area(name, area, context) for name, area in areas.items()})
+
+
+def _generate_area(name, area, context):
+    if isinstance(area, ImageContent):
+        return area
+    if area.type == MARKDOWN:
+        return MarkdownContent(_render_area(name, area.value, context))
+    raise TypeError(f'{name}: an area of type {area.type!r} cannot be rendered; are its images loaded?')
 
 
 def _check_area_length(name, text):
@@ -223,15 +264,6 @@ def _render_area(name, text, context):
 
 def _syntax_error_message(area_name, error):
     return f'Template syntax error in {area_name}, line {error.lineno}: {error.message}'
-
-
-def _check_images(document):
-    for name, area in document.areas.items():
-        if area.type == IMAGE and area.value:
-            try:
-                ImageReader(BytesIO(area.value)).getSize()
-            except Exception:
-                raise DocumentRenderError(f'{name}: the image cannot be read')
 
 
 def render_pdf(documents):
@@ -271,7 +303,8 @@ def _us_letter(n, document):
         )
 
     def flowables(area_name, height):
-        return _area_flowables(document.areas.get(area_name), _AREA_WIDTH, height, _ALIGNMENT[area_name])
+        content = document.areas.get(area_name)
+        return content.flowables(_AREA_WIDTH, height, _ALIGNMENT[area_name]) if content else []
 
     def draw(canvas, area_name, top, height):
         frame(top, height).addFromList(flowables(area_name, height), canvas)
@@ -295,28 +328,6 @@ def _us_letter(n, document):
         PageTemplate(id=f'{n}-later', frames=[body_frame(_MARGIN)], onPage=draw_later_page),
     ]
     return templates, [NextPageTemplate(f'{n}-later'), *flowables('body', _BODY_HEIGHT)]
-
-
-def _area_flowables(area, width, height, alignment):
-    """:param area: an :class:`Area` or ``None``
-    :param width: of the area, in points
-    :param height: of the area, in points
-    :param alignment: ``'LEFT'`` or ``'CENTER'``, for an image
-    """
-    if not area:
-        return []
-    if area.type == MARKDOWN:
-        return _markdown_to_flowables(area.value)
-    if area.type == IMAGE:
-        return [_image_flowable(area.value, width, height, alignment)] if area.value else []
-    raise ValueError(f'Unknown area type: {area.type!r}')
-
-
-def _image_flowable(data, width, height, alignment):
-    """The image scaled down to fit within ``width`` and ``height``, with a pixel as a point"""
-    image_width, image_height = ImageReader(BytesIO(data)).getSize()
-    scale = min(width / image_width, height / image_height, 1)
-    return Image(BytesIO(data), image_width * scale, image_height * scale, hAlign=alignment, mask='auto')
 
 
 def _markdown_to_flowables(text):
