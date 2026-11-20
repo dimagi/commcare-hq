@@ -16,7 +16,7 @@ from corehq.apps.document_templates.case_documents import (
 from corehq.apps.document_templates.images import save_image
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.rendering import generate_document
-from corehq.apps.hqmedia.models import CommCareImage
+from corehq.apps.document_templates.tests.utils import delete_image
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_case,
@@ -78,8 +78,8 @@ class TestBuildCasePdf(TestCase):
     def _image_template(self, domain=DOMAIN):
         buffer = BytesIO()
         Image.new('RGB', (10, 20), color=tuple(uuid.uuid4().bytes[:3])).save(buffer, format='PNG')
-        image_id = save_image(domain, SimpleUploadedFile('logo.png', buffer.getvalue()), 'user')
-        self.addCleanup(CommCareImage.get(image_id).delete)
+        image_id = save_image(domain, SimpleUploadedFile('logo.png', buffer.getvalue()))
+        self.addCleanup(delete_image, image_id)
         return Template.objects.create(
             domain=DOMAIN, name='Logo', slug='logo',
             areas={'header': Area(type='image', value=image_id), 'body': Area(value='Hello')},

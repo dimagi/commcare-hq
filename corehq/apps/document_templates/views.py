@@ -28,8 +28,9 @@ from corehq.apps.document_templates.case_documents import (
 from corehq.apps.document_templates.images import (
     ImageError,
     get_image,
-    get_thumbnail_url,
+    get_image_url,
     load_images,
+    read_image,
     save_image,
 )
 from corehq.apps.document_templates.models import (
@@ -375,7 +376,7 @@ def area_image_context(domain, area_name, image_id, error=None):
         'domain': domain,
         'area': area_name,
         'image_id': image_id,
-        'thumbnail_url': get_thumbnail_url(image_id) if image_id else '',
+        'thumbnail_url': get_image_url(domain, image_id) if image_id else '',
         'error': error,
     }
 
@@ -390,8 +391,21 @@ def upload_area_image(request, domain, area):
     image_id = request.POST.get(f'{AREA_FIELD_PREFIX}{area}_image', '')
     error = None
     try:
-        image_id = save_image(domain, request.FILES.get('image_file'), request.couch_user.username)
+        image_id = save_image(domain, request.FILES.get('image_file'))
     except ImageError as exception:
         error = str(exception)
     context = area_image_context(domain, area, image_id, error)
     return HttpResponse(render_to_string('document_templates/partials/area_image.html', context))
+
+
+@require_permission(HqPermissions.edit_document_templates)
+@toggles.DOCUMENT_TEMPLATES.required_decorator()
+def download_area_image(request, domain, key):
+    try:
+        meta = get_image(domain, key)
+        data = read_image(meta)
+    except ImageError:
+        raise Http404()
+    response = HttpResponse(data, content_type=meta.content_type)
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response

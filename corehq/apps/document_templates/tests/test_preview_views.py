@@ -92,7 +92,7 @@ def test_variables_view_treats_an_unknown_type_as_markdown():
 class TestPreviewWithImages(TestCase):
 
     def _image_id(self, domain=DOMAIN):
-        image_id = save_image(domain, SimpleUploadedFile('logo.png', make_image()), 'user')
+        image_id = save_image(domain, SimpleUploadedFile('logo.png', make_image()))
         self.addCleanup(delete_image, image_id)
         return image_id
 

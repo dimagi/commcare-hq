@@ -5,6 +5,7 @@ from corehq.apps.document_templates.views import (
     DocumentTemplatesView,
     EditDocumentTemplateView,
     NewDocumentTemplateView,
+    download_area_image,
     preview_document,
     render_document,
     upload_area_image,
@@ -28,4 +29,5 @@ urlpatterns = [
     path('templates/preview/', preview_document, name='preview_document'),
     path('templates/render/', render_document, name='render_document'),
     path('templates/images/<str:area>/', upload_area_image, name='upload_document_template_image'),
+    path('templates/images/download/<str:key>/', download_area_image, name='download_document_template_image'),
 ]

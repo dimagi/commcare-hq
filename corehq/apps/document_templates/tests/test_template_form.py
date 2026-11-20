@@ -2,7 +2,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from corehq.apps.document_templates.images import get_thumbnail_url, save_image
+from corehq.apps.document_templates.images import get_image_url, save_image
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.tests.utils import delete_image, make_image
 from corehq.apps.document_templates.views import TemplateForm
@@ -158,7 +158,7 @@ class TestTemplateFormSave(TestCase):
 class TestTemplateFormImages(TestCase):
 
     def _image_id(self, domain=DOMAIN):
-        image_id = save_image(domain, SimpleUploadedFile('logo.png', make_image()), 'user')
+        image_id = save_image(domain, SimpleUploadedFile('logo.png', make_image()))
         self.addCleanup(delete_image, image_id)
         return image_id
 
@@ -214,7 +214,7 @@ class TestTemplateFormImages(TestCase):
         template = Template(name='Welcome', slug='welcome', areas={'header': Area(type='image', value='abc')})
         header, footer = _form(area_names=['header', 'footer'], instance=template).areas()
         assert (header.type, header.image['image_id']) == ('image', 'abc')
-        assert header.image['thumbnail_url'] == get_thumbnail_url('abc')
+        assert header.image['thumbnail_url'] == get_image_url(DOMAIN, 'abc')
         assert (footer.type, footer.image['image_id'], footer.image['thumbnail_url']) == ('markdown', '', '')
 
     def test_editor_type_falls_back_to_markdown_for_a_posted_type_that_is_unknown(self):

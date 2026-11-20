@@ -1,11 +1,15 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from corehq.apps.document_templates.images import save_image
 from corehq.apps.document_templates.models import Template
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.apps.users.models_role import UserRole
 from corehq.util.test_utils import flag_enabled
+
+from .utils import delete_image, make_image
 
 DOMAIN = 'document-templates-permissions-test'
 PASSWORD = 'Passw0rd!'
@@ -33,6 +37,8 @@ class TestDocumentTemplatePermissions(TestCase):
 
     def setUp(self):
         self.template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', areas={})
+        self.image_key = save_image(DOMAIN, SimpleUploadedFile('logo.png', make_image()))
+        self.addCleanup(delete_image, self.image_key)
 
     def _status(self, role, method, urlname, *args):
         client = Client()
@@ -48,6 +54,7 @@ class TestDocumentTemplatePermissions(TestCase):
             ('new_document_template', 'post', []),
             ('edit_document_template', 'get', [self.template.pk]),
             ('upload_document_template_image', 'post', ['header']),
+            ('download_document_template_image', 'get', [self.image_key]),
         ]:
             for role, expected in [('editor', 200), ('nobody', 403)]:
                 with self.subTest(urlname=urlname, method=method, role=role):
