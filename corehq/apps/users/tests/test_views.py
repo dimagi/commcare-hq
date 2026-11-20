@@ -471,7 +471,7 @@ class TestCountWebUsers(TestCase):
         self.assertEqual(json.loads(result.content)['user_count'], 2)
 
 
-class BulkUserUploadAPITest(TestCase):
+class BulkUploadCommCareUserAPITest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
