@@ -114,6 +114,13 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
                 PublicWebformStartView.urlname,
                 kwargs={'public_id': self.webform.public_id.hex},
             ))
+        if not self.form.can_deliver:
+            return render(
+                request,
+                'public_webforms/public/webform_busy.html',
+                self.get_context_data(),
+                status=429,
+            )
         if self.webform.direct_access:
             messages.info(request, _("For added security, please provide your contact information."))
         return super().get(request, *args, **kwargs)

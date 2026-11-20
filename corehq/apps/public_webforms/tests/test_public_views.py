@@ -268,6 +268,19 @@ class TestDirectAccessWebform:
         assert response.url == _url(PublicWebformRequestView.urlname, webform.public_id)
         assert not PublicFormSession.objects.filter(public_webform=webform).exists()
 
+    def test_shows_the_busy_page_when_soft_rate_limited_without_a_delivery_channel(self):
+        webform = create_webform(
+            direct_access=True, is_disabled=False, allow_email=False, allow_sms=False)
+
+        with (
+            mock.patch('corehq.apps.public_webforms.public.views.is_soft_rate_limited', return_value=True),
+            mock.patch('corehq.apps.public_webforms.public.views.get_app', return_value=None),
+        ):
+            response = _get(webform.public_id)
+
+        assert response.status_code == 429
+        assert 'public_webforms/public/webform_busy.html' in [t.name for t in response.templates]
+
     def _form_url(self, session):
         return reverse(PublicFormView.urlname, kwargs={
             'public_id': session.public_webform.public_id.hex,
