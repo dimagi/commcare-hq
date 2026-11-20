@@ -1085,21 +1085,13 @@ class DatasourceExportDownloadForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "",
-                crispy.Div(
-                    crispy.Field(
-                        'data_source',
-                        css_class='input-xlarge',
-                        data_bind='value: dataSource'
-                    ),
-                    data_bind='visible: haveDatasources'
-                ),
+                crispy.Field('data_source', css_class='input-xlarge'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
                     _("Download Data Export Tool query file"),
                     type="submit",
                     css_class="btn-primary",
-                    data_bind="enable: haveDatasources"
                 ),
             ),
         )
