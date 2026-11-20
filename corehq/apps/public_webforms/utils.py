@@ -70,3 +70,11 @@ def get_latest_released_eligible_form(domain, app_id, form_unique_id):
     if form.get_module().module_type != 'basic' or form.requires_case():
         return None
     return form
+
+
+def get_analytics_delivery(session):
+    if session.email:
+        return 'email'
+    elif session.phone_number:
+        return 'sms'
+    return None
