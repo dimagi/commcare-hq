@@ -85,6 +85,14 @@ class BasePublicWebformAccessView(BasePublicWebformView):
             and not is_soft_rate_limited(self.webform.domain)
         )
 
+    def record_public_link_accessed(self, status):
+        record_google_analytics_event_for_client(
+            'public_webform_public_link_accessed', self.webform.public_id.hex, {
+                'domain': self.webform.domain,
+                'webform_id': self.webform.id,
+                'status': status,
+            })
+
 
 @method_decorator(use_bootstrap5, name='dispatch')
 class PublicWebformRequestView(BasePublicWebformAccessView):
@@ -93,14 +101,9 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
 
     def dispatch(self, request, *args, **kwargs):
         is_open = self.webform.is_open and (self.webform.direct_access or self.form.can_deliver)
-        if request.method == 'GET':
-            record_google_analytics_event_for_client(
-                'public_webform_public_link_accessed', self.webform.public_id.hex, {
-                    'domain': self.webform.domain,
-                    'webform_id': self.webform.id,
-                    'status': 'open' if is_open else 'closed',
-                })
         if not is_open:
+            if request.method == 'GET':
+                self.record_public_link_accessed('closed')
             return render(
                 request,
                 'public_webforms/public/webform_closed.html',
@@ -114,6 +117,7 @@ class PublicWebformRequestView(BasePublicWebformAccessView):
                 PublicWebformStartView.urlname,
                 kwargs={'public_id': self.webform.public_id.hex},
             ))
+        self.record_public_link_accessed('open')
         if not self.form.can_deliver:
             return render(
                 request,
@@ -169,9 +173,13 @@ class PublicWebformStartView(BasePublicWebformAccessView):
             ))
         return super().dispatch(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        self.record_public_link_accessed('open')
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
-            return self.get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)
         session = self.form.get_or_create_session()
         return HttpResponseRedirect(reverse(PublicFormView.urlname, kwargs={
             'public_id': self.webform.public_id.hex,
