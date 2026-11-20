@@ -28,6 +28,7 @@ from xml.sax.saxutils import escape, quoteattr
 
 import attrs
 import markdown
+from markdown.inlinepatterns import SimpleTagInlineProcessor
 from attrs import define
 from bs4 import BeautifulSoup
 from django.utils.translation import gettext
@@ -94,7 +95,11 @@ HEADINGS = {
 }
 
 # HTML tag -> reportlab paragraph markup tag
-INLINE_TAGS = {'strong': 'b', 'em': 'i'}
+INLINE_TAGS = {'strong': 'b', 'em': 'i', 'u': 'u', 'strike': 'strike'}
+
+# Markdown inline patterns: ``__underline__``, not inside words, and ``~~strike~~``
+UNDERLINE_RE = r'(?<!\w)(__)(?!_)(.+?)(?<!_)__(?!\w)'
+STRIKE_RE = r'(~~)(?!~)(.+?)(?<!~)~~'
 
 # Links in the PDF can only open these
 LINK_SCHEME_RE = re.compile(r'(https?|mailto):', re.IGNORECASE)
@@ -194,10 +199,16 @@ def _parse_variable_names(text):
 
 
 def _markdown_to_html(value):
-    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through"""
-    md = markdown.Markdown(extensions=['nl2br', 'tables'])
+    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through
+
+    ``__text__`` is underlined, not bold, and ``~~text~~`` is struck through.
+    """
+    md = markdown.Markdown(extensions=['nl2br', 'tables', 'sane_lists'])
     md.preprocessors.deregister('html_block')
     md.inlinePatterns.deregister('html')
+    # Priority 55 runs before the underscore emphasis (50), so __ is not bold
+    md.inlinePatterns.register(SimpleTagInlineProcessor(UNDERLINE_RE, 'u'), 'underline', 55)
+    md.inlinePatterns.register(SimpleTagInlineProcessor(STRIKE_RE, 'strike'), 'strike', 55)
     return md.convert(value)
 
 

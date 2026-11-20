@@ -138,10 +138,25 @@ def test_generate_document_reports_a_syntax_error():
         _generate({**VALUES, 'footer': '{% if %}'}, {})
 
 
-def test_markdown_emphasis_mangles_dunder_names_in_values():
-    # Python-Markdown turns __word__ into <strong>, so such names cannot be used in a value
+@pytest.mark.parametrize('value, expected', [
+    ('__underlined__', '<p><u>underlined</u></p>'),
+    ('~~struck~~', '<p><strike>struck</strike></p>'),
+    ('**bold** and *italic*', '<p><strong>bold</strong> and <em>italic</em></p>'),
+    ('__a *b* c__', '<p><u>a <em>b</em> c</u></p>'),
+    ('**__both__**', '<p><strong><u>both</u></strong></p>'),
+    ('~~__both__~~', '<p><strike><u>both</u></strike></p>'),
+    ('snake__case__name', '<p>snake__case__name</p>'),
+    ('`__code__`', '<p><code>__code__</code></p>'),
+    ('a\\__b__', '<p>a__b__</p>'),
+])
+def test_markdown_underline_and_strike(value, expected):
+    assert _markdown_to_html(value) == expected
+
+
+def test_markdown_underline_mangles_dunder_names_in_values():
+    # __word__ is underlined, so such names cannot be used in a value
     html = _markdown_to_html("{{ ''.__class__.__mro__ }}")
-    assert html == "<p>{{ ''.<strong>class</strong>.<strong>mro</strong> }}</p>"
+    assert html == "<p>{{ ''.<u>class</u>.<u>mro</u> }}</p>"
 
 
 def _markups(flowables):
@@ -151,6 +166,7 @@ def _markups(flowables):
 @pytest.mark.parametrize('markdown_text, expected', [
     ('plain', ['plain']),
     ('**b** *i*', ['<b>b</b> <i>i</i>']),
+    ('__u__ ~~s~~', ['<u>u</u> <strike>s</strike>']),
     ('line one\nline two', ['line one<br/> line two']),
     ('a < b & c', ['a &lt; b &amp; c']),
     ('`code`', ['<font name="Courier">code</font>']),
