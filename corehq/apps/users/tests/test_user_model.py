@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
+import pytest
+
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -54,6 +57,42 @@ class UserModelTest(TestCase):
             created_by=None,
             created_via=None,
         )
+
+    def test_get_wraps_as_the_doc_type_subclass(self):
+        assert type(CouchUser.get(self.user._id)) is CommCareUser
+        web_user = self.create_user('webby')
+        assert type(CouchUser.get(web_user._id)) is WebUser
+
+    def test_get_on_a_subclass_checks_the_type(self):
+        assert type(CommCareUser.get(self.user._id)) is CommCareUser
+        with pytest.raises(CouchUser.AccountTypeError):
+            WebUser.get(self.user._id)
+
+    def test_get_returns_retired_users(self):
+        self.user.retire(self.domain, deleted_by=None)
+        for cls in (CouchUser, CommCareUser):
+            user = cls.get(self.user._id)
+            assert type(user) is CommCareUser
+            assert user.is_deleted()
+
+    def test_get_accepts_legacy_deleted_doc_types(self):
+        doc = self.user.to_json()
+        del doc['_id'], doc['_rev']
+        doc['username'] = 'legacy-deleted'
+        doc['doc_type'] = 'CommCareUser-Deleted'
+        doc['base_doc'] = 'CouchUser-Deleted'
+        CouchUser.get_db().save_doc(doc)
+
+        user = CouchUser.get(doc['_id'])
+        assert type(user) is CommCareUser
+        assert user.is_deleted()
+
+    def test_get_rejects_non_user_docs(self):
+        group = Group(domain=self.domain, name='group')
+        group.save()
+        self.addCleanup(group.delete)
+        with pytest.raises(KeyError):
+            CouchUser.get(group._id)
 
     def test_get_form_ids(self):
         form_ids = list(self.user._get_form_ids())
