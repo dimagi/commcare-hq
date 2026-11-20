@@ -56,8 +56,28 @@ class BasePublicWebformView(BasePageView):
         return context
 
 
+class BasePublicWebformAccessView(BasePublicWebformView):
+
+    @property
+    @memoized
+    def form_name(self):
+        app = get_app(self.webform.domain, self.webform.app_build_id)
+        form = app.get_form(self.webform.form_unique_id) if app else None
+        return clean_trans(form.name, [get_language()] + app.langs) if form else None
+
+    @property
+    def page_title(self):
+        return self.form_name
+
+    @property
+    def page_context(self):
+        context = super().page_context
+        context['form'] = self.form
+        return context
+
+
 @method_decorator(use_bootstrap5, name='dispatch')
-class PublicWebformRequestView(BasePublicWebformView):
+class PublicWebformRequestView(BasePublicWebformAccessView):
     urlname = 'public_webform_request'
 
     def dispatch(self, request, *args, **kwargs):
@@ -76,17 +96,6 @@ class PublicWebformRequestView(BasePublicWebformView):
                 status=404,
             )
         return super().dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def form_name(self):
-        app = get_app(self.webform.domain, self.webform.app_build_id)
-        form = app.get_form(self.webform.form_unique_id) if app else None
-        return clean_trans(form.name, [get_language()] + app.langs) if form else None
-
-    @property
-    def page_title(self):
-        return self.form_name
 
     @property
     def template_name(self):
@@ -123,12 +132,6 @@ class PublicWebformRequestView(BasePublicWebformView):
             PublicWebformLinkSentView.urlname,
             kwargs={'public_id': self.webform.public_id.hex},
         ))
-
-    @property
-    def page_context(self):
-        context = super().page_context
-        context['form'] = self.form
-        return context
 
     @property
     @memoized
