@@ -479,7 +479,11 @@ class BulkUploadCommCareUserAPITest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
-        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None)
+        edit_mobile_workers_role = UserRole.create(
+            cls.domain_name, 'can-edit-mobile-workers', permissions=HqPermissions(edit_commcare_users=True)
+        )
+        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None,
+                                  role_id=edit_mobile_workers_role.get_id)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user(), domain=cls.domain_name)
 
@@ -607,6 +611,21 @@ class BulkUploadCommCareUserAPITest(TestCase):
             'success': False,
             'message': 'only one file can be uploaded at a time'
         })
+
+    def test_requires_edit_commcare_users_permission(self):
+        no_permissions = UserRole.create(self.domain_name, 'no-permissions')
+        member = WebUser.create(self.domain_name, 'member@test.com', 'password', None, None,
+                                role_id=no_permissions.get_id)
+        self.addCleanup(member.delete, self.domain_name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=member.get_django_user(), domain=self.domain_name)
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {member.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
 
 
 class BulkUploadWebUserTest(TestCase, DomainSubscriptionMixin):

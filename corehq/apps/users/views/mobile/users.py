@@ -1571,6 +1571,7 @@ def link_connectid_user(request, domain):
 @csrf_exempt
 @require_POST
 @api_auth()
+@require_can_edit_commcare_users
 def bulk_user_upload_api(request, domain):
     try:
         if len(request.FILES) > 1:
