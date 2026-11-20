@@ -1,0 +1,18 @@
+{% extends 'hqwebapp/bootstrap5/base_section.html' %}
+{% load hq_shared_tags %}
+{% js_entry "sidecar/js/sidecar_app" %}
+
+{% block page_content_classes %}{{ block.super }} p-0 d-flex flex-column{% endblock %}
+{% block pre_page_content %}{% endblock %}
+
+{% block page_content %}
+  {% initial_page_data 'domain' domain %}
+  {% initial_page_data 'sidecar_app_url' sidecar_app.url %}
+  {% initial_page_data 'sidecar_api_allowlist' api_allowlist %}
+  <iframe
+    id="sidecar-app"
+    title="{{ sidecar_app.name }}"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-top-navigation-by-user-activation allow-downloads"
+    class="flex-grow-1 w-100 border-0"
+  ></iframe>
+{% endblock %}

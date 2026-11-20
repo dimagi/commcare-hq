@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseForbidden, JsonResponse
+from django.middleware.csrf import CsrfViewMiddleware
 
 from attrs import define, field
 from tastypie.authentication import Authentication
@@ -12,12 +13,13 @@ from corehq.apps.domain.decorators import (
     api_key_auth,
     basic_auth_or_try_api_key_auth,
     get_auth_decorator_map,
+    login_and_domain_required,
 )
 from corehq.apps.users.decorators import (
     require_api_permission,
     require_permission_raw,
 )
-from corehq.toggles import IS_CONTRACTOR
+from corehq.toggles import IS_CONTRACTOR, SIDECAR
 
 
 def wrap_4xx_errors_for_apis(view_func):
@@ -48,6 +50,22 @@ def get_rate_limit_identifier(request):
         username = ''
     domain = getattr(request, 'domain', '')
     return ApiIdentifier(username=username, domain=domain)
+
+
+def is_sidecar_request(request):
+    """Whether this is a session request that passes CSRF checks in a SIDECAR project"""
+    return (
+        request.user.is_authenticated
+        and SIDECAR.enabled(getattr(request, 'domain', None))
+        and passes_csrf_check(request)
+    )
+
+
+def passes_csrf_check(request):
+    check = CsrfViewMiddleware(lambda request: None)
+    check._reject = lambda request, reason: reason
+    check.process_request(request)
+    return check.process_view(request, None, (), {}) is None
 
 
 class HQAuthenticationMixin:
@@ -110,6 +128,11 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
             require_api_permission('access_api', login_decorator=self._get_auth_decorator(request)),
             wrap_4xx_errors_for_apis,
         ], **kwargs)
+
+    def _get_auth_decorator(self, request):
+        if is_sidecar_request(request):
+            return login_and_domain_required
+        return super()._get_auth_decorator(request)
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'

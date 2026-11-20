@@ -1045,6 +1045,13 @@ DOCUMENT_TEMPLATES = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SIDECAR = StaticToggle(
+    'sidecar',
+    'Sidecar: Custom third-party web apps embedded in the project',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+)
+
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(
     "geocoder_my_location_button",
     "USH: Add button to geocoder to populate search with the user's current location",

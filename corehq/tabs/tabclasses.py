@@ -81,6 +81,8 @@ from corehq.apps.reports.dispatcher import (
 )
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.sidecar.models import SidecarApp
+from corehq.apps.sidecar.views import SidecarAppView
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -470,6 +472,7 @@ class ProjectDataTab(UITab):
         '/a/{domain}/importer/',
         '/a/{domain}/case/',
         '/a/{domain}/clean/',
+        '/a/{domain}/custom_apps/',
         '/a/{domain}/project_db/',
         '/a/{domain}/microplanning/',
         '/a/{domain}/kyc/',
@@ -662,6 +665,9 @@ class ProjectDataTab(UITab):
             items += self._get_kyc_verification_views()
         if self._can_view_payments_integration:
             items += self._get_payments_verification_views()
+
+        if self._get_custom_app_views:
+            items.append([_("Custom Apps"), self._get_custom_app_views])
         return items
 
     @cached_property
@@ -1108,6 +1114,15 @@ class ProjectDataTab(UITab):
         ]]
         return items
 
+    @cached_property
+    def _get_custom_app_views(self):
+        if not toggles.SIDECAR.enabled(self.domain) and self.couch_user.is_domain_admin(self.domain):
+            return []
+        return [{
+            'title': sidecar_app.name,
+            'url': reverse(SidecarAppView.urlname, args=[self.domain, sidecar_app.slug]),
+        } for sidecar_app in SidecarApp.objects.filter(domain=self.domain).order_by('name')]
+
     @property
     def dropdown_items(self):
         if (
@@ -1156,6 +1171,13 @@ class ProjectDataTab(UITab):
                 DataDictionaryView.page_title,
                 url=reverse(DataDictionaryView.urlname, args=[self.domain]),
             ))
+
+        if self._get_custom_app_views:
+            items.append(dropdown_dict(_("Custom Apps"), is_header=True))
+            items.extend(
+                dropdown_dict(view['title'], url=view['url'])
+                for view in self._get_custom_app_views
+            )
 
         if items:
             items += [self.divider]
