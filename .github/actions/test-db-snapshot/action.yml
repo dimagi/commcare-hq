@@ -1,0 +1,63 @@
+name: Test database snapshot
+description: >-
+  Skip test database setup (1-3 minutes per job) by restoring the test
+  databases from a cached snapshot, or save a snapshot taken by
+  `pytest --snapshot-test-dbs`.
+
+  Test database setup runs all migrations, then syncs Couch views. The
+  snapshot holds the migrated SQL databases, keyed on migrations.lock,
+  which lists every migration, and on HQ's migration files and the SQL
+  files they load, which are sometimes edited after they're merged.
+  Couch views are synced after restoring.
+inputs:
+  suite:
+    description: Test suite (matrix.TEST). Each suite has its own databases.
+    required: true
+  command:
+    description: restore or save.
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Check command
+    if: inputs.command != 'restore' && inputs.command != 'save'
+    shell: bash
+    run: echo "::error::command must be 'restore' or 'save', not '${{ inputs.command }}'" && exit 1
+
+  - name: Compute snapshot cache key
+    id: key
+    shell: bash
+    run: |
+      # Bump the version to force new snapshots, e.g. after a change the
+      # hashed files don't capture, like code that migrations call.
+      echo "key=test-dbs-v1-${{ inputs.suite }}-${{ hashFiles('migrations.lock', 'corehq/**/migrations/*.py', 'corehq/**/*.sql', 'testsettings.py', 'docker/localsettings.py') }}" >> "$GITHUB_OUTPUT"
+      # Outside the workspace: the test container takes ownership of it
+      echo "dir=$RUNNER_TEMP/test-db-snapshot" >> "$GITHUB_OUTPUT"
+
+  - name: Restore snapshot from cache
+    id: restore
+    if: inputs.command == 'restore'
+    uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+    with:
+      path: ${{ steps.key.outputs.dir }}
+      key: ${{ steps.key.outputs.key }}
+  - name: Restore snapshot into postgres
+    if: steps.restore.outputs.cache-hit == 'true'
+    shell: bash
+    run: .github/actions/test-db-snapshot/snapshot.sh restore "${{ steps.key.outputs.dir }}"
+
+  - name: Dump snapshot from postgres
+    id: dump
+    if: inputs.command == 'save'
+    shell: bash
+    run: |
+      .github/actions/test-db-snapshot/snapshot.sh save "${{ steps.key.outputs.dir }}"
+      if compgen -G "${{ steps.key.outputs.dir }}/*.dump" > /dev/null; then
+        echo "dumped=true" >> "$GITHUB_OUTPUT"
+      fi
+  - name: Save snapshot to cache
+    if: steps.dump.outputs.dumped == 'true'
+    uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+    with:
+      path: ${{ steps.key.outputs.dir }}
+      key: ${{ steps.key.outputs.key }}

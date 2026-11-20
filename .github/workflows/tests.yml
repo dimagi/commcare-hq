@@ -39,6 +39,10 @@ jobs:
       # Coverage tracing slows tests, and the Codecov check is informational
       # only, so collect coverage on scheduled and manual runs, not PRs.
       COVERAGE: ${{ github.event_name != 'pull_request' && 'yes' || 'no' }}
+      # Snapshot and save the test databases from one job per suite, on
+      # scheduled and manual runs: PR runs can only restore snapshots saved
+      # on master.
+      SAVE_TEST_DBS: ${{ github.event_name != 'pull_request' && (matrix.TEST != 'python' || matrix.DIVIDED_WE_RUN == '05') && 'yes' || 'no' }}
     steps:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
@@ -79,6 +83,15 @@ jobs:
     - name: Discard stale yarn integrity marker
       if: steps.node-modules.outputs.cache-hit != 'true'
       run: rm -f node_modules/.yarn-integrity
+    # The snapshot is optional: without it, tests set up the databases.
+    # It only holds the SQL databases, so tests run with --sync-couch-views.
+    - name: Restore test databases
+      id: restore-dbs
+      continue-on-error: true
+      uses: ./.github/actions/test-db-snapshot
+      with:
+        command: restore
+        suite: ${{ matrix.TEST }}
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
@@ -97,6 +110,8 @@ jobs:
         --max-test-time=29
         --durations=50
         -p no:cacheprovider
+        --sync-couch-views
+        ${{ env.SAVE_TEST_DBS == 'yes' && '--snapshot-test-dbs' || '' }}
     # Save only from scheduled and manual runs: PR runs can restore caches
     # saved on master, but a cache saved by a PR run is only visible to that
     # PR. One job saves, since every job installs the same node_modules.
@@ -113,6 +128,17 @@ jobs:
       with:
         path: node_modules
         key: ${{ steps.node-modules.outputs.cache-primary-key }}
+    # Restoring ran only if checkout succeeded, which this local action needs.
+    - name: Save test databases
+      if: >-
+        always()
+        && env.SAVE_TEST_DBS == 'yes'
+        && steps.restore-dbs.outcome != 'skipped'
+      continue-on-error: true
+      uses: ./.github/actions/test-db-snapshot
+      with:
+        command: save
+        suite: ${{ matrix.TEST }}
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
