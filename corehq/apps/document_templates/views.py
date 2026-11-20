@@ -27,8 +27,10 @@ from corehq.apps.document_templates.case_documents import (
 )
 from corehq.apps.document_templates.images import (
     ImageError,
+    expire_unused_images,
     get_image,
     get_image_url,
+    keep_images,
     load_images,
     read_image,
     save_image,
@@ -208,8 +210,14 @@ class TemplateForm(forms.ModelForm):
         return areas
 
     def save(self, commit=True):
+        old_areas = self.instance.areas
         self.instance.areas = self.get_areas()
-        return super().save(commit=commit)
+        if commit:
+            keep_images(self.instance.domain, self.instance.areas)
+        template = super().save(commit=commit)
+        if commit:
+            expire_unused_images(self.instance.domain, old_areas, self.instance.areas)
+        return template
 
 
 @method_decorator(use_bootstrap5, name='dispatch')

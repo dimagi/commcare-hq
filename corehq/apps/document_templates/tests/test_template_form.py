@@ -2,7 +2,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from corehq.apps.document_templates.images import get_image_url, save_image
+from corehq.apps.document_templates.images import get_image, get_image_url, save_image
 from corehq.apps.document_templates.models import Area, Template
 from corehq.apps.document_templates.tests.utils import delete_image, make_image
 from corehq.apps.document_templates.views import TemplateForm
@@ -181,6 +181,34 @@ class TestTemplateFormImages(TestCase):
         )
         assert form.is_valid()
         assert form.get_areas() == {'header': Area(type='markdown', value='# Hi')}
+
+    def _save_form(self, header_image, instance=None):
+        form = _form(
+            self._data(area_header_type='image', area_header_image=header_image),
+            area_names=['header'],
+            instance=instance,
+        )
+        assert form.is_valid(), form.errors
+        return form.save()
+
+    def test_saved_image_does_not_expire(self):
+        image_id = self._image_id()
+        self._save_form(image_id)
+        assert get_image(DOMAIN, image_id).expires_on is None
+
+    def test_replaced_image_expires(self):
+        old_id, new_id = self._image_id(), self._image_id()
+        template = self._save_form(old_id)
+        self._save_form(new_id, instance=template)
+        assert get_image(DOMAIN, old_id).expires_on is not None
+        assert get_image(DOMAIN, new_id).expires_on is None
+
+    def test_image_is_not_kept_unless_the_form_is_committed(self):
+        image_id = self._image_id()
+        form = _form(self._data(area_header_type='image', area_header_image=image_id), area_names=['header'])
+        assert form.is_valid()
+        form.save(commit=False)
+        assert get_image(DOMAIN, image_id).expires_on is not None
 
     def test_image_area_without_an_image_is_valid(self):
         form = _form(self._data(area_header_type='image'), area_names=['header'])

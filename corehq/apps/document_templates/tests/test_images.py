@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 from io import BytesIO
 from unittest.mock import patch
 
@@ -10,8 +11,10 @@ from PIL import ExifTags, Image
 from corehq.apps.document_templates.images import (
     ImageError,
     _validate_and_orient_image,
+    expire_unused_images,
     get_image,
     get_image_data,
+    keep_images,
     load_images,
     save_image,
 )
@@ -132,3 +135,44 @@ class TestStoredImages(TestCase):
         areas = {'header': Area(type='image', value=self._save())}
         with self.assertRaisesMessage(ImageError, 'header: The image does not exist.'):
             load_images(OTHER_DOMAIN, areas)
+
+
+class TestImageExpiry(TestCase):
+
+    def _save(self, domain=DOMAIN):
+        key = save_image(domain, _upload(make_image()))
+        self.addCleanup(delete_image, key)
+        return key
+
+    @staticmethod
+    def _expires_on(key, domain=DOMAIN):
+        return get_image(domain, key).expires_on
+
+    def test_upload_expires_in_a_day(self):
+        expires_on = self._expires_on(self._save())
+        assert datetime.utcnow() + timedelta(hours=23) < expires_on < datetime.utcnow() + timedelta(hours=25)
+
+    def test_kept_images_do_not_expire(self):
+        header, footer = self._save(), self._save()
+        keep_images(DOMAIN, {
+            'header': Area(type='image', value=header),
+            'body': Area(value=footer),  # markdown that looks like a key is not an image
+        })
+        assert self._expires_on(header) is None
+        assert self._expires_on(footer) is not None
+
+    def test_keep_images_ignores_images_of_another_domain(self):
+        key = self._save(OTHER_DOMAIN)
+        keep_images(DOMAIN, {'header': Area(type='image', value=key)})
+        assert self._expires_on(key, OTHER_DOMAIN) is not None
+
+    def test_images_no_longer_used_expire(self):
+        kept, dropped = self._save(), self._save()
+        old_areas = {'header': Area(type='image', value=kept), 'footer': Area(type='image', value=dropped)}
+        keep_images(DOMAIN, old_areas)
+        expire_unused_images(DOMAIN, old_areas, {**old_areas, 'footer': Area(value='Bye')})
+        assert self._expires_on(kept) is None
+        assert self._expires_on(dropped) < datetime.utcnow() + timedelta(hours=2)
+
+    def test_expire_unused_images_of_a_new_template(self):
+        expire_unused_images(DOMAIN, None, {'header': Area(type='image', value=self._save())})

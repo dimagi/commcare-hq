@@ -12,6 +12,7 @@ from corehq.blobs.models import BlobMeta
 ALLOWED_FORMATS = ('PNG', 'JPEG')
 MAX_PIXELS = 25_000_000
 JPEG_QUALITY = 95
+UPLOAD_LIFETIME_MINUTES = 24 * 60  # until a template that uses the image is saved
 
 
 class ImageError(Exception):
@@ -34,8 +35,31 @@ def save_image(domain, uploaded_file):
         type_code=CODES.document_template_image,
         name=uploaded_file.name,
         content_type=Image.MIME[image_format],
+        timeout=UPLOAD_LIFETIME_MINUTES,
     )
     return meta.key
+
+
+def keep_images(domain, areas):
+    """Stop the images of ``areas`` from expiring; call before saving a template with ``areas``"""
+    keys = _image_keys(areas)
+    if keys:
+        BlobMeta.objects.partitioned_query(domain).filter(
+            parent_id=domain,
+            type_code=CODES.document_template_image,
+            key__in=keys,
+        ).update(expires_on=None)
+
+
+def expire_unused_images(domain, old_areas, new_areas):
+    """Expire the images of ``old_areas`` that ``new_areas`` no longer use; call after saving a template"""
+    db = get_blob_db()
+    for key in _image_keys(old_areas) - _image_keys(new_areas):
+        db.expire(domain, key)
+
+
+def _image_keys(areas):
+    return {area.value for area in (areas or {}).values() if area.type == IMAGE and area.value}
 
 
 def _validate_and_orient_image(data):
