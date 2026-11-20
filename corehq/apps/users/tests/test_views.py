@@ -471,7 +471,7 @@ class TestCountWebUsers(TestCase):
         self.assertEqual(json.loads(result.content)['user_count'], 2)
 
 
-class BulkUploadCommCareUserAPITest(TestCase):
+class BulkUploadCommCareUserAPITest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -479,6 +479,8 @@ class BulkUploadCommCareUserAPITest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.STANDARD)
+        cls.addClassCleanup(cls.teardown_subscriptions)
         edit_mobile_workers_role = UserRole.create(
             cls.domain_name, 'can-edit-mobile-workers', permissions=HqPermissions(edit_commcare_users=True)
         )
@@ -623,6 +625,21 @@ class BulkUploadCommCareUserAPITest(TestCase):
             self.url,
             {'bulk_upload_file': self._create_valid_workbook()},
             HTTP_AUTHORIZATION=f'ApiKey {member.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_requires_bulk_user_management_privilege(self):
+        free_domain = create_domain('bulk-user-upload-free-domain')
+        self.addCleanup(free_domain.delete)
+        admin = WebUser.create(free_domain.name, 'admin@test.com', 'password', None, None, is_admin=True)
+        self.addCleanup(admin.delete, free_domain.name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=admin.get_django_user(), domain=free_domain.name)
+
+        response = self.client.post(
+            reverse('bulk_user_upload_api', args=[free_domain.name]),
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {admin.username}:{api_key.plaintext_key}',
         )
 
         self.assertEqual(response.status_code, 403)
