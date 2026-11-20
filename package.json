@@ -35,7 +35,7 @@
         "datatables-fixedcolumns": "DataTables/FixedColumns#3.2.0",
         "datatables.net": "1.11.3",
         "datatables.net-bs5": "1.13.8",
-        "datatables.net-fixedcolumns-bs5": "4.3.0",
+        "datatables.net-fixedcolumns-bs5": "6.1.2",
         "detectrtc": "1.4.0",
         "dompurify": "3.4.17",
         "eonasdan-bootstrap-datetimepicker": "4.17.49",
