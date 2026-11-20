@@ -5,7 +5,8 @@ from random import randint
 from unittest.mock import patch
 
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase
+from django.db import transaction
+from django.test import SimpleTestCase, TestCase, TransactionTestCase
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
@@ -242,14 +243,69 @@ class IsDomainInUseTests(SimpleTestCase):
         self.addCleanup(self.get_by_name_patcher.stop)
 
 
+class TestTestCaseRollsBackSQL(TestCase):
+    databases = '__all__'
+
+    def test_test_case_rolls_back(self):
+        assert _test_case_rolls_back_sql()
+
+
+class TestTestCaseRollsBackSQLOutsideTestCase(TransactionTestCase):
+    databases = '__all__'
+
+    # One test, since flushing the databases after each is slow
+    def test_test_case_does_not_roll_back(self):
+        assert not _test_case_rolls_back_sql()
+        with transaction.atomic():
+            assert not _test_case_rolls_back_sql()
+
+
 @wraps(Domain.delete)
 @unit_testing_only
 def _delete_test_domain(self, leave_tombstone=False):
     return _delete_test_domain.__wrapped__(self, leave_tombstone=leave_tombstone)
 
 
+@unit_testing_only
+def _apply_test_deletion_operations(domain_name):
+    from corehq.apps.domain import deletion
+
+    rolls_back = _test_case_rolls_back_sql()
+    for op in deletion.DOMAIN_DELETE_OPERATIONS:
+        if not (rolls_back and _only_deletes_sql(op)):
+            op.execute(domain_name)
+
+
+def _test_case_rolls_back_sql():
+    """Return true if a test case will roll back changes in every database"""
+    from django.db import connections
+    return all(
+        any(block._from_testcase for block in connections[alias].atomic_blocks)
+        for alias in connections
+    )
+
+
+def _only_deletes_sql(op):
+    from corehq.apps.domain import deletion
+
+    if isinstance(op, deletion.ModelDeletion):
+        return True
+    # Others delete Couch docs, blobs or tables outside Django's
+    # transaction, or have side effects beyond deleting rows.
+    return isinstance(op, deletion.CustomDeletion) and op.deletion_fn in {
+        deletion._delete_django_users,
+        deletion._delete_domain_backend_mappings,
+        deletion._delete_domain_backends,
+        deletion._delete_sms_content_events_schedules,
+    }
+
+
 delete_es_docs_patch = patch('corehq.apps.domain.deletion._delete_es_docs')
 domain_tombstone_patch = patch.object(Domain, 'delete', _delete_test_domain)
+sql_deletion_patch = patch(
+    'corehq.apps.domain.deletion.apply_deletion_operations',
+    _apply_test_deletion_operations,
+)
 
 
 def patch_domain_deletion():
@@ -257,6 +313,8 @@ def patch_domain_deletion():
 
     - Do not create a tombstone (unless requested) when deleting a domain.
     - Do not delete docs in Elasticsearch when deleting a domain
+    - Do not delete SQL rows that the test case will roll back. Tests of
+      domain deletion itself should use ``@suspend(sql_deletion_patch)``.
 
     Without this, every test that deletes a domain would need to be
     decorated with `@es_test` and call .delete(leave_tombstone=False)
@@ -265,3 +323,4 @@ def patch_domain_deletion():
     assert settings.UNIT_TESTING
     delete_es_docs_patch.__enter__()
     domain_tombstone_patch.__enter__()
+    sql_deletion_patch.__enter__()
