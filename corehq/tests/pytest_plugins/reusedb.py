@@ -85,6 +85,13 @@ def pytest_addoption(parser):
         help="After creating test databases, copy each to <name>_snapshot "
              "before running tests. Used by CI to cache database setup.",
     )
+    parser.addoption(
+        "--sync-couch-views",
+        action="store_true",
+        help="When reusing test databases, sync Couch views as creating "
+             "them does. Use when the Couch databases may be new, e.g. "
+             "after restoring SQL databases from a snapshot.",
+    )
 
 
 @pytest.hookimpl
@@ -268,6 +275,8 @@ def couch_sql_context(config):
             flush_databases()
         if config.reuse_db == "bootstrap":
             bootstrap_migrated_db_state()
+        if config.getoption("--sync-couch-views"):
+            sync_couch_views()
         if config.should_teardown:
             dbs = get_sql_databases()
     else:
@@ -335,6 +344,17 @@ def snapshot_test_databases():
     """
     for connection, _, _ in get_sql_databases():
         connection.creation.clone_test_db(suffix="snapshot", verbosity=0)
+
+
+@unit_testing_only
+def sync_couch_views():
+    """Sync Couch views as migrating new test databases does
+
+    Migrations request it (see ``corehq.preindex.django_migrations``),
+    so reused databases skip it.
+    """
+    from corehq.preindex.django_migrations import run_reindex
+    run_reindex()
 
 
 def sql_databases_ok():
