@@ -98,7 +98,7 @@ dependencies = [
     "qrcode",
     "quickcache",
     "redis",
-    "reportlab==4.3.0",
+    "reportlab==5.1.0",
     "requests_oauthlib",
     "requests_toolbelt",
     "requests",
