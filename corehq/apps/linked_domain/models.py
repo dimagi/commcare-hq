@@ -194,6 +194,10 @@ class CaseSearchEndpointLinkDetail(jsonobject.JsonObject):
     upstream_endpoint_id = jsonobject.StringProperty()
 
 
+class DocumentTemplateLinkDetail(jsonobject.JsonObject):
+    upstream_template_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
@@ -202,5 +206,6 @@ def wrap_detail(model, detail_json):
         'keyword': KeywordLinkDetail,
         'ucr_expression': UCRExpressionLinkDetail,
         'case_search_endpoint': CaseSearchEndpointLinkDetail,
+        'document_template': DocumentTemplateLinkDetail,
         'auto_update_rule': UpdateRuleLinkDetail,
     }[model].wrap(detail_json)

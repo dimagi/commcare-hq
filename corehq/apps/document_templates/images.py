@@ -69,5 +69,16 @@ def load_images(domain, areas):
     return loaded
 
 
+def share_images_with_linked_domain(areas, upstream_domain, downstream_domain):
+    for name, area in areas.items():
+        if area.type == IMAGE and area.value:
+            try:
+                image = get_image(upstream_domain, area.value)
+            except ImageError as error:
+                raise ImageError(f'{name}: {error}')
+            if downstream_domain not in image.valid_domains:
+                image.add_domain(downstream_domain)
+
+
 def get_thumbnail_url(image_id):
     return reverse('hqmedia_download', args=['CommCareImage', image_id]) + f'?thumb={THUMBNAIL_PIXELS}'
