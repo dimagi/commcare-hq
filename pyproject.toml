@@ -170,6 +170,8 @@ test = [
     'pytest-django',
     'pytest-unmagic',
     'coverage',
+    'ty',
+    'django-types',
 ]
 
 [tool.pytest.ini_options]

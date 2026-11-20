@@ -55,6 +55,8 @@ pyfiles=($(git diff --staged --name-only --diff-filter=d| grep "\.py$"))
 if [ -n "$pyfiles" ]; then
     ruff check "${pyfiles[@]}"
 	if [ $? != 0 ]; then status=1 && echo; fi
+	ty check "${pyfiles[@]}"
+	if [ $? != 0 ]; then status=1 && echo; fi
 fi
 
 html_or_stylesheets=($(git diff --staged --name-only --diff-filter=d| grep -E "\.(html|css|scss|less)$"))
