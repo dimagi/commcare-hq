@@ -47,6 +47,7 @@ class TestDocumentTemplatePermissions(TestCase):
             ('new_document_template', 'get', []),
             ('new_document_template', 'post', []),
             ('edit_document_template', 'get', [self.template.pk]),
+            ('upload_document_template_image', 'post', ['header']),
         ]:
             for role, expected in [('editor', 200), ('nobody', 403)]:
                 with self.subTest(urlname=urlname, method=method, role=role):

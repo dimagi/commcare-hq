@@ -7,6 +7,7 @@ from corehq.apps.document_templates.rendering import (
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
     Document,
+    _image_flowable,
     _markdown_to_flowables,
     _markdown_to_html,
     _parse_variable_names,
@@ -15,6 +16,8 @@ from corehq.apps.document_templates.rendering import (
     get_variable_names,
     render_pdf,
 )
+
+from .utils import make_image
 
 VALUES = {'header': '', 'address': '', 'body': '', 'footer': ''}
 
@@ -200,7 +203,11 @@ def test_render_pdf_lays_out_a_table():
 
 
 def _document(**areas):
-    return Document({name: Area(value=areas.get(name, '')) for name in VALUES})
+    """Areas given as text are markdown"""
+    return Document({
+        name: area if isinstance(area, Area) else Area(value=area)
+        for name, area in {**VALUES, **areas}.items()
+    })
 
 
 def test_render_pdf_returns_a_pdf():
@@ -208,8 +215,8 @@ def test_render_pdf_returns_a_pdf():
 
 
 def test_render_pdf_rejects_an_unknown_area_type():
-    document = Document({**_document().areas, 'body': Area(type='image', value='x.png')})
-    with pytest.raises(ValueError, match="Unknown area type: 'image'"):
+    document = _document(body=Area(type='unknown', value='x'))
+    with pytest.raises(ValueError, match="Unknown area type: 'unknown'"):
         render_pdf([document])
 
 
@@ -238,7 +245,7 @@ def test_render_pdf_flows_the_body_over_pages():
 
 
 def test_generate_document_keeps_other_area_types():
-    image = Area(type='image', value='{{ name }}.png')
+    image = Area(type='image', value=make_image())
     document = generate_document({**_areas(VALUES), 'body': image}, {})
     assert document.areas['body'] is image
 
@@ -246,3 +253,58 @@ def test_generate_document_keeps_other_area_types():
 def test_variable_names_ignores_other_area_types():
     areas = {**_areas(VALUES), 'body': Area(type='image', value='{{ name }}')}
     assert get_variable_names(areas) == []
+
+
+def _image(data):
+    return Area(type='image', value=data)
+
+
+@pytest.mark.parametrize('image_size, frame, expected', [
+    ((100, 50), (504, 72), (100, 50)),  # never scaled up
+    ((2000, 100), (504, 72), (504, 25.2)),  # too wide
+    ((100, 1000), (504, 72), (7.2, 72)),  # too tall
+    ((4000, 4000), (504, 612), (504, 504)),
+])
+def test_image_is_scaled_down_to_fit_keeping_its_ratio(image_size, frame, expected):
+    flowable = _image_flowable(make_image(size=image_size), *frame, 'LEFT')
+    assert (round(flowable.drawWidth, 1), round(flowable.drawHeight, 1)) == expected
+
+
+@pytest.mark.parametrize('alignment', ['LEFT', 'CENTER'])
+def test_image_is_aligned(alignment):
+    assert _image_flowable(make_image(), 504, 72, alignment).hAlign == alignment
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_draws_an_image_in_any_area(area_name):
+    pdf = render_pdf([_document(**{area_name: _image(make_image())})])
+    assert b'/Subtype /Image' in pdf
+
+
+def test_render_pdf_draws_an_empty_image_area_as_blank():
+    assert b'/Subtype /Image' not in render_pdf([_document(header=_image(b''))])
+
+
+@pytest.mark.parametrize('area_name', list(VALUES))
+def test_render_pdf_fits_an_image_that_is_larger_than_the_area(area_name):
+    render_pdf([_document(**{area_name: _image(make_image(size=(4000, 4000)))})])
+
+
+def test_render_pdf_moves_a_body_image_that_does_not_fit_below_the_address_to_the_next_page():
+    small = render_pdf([_document(body=_image(make_image(size=(100, 50))))])
+    tall = render_pdf([_document(body=_image(make_image(size=(100, 4000))))])
+    assert small.count(b'/Type /Page\n') == 1
+    assert tall.count(b'/Type /Page\n') == 2
+
+
+def test_generate_document_renders_markdown_around_an_image():
+    areas = {**_areas(VALUES), 'header': _image(make_image()), 'body': Area(value='Dear {{ name }}')}
+    document = generate_document(areas, {'name': 'Ada'})
+    assert document.areas['header'] is areas['header']
+    assert document.areas['body'].value == 'Dear Ada'
+    assert b'/Subtype /Image' in render_pdf([document])
+
+
+def test_generate_document_reports_an_image_that_cannot_be_read():
+    with pytest.raises(DocumentRenderError, match='header: the image cannot be read'):
+        generate_document({**_areas(VALUES), 'header': _image(b'not an image')}, {})
