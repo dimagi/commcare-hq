@@ -36,10 +36,8 @@ from corehq.apps.document_templates.images import (
     save_image,
 )
 from corehq.apps.document_templates.models import (
-    AREA_TYPES,
-    IMAGE,
-    MARKDOWN,
     Area,
+    AreaType,
     Template,
 )
 from corehq.apps.document_templates.rendering import (
@@ -123,7 +121,7 @@ class TemplateForm(forms.ModelForm):
         saved_areas = self.instance.areas or {}
         for area_name in area_names:
             area = saved_areas.get(area_name) or Area()
-            is_image = area.type == IMAGE
+            is_image = area.type == AreaType.IMAGE
             # both values are kept in the form so switching the type does not lose what was typed;
             # only the one of the selected type is saved
             self.fields[self._field_name(area_name)] = forms.CharField(
@@ -133,7 +131,7 @@ class TemplateForm(forms.ModelForm):
                 widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             )
             self.fields[self._type_field_name(area_name)] = forms.ChoiceField(
-                choices=[(MARKDOWN, gettext_lazy('Markdown')), (IMAGE, gettext_lazy('Image'))],
+                choices=AreaType.choices,
                 required=False,
                 initial=area.type,
                 widget=forms.Select(attrs={
@@ -161,7 +159,7 @@ class TemplateForm(forms.ModelForm):
         cleaned_data = super().clean()
         for area_name in self.area_names:
             image_id = cleaned_data.get(self._image_field_name(area_name))
-            if cleaned_data.get(self._type_field_name(area_name)) == IMAGE and image_id:
+            if cleaned_data.get(self._type_field_name(area_name)) == AreaType.IMAGE and image_id:
                 try:
                     get_image(self.instance.domain, image_id)
                 except ImageError as error:
@@ -201,7 +199,7 @@ class TemplateForm(forms.ModelForm):
             name=area_name,
             label=definition.label if definition else area_name,
             description=definition.description if definition else '',
-            type=area_type if area_type in AREA_TYPES else MARKDOWN,
+            type=area_type if area_type in AreaType.values else AreaType.MARKDOWN,
             type_field=self[self._type_field_name(area_name)],
             markdown_field=self[self._field_name(area_name)],
             image=area_image_context(self.instance.domain, area_name, image_id, image_error),
@@ -210,8 +208,9 @@ class TemplateForm(forms.ModelForm):
     def get_areas(self):
         areas = {}
         for area_name in self.area_names:
-            if self.cleaned_data[self._type_field_name(area_name)] == IMAGE:
-                areas[area_name] = Area(type=IMAGE, value=self.cleaned_data[self._image_field_name(area_name)])
+            if self.cleaned_data[self._type_field_name(area_name)] == AreaType.IMAGE:
+                image_key = self.cleaned_data[self._image_field_name(area_name)]
+                areas[area_name] = Area(type=AreaType.IMAGE, value=image_key)
             else:
                 areas[area_name] = Area(value=self.cleaned_data[self._field_name(area_name)])
         return areas

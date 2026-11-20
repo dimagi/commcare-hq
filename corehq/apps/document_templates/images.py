@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 from PIL import ExifTags, Image, ImageOps
 
-from corehq.apps.document_templates.models import IMAGE
+from corehq.apps.document_templates.models import AreaType
 from corehq.apps.document_templates.rendering import DocumentRenderError, ImageContent
 from corehq.blobs import CODES, NotFound, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -59,7 +59,7 @@ def expire_unused_images(domain, old_areas, new_areas):
 
 
 def _image_keys(areas):
-    return {area.value for area in (areas or {}).values() if area.type == IMAGE and area.value}
+    return {area.value for area in (areas or {}).values() if area.type == AreaType.IMAGE and area.value}
 
 
 def _validate_and_orient_image(data):
@@ -125,7 +125,7 @@ def load_images(domain, areas):
     """
     loaded = {}
     for name, area in areas.items():
-        if area.type != IMAGE:
+        if area.type != AreaType.IMAGE:
             loaded[name] = area
         elif area.value:
             try:

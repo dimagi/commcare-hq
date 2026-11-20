@@ -1,17 +1,19 @@
 from attrs import define, field
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from corehq.util.jsonattrs import AttrsDict
 
-MARKDOWN = 'markdown'
-IMAGE = 'image'
-AREA_TYPES = (MARKDOWN, IMAGE)
+
+class AreaType(models.TextChoices):
+    MARKDOWN = 'markdown', gettext_lazy('Markdown')
+    IMAGE = 'image', gettext_lazy('Image')
 
 
 @define
 class Area:
     value = field(default='')
-    type = field(default=MARKDOWN)
+    type = field(default=AreaType.MARKDOWN)
 
 
 class Template(models.Model):

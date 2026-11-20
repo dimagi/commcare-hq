@@ -56,7 +56,7 @@ from reportlab.platypus import (
     Table,
 )
 
-from corehq.apps.document_templates.models import MARKDOWN, Area
+from corehq.apps.document_templates.models import Area, AreaType
 
 # The US letter layout, see :func:`_us_letter`. Distances from the top edge of the page are in points.
 _MARGIN = 0.75 * inch
@@ -171,7 +171,7 @@ def get_variable_names(areas):
     """
     names = {}
     for name, area in areas.items():
-        if not isinstance(area, Area) or area.type != MARKDOWN:
+        if not isinstance(area, Area) or area.type != AreaType.MARKDOWN:
             continue
         _check_area_length(name, area.value)
         try:
@@ -237,7 +237,7 @@ def generate_document(areas, context):
 def _generate_area(name, area, context):
     if isinstance(area, ImageContent):
         return area
-    if area.type == MARKDOWN:
+    if area.type == AreaType.MARKDOWN:
         return MarkdownContent(_render_area(name, area.value, context))
     raise TypeError(f'{name}: an area of type {area.type!r} cannot be rendered; are its images loaded?')
 
