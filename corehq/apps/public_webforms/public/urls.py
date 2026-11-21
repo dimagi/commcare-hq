@@ -4,6 +4,7 @@ from corehq.apps.public_webforms.public.views import (
     PublicFormView,
     PublicWebformLinkSentView,
     PublicWebformRequestView,
+    PublicWebformStartView,
     PublicFormSubmittedView,
 )
 
@@ -12,6 +13,11 @@ urlpatterns = [
         r'^(?P<public_id>[a-f0-9]{32})/$',
         PublicWebformRequestView.as_view(),
         name=PublicWebformRequestView.urlname,
+    ),
+    url(
+        r'^(?P<public_id>[a-f0-9]{32})/start/$',
+        PublicWebformStartView.as_view(),
+        name=PublicWebformStartView.urlname,
     ),
     url(
         r'^(?P<public_id>[a-f0-9]{32})/sent/$',
