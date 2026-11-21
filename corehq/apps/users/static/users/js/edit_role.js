@@ -377,6 +377,26 @@ Alpine.data('initRole', (roleJson) => {
                     nestedPermissions: [],
                 },
                 {
+                    get showOption() {
+                        return toggles.toggleEnabled("DOCUMENT_TEMPLATES");
+                    },
+                    get editPermission() {
+                        return self.role.permissions.edit_document_templates;
+                    },
+                    set editPermission(value) {
+                        self.role.permissions.edit_document_templates = value;
+                    },
+                    viewPermission: null,
+                    text: gettext("<strong>Document Templates</strong> &mdash; manage document templates"),
+                    showEditCheckbox: true,
+                    editCheckboxLabel: "edit-document-templates-checkbox",
+                    showViewCheckbox: false,
+                    viewCheckboxLabel: "view-document-templates-checkbox",
+                    screenReaderEditAndViewText: gettext("Edit & View Document Templates"),
+                    screenReaderViewOnlyText: null,
+                    nestedPermissions: [],
+                },
+                {
                     showOption: true,
                     get editPermission() {
                         return self.role.permissions.edit_data;
