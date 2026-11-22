@@ -1006,3 +1006,14 @@ def all_app_manager_add_ons_enabled(domain):
 class ChatbotDomainSettings(models.Model):
     domain = models.CharField(max_length=255, primary_key=True)
     disabled = models.BooleanField(default=False)
+
+
+class ChatbotDomainUsage(models.Model):
+    domain = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+    last_message_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['domain', 'user_id'], name='unique_chatbot_domain_usage'),
+        ]
