@@ -87,6 +87,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.hqwebapp.chat_access import require_chatbot_enabled
+from corehq.apps.hqwebapp.chat_metrics import record_chatbot_message
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import (
     fetch_chat_usage_from_ocs,
@@ -231,8 +232,14 @@ def chat_quota(request, domain):
         else:
             used = get_cached_chat_usage(couch_user.user_id)
     except ChatUsageUnavailable:
-        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
-    return JsonResponse({'limit': limit, 'used': used})
+        used = None
+        response = JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    else:
+        response = JsonResponse({'limit': limit, 'used': used})
+
+    if request.method == 'POST':
+        record_chatbot_message(domain, couch_user, limit, used)
+    return response
 
 
 @require_GET
