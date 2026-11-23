@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 from django.conf import settings
 from django.contrib import messages
 
@@ -10,6 +8,7 @@ from corehq.apps.sso.models import (
 from corehq.apps.sso.utils.message_helpers import (
     get_success_message_for_trusted_idp,
 )
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 def get_request_data(request):
@@ -37,10 +36,7 @@ def get_request_data(request):
 
 
 def get_return_to_url_from_request(request):
-    next_url = request.GET.get('next')
-    if not urlparse(next_url).netloc:
-        # only accept relative urls
-        return next_url
+    return get_safe_redirect_url(request, request.GET.get('next'), None)
 
 
 def is_request_using_sso(request):

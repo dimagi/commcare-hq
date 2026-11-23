@@ -1,3 +1,4 @@
+import pytest
 from testil import eq
 
 from django.contrib.messages.middleware import MessageMiddleware
@@ -315,3 +316,15 @@ class TestGetReturnToUrlFromRequest(SimpleTestCase):
             get_return_to_url_from_request(self.request),
             '/relative/path'
         )
+
+
+@pytest.mark.parametrize('next_url', [
+    'https:///example.com/',
+    '/\\example.com/',
+    '\\\\example.com/',
+    'javascript:alert(1)',
+    'https://example.com/',
+])
+def test_get_return_to_url_from_request_rejects_other_sites(next_url):
+    request = RequestFactory().get('/sso/test', {'next': next_url})
+    assert get_return_to_url_from_request(request) is None

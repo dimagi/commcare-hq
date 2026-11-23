@@ -173,6 +173,7 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -872,10 +873,8 @@ def delete_report(request, domain, report_id):
               "It has been removed from there too.")
         )
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
-    redirect = request.GET.get("redirect", None)
-    if not redirect:
-        redirect = reverse('saved_reports', args=[domain])
-    return HttpResponseRedirect(redirect)
+    default_url = reverse('saved_reports', args=[domain])
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.GET.get("redirect"), default_url))
 
 
 @login_and_domain_required

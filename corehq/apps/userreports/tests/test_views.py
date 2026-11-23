@@ -1,7 +1,11 @@
 from django.test import SimpleTestCase, TestCase, RequestFactory
+from django.urls import reverse
 from django.utils.safestring import SafeString
 
-from corehq.apps.userreports.models import UCRExpression
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.userreports.models import ReportConfiguration, UCRExpression
+from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 from corehq.apps.userreports.views import UCRExpressionListView
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from ..views import NamedExpressionHighlighter
@@ -61,3 +65,38 @@ class UCRExpressionListViewTests(TestCase):
             kwargs['limit'] = limit
         view.request = RequestFactory().get('/', kwargs)
         return view
+
+
+@flag_enabled('USER_CONFIGURABLE_REPORTS')
+class DeleteReportRedirectTests(TestCase):
+    domain = 'delete-report-redirect'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(domain_obj.delete)
+        cls.user = WebUser.create(cls.domain, 'admin@example.com', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        self.client.force_login(self.user.get_django_user())
+
+    def _delete_report(self, redirect):
+        report = ReportConfiguration(domain=self.domain, config_id='missing-data-source')
+        report.save()
+        self.addCleanup(report.delete)
+        return self.client.get(
+            reverse('delete_configurable_report', args=[self.domain, report._id]),
+            {'redirect': redirect},
+        )
+
+    def test_same_site_redirect(self):
+        response = self._delete_report('/a/delete-report-redirect/reports/')
+        assert response.status_code == 302
+        assert response['Location'] == '/a/delete-report-redirect/reports/'
+
+    def test_external_redirect_falls_back(self):
+        response = self._delete_report('https://example.com/')
+        assert response.status_code == 302
+        assert response['Location'] == reverse('saved_reports', args=[self.domain])

@@ -72,6 +72,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.users.models import WebUser
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 @method_decorator(use_bootstrap5, name='dispatch')
@@ -665,5 +666,5 @@ class CopyExportView(View):
             request,
             format_html(_("Export <strong>{}</strong> created."), new_export.name)
         )
-        redirect = request.GET.get('next', reverse('data_interfaces_default', args=[domain]))
-        return HttpResponseRedirect(redirect)
+        default_url = reverse('data_interfaces_default', args=[domain])
+        return HttpResponseRedirect(get_safe_redirect_url(request, request.GET.get('next'), default_url))
