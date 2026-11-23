@@ -444,8 +444,8 @@ describe('Entries', function () {
     });
 
     it('Should coerce user input times to moment objects', function () {
-        const assertParsesAs = function (userInput, timeFormat, expected) {
-            const res = utils.parseInputTime(userInput, timeFormat);
+        const assertParsesAs = function (userInput, timeFormat, expected, locale) {
+            const res = utils.parseInputTime(userInput, timeFormat, locale);
             assert.isTrue(moment.isMoment(res));
             assert.equal(res.format("HH:mm"), expected);
         };
@@ -459,6 +459,9 @@ describe('Entries', function () {
         assertParsesAs("930pm", "hh:mm A", "21:30");
         assertParsesAs("12:30", "hh:mm A", "12:30");
         assertParsesAs("2000", "hh:mm A", "20:00");
+
+        assertParsesAs("09:30 ከሰዓት", "hh:mm A", "21:30", "am-ET");
+        assertParsesAs("12:05 ጥዋት", "hh:mm A", "00:05", "am-ET");
     });
 
     it('Should fail to interpret invalid time inputs', function () {
