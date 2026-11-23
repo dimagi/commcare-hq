@@ -37,10 +37,11 @@ from corehq.apps.domain.views.settings import (
 )
 from corehq.apps.hqwebapp.models import Alert
 from corehq.apps.toggle_ui.models import ToggleAudit
-from corehq.apps.users.models import ActivityLevel, WebUser
+from corehq.apps.users.models import ActivityLevel, Invitation, StaticRole, WebUser
 from corehq.feature_previews import FeaturePreview
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import AppStructureRepeater
+from corehq.tests.util.forms import csrf_client, submit_form
 from corehq.toggles import NAMESPACE_DOMAIN, StaticToggle, Tag
 from corehq.util.test_utils import privilege_enabled
 
@@ -926,3 +927,69 @@ class TestFeaturePreviewsView(TestCase):
             ToggleAudit.ACTION_REMOVE,
             ToggleAudit.ACTION_ADD
         ])
+
+
+class TestAcceptAllInvitations(TestCase):
+    member_domain = 'test-accept-invites-member'
+    inviting_domain = 'test-accept-invites-inviting'
+    other_inviting_domain = 'test-accept-invites-other'
+    username = 'invitee@example.com'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for name in (cls.member_domain, cls.inviting_domain, cls.other_inviting_domain):
+            domain_obj = create_domain(name)
+            cls.addClassCleanup(domain_obj.delete)
+        cls.inviter = WebUser.create(cls.inviting_domain, 'inviter@example.com', 'password', None, None)
+        cls.addClassCleanup(cls.inviter.delete, cls.inviting_domain, deleted_by=None)
+
+    def setUp(self):
+        self.user = WebUser.create(self.member_domain, self.username, 'password', None, None)
+        self.addCleanup(self.user.delete, None, deleted_by=None)
+        self.invitation = self._invite(self.inviting_domain)
+        self.client.login(username=self.username, password='password')
+        self.url = reverse('accept_all_invitations')
+
+    def _invite(self, domain):
+        return Invitation.objects.create(
+            domain=domain,
+            email=self.username,
+            invited_by=self.inviter.user_id,
+            invited_on=datetime.utcnow(),
+            role=StaticRole.domain_admin(domain).get_qualified_id(),
+        )
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        self.invitation.refresh_from_db()
+        assert not self.invitation.is_accepted
+        assert not WebUser.get(self.user.user_id).is_member_of(self.inviting_domain)
+
+    def test_post_accepts_invitations(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        self.invitation.refresh_from_db()
+        assert self.invitation.is_accepted
+        assert WebUser.get(self.user.user_id).is_member_of(self.inviting_domain)
+
+    def test_project_select_page_button(self):
+        self._invite(self.other_inviting_domain)
+        self._submit_button_on(reverse('domain_select'))
+
+    def test_registration_page_button(self):
+        self._invite(self.other_inviting_domain)
+        self._submit_button_on(reverse('registration_domain'))
+
+    def _submit_button_on(self, page_url):
+        client = csrf_client(self.username, 'password')
+        page = client.get(page_url)
+        assert page.status_code == 200
+
+        response = submit_form(client, page, 'Accept All Invitations')
+
+        assert response.status_code == 302
+        user = WebUser.get(self.user.user_id)
+        assert user.is_member_of(self.inviting_domain)
+        assert user.is_member_of(self.other_inviting_domain)

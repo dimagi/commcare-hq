@@ -1707,6 +1707,7 @@ def _get_case_id_and_redirect_url(domain, request):
 
 @require_form_view_permission
 @require_permission(HqPermissions.edit_data)
+@require_POST
 @location_safe
 def unarchive_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)

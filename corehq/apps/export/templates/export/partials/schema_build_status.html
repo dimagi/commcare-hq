@@ -1,0 +1,24 @@
+{% load i18n %}
+{% if failed %}
+  {% include "export/partials/schema_build_failed.html" %}
+{% else %}
+  <div
+    id="schema-build-poller"
+    hx-get="{% url 'export_schema_build_status' domain download_id %}"
+    hx-trigger="every 2s"
+    hx-swap="outerHTML"
+  >
+    <div
+      class="progress"
+      role="progressbar"
+      aria-label="{% trans 'Progress finding columns' %}"
+      aria-valuenow="{{ percent }}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="progress-bar" style="width: {{ percent }}%">
+        {{ percent }}%
+      </div>
+    </div>
+  </div>
+{% endif %}

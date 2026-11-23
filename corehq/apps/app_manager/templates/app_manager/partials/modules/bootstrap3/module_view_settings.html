@@ -153,9 +153,9 @@
                   </label>
                   <div class="{% css_field_class %}">
                     v. {{ module.shadow_module_version }}
-                      <a class="btn btn-primary" href="{% url 'upgrade_shadow_module' domain app.id module.unique_id %}">
+                      <button type="submit" class="btn btn-primary" form="upgrade-shadow-module-form">
                         {% trans "Upgrade to version 2" %}
-                      </a>
+                      </button>
                   </div>
                 </div>
               {% endif %}
@@ -308,3 +308,11 @@
     {% endblock %}
   </fieldset>
 </form>
+{% if module.module_type == 'shadow' and module.shadow_module_version == 1 %}
+  {# Outside the settings form above, since forms cannot be nested #}
+  <form id="upgrade-shadow-module-form"
+        method="post"
+        action="{% url 'upgrade_shadow_module' domain app.id module.unique_id %}">
+    {% csrf_token %}
+  </form>
+{% endif %}

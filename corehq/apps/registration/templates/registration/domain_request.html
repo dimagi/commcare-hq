@@ -63,13 +63,13 @@
         </div>
         <div class="card-body">
           {% if show_multiple_invites %}
-            <p>
-              <a class="btn btn-primary"
-                 href="{% url "accept_all_invitations" %}">
+            <form method="post" action="{% url "accept_all_invitations" %}" class="mb-3">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">
                 <i class="fa fa-envelope"></i>
                 {% trans 'Accept All Invitations' %}
-              </a>
-            </p>
+              </button>
+            </form>
             <div class="spacer"></div>
             <p>
               {% blocktrans %}

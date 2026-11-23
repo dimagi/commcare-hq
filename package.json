@@ -25,7 +25,7 @@
         "bootstrap-daterangepicker": "3.0.3",
         "bootstrap-timepicker": "0.5.1",
         "bootstrap5": "npm:bootstrap@5.3.1",
-        "calendars": "kbwood/calendars#2.1.2",
+        "calendars": "kbwood/calendars#2.2.1",
         "canvas-gauges": "2.1.7-radial",
         "clipboard": "2.0.11",
         "crypto-js": "4.2.0",
@@ -92,7 +92,7 @@
         "@eslint/js": "^10.0.1",
         "chai": "4.3.6",
         "colors": "1.4.0",
-        "eslint": "10.0.2",
+        "eslint": "10.15.0",
         "globals": "^16.4.0",
         "grunt": "1.6.2",
         "grunt-cli": "1.4.3",
@@ -120,7 +120,8 @@
         "nanoid": "^3.1.31",
         "word-wrap": "@aashutoshrathi/word-wrap",
         "diff": "8.0.3",
-        "puppeteer": "^25.15.0"
+        "puppeteer": "^25.15.0",
+        "mocha/glob": "^14.0.6"
     },
     "scripts": {
         "dev": "node webpack/generateDetails.js && webpack --mode development --config webpack/webpack.dev.js --watch",

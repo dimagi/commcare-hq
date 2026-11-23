@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from django.urls import reverse
 
@@ -36,11 +37,29 @@ from corehq.apps.userreports.datatypes import (
     DATA_TYPE_DATE,
     DATA_TYPE_DATETIME
 )
+from corehq.apps.userreports.exceptions import BadSpecError
 
 SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
 
 CHOICE_DELIMITER = "\u001f"
+
+# Filter slugs and ancestor expression fields are used as SQL bind
+# parameter names, which SQLAlchemy 1.3 does not escape
+SQL_PARAM_NAME_REGEX = re.compile(r'[\w.\-]+')
+
+
+def is_valid_sql_param_name(name):
+    return isinstance(name, str) and bool(SQL_PARAM_NAME_REGEX.fullmatch(name))
+
+
+def check_sql_param_names(filter):
+    names = [filter.get('slug')]
+    if filter.get('ancestor_expression'):
+        names.append(filter['ancestor_expression'].get('field'))
+    for name in names:
+        if not is_valid_sql_param_name(name):
+            raise BadSpecError("Invalid report filter slug or field: '{}'".format(name))
 
 
 class FilterValue(object):
@@ -52,6 +71,7 @@ class FilterValue(object):
                 defined in the ReportConfiguraion
             value: should be the filter value from the user request
         """
+        check_sql_param_names(filter)
         self.filter = filter
         self.value = value
 

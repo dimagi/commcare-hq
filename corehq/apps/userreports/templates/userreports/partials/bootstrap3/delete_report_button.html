@@ -1,17 +1,18 @@
 {% load i18n %}
 
 {% if report.spec.report_meta.created_by_builder %}
-  <a
-    id="deleteReport"
-    class="btn btn-danger"
-    href="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
-  >
-  {% if use_updated_ucr_naming %}
-    {% trans 'Delete Custom Web Report' %}
-  {% else %}
-    {% trans 'Delete Report' %}
-  {% endif %}
-  </a>
+  <form method="post"
+        action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}"
+        style="display: inline;">
+    {% csrf_token %}
+    <button type="submit" id="deleteReport" class="btn btn-danger">
+    {% if use_updated_ucr_naming %}
+      {% trans 'Delete Custom Web Report' %}
+    {% else %}
+      {% trans 'Delete Report' %}
+    {% endif %}
+    </button>
+  </form>
 {% else %}
   <div class="btn-group">
     {% if referring_apps %}

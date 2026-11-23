@@ -13,7 +13,7 @@
  
  {% block page_content %}
    {% initial_page_data 'invitation_links' invitation_links %}
-@@ -20,16 +20,16 @@
+@@ -22,16 +22,16 @@
    </div>
    <div class="spacer"></div>
  
@@ -35,7 +35,7 @@
              <i class='fa fa-envelope'>
              </i>
              {% trans "Accept" %}
-@@ -40,15 +40,15 @@
+@@ -42,15 +42,15 @@
        </ul>
      </div>
    </div>
@@ -56,7 +56,7 @@
            <search-box data-apply-bindings="false"
                        params="value: query,
                                action: search,
-@@ -58,8 +58,8 @@
+@@ -60,8 +60,8 @@
          </div>
        </div>
      </div>

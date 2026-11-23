@@ -1,8 +1,13 @@
 import json
 import uuid
 from datetime import datetime
+from unittest.mock import patch
 
+from django.core.cache import cache
+
+from corehq.apps.celery import app as celery_app
 from corehq.apps.export.export import get_export_file
+from corehq.apps.export.tasks import build_export_schema
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.util.files import TransientTempfile
@@ -67,3 +72,35 @@ def get_export_json(export_instance):
 
         with export_file as export:
             return json.loads(export.read())
+
+
+class StoreEagerCeleryResults:
+    """Store eager Celery results so soil can read schema builds back
+
+    Create and edit views poll a background schema build through soil,
+    which reads the task's state from the result backend. Eager tasks
+    are not stored there unless ``task_store_eager_result`` is set.
+    Celery copies that setting to each task when the task is bound, so
+    the task's own ``store_eager_result`` is set too.
+
+    The cache is cleared before each test so that a build recorded by an
+    earlier test (whose result was not stored) is not joined.
+
+    List this mixin before ``TestCase`` in the bases, so that its
+    ``setUp`` and ``setUpClass`` run. In the wrong order they are
+    silently skipped.
+    """
+
+    def setUp(self):
+        cache.clear()  # before super().setUp() logs in; sessions are cached
+        super().setUp()
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        conf = celery_app.conf
+        cls.addClassCleanup(setattr, conf, 'task_store_eager_result', conf.task_store_eager_result)
+        conf.task_store_eager_result = True
+        patcher = patch.object(build_export_schema, 'store_eager_result', True)
+        patcher.start()
+        cls.addClassCleanup(patcher.stop)

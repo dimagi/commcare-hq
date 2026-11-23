@@ -300,10 +300,16 @@ esac
 if [ "$CMD" == "test" ]; then
     # Disable group if https://github.com/github/feedback/discussions/8848 resurfaces
     [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
+    # Building web mostly pulls its large base image, so do it in the
+    # background while the services it depends on are pulled and started.
+    web_build_log=$(mktemp)
+    docker compose build web > "$web_build_log" 2>&1 &
+    web_build_pid=$!
+
     echo "Pulling docker containers..."
     # Pull only the services the test container depends on (skips
     # formplayer and minio, which tests do not use). Locally-built images
-    # (web, couch, elasticsearch6) are built by `docker compose run`.
+    # (couch, elasticsearch6) are built by `docker compose up`.
     docker compose pull --quiet --ignore-buildable --include-deps web
 
     # Print service versions
@@ -320,6 +326,17 @@ if [ "$CMD" == "test" ]; then
     #
     # Some version information is encoded in docker image names
     docker images
+
+    web_deps=$(docker compose config --format json \
+        | python -c 'import json, sys; print(*json.load(sys.stdin)["services"]["web"]["depends_on"])')
+    docker compose up --detach --wait $web_deps
+
+    if ! wait $web_build_pid; then
+        cat "$web_build_log"
+        echo "ERROR: failed to build the web image"
+        exit 1
+    fi
+    rm -f "$web_build_log"
 
     docker compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then

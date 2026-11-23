@@ -41,6 +41,7 @@ from corehq.apps.userreports.reports.filters.values import (
     NONE_CHOICE,
     SHOW_ALL_CHOICE,
     dynamic_choice_list_url,
+    is_valid_sql_param_name,
 )
 
 
@@ -97,6 +98,12 @@ def _build_choice_list_filter(spec, report):
     )
 
 
+def _check_ancestor_expression_field(wrapped):
+    if wrapped.ancestor_expression and not is_valid_sql_param_name(wrapped.ancestor_expression['field']):
+        raise BadSpecError(_("Invalid 'ancestor_expression' field: '{}'").format(
+            wrapped.ancestor_expression['field']))
+
+
 def _build_dynamic_choice_list_filter(spec, report):
     wrapped = DynamicChoiceListFilterSpec.wrap(spec)
     choice_provider_spec = wrapped.get_choice_provider_spec()
@@ -115,6 +122,7 @@ def _build_dynamic_choice_list_filter(spec, report):
         raise BadSpecError(_(
             "'ancestor_expression' is applicable only for location choices"
         ))
+    _check_ancestor_expression_field(wrapped)
 
     return DynamicChoiceListFilter(
         name=wrapped.slug,
@@ -154,6 +162,7 @@ def _build_location_drilldown_filter(spec, report):
     if not valid_spec:
         raise BadSpecError(_(
             "'ancestor_expression' must be empty dictionary or have 'field', 'location_type' keys"))
+    _check_ancestor_expression_field(wrapped)
 
     return LocationDrilldownFilter(
         name=wrapped.slug,

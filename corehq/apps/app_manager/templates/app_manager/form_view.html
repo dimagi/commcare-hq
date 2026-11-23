@@ -259,20 +259,24 @@
                       {% endblocktrans %}
                     </p>
 
-                    <p>
+                    <div class="mb-3">
                       <a
                         href="{% url 'domain_select_plan' domain %}"
                         class="btn btn-primary"
                       >
                         {% trans "Change your subscription" %}
                       </a>
-                      <a
-                        href="{% url 'drop_usercase' domain app.id %}"
-                        class="btn btn-outline-danger"
+                      <form
+                        method="post"
+                        action="{% url 'drop_usercase' domain app.id %}"
+                        class="d-inline"
                       >
-                        {% trans "Remove User Properties" %}
-                      </a>
-                    </p>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                          {% trans "Remove User Properties" %}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 {% endif %}
                 {% include 'app_manager/partials/forms/usercase_config.html' %}

@@ -161,10 +161,15 @@ class ConstructedPillow:
         """
         context = PillowRuntimeContext(changes_seen=0)
         changes_chunk = []
+        last_change = None
 
         for change in self.change_feed.iter_changes(since=since or None, forever=forever):
             if change is None and not changes_chunk:
-                self._update_checkpoint(None, None)
+                if context.changes_seen:
+                    # don't leave processed changes unsaved while the feed is quiet
+                    self._update_checkpoint(last_change, context)
+                else:
+                    self._update_checkpoint(None, None)
                 self._record_timeout_in_datadog()
                 continue
             if self.batch_processors:
@@ -176,7 +181,8 @@ class ConstructedPillow:
                 # change is None means consumer timeout -> process partial chunk to avoid lag
                 if chunk_full or (change is None and changes_chunk):
                     self._batch_process_with_error_handling(changes_chunk)
-                    self._update_checkpoint(changes_chunk[-1], context)
+                    last_change = changes_chunk[-1]
+                    self._update_checkpoint(last_change, context)
                     changes_chunk = []
             else:
                 # process all changes one by one
@@ -185,6 +191,7 @@ class ConstructedPillow:
                 processing_time = self.process_with_error_handling(change)
                 self._record_change_in_datadog(change, processing_time)
                 self._update_checkpoint(change, context)
+                last_change = change
         if changes_chunk:
             self._batch_process_with_error_handling(changes_chunk)
             self._update_checkpoint(changes_chunk[-1], context)

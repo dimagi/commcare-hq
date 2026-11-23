@@ -12,11 +12,13 @@
 
 <div id="all-links" class="ko-template">
   <div class="btn-toolbar" data-bind="visible: invitationLinks().length > 1">
-    <a class="btn btn-primary"
-       href="{% url "accept_all_invitations" %}">
-      <i class="fa fa-envelope"></i>
-      {% trans 'Accept All Invitations' %}
-    </a>
+    <form method="post" action="{% url "accept_all_invitations" %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary">
+        <i class="fa fa-envelope"></i>
+        {% trans 'Accept All Invitations' %}
+      </button>
+    </form>
   </div>
   <div class="spacer"></div>
 
