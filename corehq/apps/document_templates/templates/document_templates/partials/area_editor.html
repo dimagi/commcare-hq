@@ -1,0 +1,21 @@
+{% load i18n %}
+{# One area of the template form: a dropdown to choose between markdown and an image #}
+<div class="row g-3 mb-3" x-data="{ type: '{{ area.type }}' }">
+  <div class="col-md-2">
+    <label
+      for="{{ area.type_field.id_for_label }}"
+      class="form-label fw-semibold"
+      >{{ area.label }}</label
+    >
+    {{ area.type_field }}
+  </div>
+  <div class="col-md-10">
+    {% if area.description %}
+      <div class="form-text mt-0 mb-1">{{ area.description }}</div>
+    {% endif %}
+    <div x-show="type === 'markdown'">{{ area.markdown_field }}</div>
+    <div x-show="type === 'image'">
+      {% include "document_templates/partials/area_image.html" with area=area.name image_id=area.image.image_id thumbnail_url=area.image.thumbnail_url error=area.image.error %}
+    </div>
+  </div>
+</div>

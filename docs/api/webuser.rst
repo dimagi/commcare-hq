@@ -235,6 +235,7 @@ Request & Response Details
         "edit_commcare_users": false,
         "edit_data": false,
         "edit_data_dict": false,
+        "edit_document_templates": false,
         "edit_file_dropzone": false,
         "edit_groups": false,
         "edit_linked_configurations": false,
