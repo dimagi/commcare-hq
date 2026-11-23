@@ -43,6 +43,7 @@ class CaseDocumentError(Exception):
 
     def __init__(self, message, failures=()):
         super().__init__(message)
+        self.message = message
         self.failures = list(failures)
 
 
@@ -83,7 +84,7 @@ def render_case_documents(domain, case_ids, couch_user):
                 areas_by_slug[slug], {**case.get_properties_in_api_format(), 'case_id': case_id},
             ))
         except DocumentRenderError as error:
-            failures.append(Failure(case_id, case.name, str(error)))
+            failures.append(Failure(case_id, case.name, error.message))
 
     if failures:
         raise CaseDocumentError(

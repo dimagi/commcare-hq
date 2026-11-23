@@ -106,7 +106,11 @@ _render_env = SandboxedEnvironment(undefined=StrictUndefined, finalize=_escape_v
 
 
 class DocumentRenderError(Exception):
-    pass
+    """The message is meant for the user"""
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
 
 
 @define(frozen=True)
