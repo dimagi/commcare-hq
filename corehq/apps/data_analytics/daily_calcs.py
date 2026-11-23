@@ -47,6 +47,7 @@ from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.role_utils import get_custom_roles_for_domain
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.motech.repeaters.models import Repeater
+from corehq.util.quickcache import quickcache
 
 from .metric_registry import MetricDef
 
@@ -130,13 +131,18 @@ def _calc_chatbot_active_users_30d(ctx):
     ).count()
 
 
-def _count_members_under_chatbot_quota_pressure(ctx, timestamp_field):
-    """Count active web users of the domain under quota pressure, wherever they chatted."""
-    user_ids = list(
+@quickcache(['timestamp_field'], timeout=23 * 60 * 60)
+def _chatbot_user_ids_under_quota_pressure(timestamp_field):
+    return list(
         ChatbotQuotaPressure.objects
         .filter(**{f'{timestamp_field}__gte': _thirty_days_ago()})
         .values_list('user_id', flat=True)
     )
+
+
+def _count_members_under_chatbot_quota_pressure(ctx, timestamp_field):
+    """Count active web users of the domain under quota pressure, wherever they chatted."""
+    user_ids = _chatbot_user_ids_under_quota_pressure(timestamp_field)
     if not user_ids:
         return 0
     return UserES().domain(ctx.domain).web_users().user_ids(user_ids).count()
