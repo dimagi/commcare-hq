@@ -5,6 +5,7 @@ from datetime import datetime
 from io import BytesIO
 from unittest.mock import Mock, patch
 
+from django.contrib.messages import get_messages
 from django.http import Http404, HttpResponseRedirect
 from django.test import Client, TestCase
 from django.test.client import RequestFactory
@@ -13,6 +14,8 @@ from django.urls import reverse
 from openpyxl import Workbook
 
 from corehq import privileges
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
@@ -468,7 +471,7 @@ class TestCountWebUsers(TestCase):
         self.assertEqual(json.loads(result.content)['user_count'], 2)
 
 
-class BulkUserUploadAPITest(TestCase):
+class BulkUploadCommCareUserAPITest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -476,7 +479,13 @@ class BulkUserUploadAPITest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
-        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None)
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.STANDARD)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+        edit_mobile_workers_role = UserRole.create(
+            cls.domain_name, 'can-edit-mobile-workers', permissions=HqPermissions(edit_commcare_users=True)
+        )
+        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None,
+                                  role_id=edit_mobile_workers_role.get_id)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user(), domain=cls.domain_name)
 
@@ -566,52 +575,6 @@ class BulkUserUploadAPITest(TestCase):
             'success': False
         })
 
-    @flag_enabled('TABLEAU_USER_SYNCING')
-    def test_tableau_role_and_groups_headers(self):
-        workbook = Workbook()
-        users_sheet = workbook.create_sheet(title='users')
-        users_sheet.append(['username', 'email', 'password', 'tableau_role', 'tableau_groups'])
-        users_sheet.append(['test_user', 'test@example.com', 'password', 'fakerole', 'fakegroup'])
-
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'users.xlsx'
-
-        # Test user with permission to edit Tableau Configs
-        self.user.is_superuser = False
-        role_with_upload_and_edit_tableau_permission = UserRole.create(
-            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
-                                                                   edit_user_tableau_config=True)
-        )
-        self.user.set_role(self.domain_name,
-                        role_with_upload_and_edit_tableau_permission.get_qualified_id())
-        self.user.save()
-
-        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
-            response = self._make_post_request(file)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json(), {'success': True})
-
-        # Test user without permission to edit Tableau Configs
-        role_with_upload_permission = UserRole.create(
-            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
-        )
-        self.user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
-        self.user.save()
-
-        file.seek(0)
-        response = self._make_post_request(file)
-        self.assertEqual(response.status_code, 400)
-
-        expected_pattern = re.compile(
-            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
-            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
-            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
-            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
-        )
-        self.assertRegex(response.json()['message'], expected_pattern)
-
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
         mock_upload_users.side_effect = UserUploadError('User upload error')
@@ -650,6 +613,101 @@ class BulkUserUploadAPITest(TestCase):
             'success': False,
             'message': 'only one file can be uploaded at a time'
         })
+
+    def test_requires_edit_commcare_users_permission(self):
+        no_permissions = UserRole.create(self.domain_name, 'no-permissions')
+        member = WebUser.create(self.domain_name, 'member@test.com', 'password', None, None,
+                                role_id=no_permissions.get_id)
+        self.addCleanup(member.delete, self.domain_name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=member.get_django_user(), domain=self.domain_name)
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {member.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_requires_bulk_user_management_privilege(self):
+        free_domain = create_domain('bulk-user-upload-free-domain')
+        self.addCleanup(free_domain.delete)
+        admin = WebUser.create(free_domain.name, 'admin@test.com', 'password', None, None, is_admin=True)
+        self.addCleanup(admin.delete, free_domain.name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=admin.get_django_user(), domain=free_domain.name)
+
+        response = self.client.post(
+            reverse('bulk_user_upload_api', args=[free_domain.name]),
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {admin.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+
+class BulkUploadWebUserTest(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'bulk-upload-web-user-domain'
+        cls.domain = create_domain(cls.domain_name)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.STANDARD)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('upload_web_users', args=[self.domain_name])
+
+    def _create_user(self, username, permissions):
+        role = UserRole.create(self.domain_name, username, permissions=permissions)
+        user = WebUser.create(self.domain_name, username, 'password', None, None, role_id=role.get_id)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
+        return user
+
+    def _make_post_request(self, user, file):
+        self.client.login(username=user.username, password='password')
+        return self.client.post(self.url, {'bulk_upload_file': file})
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    def test_tableau_role_and_groups_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'role', 'tableau_role', 'tableau_groups'])
+        users_sheet.append(['test_user@example.com', 'test_user@example.com', 'Admin', 'fakerole', 'fakegroup'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        # Test user with permission to edit Tableau Configs
+        tableau_editor = self._create_user(
+            'tableau-editor@test.com', HqPermissions(edit_web_users=True, edit_user_tableau_config=True)
+        )
+        download_id = '0' * 32
+        with patch('corehq.apps.users.views.BaseUploadUser.upload_users',
+                   return_value=Mock(download_id=download_id)):
+            response = self._make_post_request(tableau_editor, file)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, reverse('web_user_upload_status', args=[self.domain_name, download_id]))
+
+        # Test user without permission to edit Tableau Configs
+        user_manager = self._create_user('user-manager@test.com', HqPermissions(edit_web_users=True))
+        file.seek(0)
+        response = self._make_post_request(user_manager, file)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.url)
+
+        expected_pattern = re.compile(
+            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
+            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
+            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
+        )
+        [message] = get_messages(response.wsgi_request)
+        self.assertRegex(str(message), expected_pattern)
 
 
 class BaseUploadUserTest(TestCase):
