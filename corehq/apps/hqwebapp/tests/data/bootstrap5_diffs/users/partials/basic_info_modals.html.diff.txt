@@ -47,7 +47,7 @@
            </div>
            <form class="form form-horizontal disable-on-submit"
                  name="reverify_phone_number"
-@@ -59,7 +62,7 @@
+@@ -60,7 +63,7 @@
                </div>
              </div>
              <div class="modal-footer">

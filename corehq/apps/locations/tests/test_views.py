@@ -18,7 +18,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.views import LocationTypesView, LocationImportView, unassign_users
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import WebUser, HQApiKey
+from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
@@ -362,6 +362,82 @@ class BulkLocationUploadAPITest(TestCase):
             'success': False,
             'message': 'only one file can be uploaded at a time'
         })
+
+
+class TestUnassignUsersView(TestCase):
+    domain = 'test-unassign-users-view'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'unassign-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        loc_type = LocationType.objects.create(domain=cls.domain, name='city')
+        cls.location = make_loc('city1', type=loc_type, domain=cls.domain)
+
+    def setUp(self):
+        self.mobile_user = CommCareUser.create(self.domain, 'mobile', 'password', None, None)
+        self.addCleanup(self.mobile_user.delete, self.domain, deleted_by=None)
+        self.mobile_user.set_location(self.location)
+        self.client.login(username='unassign-admin', password='password')
+        self.url = reverse('unassign_users', args=[self.domain])
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert CommCareUser.get(self.mobile_user.user_id).location_id == self.location.location_id
+
+    def test_post_unassigns_users(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert CommCareUser.get(self.mobile_user.user_id).location_id is None
+
+
+@mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
+class TestArchiveLocationViews(TestCase):
+    domain = 'test-archive-location-views'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'archive-loc-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        cls.loc_type = LocationType.objects.create(domain=cls.domain, name='city')
+
+    def setUp(self):
+        self.client.login(username='archive-loc-admin', password='password')
+
+    def test_archive_get_is_rejected(self):
+        location = make_loc('archive-get', type=self.loc_type, domain=self.domain)
+        response = self.client.get(reverse('archive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 405
+        location.refresh_from_db()
+        assert not location.is_archived
+
+    def test_archive_post(self):
+        location = make_loc('archive-post', type=self.loc_type, domain=self.domain)
+        response = self.client.post(reverse('archive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 200
+        location.refresh_from_db()
+        assert location.is_archived
+
+    def test_unarchive_get_is_rejected(self):
+        location = make_loc('unarchive-get', type=self.loc_type, domain=self.domain, is_archived=True)
+        response = self.client.get(reverse('unarchive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 405
+        location.refresh_from_db()
+        assert location.is_archived
+
+    def test_unarchive_post(self):
+        location = make_loc('unarchive-post', type=self.loc_type, domain=self.domain, is_archived=True)
+        response = self.client.post(reverse('unarchive_location', args=[self.domain, location.location_id]))
+        assert response.status_code == 200
+        location.refresh_from_db()
+        assert not location.is_archived
 
 
 @pytest.mark.parametrize('redirect, expected', [

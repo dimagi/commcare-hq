@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.test import SimpleTestCase, TestCase, RequestFactory
 from django.urls import reverse
 from django.utils.safestring import SafeString
@@ -86,10 +88,8 @@ class DeleteReportRedirectTests(TestCase):
         report = ReportConfiguration(domain=self.domain, config_id='missing-data-source')
         report.save()
         self.addCleanup(report.delete)
-        return self.client.get(
-            reverse('delete_configurable_report', args=[self.domain, report._id]),
-            {'redirect': redirect},
-        )
+        url = reverse('delete_configurable_report', args=[self.domain, report._id])
+        return self.client.post(f'{url}?{urlencode({"redirect": redirect})}')
 
     def test_same_site_redirect(self):
         response = self._delete_report('/a/delete-report-redirect/reports/')

@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -198,6 +198,7 @@ def generic_inbound_api(request, domain, api_id):
 
 
 @can_administer_generic_inbound
+@require_POST
 def retry_api_request(request, domain, log_id):
     request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
     reprocess_api_request(request_log)
@@ -205,6 +206,7 @@ def retry_api_request(request, domain, log_id):
 
 
 @can_administer_generic_inbound
+@require_POST
 def revert_api_request(request, domain, log_id):
     request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
     archive_api_request(request_log, request.couch_user._id)

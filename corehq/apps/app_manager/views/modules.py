@@ -951,6 +951,7 @@ def undo_delete_module(request, domain):
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 
+@no_conflict_require_POST
 @require_can_edit_apps
 def upgrade_shadow_module(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)

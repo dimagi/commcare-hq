@@ -832,6 +832,7 @@ def _assert_report_delete_privileges(request):
 
 @login_and_domain_required
 @require_permission(HqPermissions.edit_reports)
+@require_POST
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id,
@@ -879,6 +880,7 @@ def delete_report(request, domain, report_id):
 
 @login_and_domain_required
 @require_permission(HqPermissions.edit_reports)
+@require_POST
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[

@@ -4,7 +4,6 @@ from datetime import datetime
 from django.conf import settings
 
 import langcodes
-import urllib.parse
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
@@ -826,6 +825,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
+@require_POST
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
@@ -1378,16 +1378,13 @@ def delete_phone_number(request, domain, couch_user_id):
     return HttpResponseRedirect(redirect)
 
 
+@require_POST
 @always_allow_project_access
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
-    """
-    phone_number cannot be passed in the url due to special characters
-    but it can be passed as %-encoded GET parameters
-    """
-    if 'phone_number' not in request.GET:
+    if 'phone_number' not in request.POST:
         raise Http404('Must include phone number in request.')
-    phone_number = urllib.parse.unquote(request.GET['phone_number'])
+    phone_number = request.POST['phone_number']
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     try:

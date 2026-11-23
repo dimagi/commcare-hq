@@ -698,6 +698,7 @@ class NewLocationView(BaseEditLocationView):
 
 @location_safe
 @can_edit_location
+@require_POST
 def archive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.archive()
@@ -750,6 +751,7 @@ def location_descendants_count(request, domain, loc_id):
 
 @can_edit_location
 @location_safe
+@require_POST
 def unarchive_location(request, domain, loc_id):
     loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.unarchive()
@@ -1113,6 +1115,7 @@ class DowngradeLocationsView(BaseDomainView):
 
 
 @domain_admin_required
+@require_POST
 def unassign_users(request, domain):
     """
     Unassign all users from their locations.  This is for downgraded domains.

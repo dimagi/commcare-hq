@@ -18,10 +18,12 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.sms.verify import VERIFICATION__WORKFLOW_STARTED
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -39,6 +41,7 @@ from corehq.apps.users.models import (
 from corehq.apps.users.views import BaseUploadUser, InviteWebUserView
 from corehq.apps.users.views.mobile.users import (
     CommCareUserPasswordResetView,
+    EditCommCareUserView,
     MobileWorkerListView,
 )
 from corehq.apps.users.views.role import (
@@ -46,7 +49,8 @@ from corehq.apps.users.views.role import (
     _update_role_from_view,
 )
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.tests.util.forms import csrf_client, submit_form
+from corehq.util.test_utils import flag_enabled, generate_cases, privilege_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
@@ -394,6 +398,104 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.by_domain, self.domain)
         self.assertEqual(user_history_log.for_domain, self.domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
+
+
+@patch('corehq.apps.users.views.initiate_sms_verification_workflow',
+       return_value=VERIFICATION__WORKFLOW_STARTED)
+class TestVerifyPhoneNumberView(TestCase):
+    domain = 'test-verify-phone-number'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'verify-phone-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        cls.mobile_user = CommCareUser.create(cls.domain, 'verify-phone-mobile', 'password', None, None)
+        cls.addClassCleanup(cls.mobile_user.delete, cls.domain, deleted_by=None)
+        cls.url = reverse('verify_phone_number', args=[cls.domain, cls.mobile_user.user_id])
+
+    def setUp(self):
+        self.client.login(username='verify-phone-admin', password='password')
+
+    def test_get_is_rejected(self, initiate_verification):
+        response = self.client.get(self.url, {'phone_number': '99999999'})
+        assert response.status_code == 405
+        initiate_verification.assert_not_called()
+
+    def test_post_starts_verification(self, initiate_verification):
+        response = self.client.post(self.url, {'phone_number': '99999999'})
+        assert response.status_code == 302
+        initiate_verification.assert_called_once()
+        user, phone_number = initiate_verification.call_args.args
+        assert user.user_id == self.mobile_user.user_id
+        assert phone_number == '99999999'
+
+    def test_post_without_phone_number(self, initiate_verification):
+        response = self.client.post(self.url)
+        assert response.status_code == 404
+        initiate_verification.assert_not_called()
+
+    @es_test(requires=[app_adapter])  # the edit page looks up app languages
+    def test_verify_button_on_edit_page(self, initiate_verification):
+        self._submit_verify_button(pending=False)
+        initiate_verification.assert_called_once()
+        assert initiate_verification.call_args.args[1] == '99999999'
+
+    @es_test(requires=[app_adapter])  # the edit page looks up app languages
+    def test_reverify_button_on_edit_page(self, initiate_verification):
+        self._submit_verify_button(pending=True, within='reverify_99999999')
+        initiate_verification.assert_called_once()
+        assert initiate_verification.call_args.args[1] == '99999999'
+
+    def _submit_verify_button(self, pending, within=None):
+        user = CommCareUser.create(self.domain, 'verify-phone-page-mobile', 'password', None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        user.add_phone_number('99999999')
+        user.save()
+        if pending:
+            entry = user.get_or_create_phone_entry('99999999')
+            entry.pending_verification = True
+            entry.save()
+        client = csrf_client('verify-phone-admin', 'password')
+        with privilege_enabled(privileges.INBOUND_SMS):
+            page = client.get(reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]))
+            assert page.status_code == 200
+            response = submit_form(client, page, 'Verify', within=within)
+        assert response.status_code == 302
+
+
+class TestUndoRemoveWebUserView(TestCase):
+    domain = 'test-undo-remove-web-user'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'undo-remove-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        removed = WebUser.create(self.domain, 'undo-remove-member', 'password', None, None)
+        self.addCleanup(removed.delete, None, deleted_by=None)
+        record = removed.delete_domain_membership(self.domain, create_record=True)
+        removed.save()
+        self.addCleanup(record.delete)
+        self.removed_user_id = removed.user_id
+        self.url = reverse('undo_remove_web_user', args=[self.domain, record.get_id])
+        self.client.login(username='undo-remove-admin', password='password')
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert not WebUser.get(self.removed_user_id).is_member_of(self.domain)
+
+    def test_post_restores_membership(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert WebUser.get(self.removed_user_id).is_member_of(self.domain)
 
 
 @es_test(requires=[user_adapter], setup_class=True)
