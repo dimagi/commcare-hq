@@ -12,5 +12,3 @@ services:
     platform: linux/amd64
   kafka:
     platform: linux/amd64
-  minio:
-    platform: linux/amd64
