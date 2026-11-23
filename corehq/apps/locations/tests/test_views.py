@@ -1,7 +1,9 @@
+import inspect
 import json
 
 from django.contrib.messages import get_messages
-from django.test import Client, TestCase
+import pytest
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 
 from io import BytesIO
@@ -14,7 +16,7 @@ from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.exceptions import LocationConsistencyError
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
-from corehq.apps.locations.views import LocationTypesView, LocationImportView
+from corehq.apps.locations.views import LocationTypesView, LocationImportView, unassign_users
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_enabled
@@ -436,3 +438,23 @@ class TestArchiveLocationViews(TestCase):
         assert response.status_code == 200
         location.refresh_from_db()
         assert not location.is_archived
+
+
+@pytest.mark.parametrize('redirect, expected', [
+    ('/a/test-domain/settings/', '/a/test-domain/settings/'),
+    ('https://example.com/', None),
+    (None, None),
+])
+def test_unassign_users_redirect(redirect, expected):
+    data = {'redirect': redirect} if redirect is not None else {}
+    request = RequestFactory().post('/a/test-domain/settings/locations/unassign_users/', data)
+    view = inspect.unwrap(unassign_users)
+    with (
+        mock.patch('corehq.apps.locations.views.get_users_assigned_to_locations', return_value=[]),
+        mock.patch('corehq.apps.locations.views.messages'),
+    ):
+        response = view(request, 'test-domain')
+    if expected is None:
+        expected = reverse('users_default', args=['test-domain'])
+    assert response.status_code == 302
+    assert response['Location'] == expected

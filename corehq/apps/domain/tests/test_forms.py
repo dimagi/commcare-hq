@@ -309,23 +309,19 @@ class TestConfirmNewSubscriptionForm(BaseTestSubscriptionForm):
             SoftwarePlanEdition.STANDARD, is_annual_plan=False
         )
         self.account.auto_pay_user = None
-        self.account.save()
         form = self.create_form_for_submission(new_plan_version)
         form.full_clean()
         assert not form.is_valid()
 
         self.account.auto_pay_user = 'someone@example.com'
-        self.account.save()
         form.full_clean()
         assert form.is_valid()
 
-    def test_autopay_required_if_set_on_account(self):
+    def test_autopay_required_for_annual_plan(self):
         new_plan_version = DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.STANDARD, is_annual_plan=True
         )
-        self.account.require_auto_pay = True
         self.account.auto_pay_user = None
-        self.account.save()
         form = self.create_form_for_submission(new_plan_version)
         form.full_clean()
         assert not form.is_valid()

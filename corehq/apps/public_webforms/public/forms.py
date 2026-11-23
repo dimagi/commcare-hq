@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.hqwebapp.fields import TurnstileField
 from corehq.apps.public_webforms.models import PublicFormSession
-from corehq.apps.public_webforms.rate_limiter import rate_limit_link_request
+from corehq.apps.public_webforms.rate_limiter import rate_limit_access_request
 from corehq.apps.sms.util import domain_can_send_sms
 
 
@@ -77,7 +77,7 @@ class PublicWebformLinkRequestForm(forms.Form):
                 )
 
         contact = cleaned_data.get('email') or cleaned_data.get('phone_number')
-        if contact and rate_limit_link_request(self.webform.domain, contact):
+        if not self.errors and rate_limit_access_request(self.webform.domain, contact):
             self.add_error(None, _("Please wait a moment before trying again."))
         return cleaned_data
 
@@ -95,10 +95,34 @@ class PublicWebformLinkRequestForm(forms.Form):
         email = self.cleaned_data['email']
         phone_number = self.cleaned_data['phone_number']
         contact = {'email': email} if email else {'phone_number': phone_number}
-        session = PublicFormSession.get_active_session_for_contact(
+        session = PublicFormSession.get_reusable_session_for_contact(
             self.webform, **contact)
         return session or PublicFormSession.objects.create(
             public_webform=self.webform,
             expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
             **contact,
+        )
+
+
+class PublicWebformDirectAccessForm(forms.Form):
+
+    turnstile = TurnstileField()
+
+    def __init__(self, webform, *args, session_key=None, **kwargs):
+        self.webform = webform
+        self.session_key = session_key
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.errors and rate_limit_access_request(self.webform.domain):
+            self.add_error(None, _("Please wait a moment before trying again."))
+        return cleaned_data
+
+    def get_or_create_session(self):
+        session = PublicFormSession.get_reusable_session_by_key(
+            self.webform, self.session_key)
+        return session or PublicFormSession.objects.create(
+            public_webform=self.webform,
+            expires_at=timezone.now() + PublicFormSession.DEFAULT_LIFESPAN,
         )

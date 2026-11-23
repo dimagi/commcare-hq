@@ -380,7 +380,6 @@ msgstr ""
 "हैं।"
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
 msgid "Billing Account"
 msgstr "बिलिंग खाता"
 
@@ -1498,7 +1497,6 @@ msgstr ""
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -5163,32 +5161,39 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "हम और जानना चाहेंगे! कृपया स्पष्ट करें -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-msgid ""
-"\n"
-"      By clicking this button, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
-msgstr ""
-"\n"
-"      इस बटन पर क्लिक करके, आप Dimagi की\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की शर्तों</a> और\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">गोपनीयता नीति</a> से सहमत होते हैं।\n"
-"    "
-
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
-"\n"
-"      By clicking Submit Request, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"Yes, I would like to receive relevant email updates from Dimagi, including "
+"newsletters, product updates, webinars, podcasts, and related resources. I "
+"can unsubscribe at any time."
 msgstr ""
-"\n"
-"      सबमिट अनुरोध पर क्लिक करके, आप डिमागी की\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की शर्तें</a> और\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">गोपनीयता नीति</a> से सहमत होते हैं।\n"
-"    "
+"हाँ, मैं Dimagi से प्रासंगिक ईमेल अपडेट प्राप्त करना चाहता/चाहती हूँ, जिनमें"
+" न्यूज़लेटर, उत्पाद अपडेट, वेबिनार, पॉडकास्ट और संबंधित संसाधन शामिल हैं। "
+"मैं किसी भी समय सदस्यता रद्द कर सकता/सकती हूँ।"
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking Submit Request, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"By clicking Submit Request, I agree to Dimagi's <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
+" Service</a> and <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a> and to receive follow-up emails about "
+"my request, including invitations to schedule a conversation with Dimagi's "
+"team. I can unsubscribe at any time."
+msgstr ""
+"अनुरोध सबमिट करें पर क्लिक करके, मैं Dimagi की <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की "
+"शर्तों</a> और <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">गोपनीयता नीति</a> से सहमत हूँ और अपने अनुरोध के बारे में "
+"फ़ॉलो-अप ईमेल प्राप्त करने के लिए सहमति देता/देती हूँ, जिनमें Dimagi की टीम "
+"के साथ बातचीत तय करने के निमंत्रण भी शामिल हैं। मैं किसी भी समय सदस्यता रद्द"
+" कर सकता/सकती हूँ।"
 
 #: corehq/apps/analytics/views.py
 msgid "No hubspot API ID is present."
@@ -5559,6 +5564,11 @@ msgstr "अनुरोधित संस्करण के लिए बि�
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "कृपया अपडेट जांचने के लिए ऐप में लॉग इन करें।"
+
+#: corehq/apps/app_manager/exceptions.py
+#| msgid "Remote apps are not supported"
+msgid "RemoteApps are no longer supported"
+msgstr "RemoteApps अब समर्थित नहीं हैं"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -5998,13 +6008,6 @@ msgid "Copy of {name}"
 msgstr "{name} की प्रति"
 
 #: corehq/apps/app_manager/models/applications.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr ""
-"प्रोफ़ाइल फ़ाइल से सूट फ़ाइल लोड करने में समस्या। क्या आपकी प्रोफ़ाइल फ़ाइल "
-"सही है?"
-
-#: corehq/apps/app_manager/models/applications.py
 msgid "Remote Application"
 msgstr "रिमोट एप्लिकेशन"
 
@@ -6064,14 +6067,6 @@ msgid ""
 msgstr ""
 "एप्लिकेशन अपडेट करना सफल रहा, लेकिन एप्लिकेशन में मल्टीमीडिया फ़ाइल(फ़ाइलें)"
 " गायब हैं।"
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Starter App"
-msgstr "स्टार्टर ऐप"
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Feature Template"
-msgstr "फ़ीचर टेम्पलेट"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -6279,6 +6274,14 @@ msgstr "यूज़र का उपयोगकर्ता नाम"
 #: corehq/apps/app_manager/models/report_app_config.py
 msgid "The user's ID"
 msgstr "यूज़र की आईडी"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Starter App"
+msgstr "स्टार्टर ऐप"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Feature Template"
+msgstr "फ़ीचर टेम्पलेट"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
@@ -7813,7 +7816,7 @@ msgstr "मेनू सेटिंग्स"
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -7958,6 +7961,7 @@ msgstr "CommCare इंस्टॉल करें"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
@@ -9957,6 +9961,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
@@ -13970,6 +13975,7 @@ msgid "Loading ..."
 msgstr "लोड हो रहा है ..."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
 msgid "Try again"
 msgstr "फिर से प्रयास करें"
 
@@ -14242,12 +14248,10 @@ msgid "Not set"
 msgstr "सेट नहीं किया गया"
 
 #: corehq/apps/app_manager/views/apps.py
-#| msgid "U\\u200BI translation"
 msgid "U​I translation"
 msgstr "U​I अनुवाद"
 
 #: corehq/apps/app_manager/views/apps.py
-#| msgid "U\\u200BI translations"
 msgid "U​I translations"
 msgstr "U​I अनुवाद"
 
@@ -15144,7 +15148,7 @@ msgstr "विजेट संपादित करें"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -16289,7 +16293,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -21141,6 +21145,10 @@ msgstr ""
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "नियम {name} को अपडेट नहीं किया गया, क्योंकि कुछ भी नहीं बदला"
 
+#: corehq/apps/document_templates/templates/document_templates/partials/preview_modal_body.html
+msgid "The template does not use any variables."
+msgstr "टेम्पलेट में किसी भी वेरिएबल का उपयोग नहीं किया गया है।"
+
 #: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/sso/forms.py
@@ -22658,7 +22666,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 msgid "Please note:"
 msgstr "कृपया ध्यान दें:"
 
@@ -25864,6 +25871,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/export/templates/export/schema_build_waiting.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
 msgid "Go back"
@@ -28994,6 +29002,14 @@ msgstr ""
 msgid "Ok"
 msgstr "ठीक है"
 
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
+msgid "We couldn't load the available columns."
+msgstr "हम उपलब्ध कॉलम लोड नहीं कर सके।"
+
+#: corehq/apps/export/templates/export/partials/schema_build_status.html
+msgid "Progress finding columns"
+msgstr "कॉलम ढूँढ़ने की प्रगति"
+
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -29367,6 +29383,20 @@ msgstr "प्राइसिंग प्लान्स के बारे �
 #: corehq/apps/export/templates/export/paywall.html
 msgid "Change My Subscription"
 msgstr "मेरी सदस्यता बदलें"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid "Finding available columns…"
+msgstr "उपलब्ध कॉलम ढूँढ़े जा रहे हैं…"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid ""
+"We're checking your applications for the questions and case properties you "
+"can include. This can take a few minutes for projects with many "
+"applications. Please keep this page open."
+msgstr ""
+"हम आपके ऐप्लिकेशन में उन प्रश्नों और केस प्रॉपर्टीज़ की जाँच कर रहे हैं "
+"जिन्हें आप शामिल कर सकते हैं। कई ऐप्लिकेशन वाले प्रोजेक्ट में इसमें कुछ मिनट"
+" लग सकते हैं। कृपया यह पेज खुला रखें।"
 
 #: corehq/apps/export/views/download.py
 msgid "You have no submissions in this project."
@@ -31894,6 +31924,30 @@ msgstr ""
 "पालन करने के लिए बाध्य किया जाएगा। इसका उपयोग तब करें जब संदेह हो कि पासवर्ड"
 " से समझौता किया गया है।"
 
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "उदाहरण के लिए, कृषि"
+
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "A sector with this name already exists."
+msgstr "इस नाम वाला सेक्टर पहले से मौजूद है।"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py corehq/tabs/tabclasses.py
+msgid "Manage Template Apps"
+msgstr "टेम्पलेट ऐप प्रबंधित करें"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label deleted."
+msgstr "सेक्टर लेबल हटाया गया।"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label saved."
+msgstr "सेक्टर लेबल सहेजा गया।"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label added."
+msgstr "सेक्टर लेबल जोड़ा गया।"
+
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
 msgid "Disabled Datadog user {label}"
@@ -32138,30 +32192,6 @@ msgstr "पर बदला गया"
 msgid "Update Randomness"
 msgstr "रैंडमनेस अपडेट करें"
 
-#: corehq/apps/hqadmin/template_apps/forms.py
-msgid "For example, Agriculture"
-msgstr "उदाहरण के लिए, कृषि"
-
-#: corehq/apps/hqadmin/template_apps/forms.py
-msgid "A sector with this name already exists."
-msgstr "इस नाम वाला सेक्टर पहले से मौजूद है।"
-
-#: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
-msgid "Manage Template Apps"
-msgstr "टेम्पलेट ऐप प्रबंधित करें"
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label deleted."
-msgstr "सेक्टर लेबल हटाया गया।"
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label saved."
-msgstr "सेक्टर लेबल सहेजा गया।"
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label added."
-msgstr "सेक्टर लेबल जोड़ा गया।"
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr "डोमेन नाम"
@@ -32229,6 +32259,43 @@ msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 "कृपया एक माह दर्ज करें ताकि उस माह के लिए सभी MALT डेटा को CSV के रूप में "
 "डाउनलोड किया जा सके"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Manage sectors"
+msgstr "सेक्टर प्रबंधित करें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Template Apps"
+msgstr "टेम्पलेट ऐप"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"सेक्टर लेबल सभी टेम्पलेट ऐप में साझा किए जाते हैं। किसी लेबल का नाम बदलने से"
+" वह हर उस टेम्पलेट में अपडेट हो जाता है जो उसका उपयोग करता है।"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "New sector label"
+msgstr "नया सेक्टर लेबल"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Add sector"
+msgstr "सेक्टर जोड़ें"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Sector label"
+msgstr "सेक्टर लेबल"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Templates using it"
+msgstr "इसका उपयोग करने वाले टेम्पलेट"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr "अभी तक कोई सेक्टर लेबल नहीं है। ऊपर पहला लेबल जोड़ें।"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid ""
@@ -32447,43 +32514,6 @@ msgstr "सुपरयूज़र असाइन कर सकते है�
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Feature Flag Edit Permissions"
 msgstr "फ़ीचर फ़्लैग संपादन अनुमतियाँ"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-msgid "Manage sectors"
-msgstr "सेक्टर प्रबंधित करें"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-msgid "Template Apps"
-msgstr "टेम्पलेट ऐप"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid ""
-"Sector labels are shared across template apps. Renaming a label updates "
-"every template that uses it."
-msgstr ""
-"सेक्टर लेबल सभी टेम्पलेट ऐप में साझा किए जाते हैं। किसी लेबल का नाम बदलने से"
-" वह हर उस टेम्पलेट में अपडेट हो जाता है जो उसका उपयोग करता है।"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "New sector label"
-msgstr "नया सेक्टर लेबल"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Add sector"
-msgstr "सेक्टर जोड़ें"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Sector label"
-msgstr "सेक्टर लेबल"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Templates using it"
-msgstr "इसका उपयोग करने वाले टेम्पलेट"
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "No sector labels yet. Add the first label above."
-msgstr "अभी तक कोई सेक्टर लेबल नहीं है। ऊपर पहला लेबल जोड़ें।"
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -34373,9 +34403,7 @@ msgstr "स्थिति पृष्ठ"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/users/views/web.py
+#: corehq/apps/settings/views.py corehq/apps/users/views/web.py
 msgid "Project"
 msgstr "प्रोजेक्ट"
 
@@ -36021,6 +36049,7 @@ msgid "Payment request failed"
 msgstr "भुगतान अनुरोध विफल"
 
 #: corehq/apps/integration/payments/services.py
+#: corehq/apps/public_webforms/tables.py
 msgid "Verification"
 msgstr "सत्यापन"
 
@@ -38554,20 +38583,19 @@ msgstr ""
 "उनकी समाप्ति तक उपयोग किए जा सकते हैं।"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "How Respondents Receive Their One-time Link"
-msgid "How Respondents Open the Form"
-msgstr "उत्तरदाता फ़ॉर्म कैसे खोलते हैं"
+#| msgid "How Respondents Open the Form"
+msgid "How Respondents Access the Form"
+msgstr "उत्तरदाता फ़ॉर्म तक कैसे पहुँचते हैं"
 
 #: corehq/apps/public_webforms/forms.py
 msgid "One-time link by email or text message"
 msgstr "ईमेल या टेक्स्ट संदेश से एक बार इस्तेमाल होने वाला लिंक"
 
-#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 msgid "Anyone with the link"
 msgstr "लिंक वाला कोई भी व्यक्ति"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "A branded email with a single-use link."
 msgid "A branded email with a one-time-use link."
 msgstr "एक ब्रांडेड ईमेल, जिसमें एक बार इस्तेमाल होने वाला लिंक हो।"
 
@@ -38578,18 +38606,14 @@ msgstr ""
 "किया जाएगा।"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Open to Requests"
 msgid "Open to Respondents"
 msgstr "उत्तरदाताओं के लिए खुला"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid ""
-#| "Immediately open this public webform to one-time link requests."
 msgid "Open this public webform to respondents."
 msgstr "यह सार्वजनिक वेबफ़ॉर्म उत्तरदाताओं के लिए खोलें।"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Verification"
 msgid "Verification Method"
 msgstr "सत्यापन विधि"
 
@@ -38607,12 +38631,10 @@ msgstr ""
 "CommCare वह लिंक कैसे भेज सकता है।"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "The send date must be in the future."
 msgid "Webform must close in the future."
 msgstr "वेबफ़ॉर्म भविष्य की किसी तारीख़ पर बंद होना चाहिए।"
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "Choose at least one project space."
 msgid "Choose at least one verification method."
 msgstr "कम से कम एक सत्यापन विधि चुनें।"
 
@@ -38711,12 +38733,38 @@ msgid "Expires"
 msgstr "समाप्ति"
 
 #: corehq/apps/public_webforms/tables.py
-msgid "Delivery"
-msgstr "डिलीवरी"
+#| msgid "IP Access"
+msgid "Access"
+msgstr "पहुँच"
 
 #: corehq/apps/public_webforms/tables.py
 msgid "Public URL"
 msgstr "सार्वजनिक URL"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "One-Time Link Request"
+msgid "One-time link"
+msgstr "एक बार इस्तेमाल होने वाला लिंक"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Email Delivered"
+msgid "Email enabled"
+msgstr "ईमेल सक्षम"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "Email disabled"
+msgstr "ईमेल अक्षम"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Is enabled"
+msgid "SMS enabled"
+msgstr "SMS सक्षम"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "SMS disabled"
+msgstr "SMS अक्षम"
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, python-format
@@ -38860,9 +38908,6 @@ msgstr ""
 "  "
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/sms/templates/sms/wall.html
 msgid "Enable Messaging"
 msgstr "मैसेजिंग चालू करें"
 
@@ -46519,167 +46564,6 @@ msgstr "और"
 msgid "Add Day and Time Window"
 msgstr "दिन और समय विंडो जोड़ें"
 
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#, python-format
-msgid ""
-"\n"
-"            Enable messaging for %(domain_name)s\n"
-"          "
-msgstr ""
-"\n"
-"            %(domain_name)s के लिए मैसेजिंग चालू करें\n"
-"          "
-
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#, python-format
-msgid ""
-"\n"
-"              %(billing_account)s\n"
-"              will be charged for every SMS this project sends and receives.\n"
-"            "
-msgstr ""
-"\n"
-"              इस प्रोजेक्ट द्वारा भेजे और प्राप्त किए जाने वाले हर SMS का शुल्क\n"
-"              %(billing_account)s से लिया जाएगा।\n"
-"            "
-
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-msgid ""
-"\n"
-"                A public webform with SMS turned on sends a text to any phone\n"
-"                number a respondent enters, and each text is charged.\n"
-"              "
-msgstr ""
-"\n"
-"                SMS चालू होने पर, सार्वजनिक वेबफ़ॉर्म उत्तरदाता द्वारा दर्ज किए गए किसी भी फ़ोन\n"
-"                नंबर पर टेक्स्ट संदेश भेजता है, और हर संदेश का शुल्क लिया जाता है।\n"
-"              "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid "Action is required to enable messaging."
-msgstr "मैसेजिंग चालू करने के लिए कार्रवाई आवश्यक है।"
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid "How to Enable Messaging"
-msgstr "मैसेजिंग चालू करने का तरीका"
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid ""
-"\n"
-"        To enable messaging features for this project space, please do at least\n"
-"        <strong>one</strong> of the following:\n"
-"      "
-msgstr ""
-"\n"
-"        इस प्रोजेक्ट स्पेस के लिए मैसेजिंग सुविधाएँ चालू करने हेतु, कृपया नीचे दिए गए विकल्पों में से\n"
-"        कम-से-कम <strong>एक</strong> काम करें:\n"
-"      "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
-"          account.\n"
-"        "
-msgstr ""
-"\n"
-"          अपने उपयोगकर्ता खाते में <a href=\"%(billing_info_url)s\">भुगतान कार्ड सहेजें</a>।\n"
-"        "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
-"          for this project space.\n"
-"        "
-msgstr ""
-"\n"
-"          इस प्रोजेक्ट स्पेस के लिए <a href=\"%(billing_info_url)s\">स्वचालित भुगतान चालू करें</a>।\n"
-"        "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
-"          or\n"
-"          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
-"          totaling %(self_enable_payment_threshold)s or more.\n"
-"        "
-msgstr ""
-"\n"
-"          %(self_enable_payment_threshold)s या उससे अधिक के कुल बिलों का\n"
-"          <a href=\"%(pay_invoices_url)s\">भुगतान करें</a>\n"
-"          या\n"
-"          <a href=\"%(purchase_credits_url)s\">प्रीपेड क्रेडिट खरीदें</a>।\n"
-"        "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid ""
-"\n"
-"        Then, return to this page to enable messaging. This helps us ensure SMS\n"
-"        charges can be billed correctly.\n"
-"      "
-msgstr ""
-"\n"
-"        इसके बाद, मैसेजिंग चालू करने के लिए इस पेज पर वापस आएँ। इससे हमें यह सुनिश्चित करने में मदद मिलती है कि SMS\n"
-"        शुल्क का बिल सही तरीके से बनाया जा सके।\n"
-"      "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"        If none of these options are available for you, please email\n"
-"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
-"        to request access to messaging features. Include your full name and the\n"
-"        name of the organization you work for.\n"
-"      "
-msgstr ""
-"\n"
-"        यदि इनमें से कोई भी विकल्प आपके लिए उपलब्ध नहीं है, तो मैसेजिंग सुविधाओं का ऐक्सेस पाने के लिए\n"
-"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
-"        पर ईमेल करें। अपना पूरा नाम और उस संगठन का नाम शामिल करें जिसके लिए आप काम करते हैं।\n"
-"      "
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/sms/templates/sms/wall.html
-msgid "Back to Home"
-msgstr "होम पर वापस जाएँ"
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Turning on messaging will cost this project money."
-msgstr "मैसेजिंग चालू करने पर इस प्रोजेक्ट का खर्च होगा।"
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid ""
-"\n"
-"      This project is charged for every SMS it sends and receives. The price of\n"
-"      each SMS depends on the country of the phone number. Charges appear on the\n"
-"      project's monthly CommCare invoice.\n"
-"    "
-msgstr ""
-"\n"
-"      इस प्रोजेक्ट द्वारा भेजे और प्राप्त किए जाने वाले हर SMS का शुल्क लिया जाता है।\n"
-"      हर SMS की कीमत फ़ोन नंबर के देश पर निर्भर करती है। शुल्क प्रोजेक्ट के\n"
-"      मासिक CommCare इनवॉइस में दिखाई देंगे।\n"
-"    "
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "See SMS prices by country"
-msgstr "देश के अनुसार SMS की कीमतें देखें"
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Who is Charged"
-msgstr "शुल्क किससे लिया जाएगा"
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Invoices Emailed to"
-msgstr "इनवॉइस ईमेल किए जाएँगे"
-
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Filter Type"
 msgstr "फ़िल्टर प्रकार"
@@ -46701,30 +46585,30 @@ msgid "Verification Pending"
 msgstr "सत्यापन लंबित"
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid ""
-"\n"
-"        Messaging lets this project send and receive SMS, including one-time\n"
-"        links for public webforms, broadcasts, and conditional alerts.\n"
-"      "
-msgstr ""
-"\n"
-"        मैसेजिंग से यह प्रोजेक्ट SMS भेज और प्राप्त कर सकता है। इसमें सार्वजनिक वेबफ़ॉर्म के लिए एक बार इस्तेमाल होने वाले\n"
-"        लिंक, प्रसारण और सशर्त अलर्ट शामिल हैं।\n"
-"      "
+msgid "Request Access to Messaging Features"
+msgstr "संदेश सुविधाओं के लिए पहुँच का अनुरोध करें"
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Messaging is currently disabled for this project space."
-msgstr "इस प्रोजेक्ट स्पेस के लिए मैसेजिंग अभी बंद है।"
-
-#: corehq/apps/sms/templates/sms/wall.html
+#, python-format
 msgid ""
 "\n"
-"            Please contact your project administrator to enable messaging.\n"
-"          "
+"      To enable messaging features, please request access by sending an email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
+"      work email address containing the following information:\n"
+"    "
 msgstr ""
 "\n"
-"            मैसेजिंग चालू करने के लिए कृपया अपने प्रोजेक्ट एडमिनिस्ट्रेटर से संपर्क करें।\n"
-"          "
+"      मैसेजिंग फीचर्स सक्षम करने के लिए, कृपया अपनी कार्य ईमेल आईडी से\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> पर निम्न जानकारी के साथ ईमेल भेजकर एक्सेस का अनुरोध करें:\n"
+"    "
+
+#: corehq/apps/sms/templates/sms/wall.html
+msgid "Your full name"
+msgstr "आपका पूरा नाम"
+
+#: corehq/apps/sms/templates/sms/wall.html
+msgid "The organization you work for"
+msgstr "वह संगठन जिसमें आप कार्यरत हैं"
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 msgid "WhatsApp Templates"
@@ -46782,14 +46666,6 @@ msgstr "1 सप्ताह"
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
 msgstr "30 दिन"
-
-#: corehq/apps/sms/views.py
-msgid "Messaging enabled successfully."
-msgstr "मैसेजिंग सफलतापूर्वक सक्षम की गई।"
-
-#: corehq/apps/sms/views.py
-msgid "Messaging cannot be enabled right now."
-msgstr "अभी मैसेजिंग सक्षम नहीं की जा सकती।"
 
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
 msgid "Compose SMS Message"
@@ -52103,33 +51979,47 @@ msgstr ""
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                        Are you sure you want to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Are you sure you want to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Are you sure you want to accept the invitation to join\n"
+"                        the CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
-"                        क्या आप वाकई निमंत्रण स्वीकार करना चाहते हैं\n"
-"                        CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> में <strong>%(username)s</strong> के रूप में शामिल होने के लिए?\n"
+"                        क्या आप वाकई %(invite_type)s CommCare HQ में\n"
+"                        <strong>%(invite_to)s</strong> के रूप में\n"
+"                        <strong>%(username)s</strong> को शामिल होने का निमंत्रण स्वीकार करना चाहते हैं?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                        Would you like to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Would you like to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Would you like to accept the invitation to join the\n"
+"                        CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
-"                        क्या आप निमंत्रण स्वीकार करना चाहेंगे\n"
-"                        CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> में <strong>%(username)s</strong> के रूप में शामिल होने के लिए?\n"
+"                        क्या आप %(invite_type)s CommCare HQ में\n"
+"                        <strong>%(invite_to)s</strong> के रूप में\n"
+"                        <strong>%(username)s</strong> को शामिल होने का निमंत्रण स्वीकार करना चाहते हैं?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -52164,6 +52054,25 @@ msgstr "वेब खाता बनाएँ"
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                      Turn off demo mode to allow this mobile worker to start\n"
+#| "                      sending data to %(hq_name)s again.\n"
+#| "                    "
+msgid ""
+"\n"
+"                    You are signed in as %(username)s, but this invitation was\n"
+"                    sent to %(invited_user)s.\n"
+"                  "
+msgstr ""
+"\n"
+"                    आपने %(username)s के रूप में साइन इन किया है, लेकिन यह निमंत्रण\n"
+"                    %(invited_user)s को भेजा गया था।\n"
+"                  "
+
+#: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
+#: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
+#, python-format
 msgid ""
 "\n"
 "                  Not %(username)s?\n"
@@ -52181,28 +52090,39 @@ msgstr "खाता बदलें"
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your email is managed by %(idp_name)s.\n"
+#| "                    You will be asked to authenticate with Single Sign-On\n"
+#| "                    in the next step.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your email is managed by %(idp_name)s.\n"
-"                    You will be asked to authenticate with Single Sign-On\n"
-"                    in the next step.\n"
+"                    Your email is managed by %(idp_name)s. You will be asked\n"
+"                    to authenticate with Single Sign-On in the next step.\n"
 "                  "
 msgstr ""
 "\n"
-"                    आपका ईमेल %(idp_name)s द्वारा प्रबंधित किया जाता है।\n"
-"                    अगले चरण में आपको सिंगल साइन-ऑन के साथ प्रमाणित करने के लिए कहा जाएगा।\n"
+"                    आपका ईमेल %(idp_name)s द्वारा प्रबंधित है। अगले चरण में आपसे\n"
+"                    सिंगल साइन-ऑन के ज़रिए प्रमाणित करने के लिए कहा जाएगा।\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+"                    To accept this %(invite_type_lower)s invitation, you must\n"
+"                    create an account.\n"
 "                  "
 msgstr ""
 "\n"
-"                    इस %(invite_type_lower)s निमंत्रण को स्वीकार करने के लिए, आपको एक खाता बनाना होगा।\n"
+"                    यह %(invite_type_lower)s निमंत्रण स्वीकार करने के लिए, आपको\n"
+"                    एक खाता बनाना होगा।\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -54983,7 +54903,6 @@ msgid "is_active"
 msgstr "सक्रिय है"
 
 #: corehq/apps/users/views/mobile/users.py
-#| msgid "You can now log into the mobile app."
 msgid "You can now login"
 msgstr "अब आप लॉगिन कर सकते हैं"
 
@@ -57810,10 +57729,6 @@ msgid "User Configurable Report"
 msgstr "यूज़र कॉन्फ़िगरेबल रिपोर्ट"
 
 #: corehq/motech/dhis2/forms.py
-#| msgid ""
-#| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
-#| "href=\"https://github.com/dimagi/commcare-"
-#| "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
@@ -58290,7 +58205,6 @@ msgid "There is an error in your data API validations"
 msgstr "आपके डेटा API सत्यापन में त्रुटि है"
 
 #: corehq/motech/models.py
-#| msgid "Please select the applicable day(s) of the week."
 msgid "Please select the applicable API auth settings for the "
 msgstr "कृपया लागू API प्रमाणीकरण सेटिंग चुनें: "
 
@@ -58335,9 +58249,6 @@ msgid "patients from OpenMRS unless only one case type is specified."
 msgstr "OpenMRS से मरीज, जब तक केवल एक केस प्रकार निर्दिष्ट नहीं किया गया हो।"
 
 #: corehq/motech/openmrs/atom_feed.py
-#| msgid ""
-#| "{repeater.domain}: {repeater}: More than one case found matching unique "
-#| "OpenMRS UUID. case external_id: "
 msgid "matching unique OpenMRS UUID. case external_id: "
 msgstr "मेल खाने वाला विशिष्ट OpenMRS UUID। केस external_id: "
 
@@ -58458,6 +58369,20 @@ msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr "उदा. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 
 #: corehq/motech/openmrs/forms.py
+msgid "Each column mapping must be an object."
+msgstr "हर कॉलम मैपिंग एक ऑब्जेक्ट होनी चाहिए।"
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Unknown column mapping keys: %(keys)s"
+msgstr "अज्ञात कॉलम मैपिंग कुंजियाँ: %(keys)s"
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Each column mapping must have a \"%(key)s\"."
+msgstr "हर कॉलम मैपिंग में \"%(key)s\" होना चाहिए।"
+
+#: corehq/motech/openmrs/forms.py
 msgid ""
 "Cases at this location and below will be forwarded. Leave empty if this is "
 "the only OpenMRS Forwarder"
@@ -58526,6 +58451,21 @@ msgstr "अभी आयात करें"
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "OpenMRS Importer"
 msgstr "OpenMRS आयातक"
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "No OpenMRS Importers were submitted."
+msgstr "कोई OpenMRS इम्पोर्टर सबमिट नहीं किया गया।"
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers are not valid JSON."
+msgstr "OpenMRS इम्पोर्टर मान्य JSON नहीं हैं।"
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers must be a list of objects."
+msgstr "OpenMRS इम्पोर्टर ऑब्जेक्ट की सूची होने चाहिए।"
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -60439,6 +60379,199 @@ msgid "Enter valid JSON"
 msgstr "मान्य JSON दर्ज करें"
 
 #~ msgid ""
+#~ "\n"
+#~ "      By clicking this button, you agree to Dimagi's\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      इस बटन पर क्लिक करके, आप Dimagi की\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">सेवा की शर्तों</a> और\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">गोपनीयता नीति</a> से सहमत होते हैं।\n"
+#~ "    "
+
+#~ msgid ""
+#~ "Problem loading suite file from profile file. Is your profile file correct?"
+#~ msgstr ""
+#~ "प्रोफ़ाइल फ़ाइल से सूट फ़ाइल लोड करने में समस्या। क्या आपकी प्रोफ़ाइल फ़ाइल "
+#~ "सही है?"
+
+#~ msgid "Delivery"
+#~ msgstr "डिलीवरी"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            Enable messaging for %(domain_name)s\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            %(domain_name)s के लिए मैसेजिंग चालू करें\n"
+#~ "          "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              %(billing_account)s\n"
+#~ "              will be charged for every SMS this project sends and receives.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              इस प्रोजेक्ट द्वारा भेजे और प्राप्त किए जाने वाले हर SMS का शुल्क\n"
+#~ "              %(billing_account)s से लिया जाएगा।\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                A public webform with SMS turned on sends a text to any phone\n"
+#~ "                number a respondent enters, and each text is charged.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                SMS चालू होने पर, सार्वजनिक वेबफ़ॉर्म उत्तरदाता द्वारा दर्ज किए गए किसी भी फ़ोन\n"
+#~ "                नंबर पर टेक्स्ट संदेश भेजता है, और हर संदेश का शुल्क लिया जाता है।\n"
+#~ "              "
+
+#~ msgid "Action is required to enable messaging."
+#~ msgstr "मैसेजिंग चालू करने के लिए कार्रवाई आवश्यक है।"
+
+#~ msgid "How to Enable Messaging"
+#~ msgstr "मैसेजिंग चालू करने का तरीका"
+
+#~ msgid ""
+#~ "\n"
+#~ "        To enable messaging features for this project space, please do at least\n"
+#~ "        <strong>one</strong> of the following:\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        इस प्रोजेक्ट स्पेस के लिए मैसेजिंग सुविधाएँ चालू करने हेतु, कृपया नीचे दिए गए विकल्पों में से\n"
+#~ "        कम-से-कम <strong>एक</strong> काम करें:\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+#~ "          account.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          अपने उपयोगकर्ता खाते में <a href=\"%(billing_info_url)s\">भुगतान कार्ड सहेजें</a>।\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+#~ "          for this project space.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          इस प्रोजेक्ट स्पेस के लिए <a href=\"%(billing_info_url)s\">स्वचालित भुगतान चालू करें</a>।\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+#~ "          or\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+#~ "          totaling %(self_enable_payment_threshold)s or more.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          %(self_enable_payment_threshold)s या उससे अधिक के कुल बिलों का\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">भुगतान करें</a>\n"
+#~ "          या\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">प्रीपेड क्रेडिट खरीदें</a>।\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+#~ "        charges can be billed correctly.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        इसके बाद, मैसेजिंग चालू करने के लिए इस पेज पर वापस आएँ। इससे हमें यह सुनिश्चित करने में मदद मिलती है कि SMS\n"
+#~ "        शुल्क का बिल सही तरीके से बनाया जा सके।\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        If none of these options are available for you, please email\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+#~ "        to request access to messaging features. Include your full name and the\n"
+#~ "        name of the organization you work for.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        यदि इनमें से कोई भी विकल्प आपके लिए उपलब्ध नहीं है, तो मैसेजिंग सुविधाओं का ऐक्सेस पाने के लिए\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+#~ "        पर ईमेल करें। अपना पूरा नाम और उस संगठन का नाम शामिल करें जिसके लिए आप काम करते हैं।\n"
+#~ "      "
+
+#~ msgid "Back to Home"
+#~ msgstr "होम पर वापस जाएँ"
+
+#~ msgid "Turning on messaging will cost this project money."
+#~ msgstr "मैसेजिंग चालू करने पर इस प्रोजेक्ट का खर्च होगा।"
+
+#~ msgid ""
+#~ "\n"
+#~ "      This project is charged for every SMS it sends and receives. The price of\n"
+#~ "      each SMS depends on the country of the phone number. Charges appear on the\n"
+#~ "      project's monthly CommCare invoice.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      इस प्रोजेक्ट द्वारा भेजे और प्राप्त किए जाने वाले हर SMS का शुल्क लिया जाता है।\n"
+#~ "      हर SMS की कीमत फ़ोन नंबर के देश पर निर्भर करती है। शुल्क प्रोजेक्ट के\n"
+#~ "      मासिक CommCare इनवॉइस में दिखाई देंगे।\n"
+#~ "    "
+
+#~ msgid "See SMS prices by country"
+#~ msgstr "देश के अनुसार SMS की कीमतें देखें"
+
+#~ msgid "Who is Charged"
+#~ msgstr "शुल्क किससे लिया जाएगा"
+
+#~ msgid "Invoices Emailed to"
+#~ msgstr "इनवॉइस ईमेल किए जाएँगे"
+
+#~ msgid ""
+#~ "\n"
+#~ "        Messaging lets this project send and receive SMS, including one-time\n"
+#~ "        links for public webforms, broadcasts, and conditional alerts.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        मैसेजिंग से यह प्रोजेक्ट SMS भेज और प्राप्त कर सकता है। इसमें सार्वजनिक वेबफ़ॉर्म के लिए एक बार इस्तेमाल होने वाले\n"
+#~ "        लिंक, प्रसारण और सशर्त अलर्ट शामिल हैं।\n"
+#~ "      "
+
+#~ msgid "Messaging is currently disabled for this project space."
+#~ msgstr "इस प्रोजेक्ट स्पेस के लिए मैसेजिंग अभी बंद है।"
+
+#~ msgid ""
+#~ "\n"
+#~ "            Please contact your project administrator to enable messaging.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            मैसेजिंग चालू करने के लिए कृपया अपने प्रोजेक्ट एडमिनिस्ट्रेटर से संपर्क करें।\n"
+#~ "          "
+
+#~ msgid "Messaging enabled successfully."
+#~ msgstr "मैसेजिंग सफलतापूर्वक सक्षम की गई।"
+
+#~ msgid "Messaging cannot be enabled right now."
+#~ msgstr "अभी मैसेजिंग सक्षम नहीं की जा सकती।"
+
+#~ msgid ""
 #~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
 #~ "declined"
 #~ msgstr ""
@@ -60649,28 +60782,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ msgid "The selected form can't be used for a public webform."
 #~ msgstr "चयनित फॉर्म को सार्वजनिक वेबफॉर्म के लिए उपयोग नहीं किया जा सकता।"
 
-#~ msgid "Request Access to Messaging Features"
-#~ msgstr "संदेश सुविधाओं के लिए पहुँच का अनुरोध करें"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "      To enable messaging features, please request access by sending an email to\n"
-#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from your\n"
-#~ "      work email address containing the following information:\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "      मैसेजिंग फीचर्स सक्षम करने के लिए, कृपया अपनी कार्य ईमेल आईडी से\n"
-#~ "      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> पर निम्न जानकारी के साथ ईमेल भेजकर एक्सेस का अनुरोध करें:\n"
-#~ "    "
-
-#~ msgid "Your full name"
-#~ msgstr "आपका पूरा नाम"
-
-#~ msgid "The organization you work for"
-#~ msgstr "वह संगठन जिसमें आप कार्यरत हैं"
-
 #~ msgid "Space-separated list of privilege strings from corehq.privileges"
 #~ msgstr "corehq.privileges से विशेषाधिकार स्ट्रिंग्स की स्पेस से अलग सूची"
 
@@ -60777,9 +60888,6 @@ msgstr "मान्य JSON दर्ज करें"
 #~ "\n"
 #~ "        %(matched_count)s मेल मिले।\n"
 #~ "      "
-
-#~ msgid "One-Time Link Request"
-#~ msgstr "वन-टाइम लिंक अनुरोध"
 
 #~ msgid "Case list used by Select Parent First in '{}' not found"
 #~ msgstr "‘{}’ में Select Parent First द्वारा उपयोग की गई केस सूची नहीं मिली"

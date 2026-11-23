@@ -3,7 +3,7 @@ from django.contrib.auth import logout
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
 
-from corehq.util.view_utils import reverse
+from corehq.util.view_utils import get_safe_redirect_url, reverse
 from corehq.apps.sso.decorators import identity_provider_required
 from corehq.apps.sso.exceptions import SsoLoginFailed, OidcSsoError
 from corehq.apps.sso.utils.login_helpers import process_async_signup_requests
@@ -48,9 +48,8 @@ def sso_oidc_auth(request, idp_slug):
             auth.login(request, user)
             process_async_signup_requests(request, user)
 
-            if request.session["oidc_return_to"]:
-                redirect_url = request.session["oidc_return_to"]
-                del request.session["oidc_return_to"]
+            redirect_url = get_safe_redirect_url(request, request.session.pop("oidc_return_to", None), None)
+            if redirect_url:
                 return HttpResponseRedirect(redirect_url)
 
             return redirect("homepage")

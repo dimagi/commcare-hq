@@ -1,6 +1,9 @@
-from django.test import SimpleTestCase
 from unittest.mock import patch
-from corehq.util.view_utils import json_error
+
+import pytest
+from django.test import RequestFactory, SimpleTestCase
+
+from corehq.util.view_utils import get_safe_redirect_url, json_error
 
 
 @json_error
@@ -29,3 +32,52 @@ class NotifyExceptionTest(SimpleTestCase):
                 'foo',
                 'JSON exception response: ValueError: βªđ ṿåƚŭę',
             )
+
+
+@pytest.mark.parametrize('url', [
+    '/a/test-domain/',
+    '/a/test-domain/reports/?q=1#frag',
+    'relative/path/',
+    'http://testserver/a/test-domain/',
+])
+def test_get_safe_redirect_url_accepts_same_site(url):
+    request = RequestFactory().get('/')
+    assert get_safe_redirect_url(request, url, '/default/') == url
+
+
+@pytest.mark.parametrize('url', [
+    None,
+    '',
+    'https://example.com/',
+    'http://example.com/a/test-domain/',
+    '//example.com/',
+    '///example.com/',
+    'https:///example.com/',
+    'http:\\\\example.com/',
+    '/\\example.com/',
+    '\\\\example.com/',
+    '\\/example.com/',
+    ' //example.com/',
+    '\t//example.com/',
+    'javascript:alert(1)',
+    'JavaScript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'ftp://testserver/',
+    'https://testserver.example.com/',
+    'https://example.com@testserver.evil/',
+])
+def test_get_safe_redirect_url_rejects_other_sites(url):
+    request = RequestFactory().get('/')
+    assert get_safe_redirect_url(request, url, '/default/') == '/default/'
+
+
+def test_get_safe_redirect_url_requires_https_on_secure_request():
+    request = RequestFactory().get('/', secure=True)
+    assert get_safe_redirect_url(request, 'http://testserver/x/', None) is None
+    assert get_safe_redirect_url(request, 'https://testserver/x/', None) == 'https://testserver/x/'
+
+
+def test_get_safe_redirect_url_uses_request_host():
+    request = RequestFactory().get('/', HTTP_HOST='www.commcarehq.org')
+    assert get_safe_redirect_url(request, 'http://www.commcarehq.org/x/', None) == 'http://www.commcarehq.org/x/'
+    assert get_safe_redirect_url(request, 'http://testserver/x/', None) is None

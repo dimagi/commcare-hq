@@ -355,7 +355,6 @@ msgid "The transfer account can't be the same one you're trying to deactivate."
 msgstr ""
 
 #: corehq/apps/accounting/forms.py
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
 msgid "Billing Account"
 msgstr ""
 
@@ -1362,7 +1361,6 @@ msgstr ""
 #: corehq/apps/settings/templates/settings/my_projects.html
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 #: corehq/apps/styleguide/example_forms.py
 #: corehq/apps/styleguide/examples/bootstrap5/checkbox_form.py
 #: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
@@ -4323,25 +4321,22 @@ msgid "We'd love to hear more! Please specify -"
 msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-msgid ""
-"\n"
-"      By clicking this button, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
-"target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
-"target=\"_blank\">Privacy Policy</a>.\n"
-"    "
-msgstr ""
-
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
-"\n"
-"      By clicking Submit Request, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
-"target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
-"target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"Yes, I would like to receive relevant email updates from Dimagi, including "
+"newsletters, product updates, webinars, podcasts, and related resources. I "
+"can unsubscribe at any time."
+msgstr ""
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+msgid ""
+"By clicking Submit Request, I agree to Dimagi's <a href=\"https://"
+"www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> "
+"and <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a> and to receive follow-up emails about "
+"my request, including invitations to schedule a conversation with Dimagi's "
+"team. I can unsubscribe at any time."
 msgstr ""
 
 #: corehq/apps/analytics/views.py
@@ -4684,6 +4679,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
+msgstr ""
+
+#: corehq/apps/app_manager/exceptions.py
+msgid "RemoteApps are no longer supported"
 msgstr ""
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
@@ -5078,11 +5077,6 @@ msgid "Copy of {name}"
 msgstr ""
 
 #: corehq/apps/app_manager/models/applications.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr ""
-
-#: corehq/apps/app_manager/models/applications.py
 msgid "Remote Application"
 msgstr ""
 
@@ -5128,14 +5122,6 @@ msgstr ""
 msgid ""
 "Updating the application succeeded, but the application is missing "
 "multimedia file(s)."
-msgstr ""
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Starter App"
-msgstr ""
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Feature Template"
 msgstr ""
 
 #: corehq/apps/app_manager/models/applications.py
@@ -5336,6 +5322,14 @@ msgstr ""
 
 #: corehq/apps/app_manager/models/report_app_config.py
 msgid "The user's ID"
+msgstr ""
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Starter App"
+msgstr ""
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Feature Template"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -6715,7 +6709,7 @@ msgstr ""
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -6847,6 +6841,7 @@ msgstr ""
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
@@ -8540,6 +8535,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
@@ -12176,6 +12172,7 @@ msgid "Loading ..."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
 msgid "Try again"
 msgstr ""
 
@@ -13193,7 +13190,7 @@ msgstr ""
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -14213,7 +14210,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -18609,6 +18606,10 @@ msgstr ""
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr ""
 
+#: corehq/apps/document_templates/templates/document_templates/partials/preview_modal_body.html
+msgid "The template does not use any variables."
+msgstr ""
+
 #: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/sso/forms.py
@@ -19929,7 +19930,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
 msgid "Please note:"
 msgstr ""
 
@@ -22593,6 +22593,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/export/templates/export/schema_build_waiting.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
 msgid "Go back"
@@ -25410,6 +25411,14 @@ msgstr ""
 msgid "Ok"
 msgstr ""
 
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
+msgid "We couldn't load the available columns."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/schema_build_status.html
+msgid "Progress finding columns"
+msgstr ""
+
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -25743,6 +25752,17 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/paywall.html
 msgid "Change My Subscription"
+msgstr ""
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid "Finding available columns…"
+msgstr ""
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid ""
+"We're checking your applications for the questions and case properties you "
+"can include. This can take a few minutes for projects with many "
+"applications. Please keep this page open."
 msgstr ""
 
 #: corehq/apps/export/views/download.py
@@ -27941,6 +27961,30 @@ msgid ""
 "compromised."
 msgstr ""
 
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "A sector with this name already exists."
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py corehq/tabs/tabclasses.py
+msgid "Manage Template Apps"
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label deleted."
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label saved."
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label added."
+msgstr ""
+
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
 msgid "Disabled Datadog user {label}"
@@ -28167,30 +28211,6 @@ msgstr ""
 msgid "Update Randomness"
 msgstr ""
 
-#: corehq/apps/hqadmin/template_apps/forms.py
-msgid "For example, Agriculture"
-msgstr ""
-
-#: corehq/apps/hqadmin/template_apps/forms.py
-msgid "A sector with this name already exists."
-msgstr ""
-
-#: corehq/apps/hqadmin/template_apps/views.py corehq/tabs/tabclasses.py
-msgid "Manage Template Apps"
-msgstr ""
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label deleted."
-msgstr ""
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label saved."
-msgstr ""
-
-#: corehq/apps/hqadmin/template_apps/views.py
-msgid "Sector label added."
-msgstr ""
-
 #: corehq/apps/hqadmin/templates/hqadmin/call_center_ucr_check.html
 msgid "Domain name"
 msgstr ""
@@ -28252,6 +28272,41 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html
 msgid "Enter a month to download all MALT data as csv for that month"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Manage sectors"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Template Apps"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "New sector label"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Add sector"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Sector label"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Templates using it"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
@@ -28448,41 +28503,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid "Feature Flag Edit Permissions"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/manage_template_apps.html
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-msgid "Manage sectors"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal.html
-msgid "Template Apps"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid ""
-"Sector labels are shared across template apps. Renaming a label updates "
-"every template that uses it."
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "New sector label"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Add sector"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Sector label"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "Templates using it"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/template_apps/sectors/manage_sector_modal_body.html
-msgid "No sector labels yet. Add the first label above."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
@@ -30174,9 +30194,7 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/global_navigation_bar.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/settings/views.py
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/users/views/web.py
+#: corehq/apps/settings/views.py corehq/apps/users/views/web.py
 msgid "Project"
 msgstr ""
 
@@ -31620,6 +31638,7 @@ msgid "Payment request failed"
 msgstr ""
 
 #: corehq/apps/integration/payments/services.py
+#: corehq/apps/public_webforms/tables.py
 msgid "Verification"
 msgstr ""
 
@@ -33908,14 +33927,14 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Open the Form"
+msgid "How Respondents Access the Form"
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
 msgid "One-time link by email or text message"
 msgstr ""
 
-#: corehq/apps/public_webforms/forms.py
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
 msgid "Anyone with the link"
 msgstr ""
 
@@ -34046,11 +34065,31 @@ msgid "Expires"
 msgstr ""
 
 #: corehq/apps/public_webforms/tables.py
-msgid "Delivery"
+msgid "Access"
 msgstr ""
 
 #: corehq/apps/public_webforms/tables.py
 msgid "Public URL"
+msgstr ""
+
+#: corehq/apps/public_webforms/tables.py
+msgid "One-time link"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+msgid "Email enabled"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+msgid "Email disabled"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+msgid "SMS enabled"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+msgid "SMS disabled"
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
@@ -34166,9 +34205,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/sms/templates/sms/wall.html
 msgid "Enable Messaging"
 msgstr ""
 
@@ -41025,134 +41061,6 @@ msgstr ""
 msgid "Add Day and Time Window"
 msgstr ""
 
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#, python-format
-msgid ""
-"\n"
-"            Enable messaging for %(domain_name)s\n"
-"          "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-#, python-format
-msgid ""
-"\n"
-"              %(billing_account)s\n"
-"              will be charged for every SMS this project sends and "
-"receives.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/enable_messaging_modal.html
-msgid ""
-"\n"
-"                A public webform with SMS turned on sends a text to any "
-"phone\n"
-"                number a respondent enters, and each text is charged.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid "Action is required to enable messaging."
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid "How to Enable Messaging"
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid ""
-"\n"
-"        To enable messaging features for this project space, please do at "
-"least\n"
-"        <strong>one</strong> of the following:\n"
-"      "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your "
-"user\n"
-"          account.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
-"          for this project space.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
-"          or\n"
-"          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
-"          totaling %(self_enable_payment_threshold)s or more.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-msgid ""
-"\n"
-"        Then, return to this page to enable messaging. This helps us ensure "
-"SMS\n"
-"        charges can be billed correctly.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#, python-format
-msgid ""
-"\n"
-"        If none of these options are available for you, please email\n"
-"        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
-"        to request access to messaging features. Include your full name and "
-"the\n"
-"        name of the organization you work for.\n"
-"      "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_action_required.html
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-#: corehq/apps/sms/templates/sms/wall.html
-msgid "Back to Home"
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Turning on messaging will cost this project money."
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid ""
-"\n"
-"      This project is charged for every SMS it sends and receives. The price "
-"of\n"
-"      each SMS depends on the country of the phone number. Charges appear on "
-"the\n"
-"      project's monthly CommCare invoice.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "See SMS prices by country"
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Who is Charged"
-msgstr ""
-
-#: corehq/apps/sms/templates/sms/partials/wall_enable.html
-msgid "Invoices Emailed to"
-msgstr ""
-
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
 msgid "Filter Type"
 msgstr ""
@@ -41174,23 +41082,27 @@ msgid "Verification Pending"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid ""
-"\n"
-"        Messaging lets this project send and receive SMS, including one-"
-"time\n"
-"        links for public webforms, broadcasts, and conditional alerts.\n"
-"      "
+msgid "Request Access to Messaging Features"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid "Messaging is currently disabled for this project space."
+#, python-format
+msgid ""
+"\n"
+"      To enable messaging features, please request access by sending an "
+"email to\n"
+"      <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a> from "
+"your\n"
+"      work email address containing the following information:\n"
+"    "
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/wall.html
-msgid ""
-"\n"
-"            Please contact your project administrator to enable messaging.\n"
-"          "
+msgid "Your full name"
+msgstr ""
+
+#: corehq/apps/sms/templates/sms/wall.html
+msgid "The organization you work for"
 msgstr ""
 
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
@@ -41247,14 +41159,6 @@ msgstr ""
 
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py corehq/apps/sso/models.py
 msgid "30 Days"
-msgstr ""
-
-#: corehq/apps/sms/views.py
-msgid "Messaging enabled successfully."
-msgstr ""
-
-#: corehq/apps/sms/views.py
-msgid "Messaging cannot be enabled right now."
 msgstr ""
 
 #: corehq/apps/sms/views.py corehq/tabs/tabclasses.py
@@ -45967,10 +45871,11 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Are you sure you want to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as "
-"<strong>%(username)s</strong>?\n"
+"                        Are you sure you want to accept the invitation to "
+"join\n"
+"                        the CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 
@@ -45979,10 +45884,10 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Would you like to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as "
-"<strong>%(username)s</strong>?\n"
+"                        Would you like to accept the invitation to join the\n"
+"                        CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 
@@ -46018,6 +45923,17 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
+"                    You are signed in as %(username)s, but this invitation "
+"was\n"
+"                    sent to %(invited_user)s.\n"
+"                  "
+msgstr ""
+
+#: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
+#: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
+#, python-format
+msgid ""
+"\n"
 "                  Not %(username)s?\n"
 "                "
 msgstr ""
@@ -46032,9 +45948,9 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                    Your email is managed by %(idp_name)s.\n"
-"                    You will be asked to authenticate with Single Sign-On\n"
-"                    in the next step.\n"
+"                    Your email is managed by %(idp_name)s. You will be "
+"asked\n"
+"                    to authenticate with Single Sign-On in the next step.\n"
 "                  "
 msgstr ""
 
@@ -46044,7 +45960,8 @@ msgstr ""
 msgid ""
 "\n"
 "                    To accept this %(invite_type_lower)s invitation, you "
-"must create an account.\n"
+"must\n"
+"                    create an account.\n"
 "                  "
 msgstr ""
 
@@ -51520,6 +51437,20 @@ msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr ""
 
 #: corehq/motech/openmrs/forms.py
+msgid "Each column mapping must be an object."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Unknown column mapping keys: %(keys)s"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Each column mapping must have a \"%(key)s\"."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
 msgid ""
 "Cases at this location and below will be forwarded. Leave empty if this is "
 "the only OpenMRS Forwarder"
@@ -51578,6 +51509,18 @@ msgstr ""
 
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "OpenMRS Importer"
+msgstr ""
+
+#: corehq/motech/openmrs/views.py
+msgid "No OpenMRS Importers were submitted."
+msgstr ""
+
+#: corehq/motech/openmrs/views.py
+msgid "OpenMRS Importers are not valid JSON."
+msgstr ""
+
+#: corehq/motech/openmrs/views.py
+msgid "OpenMRS Importers must be a list of objects."
 msgstr ""
 
 #: corehq/motech/openmrs/views.py

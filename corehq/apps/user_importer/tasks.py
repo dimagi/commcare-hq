@@ -1,6 +1,5 @@
 import functools
 
-from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 
 from celery.exceptions import TimeoutError
@@ -11,7 +10,7 @@ from soil import DownloadBase
 from soil.progress import get_task_progress
 
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.celery import serial_task, task
+from corehq.apps.celery import task
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.util import import_tableau_users
 from corehq.apps.user_importer.models import UserUploadRecord
@@ -21,18 +20,11 @@ from corehq.toggles import TABLEAU_USER_SYNCING
 USER_UPLOAD_CHUNK_SIZE = 1000
 
 
-@serial_task(
-    '{domain}',
-    default_retry_delay=60,
-    max_retries=24 * 60,
-    timeout=24 * 60 * 60,
-    queue=settings.CELERY_MAIN_QUEUE,
-    ignore_result=False,
-)
-def import_users_and_groups(domain, user_specs, group_specs, upload_user_id,
+@task(bind=True)
+def import_users_and_groups(self, domain, user_specs, group_specs, upload_user_id,
                             upload_record_id, is_web_upload):
     return import_users(domain, user_specs, group_specs, upload_user_id,
-                        upload_record_id, is_web_upload, import_users_and_groups)
+                        upload_record_id, is_web_upload, self)
 
 
 @task(queue='ush_background_tasks', bind=True)
