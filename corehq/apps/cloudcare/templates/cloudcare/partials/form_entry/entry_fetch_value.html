@@ -1,0 +1,82 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/html" id="fetch_value-entry-ko-template">
+  <button
+    type="button"
+    class="btn btn-outline-primary"
+    data-bind="click: onClickGenerate, attr: {id: entryId}, disable: isLoading, visible: !pdfUrl()"
+  >
+    <span
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+      data-bind="visible: isLoading"
+    ></span>
+    <span data-bind="html: buttonLabel()"></span>
+  </button>
+  <a
+    class="btn btn-outline-primary"
+    target="_blank"
+    data-bind="attr: {href: pdfUrl}, visible: pdfUrl"
+  >
+    <i class="fa fa-download" aria-hidden="true"></i>
+    {% trans "Download" %}
+  </a>
+  <!-- ko if: failure() && !hasFailedCases() -->
+  <div
+    class="text-danger small mt-1"
+    role="alert"
+    data-bind="text: failure().error"
+  ></div>
+  <!-- /ko -->
+  <div
+    class="modal fade"
+    tabindex="-1"
+    role="dialog"
+    data-bind="modal: hasFailedCases, event: {'hidden.bs.modal': onFailuresHidden}"
+  >
+    <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">
+            {% trans "Some documents cannot be generated" %}
+          </h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="{% trans_html_attr 'Close' %}"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <!-- ko with: failure -->
+          <p data-bind="text: error"></p>
+          <ul class="mb-0" data-bind="foreach: failed">
+            <li>
+              <strong data-bind="text: name || case_id"></strong>:
+              <span data-bind="text: reason"></span>
+            </li>
+          </ul>
+          <!-- /ko -->
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-primary"
+            data-bs-dismiss="modal"
+          >
+            {% trans "Close" %}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-bind="click: onClickGenerateRemaining, visible: canGenerateRemaining"
+          >
+            {% trans "Generate for remaining cases" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</script>

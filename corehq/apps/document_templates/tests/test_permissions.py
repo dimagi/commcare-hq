@@ -1,0 +1,84 @@
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase
+from django.urls import reverse
+
+from corehq.apps.document_templates.images import save_image
+from corehq.apps.document_templates.models import Template
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import HqPermissions, WebUser
+from corehq.apps.users.models_role import UserRole
+from corehq.util.test_utils import flag_enabled
+
+from .utils import delete_image, make_image
+
+DOMAIN = 'document-templates-permissions-test'
+PASSWORD = 'Passw0rd!'
+ROLES = {
+    'editor': HqPermissions(edit_document_templates=True),
+    'linked_editor': HqPermissions(edit_document_templates=True, edit_linked_configurations=True),
+    'nobody': HqPermissions(),
+}
+
+
+@flag_enabled('DOCUMENT_TEMPLATES')
+class TestDocumentTemplatePermissions(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        for name, permissions in ROLES.items():
+            permissions.normalize()  # as the role editor does when saving
+            user = WebUser.create(DOMAIN, f'{name}@example.com', PASSWORD, None, None)
+            role = UserRole.create(domain=cls.domain_obj, name=name, permissions=permissions)
+            user.set_role(DOMAIN, role.get_qualified_id())
+            user.save()
+            cls.addClassCleanup(user.delete, DOMAIN, deleted_by=None)
+
+    def setUp(self):
+        self.template = Template.objects.create(domain=DOMAIN, name='Welcome', slug='welcome', areas={})
+        self.image_key = save_image(DOMAIN, SimpleUploadedFile('logo.png', make_image()))
+        self.addCleanup(delete_image, self.image_key)
+
+    def _status(self, role, method, urlname, *args):
+        client = Client()
+        client.login(username=f'{role}@example.com', password=PASSWORD)
+        return getattr(client, method)(reverse(urlname, args=[DOMAIN, *args])).status_code
+
+    def test_views_need_edit(self):
+        for urlname, method, args in [
+            ('document_templates', 'get', []),
+            ('preview_document_variables', 'post', []),
+            ('preview_document', 'post', []),
+            ('new_document_template', 'get', []),
+            ('new_document_template', 'post', []),
+            ('edit_document_template', 'get', [self.template.pk]),
+            ('upload_document_template_image', 'post', ['header']),
+            ('download_document_template_image', 'get', [self.image_key]),
+        ]:
+            for role, expected in [('editor', 200), ('nobody', 403)]:
+                with self.subTest(urlname=urlname, method=method, role=role):
+                    assert self._status(role, method, urlname, *args) == expected
+
+    def test_delete_needs_edit(self):
+        assert self._status('nobody', 'post', 'delete_document_template', self.template.pk) == 403
+        self.template.refresh_from_db()
+        assert not self.template.deleted
+
+        assert self._status('editor', 'post', 'delete_document_template', self.template.pk) == 302
+        self.template.refresh_from_db()
+        assert self.template.deleted
+
+    def test_linked_template_needs_edit_linked_configurations(self):
+        linked = Template.objects.create(domain=DOMAIN, name='Linked', slug='linked', areas={}, is_linked=True)
+        edit_url = reverse('edit_document_template', args=[DOMAIN, linked.pk])
+        for role, expected in [('editor', 403), ('linked_editor', 200)]:
+            client = Client()
+            client.login(username=f'{role}@example.com', password=PASSWORD)
+            with self.subTest(role=role):
+                for method in ['get', 'post']:
+                    assert getattr(client, method)(edit_url).status_code == expected
+                content = client.get(reverse('document_templates', args=[DOMAIN])).content.decode()
+                assert (f'href="{edit_url}"' in content) == (expected == 200)
+                assert f'delete-template-{linked.pk}' in content

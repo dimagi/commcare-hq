@@ -4,8 +4,18 @@
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block page_content %}
-  <form method="post">
+  <form method="post" x-data="{ previewError: '' }">
     {% csrf_token %}
+
+    {% if form.instance.is_linked %}
+      <div class="alert alert-warning">
+        <i class="fa fa-link"></i>
+        {% blocktrans %}
+          This template is linked from an upstream project space. Changes made
+          here are overwritten the next time it is pushed or pulled.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
 
     <div class="row g-3 mb-3">
       <div class="col-md-6">
@@ -45,15 +55,8 @@
       </div>
     </div>
 
-    {% for field in form.area_fields %}
-      <div class="row g-3 mb-3">
-        <div class="col-md-2">
-          <label for="{{ field.id_for_label }}" class="form-label fw-semibold"
-            >{{ field.label }}</label
-          >
-        </div>
-        <div class="col-md-10">{{ field }}</div>
-      </div>
+    {% for area in form.areas %}
+      {% include "document_templates/partials/area_editor.html" %}
     {% endfor %}
 
     {# Actions #}
@@ -66,6 +69,7 @@
         data-bs-target="#preview-modal"
         hx-post="{% url 'preview_document_variables' domain %}"
         hx-target="#preview-modal-body"
+        @click="previewError = ''"
       >
         {% trans "Preview" %}
       </button>
@@ -98,6 +102,14 @@
             ></button>
           </div>
           <div class="modal-body" id="preview-modal-body"></div>
+          <div class="modal-body pt-0" x-show="previewError">
+            <div
+              class="alert alert-danger mb-0"
+              role="alert"
+              x-text="previewError"
+              style="white-space: pre-wrap"
+            ></div>
+          </div>
           <div class="modal-footer">
             <button
               type="button"
@@ -106,13 +118,25 @@
             >
               {% trans "Close" %}
             </button>
-            {# formnovalidate: previewing must not wait for name and slug #}
+            {# Fetched, not submitted, so a render error shows here instead of in a new tab #}
+            {% trans "The preview could not be generated." as preview_failed %}
             <button
-              type="submit"
+              type="button"
               class="btn btn-primary"
-              formaction="{% url 'preview_document' domain %}"
-              formtarget="_blank"
-              formnovalidate
+              @click="
+                previewError = '';
+                const response = await fetch('{% url 'preview_document' domain %}', {
+                  method: 'POST',
+                  body: new FormData($el.form),
+                });
+                if (response.ok) {
+                  window.open(URL.createObjectURL(await response.blob()), '_blank');
+                } else {
+                  previewError = response.status === 400
+                    ? await response.text()
+                    : '{{ preview_failed|escapejs }}';
+                }
+              "
             >
               {% trans "Preview" %}
             </button>
