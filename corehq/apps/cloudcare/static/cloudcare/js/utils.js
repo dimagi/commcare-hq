@@ -339,6 +339,12 @@ var parseInputDate = function (dateString) {
     return dateObj.isValid() ? dateObj : null;
 };
 
+const parseInputTime = function (value, timeFormat) {
+    const noSeparatorFormat = timeFormat.includes('A') ? 'hmm A' : 'Hmm';
+    const time = moment(value, [noSeparatorFormat, timeFormat]);
+    return time.isValid() ? time : null;
+};
+
 var initDatePicker = function ($el, selectedDate) {
     if (!$el.length) {
         return;
@@ -391,7 +397,17 @@ var initTimePicker = function ($el, selectedTime, timeFormat) {
     if (date.isValid()) {
         options.viewDate = new hqTempusDominus.DateTime(date);
     }
-    return hqTempusDominus.createTimePicker($el[0].parentNode, options);
+    const picker = hqTempusDominus.createTimePicker($el[0].parentNode, options);
+    // TD's parser drops digits when the separator is omitted, e.g. "1111" becomes 11:01
+    picker.dates.setFromInput = (value, index) => {
+        const localization = picker.viewDate.localization;
+        const time = parseInputTime(value, timeFormat);
+        picker.dates.setValue(
+            time ? new hqTempusDominus.DateTime(time.toDate()).setLocalization(localization) : undefined,
+            index,
+        );
+    };
+    return picker;
 };
 
 var smallScreenIsEnabled = function () {
@@ -431,6 +447,7 @@ export default {
     dateFormat: dateFormat,
     convertTwoDigitYear: convertTwoDigitYear,
     parseInputDate: parseInputDate,
+    parseInputTime: parseInputTime,
     initDatePicker: initDatePicker,
     initTimePicker: initTimePicker,
     showError: showError,

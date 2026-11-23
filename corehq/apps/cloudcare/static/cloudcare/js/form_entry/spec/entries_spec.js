@@ -443,6 +443,30 @@ describe('Entries', function () {
         assertInvalid("23-1-22");
     });
 
+    it('Should coerce user input times to moment objects', function () {
+        const assertParsesAs = function (userInput, timeFormat, expected) {
+            const res = utils.parseInputTime(userInput, timeFormat);
+            assert.isTrue(moment.isMoment(res));
+            assert.equal(res.format("HH:mm"), expected);
+        };
+
+        assertParsesAs("11:11", "HH:mm", "11:11");
+        assertParsesAs("1111", "HH:mm", "11:11");
+        assertParsesAs("930", "HH:mm", "09:30");
+        assertParsesAs("125", "HH:mm", "01:25");
+
+        assertParsesAs("11:11 PM", "hh:mm A", "23:11");
+        assertParsesAs("930pm", "hh:mm A", "21:30");
+        assertParsesAs("12:30", "hh:mm A", "12:30");
+        assertParsesAs("2000", "hh:mm A", "20:00");
+    });
+
+    it('Should fail to interpret invalid time inputs', function () {
+        assert.isNull(utils.parseInputTime("", "HH:mm"));
+        assert.isNull(utils.parseInputTime("abc", "HH:mm"));
+        assert.isNull(utils.parseInputTime("abc", "hh:mm A"));
+    });
+
     it('Should return TimeEntry', function () {
         questionJSON.datatype = constants.TIME;
         questionJSON.answer = '12:30';
@@ -454,6 +478,19 @@ describe('Entries', function () {
         entry.rawAnswer('12:45');
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
+    });
+
+    it('Should parse a time typed without a separator into the TimeEntry answer', function () {
+        questionJSON.datatype = constants.TIME;
+        const entry = formUI.Question(questionJSON).entry;
+        entry.entryId = 'time-entry';
+        entry.afterRender();
+
+        const input = document.getElementById('time-entry');
+        input.value = '1111';
+        input.dispatchEvent(new Event('change'));
+
+        assert.equal(entry.answer(), '11:11');
     });
 
     it('Should parse and display a time typed into a 12-hour TimeEntry', function () {
