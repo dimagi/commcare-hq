@@ -835,7 +835,7 @@ function TimeEntry(question, options) {
     this.datetimeIconClass = "fa-regular fa-clock";
     if (question.style) {
         if (question.stylesContains(constants.TIME_12_HOUR)) {
-            this.clientFormat = 'h:mm A';
+            this.clientFormat = 'hh:mm A';
         }
     }
     DateTimeEntryBase.call(this, question, options);

@@ -456,6 +456,22 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
     });
 
+    it('Should parse and display a time typed into a 12-hour TimeEntry', function () {
+        questionJSON.datatype = constants.TIME;
+        questionJSON.style = { raw: constants.TIME_12_HOUR };
+        const entry = formUI.Question(questionJSON).entry;
+        entry.entryId = 'time-entry-12-hour';
+        entry.afterRender();
+
+        const input = document.getElementById('time-entry-12-hour');
+        input.value = '12:05 AM';
+        input.dispatchEvent(new Event('change'));
+
+        assert.equal(entry.answer(), '00:05');
+        assert.equal(input.value, '12:05 AM');
+        assert.equal(entry.picker.dates.picked[0].format(), '12:05 AM');
+    });
+
     it('Should return EthiopanDateEntry', function () {
         questionJSON.datatype = constants.DATE;
         questionJSON.answer = '2021-01-29'; // 2013-05-21 in Ethiopian
