@@ -1,6 +1,6 @@
 import pytest
 from reportlab.pdfbase import pdfmetrics
-from reportlab.platypus import ListFlowable, Paragraph, Table
+from reportlab.platypus import ListFlowable, PageBreak, Paragraph, Table
 
 from corehq.apps.document_templates.models import Area
 from corehq.apps.document_templates.rendering import (
@@ -271,6 +271,38 @@ def test_blank_is_underlined():
     paragraph.wrap(400, 100)
     frags = paragraph.blPara.lines[0].words
     assert [frag.text for frag in frags if frag.us_lines] == ['\xa0'] * 5
+
+
+@pytest.mark.parametrize('markdown_text, expected', [
+    ('a\n\n[[page break]]\n\nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n[[page break]]\nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n  [[page break]]  \nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n[[page break]]\n[[page break]]\nb', [Paragraph, PageBreak, PageBreak, Paragraph]),
+    ('[[page break]]\nb', [PageBreak, Paragraph]),
+    ('a [[page break]] b', [Paragraph]),
+    ('a\n[[Page Break]]\nb', [Paragraph]),
+])
+def test_markdown_to_flowables_page_break(markdown_text, expected):
+    assert [type(flowable) for flowable in _markdown_to_flowables(markdown_text)] == expected
+
+
+def test_page_break_in_a_context_value_is_text():
+    document = generate_document(_areas({**VALUES, 'body': 'a\n{{ value }}\nb'}), {'value': '[[page break]]'})
+    flowables = document.areas['body'].flowables(400, 400, 'LEFT')
+    assert [type(flowable) for flowable in flowables] == [Paragraph]
+    assert '[[page break]]' in flowables[0].text
+
+
+@pytest.mark.parametrize('breaks, pages', [(1, 2), (2, 3)])
+def test_render_pdf_breaks_the_body_onto_a_new_page(breaks, pages):
+    body = '\n'.join(['a', *['[[page break]]'] * breaks, 'b'])
+    assert render_pdf([_document(body=body)]).count(b'/Type /Page\n') == pages
+
+
+@pytest.mark.parametrize('area_name', ['header', 'address', 'footer'])
+def test_generate_document_rejects_a_page_break_in_a_fixed_area(area_name):
+    with pytest.raises(DocumentRenderError, match=f'{area_name} cannot have a page break'):
+        _generate({**VALUES, area_name: 'a\n[[page break]]\nb'}, {})
 
 
 LONG_TEXT = '\n\n'.join(['paragraph'] * 200)

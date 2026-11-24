@@ -109,6 +109,9 @@ BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
 DEFAULT_BLANK_LENGTH = 20
 MAX_BLANK_LENGTH = 100
 
+# ``[[page break]]`` on a line of its own: the body continues on the next page
+PAGE_BREAK_RE = re.compile(r'^[ \t]*\[\[page break\]\][ \t]*$', re.MULTILINE)
+
 # Limits on author-written Jinja, in characters, before and after rendering
 MAX_AREA_LENGTH = 50_000
 MAX_RENDERED_LENGTH = 100_000
@@ -325,6 +328,8 @@ def _check_fixed_areas(document):
         if not area.is_fixed:
             continue
         flowables = _area_flowables(document, area, area.height)
+        if any(isinstance(flowable, PageBreak) for flowable in flowables):
+            raise DocumentRenderError(f'{area.name} cannot have a page break; only the body flows over pages')
         # draws what fits, leaves the rest
         _frame(area.top, area.height).addFromList(flowables, Canvas(BytesIO()))
         if flowables:
@@ -404,9 +409,14 @@ def _area_flowables(document, area, height):
 
 
 def _markdown_to_flowables(text):
-    """:returns: reportlab flowables for markdown ``text``"""
-    soup = BeautifulSoup(_markdown_to_html(text), 'html.parser')
-    return _children_to_flowables(soup.children, BODY)
+    """:returns: reportlab flowables for markdown ``text``, with a page break for each ``[[page break]]``"""
+    flowables = []
+    for n, chunk in enumerate(PAGE_BREAK_RE.split(text)):
+        if n:
+            flowables.append(PageBreak())
+        soup = BeautifulSoup(_markdown_to_html(chunk), 'html.parser')
+        flowables.extend(_children_to_flowables(soup.children, BODY))
+    return flowables
 
 
 def _children_to_flowables(children, style):
