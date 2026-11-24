@@ -1,13 +1,19 @@
 from attrs import define, field
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from corehq.util.jsonattrs import AttrsDict
+
+
+class AreaType(models.TextChoices):
+    MARKDOWN = 'markdown', gettext_lazy('Markdown')
+    IMAGE = 'image', gettext_lazy('Image')
 
 
 @define
 class Area:
     value = field(default='')
-    type = field(default='markdown')
+    type = field(default=AreaType.MARKDOWN)
 
 
 class Template(models.Model):
@@ -16,6 +22,8 @@ class Template(models.Model):
     slug = models.SlugField(max_length=50)
     areas = AttrsDict(Area)
     deleted = models.BooleanField(default=False)
+    # Copied from the template with the same slug in the upstream domain
+    is_linked = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
