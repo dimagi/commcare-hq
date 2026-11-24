@@ -31,7 +31,12 @@ from corehq.apps.hqwebapp.utils.bootstrap.paths import get_bootstrap5_path
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone
-from corehq.util.view_utils import absolute_reverse, request_as_dict, reverse
+from corehq.util.view_utils import (
+    absolute_reverse,
+    get_safe_redirect_url,
+    request_as_dict,
+    reverse,
+)
 
 from .cache import request_cache
 from .const import EXPORT_PAGE_LIMIT, AllowedRenderings
@@ -648,7 +653,9 @@ class GenericReportView(object):
             self.request,
             self.deprecation_message
         )
-        return HttpResponseRedirect(self.request.META.get('HTTP_REFERER', '/'))
+        return HttpResponseRedirect(
+            get_safe_redirect_url(self.request, self.request.META.get('HTTP_REFERER'), '/')
+        )
 
     @property
     def view_response(self):

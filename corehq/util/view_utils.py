@@ -229,8 +229,10 @@ def get_safe_redirect_url(request, url, default):
     any redirect target or link that comes from the request (query string,
     POST data, Referer header, session values set from those, etc.).
     """
+    # Pass ``url`` positionally: CodeQL's py/url-redirection query does not
+    # recognize this check when ``url`` is passed by keyword.
     if url and url_has_allowed_host_and_scheme(
-        url=url,
+        url,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):

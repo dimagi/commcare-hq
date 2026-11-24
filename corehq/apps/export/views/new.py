@@ -315,7 +315,9 @@ class BaseExportView(BaseProjectDataView):
                     'error': str(e) or type(e).__name__
                 }, status=500)
             elif isinstance(e, ExportAppException):
-                return HttpResponseRedirect(request.META['HTTP_REFERER'])
+                return HttpResponseRedirect(
+                    get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), self.export_home_url)
+                )
             else:
                 raise
         else:
