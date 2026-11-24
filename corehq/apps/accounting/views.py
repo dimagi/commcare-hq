@@ -137,6 +137,7 @@ from corehq.apps.hqwebapp.views import (
 )
 from corehq.apps.sso.tasks import auto_deactivate_removed_sso_users
 from corehq.toggles import ACCOUNTING_TESTING_TOOLS
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 @require_superuser
@@ -1061,7 +1062,9 @@ class InvoiceSummaryViewBase(AccountingSectionView):
                 self.adjust_balance_form.adjust_balance(
                     web_user=self.request.user.username,
                 )
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER') or self.page_url)
+                return HttpResponseRedirect(
+                    get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), self.page_url)
+                )
         elif 'resend' in self.request.POST:
             if self.resend_email_form.is_valid():
                 try:

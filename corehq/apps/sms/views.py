@@ -128,6 +128,7 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_safe_redirect_url
 from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
@@ -332,8 +333,11 @@ def send_to_recipients(request, domain):
             messages.success(request, _("Message sent"))
 
     return HttpResponseRedirect(
-        request.META.get('HTTP_REFERER')
-        or reverse(ComposeMessageView.urlname, args=[domain])
+        get_safe_redirect_url(
+            request,
+            request.META.get('HTTP_REFERER'),
+            reverse(ComposeMessageView.urlname, args=[domain]),
+        )
     )
 
 

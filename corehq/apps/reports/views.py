@@ -115,7 +115,12 @@ from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
-from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq.util.view_utils import (
+    get_form_or_404,
+    get_safe_redirect_url,
+    request_as_dict,
+    reverse,
+)
 from corehq import privileges, toggles
 
 from .dispatcher import ProjectReportDispatcher
@@ -1685,7 +1690,7 @@ def _opened_case_updated_by_other_forms(case_xform_ids, form_id):
 
 def _get_case_id_and_redirect_url(domain, request):
     case_id = None
-    redirect = request.META.get('HTTP_REFERER')
+    redirect = get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), None)
     if not redirect:
         redirect = inspect.SubmitHistory.get_url(domain)
     else:
@@ -1718,10 +1723,8 @@ def unarchive_form(request, domain, instance_id):
         assert instance.is_normal
     messages.success(request, _("Form was successfully restored."))
 
-    redirect = request.META.get('HTTP_REFERER')
-    if not redirect:
-        redirect = reverse('render_form_data', args=[domain, instance_id])
-    return HttpResponseRedirect(redirect)
+    default_url = reverse('render_form_data', args=[domain, instance_id])
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), default_url))
 
 
 def get_data_cleaning_updates(request, old_properties):

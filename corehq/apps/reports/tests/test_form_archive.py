@@ -103,3 +103,12 @@ class TestUnarchiveFormView(TestCase):
         response = self.client.post(self.url)
         assert response.status_code == 302
         assert not XFormInstance.objects.get_form(self.form_id, DOMAIN).is_archived
+
+    def test_post_redirects_to_same_site_referer(self):
+        referer = f'http://testserver/a/{DOMAIN}/reports/'
+        response = self.client.post(self.url, HTTP_REFERER=referer)
+        assert response['Location'] == referer
+
+    def test_post_ignores_off_site_referer(self):
+        response = self.client.post(self.url, HTTP_REFERER='https://example.com/')
+        assert response['Location'] == reverse('render_form_data', args=[DOMAIN, self.form_id])

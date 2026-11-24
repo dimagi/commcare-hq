@@ -99,6 +99,7 @@ from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_safe_redirect_url
 from corehq.util.view_utils import reverse as reverse_util
 
 
@@ -905,7 +906,8 @@ def move_child_modules_after_parents(request, domain, app_id):
     app = get_app(domain, app_id)
     app.move_child_modules_after_parents()
     app.save()
-    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    default_url = reverse('view_app', args=[domain, app_id])
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), default_url))
 
 
 @no_conflict_require_POST

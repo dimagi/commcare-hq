@@ -15,6 +15,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.apps.users.views.utils import log_user_groups_change
 from corehq.privileges import CASE_SHARING_GROUPS
+from corehq.util.view_utils import get_safe_redirect_url
 from django_prbac.utils import has_privilege
 
 require_can_edit_groups = require_permission(HqPermissions.edit_groups)
@@ -29,7 +30,8 @@ def add_group(request, domain):
             "We could not create the group; "
             "please give it a name first"
         ))
-        return HttpResponseRedirect(request.META['HTTP_REFERER'])
+        default_url = reverse('all_groups', args=[domain])
+        return HttpResponseRedirect(get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), default_url))
     group = Group.by_name(domain, group_name)
     if group:
         messages.warning(request, _(
@@ -135,7 +137,10 @@ def update_group_data(request, domain, group_id):
             messages.error(request, _(
                 "Unable to update group data. Please check the key-value mappings and try to update again."
             ))
-            return HttpResponseRedirect(request.META['HTTP_REFERER'])
+            default_url = reverse('group_members', args=[domain, group_id])
+            return HttpResponseRedirect(
+                get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), default_url)
+            )
         group.metadata = updated_data
 
         _ensure_case_sharing_privilege(request, group)
