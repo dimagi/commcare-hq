@@ -542,13 +542,15 @@ def _integer_buckets_spec(field):
     'age_at_registration',
     'count-of-visits',
     '2nd_visit',
+    '@case_id',          # metadata columns legitimately contain '@'
 ])
 def test_integer_buckets_accepts_column_name(field):
     column = ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
+    column.validate_db_safe()
     assert column.field == field
 
 
-@pytest.mark.parametrize('field', [
+NON_COLUMN_NAME_FIELDS = [
     '',
     '(select count(*) from auth_user)',
     'age or (select 1) = 1',
@@ -558,10 +560,23 @@ def test_integer_buckets_accepts_column_name(field):
     'age\n',
     'a:b',
     'a%b',
-])
-def test_integer_buckets_rejects_non_column_name(field):
+]
+
+
+@pytest.mark.parametrize('field', NON_COLUMN_NAME_FIELDS)
+def test_integer_buckets_rejects_non_column_name_on_validate(field):
+    # Rejected at validate (save) time, not at wrap time.
+    column = ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
     with pytest.raises(BadSpecError):
-        ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
+        column.validate_db_safe()
+
+
+@pytest.mark.parametrize('field', NON_COLUMN_NAME_FIELDS)
+def test_integer_buckets_wrap_does_not_reject(field):
+    # Wrapping must not raise, so existing non-conforming reports stay loadable
+    # and fixable in the editor.
+    column = ReportColumnFactory.from_spec(_integer_buckets_spec(field), is_static=False)
+    assert column.field == field
 
 
 def test_integer_buckets_quotes_field_as_identifier():

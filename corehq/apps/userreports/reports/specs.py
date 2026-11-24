@@ -67,12 +67,16 @@ SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
 }
 
-COLUMN_NAME_REGEX = re.compile(r'[\w\-]+')
+# Column names may contain word characters, hyphens and ``@`` (used by
+# metadata fields such as ``@case_id``). Enforced at save time (see
+# ``validate_column_name``) and quoted as an identifier at query time, but not
+# at wrap time, so existing reports that violate it remain loadable and fixable.
+COLUMN_NAME_REGEX = re.compile(r'[\w\-@]+')
 
 
-def _check_column_name(value):
-    if not COLUMN_NAME_REGEX.fullmatch(value):
-        raise BadValueError("Invalid column name: '{}'".format(value))
+def validate_column_name(value):
+    if not COLUMN_NAME_REGEX.fullmatch(value or ''):
+        raise BadSpecError("Invalid column name: '{}'".format(value))
 
 
 class BaseReportColumn(JsonObject):
@@ -85,6 +89,13 @@ class BaseReportColumn(JsonObject):
     @classmethod
     def restricted_to_static(cls, domain):
         return False
+
+    def validate_db_safe(self):
+        """Raise ``BadSpecError`` if the column would build unsafe SQL.
+
+        Called from ``ReportConfiguration.validate()`` (save time), not at wrap
+        time, so existing non-conforming reports can still be loaded and fixed.
+        """
 
     @classmethod
     def wrap(cls, obj):
@@ -347,8 +358,11 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
     """Used for grouping by SQL conditionals"""
     type = TypeProperty('integer_buckets')
     _agg_column_type = ConditionalAggregation
-    field = StringProperty(required=True, validators=_check_column_name)
+    field = StringProperty(required=True)
     ranges = DictProperty()
+
+    def validate_db_safe(self):
+        validate_column_name(self.field)
 
     def get_whens(self):
         whens = []

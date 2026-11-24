@@ -42,6 +42,7 @@ from corehq.apps.userreports.reports.filters.values import (
     LocationDrilldownFilterValue,
     NumericFilterValue,
     PreFilterValue,
+    check_sql_param_names,
 )
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
@@ -970,6 +971,7 @@ VALID_SQL_PARAM_NAMES = [
     'count-of-visits',
     'q.1_abc12345_0',
     'número',
+    '@case_id',          # metadata columns legitimately contain '@'
 ]
 
 
@@ -999,23 +1001,31 @@ def test_filter_slug_accepted(slug):
 
 
 @pytest.mark.parametrize('slug', INVALID_SQL_PARAM_NAMES)
-def test_filter_slug_rejected(slug):
+def test_filter_from_spec_does_not_reject_slug(slug):
+    # Building the UI filter must not raise, so existing non-conforming reports
+    # stay loadable and fixable in the editor.
+    assert ReportFilterFactory.from_spec(_pre_filter_spec(slug)).name == slug
+
+
+@pytest.mark.parametrize('slug', INVALID_SQL_PARAM_NAMES)
+def test_check_sql_param_names_rejects_slug(slug):
+    # Save-time validation (called from ReportConfiguration.validate())
     with pytest.raises(BadSpecError):
-        ReportFilterFactory.from_spec(_pre_filter_spec(slug))
+        check_sql_param_names(_pre_filter_spec(slug))
 
 
 @pytest.mark.parametrize('slug', INVALID_SQL_PARAM_NAMES)
 def test_filter_value_rejects_slug(slug):
-    # Filter values are also built from raw filter specs, without the spec wrapper
+    # Query-build-time backstop: filter values are built from raw filter specs
     with pytest.raises(BadSpecError):
         PreFilterValue(_pre_filter_spec(slug), {'operator': '=', 'operand': 'abc'})
 
 
 @pytest.mark.parametrize('field', INVALID_SQL_PARAM_NAMES)
-def test_ancestor_expression_field_rejected(field):
-    report = ReportConfiguration(domain='test-domain')
+def test_check_sql_param_names_rejects_ancestor_expression_field(field):
+    # Save-time validation covers the ancestor_expression field too
     with pytest.raises(BadSpecError):
-        ReportFilterFactory.from_spec(_location_drilldown_spec(field), report)
+        check_sql_param_names(_location_drilldown_spec(field))
 
 
 @pytest.mark.parametrize('field', INVALID_SQL_PARAM_NAMES)
@@ -1031,3 +1041,25 @@ def test_filter_slug_is_sql_param_name():
     ))
     assert sql == 'owner_id = %(owner_id_0)s'
     assert filter_value.to_sql_values() == {'owner_id_0': 'abc'}
+
+
+def test_report_with_unsafe_slug_and_field_still_loads():
+    # Regression: existing reports that violate the SQL-safety rules must remain
+    # loadable (wrap + build columns/filters) so they can be opened and fixed in
+    # the editor. Enforcement happens at save time and query-build time instead.
+    report = ReportConfiguration.wrap({
+        'domain': 'test-domain',
+        'config_id': 'abc123',
+        'title': 'bad report',
+        'aggregation_columns': ['doc_id'],
+        'filters': [{
+            'type': 'pre', 'slug': 'x)s; drop', 'field': 'f',
+            'datatype': 'string', 'pre_value': 'v',
+        }],
+        'columns': [{
+            'type': 'integer_buckets', 'column_id': 'c',
+            'field': 'x)s; drop', 'ranges': {'a': [0, 6]},
+        }],
+    })
+    assert len(report.report_columns) == 1
+    assert len(report.ui_filters) == 1
