@@ -87,7 +87,7 @@ class TestEditDocumentTemplateView(TestCase):
         data = {'name': 'Renamed', 'slug': 'renamed', 'area_body': 'New **body**'}
         return {**data, **overrides}
 
-    def test_updates_name_slug_and_areas(self):
+    def test_updates_name_and_areas_but_not_slug(self):
         template = Template.objects.create(
             domain=DOMAIN, name='Welcome', slug='welcome',
             areas={'body': Area(value='Old')},
@@ -95,7 +95,7 @@ class TestEditDocumentTemplateView(TestCase):
         response = _post(EditDocumentTemplateView, template.pk, self._data())
         assert response.status_code == 302
         template.refresh_from_db()
-        assert (template.name, template.slug) == ('Renamed', 'renamed')
+        assert (template.name, template.slug) == ('Renamed', 'welcome')
         assert template.areas['body'] == Area(value='New **body**')
 
     def test_can_save_without_changing_the_slug(self):

@@ -39,6 +39,15 @@ def test_invalid_slug_is_rejected(slug):
     assert 'slug' in form.errors
 
 
+def test_slug_is_editable_on_a_new_template():
+    assert not _form()['slug'].field.disabled
+
+
+def test_slug_is_not_editable_on_a_saved_template():
+    template = Template(pk=1, name='Welcome', slug='welcome', areas={})
+    assert _form(instance=template)['slug'].field.disabled
+
+
 def test_areas_have_the_fields_of_each_area_only():
     form = _form(area_names=['area1', 'name'])
     assert [area.name for area in form.areas()] == ['area1', 'name']
@@ -121,12 +130,12 @@ class TestTemplateFormValidation(TestCase):
         template = Template.objects.create(domain=DOMAIN, name='Old', slug='welcome', areas={})
         assert _form({'name': 'Renamed', 'slug': 'welcome'}, instance=template).is_valid()
 
-    def test_template_cannot_take_the_slug_of_another_template(self):
+    def test_posted_slug_is_ignored_on_a_saved_template(self):
         Template.objects.create(domain=DOMAIN, name='Other', slug='taken', areas={})
         template = Template.objects.create(domain=DOMAIN, name='Old', slug='welcome', areas={})
         form = _form({'name': 'Old', 'slug': 'taken'}, instance=template)
-        assert not form.is_valid()
-        assert 'slug' in form.errors
+        assert form.is_valid()
+        assert form.cleaned_data['slug'] == 'welcome'
 
 
 class TestTemplateFormSave(TestCase):
@@ -150,7 +159,7 @@ class TestTemplateFormSave(TestCase):
         assert form.is_valid()
         form.save()
         template.refresh_from_db()
-        assert (template.name, template.slug) == ('New', 'new')
+        assert (template.name, template.slug) == ('New', 'old')
         assert template.areas == {'body': Area(value='New')}
         assert Template.objects.count() == 1
 

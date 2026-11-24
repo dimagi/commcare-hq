@@ -52,6 +52,7 @@
           class="form-control {{ form.slug.errors|yesno:'is-invalid,' }}"
           maxlength="50"
           required
+          {% if form.slug.field.disabled %}disabled{% endif %}
         />
         {% for error in form.slug.errors %}
           <div class="invalid-feedback">{{ error }}</div>

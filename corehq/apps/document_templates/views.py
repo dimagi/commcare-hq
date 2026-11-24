@@ -120,6 +120,7 @@ class TemplateForm(forms.ModelForm):
     def __init__(self, *args, domain, area_names, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.domain = domain
+        self.fields['slug'].disabled = self.instance.pk is not None
         self.area_names = area_names
         saved_areas = self.instance.areas or {}
         for area_name in area_names:
