@@ -20,7 +20,6 @@ from ..daily_calcs import (
     _calc_chatbot_users_near_quota_30d,
     _calc_users_with_web_apps_submission_30d,
     _calc_web_users_accessed_30d,
-    _chatbot_user_ids_under_quota_pressure,
 )
 from ..metric_registry import DomainContext
 from .utils import save_to_es_analytics_db
@@ -189,12 +188,6 @@ class TestCalcChatbotActiveUsers30d(TestCase):
 @travel('2026-11-20', tick=False)
 class TestCalcChatbotUsersUnderQuotaPressure30d(TestCase):
     domain = 'chatbot-quota-test'
-
-    def setUp(self):
-        super().setUp()
-        for field in ['last_quota_warning_at', 'last_quota_limit_at']:
-            _chatbot_user_ids_under_quota_pressure.clear(field)
-            self.addCleanup(_chatbot_user_ids_under_quota_pressure.clear, field)
 
     def _web_user_under_pressure(self, name, domain, days_ago, at_limit=True):
         user = WebUser(
