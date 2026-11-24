@@ -339,6 +339,20 @@ var parseInputDate = function (dateString) {
     return dateObj.isValid() ? dateObj : null;
 };
 
+// TD displays AM/PM in the browser's locale, but moment parses them in English
+const _toEnglishDayPeriod = function (value, locale) {
+    const format = new Intl.DateTimeFormat(locale, { hour: 'numeric', hour12: true });
+    const dayPeriod = (hour) => format.formatToParts(new Date(2000, 0, 1, hour))
+        .find((part) => part.type === 'dayPeriod').value.toLowerCase();
+    return value.toLowerCase().replace(dayPeriod(13), 'pm').replace(dayPeriod(1), 'am');
+};
+
+const parseInputTime = function (value, timeFormat, locale) {
+    const noSeparatorFormat = timeFormat.includes('A') ? 'hmm A' : 'Hmm';
+    const time = moment(_toEnglishDayPeriod(value, locale), [noSeparatorFormat, timeFormat]);
+    return time.isValid() ? time : null;
+};
+
 var initDatePicker = function ($el, selectedDate) {
     if (!$el.length) {
         return;
@@ -391,7 +405,17 @@ var initTimePicker = function ($el, selectedTime, timeFormat) {
     if (date.isValid()) {
         options.viewDate = new hqTempusDominus.DateTime(date);
     }
-    return hqTempusDominus.createTimePicker($el[0].parentNode, options);
+    const picker = hqTempusDominus.createTimePicker($el[0].parentNode, options);
+    // TD's parser drops digits when the separator is omitted, e.g. "1111" becomes 11:01
+    picker.dates.setFromInput = (value, index) => {
+        const localization = picker.viewDate.localization;
+        const time = parseInputTime(value, timeFormat, localization.locale);
+        picker.dates.setValue(
+            time ? new hqTempusDominus.DateTime(time.toDate()).setLocalization(localization) : undefined,
+            index,
+        );
+    };
+    return picker;
 };
 
 var smallScreenIsEnabled = function () {
@@ -431,6 +455,7 @@ export default {
     dateFormat: dateFormat,
     convertTwoDigitYear: convertTwoDigitYear,
     parseInputDate: parseInputDate,
+    parseInputTime: parseInputTime,
     initDatePicker: initDatePicker,
     initTimePicker: initTimePicker,
     showError: showError,
