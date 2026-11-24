@@ -42,6 +42,15 @@ def rate_limit_access_request(domain, contact=None):
     return status != STATUS_ACCEPTED
 
 
+@run_only_when(lambda: SHOULD_RATE_LIMIT_ACCESS_REQUESTS)
+@silence_and_report_error(
+    "Exception raised in the public webform soft rate limit check",
+    'commcare.public_webforms.soft_rate_limit_check_errors')
+def is_soft_rate_limited(domain):
+    status = _check_for_exceeded_soft_rate_limits(domain, _get_ip_address())
+    return status != STATUS_ACCEPTED
+
+
 def _get_ip_address():
     request = get_request()
     return get_ip(request) if request else None
