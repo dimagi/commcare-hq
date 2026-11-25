@@ -4,7 +4,11 @@
 {% js_entry "hqwebapp/js/htmx_and_alpine" %}
 
 {% block page_content %}
-  <form method="post" x-data="{ previewError: '' }">
+  <form
+    method="post"
+    x-data="{ previewError: '', previewUrl: '', generating: false }"
+    @input="previewUrl = ''"
+  >
     {% csrf_token %}
 
     {% if form.instance.is_linked %}
@@ -48,6 +52,7 @@
           class="form-control {{ form.slug.errors|yesno:'is-invalid,' }}"
           maxlength="50"
           required
+          {% if form.slug.field.disabled %}disabled{% endif %}
         />
         {% for error in form.slug.errors %}
           <div class="invalid-feedback">{{ error }}</div>
@@ -69,7 +74,7 @@
         data-bs-target="#preview-modal"
         hx-post="{% url 'preview_document_variables' domain %}"
         hx-target="#preview-modal-body"
-        @click="previewError = ''"
+        @click="previewError = ''; previewUrl = ''"
       >
         {% trans "Preview" %}
       </button>
@@ -123,23 +128,40 @@
             <button
               type="button"
               class="btn btn-primary"
+              x-show="!previewUrl"
+              :disabled="generating"
               @click="
                 previewError = '';
-                const response = await fetch('{% url 'preview_document' domain %}', {
-                  method: 'POST',
-                  body: new FormData($el.form),
-                });
-                if (response.ok) {
-                  window.open(URL.createObjectURL(await response.blob()), '_blank');
-                } else {
-                  previewError = response.status === 400
-                    ? await response.text()
-                    : '{{ preview_failed|escapejs }}';
+                generating = true;
+                try {
+                  const response = await fetch('{% url 'preview_document' domain %}', {
+                    method: 'POST',
+                    body: new FormData($el.form),
+                  });
+                  if (response.ok) {
+                    previewUrl = URL.createObjectURL(await response.blob());
+                  } else {
+                    previewError = response.status === 400
+                      ? await response.text()
+                      : '{{ preview_failed|escapejs }}';
+                  }
+                } catch (e) {
+                  previewError = '{{ preview_failed|escapejs }}';
+                } finally {
+                  generating = false;
                 }
               "
             >
-              {% trans "Preview" %}
+              {% trans "Generate PDF" %}
             </button>
+            <a
+              class="btn btn-primary"
+              x-show="previewUrl"
+              :href="previewUrl"
+              target="_blank"
+            >
+              {% trans "Open preview" %}
+            </a>
           </div>
         </div>
       </div>

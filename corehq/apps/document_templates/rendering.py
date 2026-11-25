@@ -23,10 +23,12 @@ can be added next to it.
 import html
 import re
 from io import BytesIO
+from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
 
 import attrs
 import markdown
+from markdown.inlinepatterns import SimpleTagInlineProcessor
 from attrs import define
 from bs4 import BeautifulSoup
 from django.utils.translation import gettext
@@ -43,6 +45,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -69,16 +73,33 @@ _BODY_TOP = 3.5 * inch
 _FOOTER_HEIGHT = 1 * inch
 _BODY_HEIGHT = _PAGE_HEIGHT - 2 * _MARGIN - _FOOTER_HEIGHT  # on the pages after the first
 
+# Padauk covers Latin and Burmese. Burmese needs shaping, which needs uharfbuzz.
+# Padauk has no italic, so italic text is set upright.
+_FONTS_DIR = Path(__file__).parent / 'fonts'
+FONT = 'Padauk'
+FONT_SIZE = 12
+BOLD_FONT = 'Padauk-Bold'
+pdfmetrics.registerFont(TTFont(FONT, _FONTS_DIR / 'Padauk-Regular.ttf', shaped=True))
+pdfmetrics.registerFont(TTFont(BOLD_FONT, _FONTS_DIR / 'Padauk-Bold.ttf', shaped=True))
+pdfmetrics.registerFontFamily(FONT, normal=FONT, bold=BOLD_FONT, italic=FONT, boldItalic=BOLD_FONT)
+
 _sheet = getSampleStyleSheet()
-BODY = _sheet['BodyText']
-QUOTE = ParagraphStyle(
-    'quote', parent=BODY, fontName='Helvetica-Oblique', leftIndent=18, textColor=colors.HexColor('#555555'),
-)
-TABLE_HEADER = ParagraphStyle('table_header', parent=BODY, fontName='Helvetica-Bold')
-HEADINGS = {f'h{n}': _sheet[f'Heading{min(n, 3)}'] for n in range(1, 7)}
+BODY = ParagraphStyle('BodyText', parent=_sheet['BodyText'], fontName=FONT, fontSize=FONT_SIZE,
+                      leading=FONT_SIZE * 1.5)
+QUOTE = ParagraphStyle('quote', parent=BODY, leftIndent=18, textColor=colors.HexColor('#555555'))
+TABLE_HEADER = ParagraphStyle('table_header', parent=BODY, fontName=BOLD_FONT)
+HEADINGS = {
+    f'h{n}': ParagraphStyle(name, parent=_sheet[name], fontName=BOLD_FONT)
+    for n in range(1, 7)
+    for name in [f'Heading{min(n, 3)}']
+}
 
 # HTML tag -> reportlab paragraph markup tag
-INLINE_TAGS = {'strong': 'b', 'em': 'i'}
+INLINE_TAGS = {'strong': 'b', 'em': 'i', 'u': 'u', 'strike': 'strike'}
+
+# Markdown inline patterns: ``__underline__``, not inside words, and ``~~strike~~``
+UNDERLINE_RE = r'(?<!\w)(__)(?!_)(.+?)(?<!_)__(?!\w)'
+STRIKE_RE = r'(~~)(?!~)(.+?)(?<!~)~~'
 
 # Links in the PDF can only open these
 LINK_SCHEME_RE = re.compile(r'(https?|mailto):', re.IGNORECASE)
@@ -87,6 +108,9 @@ LINK_SCHEME_RE = re.compile(r'(https?|mailto):', re.IGNORECASE)
 BLANK_RE = re.compile(r'\[\[blank(?::(\d{1,3}))?\]\]')
 DEFAULT_BLANK_LENGTH = 20
 MAX_BLANK_LENGTH = 100
+
+# ``[[page break]]`` on a line of its own: the body continues on the next page
+PAGE_BREAK_RE = re.compile(r'^[ \t]*\[\[page break\]\][ \t]*$', re.MULTILINE)
 
 # Limits on author-written Jinja, in characters, before and after rendering
 MAX_AREA_LENGTH = 50_000
@@ -182,10 +206,16 @@ def _parse_variable_names(text):
 
 
 def _markdown_to_html(value):
-    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through"""
-    md = markdown.Markdown(extensions=['nl2br', 'tables'])
+    """HTML for markdown ``value``; HTML in ``value`` is escaped, not passed through
+
+    ``__text__`` is underlined, not bold, and ``~~text~~`` is struck through.
+    """
+    md = markdown.Markdown(extensions=['nl2br', 'tables', 'sane_lists'])
     md.preprocessors.deregister('html_block')
     md.inlinePatterns.deregister('html')
+    # Priority 55 runs before the underscore emphasis (50), so __ is not bold
+    md.inlinePatterns.register(SimpleTagInlineProcessor(UNDERLINE_RE, 'u'), 'underline', 55)
+    md.inlinePatterns.register(SimpleTagInlineProcessor(STRIKE_RE, 'strike'), 'strike', 55)
     return md.convert(value)
 
 
@@ -298,6 +328,8 @@ def _check_fixed_areas(document):
         if not area.is_fixed:
             continue
         flowables = _area_flowables(document, area, area.height)
+        if any(isinstance(flowable, PageBreak) for flowable in flowables):
+            raise DocumentRenderError(f'{area.name} cannot have a page break; only the body flows over pages')
         # draws what fits, leaves the rest
         _frame(area.top, area.height).addFromList(flowables, Canvas(BytesIO()))
         if flowables:
@@ -377,9 +409,14 @@ def _area_flowables(document, area, height):
 
 
 def _markdown_to_flowables(text):
-    """:returns: reportlab flowables for markdown ``text``"""
-    soup = BeautifulSoup(_markdown_to_html(text), 'html.parser')
-    return _children_to_flowables(soup.children, BODY)
+    """:returns: reportlab flowables for markdown ``text``, with a page break for each ``[[page break]]``"""
+    flowables = []
+    for n, chunk in enumerate(PAGE_BREAK_RE.split(text)):
+        if n:
+            flowables.append(PageBreak())
+        soup = BeautifulSoup(_markdown_to_html(chunk), 'html.parser')
+        flowables.extend(_children_to_flowables(soup.children, BODY))
+    return flowables
 
 
 def _children_to_flowables(children, style):

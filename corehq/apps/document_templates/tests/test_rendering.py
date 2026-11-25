@@ -1,8 +1,11 @@
 import pytest
-from reportlab.platypus import ListFlowable, Paragraph, Table
+from reportlab.pdfbase import pdfmetrics
+from reportlab.platypus import ListFlowable, PageBreak, Paragraph, Table
 
 from corehq.apps.document_templates.models import Area
 from corehq.apps.document_templates.rendering import (
+    BOLD_FONT,
+    FONT,
     DocumentRenderError,
     MAX_AREA_LENGTH,
     MAX_RENDERED_LENGTH,
@@ -135,10 +138,25 @@ def test_generate_document_reports_a_syntax_error():
         _generate({**VALUES, 'footer': '{% if %}'}, {})
 
 
-def test_markdown_emphasis_mangles_dunder_names_in_values():
-    # Python-Markdown turns __word__ into <strong>, so such names cannot be used in a value
+@pytest.mark.parametrize('value, expected', [
+    ('__underlined__', '<p><u>underlined</u></p>'),
+    ('~~struck~~', '<p><strike>struck</strike></p>'),
+    ('**bold** and *italic*', '<p><strong>bold</strong> and <em>italic</em></p>'),
+    ('__a *b* c__', '<p><u>a <em>b</em> c</u></p>'),
+    ('**__both__**', '<p><strong><u>both</u></strong></p>'),
+    ('~~__both__~~', '<p><strike><u>both</u></strike></p>'),
+    ('snake__case__name', '<p>snake__case__name</p>'),
+    ('`__code__`', '<p><code>__code__</code></p>'),
+    ('a\\__b__', '<p>a__b__</p>'),
+])
+def test_markdown_underline_and_strike(value, expected):
+    assert _markdown_to_html(value) == expected
+
+
+def test_markdown_underline_mangles_dunder_names_in_values():
+    # __word__ is underlined, so such names cannot be used in a value
     html = _markdown_to_html("{{ ''.__class__.__mro__ }}")
-    assert html == "<p>{{ ''.<strong>class</strong>.<strong>mro</strong> }}</p>"
+    assert html == "<p>{{ ''.<u>class</u>.<u>mro</u> }}</p>"
 
 
 def _markups(flowables):
@@ -148,6 +166,7 @@ def _markups(flowables):
 @pytest.mark.parametrize('markdown_text, expected', [
     ('plain', ['plain']),
     ('**b** *i*', ['<b>b</b> <i>i</i>']),
+    ('__u__ ~~s~~', ['<u>u</u> <strike>s</strike>']),
     ('line one\nline two', ['line one<br/> line two']),
     ('a < b & c', ['a &lt; b &amp; c']),
     ('`code`', ['<font name="Courier">code</font>']),
@@ -220,6 +239,18 @@ def test_render_pdf_returns_a_pdf():
     assert render_pdf([_document(body='Hello')]).startswith(b'%PDF')
 
 
+def test_render_pdf_embeds_padauk_for_latin_and_burmese_text():
+    pdf = render_pdf([_document(header='# ¡Hola, señor!', body='**မင်္ဂလာပါ** _ok_')])
+    assert b'+Padauk' in pdf
+    assert b'+Padauk-Bold' in pdf
+
+
+def test_fonts_are_shaped():
+    # ReportLab silently renders unshaped text if uharfbuzz cannot be imported
+    assert pdfmetrics.getFont(FONT).isShaped
+    assert pdfmetrics.getFont(BOLD_FONT).isShaped
+
+
 @pytest.mark.parametrize('area', [
     Area(type='unknown', value='x'),
     Area(type='image', value='a-key'),  # images not loaded
@@ -240,6 +271,38 @@ def test_blank_is_underlined():
     paragraph.wrap(400, 100)
     frags = paragraph.blPara.lines[0].words
     assert [frag.text for frag in frags if frag.us_lines] == ['\xa0'] * 5
+
+
+@pytest.mark.parametrize('markdown_text, expected', [
+    ('a\n\n[[page break]]\n\nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n[[page break]]\nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n  [[page break]]  \nb', [Paragraph, PageBreak, Paragraph]),
+    ('a\n[[page break]]\n[[page break]]\nb', [Paragraph, PageBreak, PageBreak, Paragraph]),
+    ('[[page break]]\nb', [PageBreak, Paragraph]),
+    ('a [[page break]] b', [Paragraph]),
+    ('a\n[[Page Break]]\nb', [Paragraph]),
+])
+def test_markdown_to_flowables_page_break(markdown_text, expected):
+    assert [type(flowable) for flowable in _markdown_to_flowables(markdown_text)] == expected
+
+
+def test_page_break_in_a_context_value_is_text():
+    document = generate_document(_areas({**VALUES, 'body': 'a\n{{ value }}\nb'}), {'value': '[[page break]]'})
+    flowables = document.areas['body'].flowables(400, 400, 'LEFT')
+    assert [type(flowable) for flowable in flowables] == [Paragraph]
+    assert '[[page break]]' in flowables[0].text
+
+
+@pytest.mark.parametrize('breaks, pages', [(1, 2), (2, 3)])
+def test_render_pdf_breaks_the_body_onto_a_new_page(breaks, pages):
+    body = '\n'.join(['a', *['[[page break]]'] * breaks, 'b'])
+    assert render_pdf([_document(body=body)]).count(b'/Type /Page\n') == pages
+
+
+@pytest.mark.parametrize('area_name', ['header', 'address', 'footer'])
+def test_generate_document_rejects_a_page_break_in_a_fixed_area(area_name):
+    with pytest.raises(DocumentRenderError, match=f'{area_name} cannot have a page break'):
+        _generate({**VALUES, area_name: 'a\n[[page break]]\nb'}, {})
 
 
 LONG_TEXT = '\n\n'.join(['paragraph'] * 200)

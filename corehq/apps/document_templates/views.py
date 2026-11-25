@@ -19,6 +19,8 @@ from django.utils.translation import gettext, gettext_lazy, gettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
+from dimagi.utils.logging import notify_error
+
 from corehq import toggles
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.document_templates.case_documents import (
@@ -118,6 +120,7 @@ class TemplateForm(forms.ModelForm):
     def __init__(self, *args, domain, area_names, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.domain = domain
+        self.fields['slug'].disabled = self.instance.pk is not None
         self.area_names = area_names
         saved_areas = self.instance.areas or {}
         for area_name in area_names:
@@ -380,6 +383,14 @@ def render_document(request, domain):
     try:
         pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
     except CaseDocumentError as error:
+        notify_error('Document template render failed', details={
+            'domain': domain,
+            'error': error.message,
+            'failed': [
+                {'case_id': failure.case_id, 'reason': failure.reason}
+                for failure in error.failures
+            ],
+        })
         return JsonResponse({
             'error': error.message,
             'failed': [
