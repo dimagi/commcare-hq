@@ -10,7 +10,7 @@
      <div class="container-fluid">
 -      <div class="row">
 -        <div class="col-xs-12">
--          <a href="https://dimagi.com/commcare/" class="footer-link-img">
+-          <a href="https://commcare.dimagi.com/" class="footer-link-img">
 -            <img
 -              src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
 -              alt="CommCare"
@@ -27,7 +27,7 @@
 -          {% endblocktrans %}{% now "Y" %}
 -          <a href="https://dimagi.com/">Dimagi, Inc.</a>
 +      <p class="text-center align-middle mb-0 w-100">
-+        <a href="https://dimagi.com/commcare/" class="footer-link-img">
++        <a href="https://commcare.dimagi.com/" class="footer-link-img">
 +          <img
 +            src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
 +            alt="CommCare"
@@ -51,10 +51,10 @@
 +        <span class="d-none d-md-inline">&nbsp;|&nbsp;</span>
 +        <br class="d-md-none" />
  
--          <a href="https://dimagi.com/commcare/"
+-          <a href="https://commcare.dimagi.com/"
 -            >{% trans 'Learn more about CommCare' %}</a
 -          >
-+        <a href="https://dimagi.com/commcare/"
++        <a href="https://commcare.dimagi.com/"
 +          >{% trans 'Learn more about CommCare' %}</a
 +        >
  
