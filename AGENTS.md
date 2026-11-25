@@ -4,6 +4,7 @@
 
 - **migrations.lock** — If you wrote a migration instead of generating one,
   run `uv run ./manage.py makemigrations --lock-update` to update the lock file.
+  Check it as CI does with `uv run ./manage.py makemigrations --lock-check`.
 
 - **New domain-scoped models** — Any new model with a `domain` field (or
   reachable via FK to a domain) must be registered in two places or CI will
