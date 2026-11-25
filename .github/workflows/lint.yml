@@ -8,6 +8,7 @@ on:
 permissions:
   checks: write
   contents: write
+  pull-requests: read  # the eslint action lists the PR's changed files
 
 jobs:
   lint-python:
