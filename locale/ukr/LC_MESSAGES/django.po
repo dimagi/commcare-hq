@@ -3410,10 +3410,19 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Our records indicate that you have not added an autopay card to your\n"
+#| "      account. Providing an autopay method is a requirement for all monthly\n"
+#| "      subscriptions. If an autopay card is not added by\n"
+#| "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
+#| "      Billing Statement remains unpaid, we will automatically pause your\n"
+#| "      subscription.\n"
+#| "    "
 msgid ""
 "\n"
 "      Our records indicate that you have not added an autopay card to your\n"
-"      account. Providing an autopay method is a requirement for all monthly\n"
+"      account. Providing an autopay method is a requirement for all\n"
 "      subscriptions. If an autopay card is not added by\n"
 "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
 "      Billing Statement remains unpaid, we will automatically pause your\n"
@@ -3421,11 +3430,11 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Наші записи свідчать, що ви не додали картку автосплати до свого\n"
-"      акаунту. Надання методу автосплати є обов’язковим для всіх щомісячних\n"
-"      підписок. Якщо картка автосплати не буде додана протягом\n"
-"      %(overdue_invoice_limit_days)s днів після %(date_due)s і виписка по оплаті залишиться несплаченою, ми автоматично призупинимо вашу\n"
-"      підписку.\n"
+"      Згідно з нашими даними, ви не додали картку для автоматичної оплати до свого\n"
+"      облікового запису. Для всіх підписок потрібно вказати спосіб автоматичної\n"
+"      оплати. Якщо картку для автоматичної оплати не буде додано протягом\n"
+"      %(overdue_invoice_limit_days)s днів після %(date_due)s, а рахунок-фактура\n"
+"      залишиться неоплаченим, ми автоматично призупинимо вашу підписку.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3472,38 +3481,53 @@ msgstr "Ви також можете оплатити цей рахунок ра
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      To pay by credit card, please go to your\n"
+#| "      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
+#| "      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
+#| "      and fill in the amount you want to pay as well as your credit card\n"
+#| "      details.\n"
+#| "    "
 msgid ""
 "\n"
 "      To pay by credit card, please go to your\n"
-"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
-"      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
-"      and fill in the amount you want to pay as well as your credit card\n"
-"      details.\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on the\n"
+"      green \"Make Payment\" button in front of your unpaid invoice(s), and fill\n"
+"      in the amount you want to pay as well as your credit card details.\n"
 "    "
 msgstr ""
 "\n"
-"      Щоб сплатити кредитною карткою, перейдіть на сторінку\n"
-"      <a href=\"%(statements_url)s\">Рахунків</a>, натисніть зелену кнопку\n"
-"      \"Оплатити\" навпроти неоплаченого рахунку(ів),\n"
-"      і введіть суму, яку бажаєте сплатити, а також дані вашої кредитної картки.\n"
+"      Щоб оплатити кредитною карткою, перейдіть на сторінку\n"
+"      <a href=\"%(statements_url)s\">рахунків</a>, натисніть зелену кнопку\n"
+"      «Оплатити» навпроти неоплаченого рахунку (рахунків) і вкажіть суму оплати\n"
+"      та дані кредитної картки.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        - To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#| "          Please include the invoice number in your wire payment and make sure to\n"
+#| "          send an email to %(accounts_email)s after you have made the payment,\n"
+#| "          mentioning the date of the payment, the amount, the invoice number, and\n"
+#| "          the project space.\n"
+#| "      "
 msgid ""
 "\n"
 "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
-"        Please include the invoice number in your wire payment and make sure\n"
-"        to send an email to %(accounts_email)s after you have made the\n"
-"        payment, mentioning the date of the payment, the amount, the invoice\n"
-"        number, and the project space.\n"
+"        Please include the invoice number in your wire payment and make sure to\n"
+"        send an email to %(accounts_email)s after you have made the payment,\n"
+"        mentioning the date of the payment, the amount, the invoice number, and\n"
+"        the project space.\n"
 "      "
 msgstr ""
 "\n"
-"        Щоб сплатити банківським переказом, знайдіть банківські реквізити Dimagi у вашому рахунку.\n"
-"        Будь ласка, вкажіть номер рахунку у платіжних деталях та обов'язково\n"
-"        надішліть листа на %(accounts_email)s після здійснення оплати,\n"
-"        зазначивши дату платежу, суму, номер рахунку та простір проєкту.\n"
+"        Щоб оплатити банківським переказом, знайдіть банківські реквізити Dimagi у своєму рахунку.\n"
+"        Укажіть номер рахунку в призначенні платежу та обов’язково надішліть\n"
+"        листа на адресу %(accounts_email)s після здійснення оплати, зазначивши\n"
+"        дату й суму платежу, номер рахунку та простір проєкту.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3554,16 +3578,27 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  Our records indicate that you have not added an autopay card to your\n"
+#| "  account. Providing an autopay method is a requirement for all monthly\n"
+#| "  subscriptions. If an autopay card is not added by\n"
+#| "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
+#| "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgid ""
 "\n"
 "  Our records indicate that you have not added an autopay card to your\n"
-"  account. Providing an autopay method is a requirement for all monthly\n"
+"  account. Providing an autopay method is a requirement for all\n"
 "  subscriptions. If an autopay card is not added by\n"
 "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
 "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgstr ""
 "\n"
-"  Наші записи свідчать, що ви не додали картку автосплати до свого акаунту. Надання методу автосплати є обов’язковим для всіх щомісячних підписок. Якщо картка автосплати не буде додана протягом %(overdue_invoice_limit_days)s днів після %(date_due)s і виписка по оплаті залишиться несплаченою, ми автоматично призупинимо вашу підписку.\n"
+"  Згідно з нашими даними, ви не додали картку для автоматичної оплати до свого\n"
+"  облікового запису. Для всіх підписок потрібно вказати спосіб автоматичної\n"
+"  оплати. Якщо картку для автоматичної оплати не буде додано протягом\n"
+"  %(overdue_invoice_limit_days)s днів після %(date_due)s, а рахунок-фактура\n"
+"  залишиться неоплаченим, ми автоматично призупинимо вашу підписку.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
@@ -4623,10 +4658,22 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#| msgid ""
+#| "\n"
+#| "        In case you incur any on-demand fees for excess users or SMS, you\n"
+#| "        will receive invoices for these charges on a monthly basis. See\n"
+#| "        <a\n"
+#| "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+#| "          >here</a\n"
+#| "        >\n"
+#| "        for more information about payment, cancellation, and refunds.\n"
+#| "      "
 msgid ""
 "\n"
-"        In case you incur any on-demand fees for excess users or SMS, you\n"
-"        will receive invoices for these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you will\n"
+"        receive invoices for these charges on a monthly basis. A credit card\n"
+"        must be added to the account for automatic payment of these invoices.\n"
+"        See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -4635,13 +4682,15 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        У разі виникнення додаткових платежів за понаднормових користувачів або SMS,\n"
-"        ви отримуватимете рахунки за ці послуги щомісяця. Дивіться\n"
+"        Якщо у вас виникнуть додаткові витрати за користувачів понад ліміт або SMS\n"
+"        за моделлю оплати за фактом використання, ви щомісяця отримуватимете рахунки\n"
+"        за ці послуги. Для автоматичної оплати цих рахунків до облікового запису\n"
+"        потрібно додати кредитну картку. Докладніше про оплату, скасування та\n"
+"        повернення коштів дивіться\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >тут</a\n"
-"        >\n"
-"        для отримання додаткової інформації щодо оплати, скасування та повернення коштів.\n"
+"        >.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -5309,12 +5358,6 @@ msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#| msgid ""
-#| "\n"
-#| "      By clicking Submit Request, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "By clicking Submit Request, I agree to Dimagi's <a "
 "href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
@@ -5707,7 +5750,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "Будь ласка, увійдіть у додаток, щоб перевірити наявність оновлення."
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Remote apps are not supported"
 msgid "RemoteApps are no longer supported"
 msgstr "RemoteApps більше не підтримуються"
 
@@ -24198,13 +24240,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
 msgid ""
 "\n"
-"                Please provide an autopay card before continuing.\n"
+"                Please provide an autopay card before continuing. If you are\n"
+"                unable to add a payment card, contact\n"
+"                <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"                for other options.\n"
 "              "
 msgstr ""
 "\n"
-"                Будь ласка, надайте картку автосплати перед продовженням.\n"
+"                Перш ніж продовжити, додайте картку для автоматичної оплати. Якщо\n"
+"                ви не можете додати платіжну картку, зверніться до служби підтримки\n"
+"                за адресою <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>,\n"
+"                щоб дізнатися про інші варіанти.\n"
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -24246,37 +24295,6 @@ msgstr ""
 "                    Окремий річний рахунок за вартість продукту буде\n"
 "                    сформовано та надіслано на контактні електронні адреси вище. Цей рахунок\n"
 "                    має бути сплачений протягом %(days_date_due_annual)s днів, інакше підписку буде призупинено. Вибрана картка автосплати не буде автоматично списана для оплати цього рахунку — його потрібно сплатити напряму.\n"
-"                  "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"                  By subscribing to this <strong>annual subscription</strong>,\n"
-"                  you acknowledge that you understand an annual invoice for the\n"
-"                  product cost will be generated and sent to the contact emails\n"
-"                  above. This invoice must be paid within\n"
-"                  %(days_date_due_annual)s days or the subscription will be\n"
-"                  paused.\n"
-"                "
-msgstr ""
-"\n"
-"                  Підписуючись на цю <strong>річну підписку</strong>,\n"
-"                  ви підтверджуєте, що розумієте: річний рахунок за вартість продукту буде сформовано та надіслано на контактні електронні адреси вище. Цей рахунок має бути сплачений протягом %(days_date_due_annual)s днів, інакше підписку буде призупинено.\n"
-"                "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-msgid ""
-"\n"
-"                    You also acknowledge that by not selecting an autopay card,\n"
-"                    you must manually pay for any on-demand fees (excess users,\n"
-"                    SMS) on a monthly basis or the subscription will be paused.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Ви також підтверджуєте, що, не вибравши картку автосплати,\n"
-"                    ви повинні вручну оплачувати всі додаткові збори (надлишкові користувачі,\n"
-"                    SMS) щомісяця, інакше підписку буде призупинено.\n"
 "                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
@@ -24889,23 +24907,27 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
+#| "              by removing your autopay card from your\n"
+#| "              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
+#| "                >project billing information</a\n"
+#| "              >\n"
+#| "              at least 5 business days before your next scheduled Autopay date.\n"
+#| "            "
 msgid ""
 "\n"
 "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
-"              by removing your autopay card from your\n"
-"              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
-"                >project billing information</a\n"
-"              >\n"
-"              at least 5 business days before your next scheduled Autopay date.\n"
+"              by emailing %(ACCOUNTS_EMAIL)s at least 5 business days before\n"
+"              your next scheduled Autopay date.\n"
 "            "
 msgstr ""
 "\n"
-"              Якщо ви користуєтеся програмним планом з оплатою щороку, ви можете скасувати Автоплатіж,\n"
-"              видаливши свою автоплатіжну картку з\n"
-"              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
-"                >платіжної інформації проєкту</a\n"
-"              >\n"
-"              щонайменше за 5 робочих днів до наступної запланованої дати Автоплатежу.\n"
+"              Якщо у вас річний тарифний план програмного забезпечення, ви можете\n"
+"              скасувати автоматичну оплату, надіславши листа на адресу\n"
+"              %(ACCOUNTS_EMAIL)s щонайменше за 5 робочих днів до наступної\n"
+"              запланованої дати автоматичної оплати.\n"
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
@@ -25667,30 +25689,18 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid "Remove autopay method"
-msgstr "Видалити спосіб автосплати"
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid ""
+#| "\n"
+#| "          Please add an autopay card before subscribing.\n"
+#| "        "
 msgid ""
 "\n"
-"          Please add an autopay card before subscribing.\n"
-"        "
+"        Please add an autopay card before subscribing.\n"
+"      "
 msgstr ""
 "\n"
-"          Будь ласка, додайте картку автосплати перед оформленням підписки.\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid ""
-"\n"
-"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
-"          pausing your subscription due to unpaid on-demand fees.\n"
-"        "
-msgstr ""
-"\n"
-"          Автосплата наразі не є обов'язковою для річних акаунтів, але її наявність зменшує ризик\n"
-"          призупинення підписки через несплачені додаткові послуги.\n"
-"        "
+"        Додайте картку для автоматичної оплати, перш ніж оформлювати підписку.\n"
+"      "
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
 msgid "Billing Details"
@@ -26678,12 +26688,6 @@ msgid ""
 msgstr ""
 "Ви вже запланували перехід на тарифний план %(software_plan_name)s з "
 "%(downgrade_date)s. Якщо це помилка, зверніться до %(contact_email)s."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unknown error unsetting autopay method. Please contact Support."
-msgstr ""
-"Невідома помилка при скасуванні способу автосплати. Будь ласка, зверніться "
-"до служби підтримки."
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Unknown error setting autopay method. Please contact Support."
@@ -39135,7 +39139,6 @@ msgstr ""
 "вже надіслано, можна використовувати до завершення їх терміну дії."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "How Respondents Open the Form"
 msgid "How Respondents Access the Form"
 msgstr "Як респонденти отримують доступ до форми"
 
@@ -39285,7 +39288,6 @@ msgid "Expires"
 msgstr "Термін дії"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "IP Access"
 msgid "Access"
 msgstr "Доступ"
 
@@ -39294,27 +39296,22 @@ msgid "Public URL"
 msgstr "Публічний URL"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "One-Time Link Request"
 msgid "One-time link"
 msgstr "Одноразове посилання"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Email Delivered"
 msgid "Email enabled"
 msgstr "Електронну пошту ввімкнено"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "Email disabled"
 msgstr "Електронну пошту вимкнено"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Is enabled"
 msgid "SMS enabled"
 msgstr "SMS увімкнено"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "SMS disabled"
 msgstr "SMS вимкнено"
 
@@ -39518,40 +39515,51 @@ msgstr ""
 "            "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
-msgid ""
-"\n"
-"      Information you submit will be used in accordance with Dimagi's\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
-"        >Privacy Policy</a\n"
-"      >,\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-"        >Terms of Service</a\n"
-"      >, and\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
-"        >Business Agreement</a\n"
-"      >.\n"
-"    "
-msgstr ""
-"\n"
-"      Інформація, яку ви надаєте, буде використовуватися відповідно до\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
-"        >Політики конфіденційності</a\n"
-"      >,\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-"        >Умов надання послуг</a\n"
-"      > та\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
-"        >Ділової угоди</a\n"
-"      > компанії Dimagi.\n"
-"    "
-
-#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Message and data rates may apply."
 msgstr "Можуть застосовуватися тарифи на повідомлення та передачу даних."
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Send my link"
 msgstr "Надіслати моє посилання"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/terms_notice.html
+#| msgid ""
+#| "\n"
+#| "      Information you submit will be used in accordance with Dimagi's\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+#| "        >Privacy Policy</a\n"
+#| "      >,\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+#| "        >Terms of Service</a\n"
+#| "      >, and\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+#| "        >Business Agreement</a\n"
+#| "      >.\n"
+#| "    "
+msgid ""
+"\n"
+"  Information you submit will be used in accordance with Dimagi's\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >Privacy Policy</a\n"
+"  >,\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >Terms of Service</a\n"
+"  >, and\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >Business Agreement</a\n"
+"  >.\n"
+msgstr ""
+"\n"
+"  Надана вами інформація використовуватиметься відповідно до\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >Політики конфіденційності</a\n"
+"  >,\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >Умов використання</a\n"
+"  > та\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >Ділової угоди</a\n"
+"  > Dimagi.\n"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
 msgid "Webform Closed"
@@ -39663,6 +39671,21 @@ msgstr ""
 "        Ми надішлемо приватне, одноразове посилання для заповнення форми, використовуючи\n"
 "        контактну інформацію, яку ви вкажете нижче.\n"
 "      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+msgid ""
+"\n"
+"      Fill out this form in your browser. You don't need an account.\n"
+"    "
+msgstr ""
+"\n"
+"      Заповніть цю форму у своєму браузері. Обліковий запис не потрібен.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+#| msgid "Start Time"
+msgid "Start form"
+msgstr "Почати заповнення форми"
 
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
 msgid "No public webforms match these filters."
@@ -50519,6 +50542,10 @@ msgid "Expected {} binds in sum_when_template {}, found {}"
 msgstr "Очікується {} прив'язок у sum_when_template {}, знайдено {}"
 
 #: corehq/apps/userreports/reports/filters/factory.py
+msgid "Invalid 'ancestor_expression' field: '{}'"
+msgstr "Недійсне поле «ancestor_expression»: '{}'"
+
+#: corehq/apps/userreports/reports/filters/factory.py
 msgid ""
 "'ancestor_expression' must be empty dictionary or have 'field', "
 "'location_type' keys"
@@ -52591,7 +52618,7 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Are you sure you want to accept the invitation\n"
@@ -52607,14 +52634,15 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        Ви впевнені, що хочете прийняти запрошення\n"
-"                        приєднатися до CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> як <strong>%(username)s</strong>?\n"
+"                        Ви впевнені, що хочете прийняти запрошення приєднатися до\n"
+"                        %(invite_type)s CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> як\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Would you like to accept the invitation\n"
@@ -52630,9 +52658,10 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        Бажаєте прийняти запрошення\n"
-"                        приєднатися до CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> як <strong>%(username)s</strong>?\n"
+"                        Хочете прийняти запрошення приєднатися до\n"
+"                        %(invite_type)s CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> як\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -52666,7 +52695,7 @@ msgstr "створіть веб-обліковий запис"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                      Turn off demo mode to allow this mobile worker to start\n"
@@ -52679,9 +52708,9 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                      Вимкніть демонстраційний режим, щоб цей мобільний працівник знову міг\n"
-"                      надсилати дані до %(hq_name)s.\n"
-"                    "
+"                    Ви ввійшли як %(username)s, але це запрошення надіслано\n"
+"                    користувачу %(invited_user)s.\n"
+"                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -52702,7 +52731,7 @@ msgstr "Змінити обліковий запис"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    Your email is managed by %(idp_name)s.\n"
@@ -52716,13 +52745,14 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    Вашою електронною поштою керує %(idp_name)s.\n"
-"                    На наступному кроці вам буде запропоновано пройти автентифікацію через єдиний вхід (Single Sign-On).\n"
+"                    Вашою електронною поштою керує %(idp_name)s. На наступному\n"
+"                    кроці вам буде запропоновано пройти автентифікацію за допомогою\n"
+"                    єдиного входу.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
@@ -52734,7 +52764,8 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    Щоб прийняти це %(invite_type_lower)s запрошення, потрібно створити обліковий запис.\n"
+"                    Щоб прийняти це запрошення %(invite_type_lower)s, потрібно\n"
+"                    створити обліковий запис.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -59046,17 +59077,17 @@ msgstr "наприклад, [{\"column\": \"givenName\", \"property\": \"first_n
 
 #: corehq/motech/openmrs/forms.py
 msgid "Each column mapping must be an object."
-msgstr ""
+msgstr "Кожне зіставлення стовпців має бути об’єктом."
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Unknown column mapping keys: %(keys)s"
-msgstr ""
+msgstr "Невідомі ключі зіставлення стовпців: %(keys)s"
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Each column mapping must have a \"%(key)s\"."
-msgstr ""
+msgstr "У кожному зіставленні стовпців має бути «%(key)s»."
 
 #: corehq/motech/openmrs/forms.py
 msgid ""
@@ -59129,22 +59160,19 @@ msgid "OpenMRS Importer"
 msgstr "Імпортер OpenMRS"
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "No OpenMRS Importers were submitted."
-msgstr "Імпортери OpenMRS збережено"
+msgstr "Імпортери OpenMRS не надані."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers are not valid JSON."
-msgstr "Імпортери OpenMRS збережено"
+msgstr "Імпортери OpenMRS не є коректним JSON."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers must be a list of objects."
-msgstr "Імпортери OpenMRS збережено"
+msgstr "Імпортери OpenMRS мають бути списком об’єктів."
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -61070,6 +61098,80 @@ msgstr "Обов'язкові колонки: {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#~ "        Please include the invoice number in your wire payment and make sure\n"
+#~ "        to send an email to %(accounts_email)s after you have made the\n"
+#~ "        payment, mentioning the date of the payment, the amount, the invoice\n"
+#~ "        number, and the project space.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Щоб сплатити банківським переказом, знайдіть банківські реквізити Dimagi у вашому рахунку.\n"
+#~ "        Будь ласка, вкажіть номер рахунку у платіжних деталях та обов'язково\n"
+#~ "        надішліть листа на %(accounts_email)s після здійснення оплати,\n"
+#~ "        зазначивши дату платежу, суму, номер рахунку та простір проєкту.\n"
+#~ "      "
+
+#~ msgid ""
+#~ "\n"
+#~ "                Please provide an autopay card before continuing.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Будь ласка, надайте картку автосплати перед продовженням.\n"
+#~ "              "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                  By subscribing to this <strong>annual subscription</strong>,\n"
+#~ "                  you acknowledge that you understand an annual invoice for the\n"
+#~ "                  product cost will be generated and sent to the contact emails\n"
+#~ "                  above. This invoice must be paid within\n"
+#~ "                  %(days_date_due_annual)s days or the subscription will be\n"
+#~ "                  paused.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                  Підписуючись на цю <strong>річну підписку</strong>,\n"
+#~ "                  ви підтверджуєте, що розумієте: річний рахунок за вартість продукту буде сформовано та надіслано на контактні електронні адреси вище. Цей рахунок має бути сплачений протягом %(days_date_due_annual)s днів, інакше підписку буде призупинено.\n"
+#~ "                "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    You also acknowledge that by not selecting an autopay card,\n"
+#~ "                    you must manually pay for any on-demand fees (excess users,\n"
+#~ "                    SMS) on a monthly basis or the subscription will be paused.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Ви також підтверджуєте, що, не вибравши картку автосплати,\n"
+#~ "                    ви повинні вручну оплачувати всі додаткові збори (надлишкові користувачі,\n"
+#~ "                    SMS) щомісяця, інакше підписку буде призупинено.\n"
+#~ "                  "
+
+#~ msgid "Remove autopay method"
+#~ msgstr "Видалити спосіб автосплати"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+#~ "          pausing your subscription due to unpaid on-demand fees.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Автосплата наразі не є обов'язковою для річних акаунтів, але її наявність зменшує ризик\n"
+#~ "          призупинення підписки через несплачені додаткові послуги.\n"
+#~ "        "
+
+#~ msgid "Unknown error unsetting autopay method. Please contact Support."
+#~ msgstr ""
+#~ "Невідома помилка при скасуванні способу автосплати. Будь ласка, зверніться "
+#~ "до служби підтримки."
 
 #~ msgid ""
 #~ "\n"

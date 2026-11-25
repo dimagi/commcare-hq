@@ -3352,10 +3352,19 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Our records indicate that you have not added an autopay card to your\n"
+#| "      account. Providing an autopay method is a requirement for all monthly\n"
+#| "      subscriptions. If an autopay card is not added by\n"
+#| "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
+#| "      Billing Statement remains unpaid, we will automatically pause your\n"
+#| "      subscription.\n"
+#| "    "
 msgid ""
 "\n"
 "      Our records indicate that you have not added an autopay card to your\n"
-"      account. Providing an autopay method is a requirement for all monthly\n"
+"      account. Providing an autopay method is a requirement for all\n"
 "      subscriptions. If an autopay card is not added by\n"
 "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
 "      Billing Statement remains unpaid, we will automatically pause your\n"
@@ -3363,10 +3372,11 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      Rekodi zetu zinaonyesha kuwa hujaongeza kadi ya autopay kwenye\n"
-"      akaunti yako. Kutoa njia ya autopay ni sharti kwa usajili wote wa kila mwezi.\n"
-"      Ikiwa kadi ya autopay haijaongezwa ndani ya siku %(overdue_invoice_limit_days)s baada ya %(date_due)s na\n"
-"      Taarifa ya Malipo haijalipwa, tutasitisha usajili wako kiotomatiki.\n"
+"      Rekodi zetu zinaonyesha kuwa hujaongeza kadi ya malipo ya kiotomatiki kwenye\n"
+"      akaunti yako. Kuweka njia ya malipo ya kiotomatiki ni sharti kwa usajili wote.\n"
+"      Ikiwa kadi ya malipo ya kiotomatiki haitaongezwa ndani ya siku\n"
+"      %(overdue_invoice_limit_days)s baada ya %(date_due)s na Taarifa ya Malipo\n"
+"      itabaki bila kulipwa, tutasitisha usajili wako kiotomatiki.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3413,37 +3423,53 @@ msgstr "Unaweza pia kulipa bili hii mapema kwa kadi ya mkopo:"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      To pay by credit card, please go to your\n"
+#| "      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
+#| "      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
+#| "      and fill in the amount you want to pay as well as your credit card\n"
+#| "      details.\n"
+#| "    "
 msgid ""
 "\n"
 "      To pay by credit card, please go to your\n"
-"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
-"      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
-"      and fill in the amount you want to pay as well as your credit card\n"
-"      details.\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on the\n"
+"      green \"Make Payment\" button in front of your unpaid invoice(s), and fill\n"
+"      in the amount you want to pay as well as your credit card details.\n"
 "    "
 msgstr ""
 "\n"
 "      Ili kulipa kwa kadi ya mkopo, tafadhali nenda kwenye ukurasa wako wa\n"
-"      <a href=\"%(statements_url)s\">Taarifa za Malipo</a>, bonyeza kitufe cha kijani cha \"Fanya Malipo\" mbele ya ankara zako ambazo hazijalipwa,\n"
-"      na jaza kiasi unachotaka kulipa pamoja na maelezo ya kadi yako ya mkopo.\n"
+"      <a href=\"%(statements_url)s\">Taarifa za Malipo</a>, bofya kitufe cha kijani cha\n"
+"      \"Lipa Sasa\" kilicho mbele ya ankara zako ambazo hazijalipwa, kisha ujaze\n"
+"      kiasi unachotaka kulipa pamoja na maelezo ya kadi yako ya mkopo.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        - To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#| "          Please include the invoice number in your wire payment and make sure to\n"
+#| "          send an email to %(accounts_email)s after you have made the payment,\n"
+#| "          mentioning the date of the payment, the amount, the invoice number, and\n"
+#| "          the project space.\n"
+#| "      "
 msgid ""
 "\n"
 "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
-"        Please include the invoice number in your wire payment and make sure\n"
-"        to send an email to %(accounts_email)s after you have made the\n"
-"        payment, mentioning the date of the payment, the amount, the invoice\n"
-"        number, and the project space.\n"
+"        Please include the invoice number in your wire payment and make sure to\n"
+"        send an email to %(accounts_email)s after you have made the payment,\n"
+"        mentioning the date of the payment, the amount, the invoice number, and\n"
+"        the project space.\n"
 "      "
 msgstr ""
 "\n"
-"        Ili kulipa kwa njia ya benki, tafuta maelezo ya akaunti ya benki ya Dimagi kwenye ankara yako.\n"
-"        Tafadhali jumuisha nambari ya ankara kwenye malipo yako ya benki na hakikisha\n"
+"        Ili kulipa kwa uhamisho wa benki, tafuta maelezo ya akaunti ya benki ya Dimagi kwenye ankara yako.\n"
+"        Tafadhali jumuisha nambari ya ankara kwenye malipo yako ya uhamisho na uhakikishe\n"
 "        unatuma barua pepe kwa %(accounts_email)s baada ya kufanya malipo,\n"
-"        ukitaja tarehe ya malipo, kiasi, nambari ya ankara, na eneo la mradi.\n"
+"        ukitaja tarehe ya malipo, kiasi, nambari ya ankara na nafasi ya mradi.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3494,19 +3520,27 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  Our records indicate that you have not added an autopay card to your\n"
+#| "  account. Providing an autopay method is a requirement for all monthly\n"
+#| "  subscriptions. If an autopay card is not added by\n"
+#| "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
+#| "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgid ""
 "\n"
 "  Our records indicate that you have not added an autopay card to your\n"
-"  account. Providing an autopay method is a requirement for all monthly\n"
+"  account. Providing an autopay method is a requirement for all\n"
 "  subscriptions. If an autopay card is not added by\n"
 "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
 "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgstr ""
 "\n"
-"  Rekodi zetu zinaonyesha kuwa hujaongeza kadi ya autopay kwenye\n"
-"  akaunti yako. Kutoa njia ya autopay ni sharti kwa usajili wote wa kila mwezi.\n"
-"  Ikiwa kadi ya autopay haijaongezwa ndani ya siku %(overdue_invoice_limit_days)s baada ya %(date_due)s na Taarifa\n"
-"  ya Malipo haijalipwa, tutasitisha usajili wako kiotomatiki.\n"
+"  Rekodi zetu zinaonyesha kuwa hujaongeza kadi ya malipo ya kiotomatiki kwenye\n"
+"  akaunti yako. Kuweka njia ya malipo ya kiotomatiki ni sharti kwa usajili wote.\n"
+"  Ikiwa kadi ya malipo ya kiotomatiki haitaongezwa ndani ya siku\n"
+"  %(overdue_invoice_limit_days)s baada ya %(date_due)s na Taarifa ya Malipo\n"
+"  itabaki bila kulipwa, tutasitisha usajili wako kiotomatiki.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
@@ -4570,10 +4604,22 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#| msgid ""
+#| "\n"
+#| "        In case you incur any on-demand fees for excess users or SMS, you\n"
+#| "        will receive invoices for these charges on a monthly basis. See\n"
+#| "        <a\n"
+#| "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+#| "          >here</a\n"
+#| "        >\n"
+#| "        for more information about payment, cancellation, and refunds.\n"
+#| "      "
 msgid ""
 "\n"
-"        In case you incur any on-demand fees for excess users or SMS, you\n"
-"        will receive invoices for these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you will\n"
+"        receive invoices for these charges on a monthly basis. A credit card\n"
+"        must be added to the account for automatic payment of these invoices.\n"
+"        See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -4582,12 +4628,14 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        Iwapo utapata ada yoyote ya ziada kwa watumiaji au SMS, utapokea ankara za malipo haya kila mwezi. Tazama\n"
+"        Iwapo utatozwa ada zozote za matumizi ya ziada kwa watumiaji wa ziada au SMS, utapokea\n"
+"        ankara za gharama hizi kila mwezi. Ni lazima kadi ya mkopo iongezwe kwenye akaunti\n"
+"        ili kulipa ankara hizi kiotomatiki. Tazama\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >hapa</a\n"
 "        >\n"
-"        kwa maelezo zaidi kuhusu malipo, kughairi, na marejesho.\n"
+"        kwa maelezo zaidi kuhusu malipo, kughairi na kurejeshewa fedha.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -5248,12 +5296,6 @@ msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#| msgid ""
-#| "\n"
-#| "      By clicking Submit Request, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "By clicking Submit Request, I agree to Dimagi's <a "
 "href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
@@ -5641,7 +5683,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "Tafadhali ingia kwenye programu ili kuangalia kama kuna masasisho."
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Remote apps are not supported"
 msgid "RemoteApps are no longer supported"
 msgstr "RemoteApps hazitumiki tena"
 
@@ -14430,16 +14471,14 @@ msgid "Not set"
 msgstr "Haijawekwa"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
 #| msgid "U\\u200BI translation"
 msgid "U​I translation"
-msgstr "Tafsiri ya U\\u200BI"
+msgstr "Tafsiri ya UI"
 
 #: corehq/apps/app_manager/views/apps.py
-#, fuzzy
 #| msgid "U\\u200BI translations"
 msgid "U​I translations"
-msgstr "Tafsiri za U\\u200BI"
+msgstr "Tafsiri za UI"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -24126,13 +24165,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
 msgid ""
 "\n"
-"                Please provide an autopay card before continuing.\n"
+"                Please provide an autopay card before continuing. If you are\n"
+"                unable to add a payment card, contact\n"
+"                <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"                for other options.\n"
 "              "
 msgstr ""
 "\n"
-"                Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea.\n"
+"                Tafadhali weka kadi ya malipo ya kiotomatiki kabla ya kuendelea. Ikiwa huwezi\n"
+"                kuongeza kadi ya malipo, wasiliana na\n"
+"                <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"                ili kupata chaguo nyingine.\n"
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -24175,37 +24221,6 @@ msgstr ""
 "                    na kutumwa kwa barua pepe za mawasiliano hapo juu. Ankara hii\n"
 "                    lazima ilipwe ndani ya siku %(days_date_due_annual)s au\n"
 "                    usajili utasitishwa. Kadi ya autopay iliyochaguliwa haitatozwa kiotomatiki kulipa ankara hii&mdash;inapaswa kulipwa moja kwa moja.\n"
-"                  "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"                  By subscribing to this <strong>annual subscription</strong>,\n"
-"                  you acknowledge that you understand an annual invoice for the\n"
-"                  product cost will be generated and sent to the contact emails\n"
-"                  above. This invoice must be paid within\n"
-"                  %(days_date_due_annual)s days or the subscription will be\n"
-"                  paused.\n"
-"                "
-msgstr ""
-"\n"
-"                  Kwa kujisajili kwenye <strong>usajili wa mwaka</strong> huu,\n"
-"                  unakubali kwamba umeelewa kuwa ankara ya mwaka kwa gharama ya bidhaa itatolewa na kutumwa kwa barua pepe za mawasiliano hapo juu. Ankara hii lazima ilipwe ndani ya siku %(days_date_due_annual)s au usajili utasitishwa.\n"
-"                "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-msgid ""
-"\n"
-"                    You also acknowledge that by not selecting an autopay card,\n"
-"                    you must manually pay for any on-demand fees (excess users,\n"
-"                    SMS) on a monthly basis or the subscription will be paused.\n"
-"                  "
-msgstr ""
-"\n"
-"                    Unakubali pia kwamba kwa kutokuchagua kadi ya autopay,\n"
-"                    lazima ulipie mwenyewe ada yoyote ya ziada (watumiaji wa ziada,\n"
-"                    SMS) kila mwezi au usajili utasitishwa.\n"
 "                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
@@ -24816,23 +24831,26 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
+#| "              by removing your autopay card from your\n"
+#| "              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
+#| "                >project billing information</a\n"
+#| "              >\n"
+#| "              at least 5 business days before your next scheduled Autopay date.\n"
+#| "            "
 msgid ""
 "\n"
 "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
-"              by removing your autopay card from your\n"
-"              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
-"                >project billing information</a\n"
-"              >\n"
-"              at least 5 business days before your next scheduled Autopay date.\n"
+"              by emailing %(ACCOUNTS_EMAIL)s at least 5 business days before\n"
+"              your next scheduled Autopay date.\n"
 "            "
 msgstr ""
 "\n"
-"              Ikiwa uko kwenye mpango wa programu wa Kulipia Kila Mwaka, unaweza kufuta Autopay\n"
-"              kwa kuondoa kadi yako ya autopay kutoka kwenye\n"
-"              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
-"                >taarifa za malipo za mradi</a\n"
-"              >\n"
-"              angalau siku 5 za kazi kabla ya tarehe yako inayofuata ya Autopay iliyopangwa.\n"
+"              Ikiwa unatumia mpango wa programu wa Kulipa Kila Mwaka, unaweza kughairi Malipo ya Kiotomatiki\n"
+"              kwa kutuma barua pepe kwa %(ACCOUNTS_EMAIL)s angalau siku 5 za kazi kabla ya\n"
+"              tarehe yako inayofuata ya Malipo ya Kiotomatiki iliyopangwa.\n"
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
@@ -25587,30 +25605,18 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid "Remove autopay method"
-msgstr "Ondoa njia ya malipo ya moja kwa moja"
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid ""
+#| "\n"
+#| "          Please add an autopay card before subscribing.\n"
+#| "        "
 msgid ""
 "\n"
-"          Please add an autopay card before subscribing.\n"
-"        "
+"        Please add an autopay card before subscribing.\n"
+"      "
 msgstr ""
 "\n"
-"          Tafadhali ongeza kadi ya malipo ya moja kwa moja kabla ya kujisajili.\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid ""
-"\n"
-"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
-"          pausing your subscription due to unpaid on-demand fees.\n"
-"        "
-msgstr ""
-"\n"
-"          Malipo ya moja kwa moja hayahitajiki kwa akaunti za mwaka kwa sasa, lakini kuwa na malipo ya moja kwa moja kunapunguza hatari ya\n"
-"          kusitishwa kwa usajili wako kutokana na ada za ziada ambazo hazijalipwa.\n"
-"        "
+"        Tafadhali ongeza kadi ya malipo ya kiotomatiki kabla ya kujisajili.\n"
+"      "
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
 msgid "Billing Details"
@@ -26588,12 +26594,6 @@ msgstr ""
 "Umeshapanga kushusha hadhi hadi Mpango wa Programu ya %(software_plan_name)s"
 " tarehe %(downgrade_date)s. Ikiwa hii ni makosa, tafadhali wasiliana na "
 "%(contact_email)s."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unknown error unsetting autopay method. Please contact Support."
-msgstr ""
-"Hitilafu isiyojulikana wakati wa kuondoa njia ya malipo ya moja kwa moja. "
-"Tafadhali wasiliana na Msaada."
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Unknown error setting autopay method. Please contact Support."
@@ -29731,7 +29731,7 @@ msgstr "Badilisha Usajili Wangu"
 
 #: corehq/apps/export/templates/export/schema_build_waiting.html
 msgid "Finding available columns…"
-msgstr ""
+msgstr "Inatafuta safu wima zinazopatikana…"
 
 #: corehq/apps/export/templates/export/schema_build_waiting.html
 msgid ""
@@ -39016,7 +39016,6 @@ msgstr ""
 "vilivyotumwa tayari vinaweza kutumika hadi vimalizike muda wake."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "How Respondents Open the Form"
 msgid "How Respondents Access the Form"
 msgstr "Jinsi Wajibuji Wanavyofikia Fomu"
 
@@ -39166,7 +39165,6 @@ msgid "Expires"
 msgstr "Inaisha"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "IP Access"
 msgid "Access"
 msgstr "Ufikiaji"
 
@@ -39175,27 +39173,22 @@ msgid "Public URL"
 msgstr "URL ya Umma"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "One-Time Link Request"
 msgid "One-time link"
 msgstr "Kiungo cha matumizi ya mara moja"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Email Delivered"
 msgid "Email enabled"
 msgstr "Barua pepe imewezeshwa"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "Email disabled"
 msgstr "Barua pepe imezimwa"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Is enabled"
 msgid "SMS enabled"
 msgstr "SMS imewezeshwa"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "SMS disabled"
 msgstr "SMS imezimwa"
 
@@ -39399,40 +39392,51 @@ msgstr ""
 "            "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
-msgid ""
-"\n"
-"      Information you submit will be used in accordance with Dimagi's\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
-"        >Privacy Policy</a\n"
-"      >,\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-"        >Terms of Service</a\n"
-"      >, and\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
-"        >Business Agreement</a\n"
-"      >.\n"
-"    "
-msgstr ""
-"\n"
-"      Taarifa utakazowasilisha zitatumika kulingana na\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
-"        >Sera ya Faragha</a\n"
-"      > ya Dimagi,\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-"        >Masharti ya Huduma</a\n"
-"      >, na\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
-"        >Makubaliano ya Biashara</a\n"
-"      >.\n"
-"    "
-
-#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Message and data rates may apply."
 msgstr "Ada za ujumbe na data zinaweza kutozwa."
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Send my link"
 msgstr "Tuma kiungo changu"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/terms_notice.html
+#| msgid ""
+#| "\n"
+#| "      Information you submit will be used in accordance with Dimagi's\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+#| "        >Privacy Policy</a\n"
+#| "      >,\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+#| "        >Terms of Service</a\n"
+#| "      >, and\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+#| "        >Business Agreement</a\n"
+#| "      >.\n"
+#| "    "
+msgid ""
+"\n"
+"  Information you submit will be used in accordance with Dimagi's\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >Privacy Policy</a\n"
+"  >,\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >Terms of Service</a\n"
+"  >, and\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >Business Agreement</a\n"
+"  >.\n"
+msgstr ""
+"\n"
+"  Taarifa utakazowasilisha zitatumika kwa mujibu wa\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >Sera ya Faragha</a\n"
+"  >,\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >Masharti ya Huduma</a\n"
+"  >, na\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >Mkataba wa Biashara</a\n"
+"  > wa Dimagi.\n"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
 msgid "Webform Closed"
@@ -39544,6 +39548,21 @@ msgstr ""
 "        Tutatuma kiungo cha faragha, kinachotumika mara moja kukamilisha fomu kwa kutumia\n"
 "        taarifa za mawasiliano utakazotoa hapa chini.\n"
 "      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+msgid ""
+"\n"
+"      Fill out this form in your browser. You don't need an account.\n"
+"    "
+msgstr ""
+"\n"
+"      Jaza fomu hii kwenye kivinjari chako. Huhitaji akaunti.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+#| msgid "Start Time"
+msgid "Start form"
+msgstr "Anza kujaza fomu"
 
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
 msgid "No public webforms match these filters."
@@ -50399,6 +50418,10 @@ msgstr ""
 "Ilitarajiwa viambatisho {} katika sum_when_template {}, vilivyopatikana {}"
 
 #: corehq/apps/userreports/reports/filters/factory.py
+msgid "Invalid 'ancestor_expression' field: '{}'"
+msgstr "Sehemu ya 'ancestor_expression' si sahihi: '{}'"
+
+#: corehq/apps/userreports/reports/filters/factory.py
 msgid ""
 "'ancestor_expression' must be empty dictionary or have 'field', "
 "'location_type' keys"
@@ -52482,7 +52505,7 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Are you sure you want to accept the invitation\n"
@@ -52498,14 +52521,15 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        Una uhakika unataka kukubali mwaliko\n"
-"                        wa kujiunga na CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> kama <strong>%(username)s</strong>?\n"
+"                        Je, una uhakika unataka kukubali mwaliko wa kujiunga na\n"
+"                        %(invite_type)s ya CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> kama\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Would you like to accept the invitation\n"
@@ -52521,9 +52545,10 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        Je, ungependa kukubali mwaliko\n"
-"                        wa kujiunga na CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> kama <strong>%(username)s</strong>?\n"
+"                        Je, ungependa kukubali mwaliko wa kujiunga na\n"
+"                        %(invite_type)s ya CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> kama\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -52557,7 +52582,7 @@ msgstr "unda akaunti ya tovuti"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                      Turn off demo mode to allow this mobile worker to start\n"
@@ -52570,9 +52595,9 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                      Zima hali ya onyesho ili kumruhusu mfanyakazi huyu wa simu kuanza\n"
-"                      kutuma data kwa %(hq_name)s tena.\n"
-"                    "
+"                    Umeingia kama %(username)s, lakini mwaliko huu\n"
+"                    ulitumwa kwa %(invited_user)s.\n"
+"                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -52593,7 +52618,7 @@ msgstr "Badilisha Akaunti"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    Your email is managed by %(idp_name)s.\n"
@@ -52607,14 +52632,13 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    Barua pepe yako inasimamiwa na %(idp_name)s.\n"
-"                    Utaombwa kuthibitisha utambulisho kwa kutumia Single Sign-On\n"
-"                    katika hatua inayofuata.\n"
+"                    Barua pepe yako inasimamiwa na %(idp_name)s. Katika hatua inayofuata\n"
+"                    utaombwa kuthibitisha utambulisho wako kwa kutumia Kuingia Mara Moja (SSO).\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
@@ -52626,7 +52650,8 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    Ili kukubali mwaliko huu wa %(invite_type_lower)s, lazima uunde akaunti.\n"
+"                    Ili kukubali mwaliko huu wa %(invite_type_lower)s, ni lazima\n"
+"                    ufungue akaunti.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -58928,17 +58953,17 @@ msgstr "mf. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 
 #: corehq/motech/openmrs/forms.py
 msgid "Each column mapping must be an object."
-msgstr ""
+msgstr "Kila ulinganishaji wa safu wima lazima uwe kitu."
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Unknown column mapping keys: %(keys)s"
-msgstr ""
+msgstr "Funguo zisizojulikana za ulinganishaji wa safu wima: %(keys)s"
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Each column mapping must have a \"%(key)s\"."
-msgstr ""
+msgstr "Kila ulinganishaji wa safu wima lazima uwe na \"%(key)s\"."
 
 #: corehq/motech/openmrs/forms.py
 msgid ""
@@ -59011,22 +59036,19 @@ msgid "OpenMRS Importer"
 msgstr "Ingizaji wa OpenMRS"
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "No OpenMRS Importers were submitted."
-msgstr "Waingizaji wa OpenMRS wamehifadhiwa"
+msgstr "Hakuna viingiza data vya OpenMRS vilivyowasilishwa."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers are not valid JSON."
-msgstr "Waingizaji wa OpenMRS wamehifadhiwa"
+msgstr "Viingiza data vya OpenMRS si JSON halali."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers must be a list of objects."
-msgstr "Waingizaji wa OpenMRS wamehifadhiwa"
+msgstr "Viingiza data vya OpenMRS lazima viwe orodha ya vitu."
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -60950,6 +60972,80 @@ msgstr "Safu zinazohitajika ni {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Weka JSON halali"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#~ "        Please include the invoice number in your wire payment and make sure\n"
+#~ "        to send an email to %(accounts_email)s after you have made the\n"
+#~ "        payment, mentioning the date of the payment, the amount, the invoice\n"
+#~ "        number, and the project space.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Ili kulipa kwa njia ya benki, tafuta maelezo ya akaunti ya benki ya Dimagi kwenye ankara yako.\n"
+#~ "        Tafadhali jumuisha nambari ya ankara kwenye malipo yako ya benki na hakikisha\n"
+#~ "        unatuma barua pepe kwa %(accounts_email)s baada ya kufanya malipo,\n"
+#~ "        ukitaja tarehe ya malipo, kiasi, nambari ya ankara, na eneo la mradi.\n"
+#~ "      "
+
+#~ msgid ""
+#~ "\n"
+#~ "                Please provide an autopay card before continuing.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Tafadhali toa kadi ya malipo ya moja kwa moja kabla ya kuendelea.\n"
+#~ "              "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                  By subscribing to this <strong>annual subscription</strong>,\n"
+#~ "                  you acknowledge that you understand an annual invoice for the\n"
+#~ "                  product cost will be generated and sent to the contact emails\n"
+#~ "                  above. This invoice must be paid within\n"
+#~ "                  %(days_date_due_annual)s days or the subscription will be\n"
+#~ "                  paused.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                  Kwa kujisajili kwenye <strong>usajili wa mwaka</strong> huu,\n"
+#~ "                  unakubali kwamba umeelewa kuwa ankara ya mwaka kwa gharama ya bidhaa itatolewa na kutumwa kwa barua pepe za mawasiliano hapo juu. Ankara hii lazima ilipwe ndani ya siku %(days_date_due_annual)s au usajili utasitishwa.\n"
+#~ "                "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    You also acknowledge that by not selecting an autopay card,\n"
+#~ "                    you must manually pay for any on-demand fees (excess users,\n"
+#~ "                    SMS) on a monthly basis or the subscription will be paused.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    Unakubali pia kwamba kwa kutokuchagua kadi ya autopay,\n"
+#~ "                    lazima ulipie mwenyewe ada yoyote ya ziada (watumiaji wa ziada,\n"
+#~ "                    SMS) kila mwezi au usajili utasitishwa.\n"
+#~ "                  "
+
+#~ msgid "Remove autopay method"
+#~ msgstr "Ondoa njia ya malipo ya moja kwa moja"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+#~ "          pausing your subscription due to unpaid on-demand fees.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          Malipo ya moja kwa moja hayahitajiki kwa akaunti za mwaka kwa sasa, lakini kuwa na malipo ya moja kwa moja kunapunguza hatari ya\n"
+#~ "          kusitishwa kwa usajili wako kutokana na ada za ziada ambazo hazijalipwa.\n"
+#~ "        "
+
+#~ msgid "Unknown error unsetting autopay method. Please contact Support."
+#~ msgstr ""
+#~ "Hitilafu isiyojulikana wakati wa kuondoa njia ya malipo ya moja kwa moja. "
+#~ "Tafadhali wasiliana na Msaada."
 
 #~ msgid ""
 #~ "\n"
