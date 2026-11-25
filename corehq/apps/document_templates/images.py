@@ -20,6 +20,10 @@ UPLOAD_LIFETIME_MINUTES = 24 * 60  # until a template that uses the image is sav
 class ImageError(Exception):
     """An image that cannot be used. The message is meant for the user"""
 
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
 
 def save_image(domain, uploaded_file):
     """:returns: the key of the stored image"""

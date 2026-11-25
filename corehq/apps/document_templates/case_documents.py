@@ -3,10 +3,14 @@ Renders a batch of cases with their document templates into one PDF.
 
 Each case picks its template with its ``document_template_slug`` property and
 is rendered with its own properties as the template context.
+
+Every case that cannot be rendered is reported as a :class:`Failure`, and
+any failure fails the request.
 """
 from casexml.apps.phone.data_providers.case.livequery import (
     get_live_case_ids_and_indices,
 )
+from attrs import define
 from django.utils.translation import gettext as _
 
 from corehq.apps.document_templates.images import ImageError, load_images
@@ -23,8 +27,24 @@ SLUG_PROPERTY = 'document_template_slug'
 MAX_CASES = 50
 
 
+@define(frozen=True)
+class Failure:
+    """A case that cannot be rendered
+
+    :param name: the case name, or ``''`` if the case is not found or not accessible
+    """
+    case_id: str
+    name: str
+    reason: str
+
+
 class CaseDocumentError(Exception):
-    """The request cannot be rendered; the message is safe to show to the user"""
+    """The request cannot be rendered; the message and failures are safe to show to the user"""
+
+    def __init__(self, message, failures=()):
+        super().__init__(message)
+        self.message = message
+        self.failures = list(failures)
 
 
 def render_case_documents(domain, case_ids, couch_user):
@@ -34,52 +54,70 @@ def render_case_documents(domain, case_ids, couch_user):
     :param couch_user: only cases this user has access to are rendered
     :returns: one PDF (bytes) with a document for each case ID, in the
         order of ``case_ids``. A repeated case ID gets a document each time.
-    :raises CaseDocumentError: if any case cannot be rendered, or the user
-        has no access to it. Nothing is returned for the cases that could.
+    :raises CaseDocumentError: if the request is invalid or any case fails.
+        Its ``failures`` list each failed case in the order of ``case_ids``.
+        Nothing is returned for the cases that could be rendered.
     """
     if not case_ids:
         raise CaseDocumentError(_('No cases given'))
     if len(case_ids) > MAX_CASES:
         raise CaseDocumentError(_('At most {max} cases can be rendered at once').format(max=MAX_CASES))
 
-    cases_by_id = _get_cases(domain, case_ids, couch_user)
-    areas_by_slug = _load_areas(domain, _get_templates(domain, cases_by_id.values()))
+    cases = _get_cases(domain, case_ids, couch_user)
+    areas_by_slug, image_errors = _load_areas(domain, _get_templates(domain, cases.values()))
     documents = []
+    failures = []
     for case_id in case_ids:
-        case = cases_by_id[case_id]
+        case = cases.get(case_id)
+        if case is None:
+            failures.append(Failure(case_id, '', _('Case not found')))
+            continue
+        slug = case.get_case_property(SLUG_PROPERTY)
+        if slug in image_errors:
+            failures.append(Failure(case_id, case.name, image_errors[slug]))
+            continue
+        if slug not in areas_by_slug:
+            failures.append(Failure(case_id, case.name, _('No known "{property}"').format(property=SLUG_PROPERTY)))
+            continue
         try:
             documents.append(generate_document(
-                areas_by_slug[case.get_case_property(SLUG_PROPERTY)],
-                {**case.get_properties_in_api_format(), 'case_id': case_id},
+                areas_by_slug[slug], {**case.get_properties_in_api_format(), 'case_id': case_id},
             ))
         except DocumentRenderError as error:
-            raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case_id, error=error))
+            failures.append(Failure(case_id, case.name, error.message))
+
+    if failures:
+        raise CaseDocumentError(
+            _('{count} of {total} cases cannot be rendered').format(count=len(failures), total=len(case_ids)),
+            failures,
+        )
     return render_pdf(documents)
 
 
 def _load_areas(domain, templates):
-    """The areas of each template by slug, with the images loaded once for all the cases"""
+    """The areas of each template by slug, with the images loaded once for all the cases
+
+    :returns: ``({slug: areas}, {slug: error})``; a template whose images
+        cannot be loaded has an error instead of areas
+    """
     areas_by_slug = {}
+    image_errors = {}
     for slug, template in templates.items():
         try:
             areas_by_slug[slug] = load_images(domain, template.areas)
         except ImageError as error:
-            raise CaseDocumentError(_('Template {slug}: {error}').format(slug=slug, error=error))
-    return areas_by_slug
+            image_errors[slug] = _('Template {slug}: {error}').format(slug=slug, error=error)
+    return areas_by_slug, image_errors
 
 
 def _get_cases(domain, case_ids, couch_user):
-    unique_ids = list(dict.fromkeys(case_ids))
+    """:returns: ``{case_id: case}`` of the cases the user can access; others are left out"""
     accessible_ids = _get_live_case_ids(domain, couch_user)
-    cases_by_id = {
+    return {
         case.case_id: case
-        for case in CommCareCase.objects.get_cases(unique_ids)
+        for case in CommCareCase.objects.get_cases(list(dict.fromkeys(case_ids)))
         if case.domain == domain and not case.is_deleted and case.case_id in accessible_ids
     }
-    missing = [case_id for case_id in unique_ids if case_id not in cases_by_id]
-    if missing:
-        raise CaseDocumentError(_('Cases not found: {ids}').format(ids=', '.join(missing)))
-    return cases_by_id
 
 
 def _get_live_case_ids(domain, couch_user):
@@ -90,12 +128,7 @@ def _get_live_case_ids(domain, couch_user):
 
 
 def _get_templates(domain, cases):
+    """:returns: ``{slug: template}`` of the live templates the cases use"""
     slugs = {case.get_case_property(SLUG_PROPERTY) for case in cases}
     live = Template.objects.filter(domain=domain, slug__in=slugs - {None, ''}, deleted=False)
-    templates = {t.slug: t for t in live}
-    unknown = [case.case_id for case in cases if case.get_case_property(SLUG_PROPERTY) not in templates]
-    if unknown:
-        raise CaseDocumentError(
-            _('Cases without a known "{property}": {ids}').format(property=SLUG_PROPERTY, ids=', '.join(unknown))
-        )
-    return templates
+    return {t.slug: t for t in live}

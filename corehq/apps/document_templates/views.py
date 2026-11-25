@@ -15,7 +15,6 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy, gettext_noop
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
@@ -165,7 +164,7 @@ class TemplateForm(forms.ModelForm):
                 try:
                     get_image(self.instance.domain, image_id)
                 except ImageError as error:
-                    self.add_error(self._image_field_name(area_name), str(error))
+                    self.add_error(self._image_field_name(area_name), error.message)
         return cleaned_data
 
     @staticmethod
@@ -343,7 +342,7 @@ def preview_document_variables(request, domain):
     try:
         names = get_variable_names(_posted_areas(request, domain))
     except DocumentRenderError as error:
-        template_context = {'error': str(error)}
+        template_context = {'error': error.message}
     else:
         template_context = {'context': _posted_context(request, names), 'field_prefix': CONTEXT_FIELD_PREFIX}
     return HttpResponse(render_to_string('document_templates/partials/preview_modal_body.html', template_context))
@@ -353,13 +352,13 @@ def preview_document_variables(request, domain):
 @toggles.DOCUMENT_TEMPLATES.required_decorator()
 @require_POST
 def preview_document(request, domain):
-    """The rendered document as a PDF, for opening in a new tab"""
+    """The rendered document as a PDF, or status 400 with the error as plain text"""
     try:
         areas = _posted_areas(request, domain)
         context = _posted_context(request, get_variable_names(areas))
         pdf = render_pdf([generate_document(load_images(domain, areas), context)])
     except (DocumentRenderError, ImageError) as error:
-        return HttpResponseBadRequest(format_html('<pre>{}</pre>', error))
+        return HttpResponseBadRequest(error.message, content_type='text/plain')
     response = FileResponse(BytesIO(pdf), filename='preview.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
@@ -373,14 +372,21 @@ def preview_document(request, domain):
 def render_document(request, domain):
     """Called from web apps with space separated case IDs as the request body
 
-    Responds with a PDF with a document for each case.
+    Responds with a PDF with a document for each case. If any case fails,
+    responds with status 400 and JSON
+    ``{"error": message, "failed": [{"case_id", "name", "reason"}]}``.
+    ``failed`` is empty if the request itself is invalid.
     """
     try:
         pdf = render_case_documents(domain, request.body.decode().split(), request.couch_user)
-    except CaseDocumentError:
-        return JsonResponse(
-            {'error': gettext('Unable to render document.')}, status=400
-        )
+    except CaseDocumentError as error:
+        return JsonResponse({
+            'error': error.message,
+            'failed': [
+                {'case_id': failure.case_id, 'name': failure.name, 'reason': failure.reason}
+                for failure in error.failures
+            ],
+        }, status=400)
     response = FileResponse(BytesIO(pdf), filename='document.pdf')
     response['X-Content-Type-Options'] = 'nosniff'
     return response
