@@ -22,6 +22,8 @@ class Template(models.Model):
     slug = models.SlugField(max_length=50)
     areas = AttrsDict(Area)
     deleted = models.BooleanField(default=False)
+    # Copied from the template with the same slug in the upstream domain
+    is_linked = models.BooleanField(default=False)
 
     class Meta:
         constraints = [
