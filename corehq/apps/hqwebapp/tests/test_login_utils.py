@@ -37,29 +37,25 @@ class TestCustomLogin(SimpleTestCase):
 class TestIsLoggedIn(TestCase):
 
     def test_returns_true_if_user_without_2fa_is_authenticated(self):
-        user = User(username="test-user", password="abc123")
-        user.save()
+        user = self.create_user()
         self.assertTrue(is_logged_in(user))
 
-    def test_returns_false_if_user_without_2fa_is_not_authenticated(self):
-        user = AnonymousUser()
-        self.assertFalse(is_logged_in(user))
+    def test_returns_false_if_user_is_not_authenticated(self):
+        self.assertFalse(is_logged_in(AnonymousUser()))
 
     def test_returns_true_if_user_with_2fa_is_authenticated_and_verified(self):
-        user = User(username="test-user", password="abc123")
-        user.save()
-        user.is_verified = lambda: True
-        self.setup_two_factor_device(user)
+        user = self.create_user(has_device=True, is_verified=True)
         self.assertTrue(is_logged_in(user))
 
     def test_returns_false_if_user_with_2fa_is_authenticated_but_not_verified(self):
-        user = User(username="test-user", password="abc123")
-        user.save()
-        user.is_verified = lambda: False
-        self.setup_two_factor_device(user)
+        user = self.create_user(has_device=True, is_verified=False)
         self.assertFalse(is_logged_in(user))
 
     @staticmethod
-    def setup_two_factor_device(user):
-        device = TOTPDevice(user=user, name='default', confirmed=True)
-        device.save()
+    def create_user(has_device=False, is_verified=False):
+        user = User(username="test-user", password="abc123")
+        user.save()
+        user.is_verified = lambda: is_verified
+        if has_device:
+            TOTPDevice(user=user, name='default', confirmed=True).save()
+        return user
