@@ -113,9 +113,6 @@
 
 ## Security
 
-- **Implement access controls**: Ensure that permissions and access
-  controls are properly implemented.
-
 - **Prefer safe actions**: Where a destructive action, like deleting an
   instance of an important class, could have strong negative
   consequences, rather choose a less permanent action, like disabling
@@ -128,9 +125,6 @@
   performance of the query in an environment similar to production. If
   you're writing code and believe this would be beneficial, **alert the
   developer**.
-
-- **Front-end**: For front-end code, be mindful of rendering or loading
-  concerns.
 
 ## Documentation
 
