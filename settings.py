@@ -313,6 +313,7 @@ HQ_APPS = (
     'corehq.apps.project_db',
     'corehq.apps.public_webforms',
     'corehq.apps.short_links',
+    'corehq.apps.sidecar',
     'corehq.apps.registry.app_config.RegistryAppConfig',
     'corehq.project_limits',
     'corehq.apps.commtrack',

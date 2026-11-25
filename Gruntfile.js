@@ -43,6 +43,7 @@ module.exports = function (grunt) {
         'hqwebapp/bootstrap5',
         'hqwebapp/components',
         'case_importer',
+        'sidecar/bootstrap5',
     ];
 
     var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),

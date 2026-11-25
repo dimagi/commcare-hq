@@ -86,6 +86,7 @@ import json
 from django.core.exceptions import ValidationError
 from django.db.models import JSONField
 from django import forms
+from django.forms.fields import InvalidJSONInput
 from django.utils.translation import gettext_lazy as _
 
 from attrs import asdict, define, field
@@ -308,7 +309,7 @@ class dict_of:
     @property
     def __name__(self):
         value_name = self.value_type.__name__
-        key = f", {self.key_type.__name__}" if self.key_type != str else ''
+        key = f", {self.key_type.__name__}" if self.key_type is not str else ''
         return f"{type(self).__name__}({value_name}{key})"
 
 
@@ -361,9 +362,16 @@ class JsonAttrsFormField(forms.JSONField):
                 },
             )
 
+    def bound_data(self, data, initial):
+        value = super().bound_data(data, initial)
+        if isinstance(value, str):  # InvalidJSONInput
+            return value
+        try:
+            return self.builder.attrify(value)
+        except Exception:
+            return InvalidJSONInput(data)
+
     def prepare_value(self, value):
         if isinstance(value, str):
             return value
-        if isinstance(value, self.builder.attrs_type):
-            value = self.builder.jsonify(value)
-        return json.dumps(value, ensure_ascii=False, cls=self.encoder, indent=2)
+        return json.dumps(self.builder.jsonify(value), ensure_ascii=False, cls=self.encoder, indent=2)

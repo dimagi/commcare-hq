@@ -535,6 +535,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'DashboardGauge'
     ]),
     ModelDeletion('document_templates', 'Template', 'domain'),
+    ModelDeletion('sidecar', 'SidecarApp', 'domain'),
 ]
 
 
