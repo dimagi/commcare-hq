@@ -10,10 +10,9 @@ from functools import wraps
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
-from urllib.request import urlopen
 
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
@@ -80,6 +79,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleIdMissingException,
     ModuleNotFoundException,
     RearrangeError,
+    RemoteAppsUnsupported,
     VersioningError,
     XFormException,
 )
@@ -1721,6 +1721,10 @@ class RemoteApp(ApplicationBase):
     write all the files for an app by hand, and then give the url to app_manager
     and let it package everything together for you.
 
+    Deprecated: RemoteApps can no longer be created, built or installed, and
+    their files are never fetched. No RemoteApp has been built since 2016.
+    The class remains so that stored RemoteApp records still load; remove it
+    along with those records when app documents move from Couch to SQL.
     """
     profile_url = StringProperty(default="http://")
     name = StringProperty()
@@ -1736,23 +1740,11 @@ class RemoteApp(ApplicationBase):
         app = cls(domain=domain, name=name, langs=[lang])
         return app
 
-    def create_profile(self, is_odk=False, langs=None):
-        # we don't do odk for now anyway
-        return remote_app.make_remote_profile(self, langs)
+    def create_profile(self, *args, **kwargs):
+        raise RemoteAppsUnsupported()
 
     def strip_location(self, location):
         return remote_app.strip_location(self.profile_url, location)
-
-    def fetch_file(self, location):
-        location = self.strip_location(location)
-        url = urljoin(self.profile_url, location)
-
-        try:
-            content = urlopen(url).read()
-        except Exception:
-            raise AppEditingError('Unable to access resource url: "%s"' % url)
-
-        return location, content
 
     def get_build_langs(self):
         if self.build_profiles:
@@ -1778,55 +1770,7 @@ class RemoteApp(ApplicationBase):
         return 'suite/resource/location[@authority="local"]'
 
     def create_all_files(self, build_profile_id=None):
-        langs_for_build = self.get_build_langs()
-        files = {
-            'profile.xml': self.create_profile(langs=langs_for_build),
-        }
-        tree = _parse_xml(files['profile.xml'])
-
-        def add_file_from_path(path, strict=False, transform=None):
-            added_files = []
-            # must find at least one
-            try:
-                tree.find(path).text
-            except (TypeError, AttributeError):
-                if strict:
-                    raise AppEditingError("problem with file path reference!")
-                else:
-                    return
-            for loc_node in tree.findall(path):
-                loc, file = self.fetch_file(loc_node.text)
-                if transform:
-                    file = transform(file)
-                files[loc] = file
-                added_files.append(file)
-            return added_files
-
-        add_file_from_path('features/users/logo')
-        try:
-            suites = add_file_from_path(
-                self.SUITE_XPATH,
-                strict=True,
-                transform=(lambda suite:
-                           remote_app.make_remote_suite(self, suite))
-            )
-        except AppEditingError:
-            raise AppEditingError(_('Problem loading suite file from profile file. Is your profile file correct?'))
-
-        for suite in suites:
-            suite_xml = _parse_xml(suite)
-
-            for tag, location in self.get_locations(suite_xml):
-                location, data = self.fetch_file(location)
-                if tag == 'xform' and langs_for_build:
-                    try:
-                        xform = XForm(data, domain=self.domain)
-                    except XFormException as e:
-                        raise XFormException('In file %s: %s' % (location, e))
-                    xform.exclude_languages(whitelist=langs_for_build)
-                    data = xform.render()
-                files.update({location: data})
-        return files
+        raise RemoteAppsUnsupported()
 
     def make_questions_map(self):
         langs_for_build = self.get_build_langs()
@@ -2036,6 +1980,8 @@ def _get_attachments(doc):
 
 def _create_app_from_doc(domain, doc):
     app_class = get_correct_app_class(doc)
+    if app_class is RemoteApp:
+        raise RemoteAppsUnsupported()
     app = app_class.from_source(doc, domain)
     app.convert_build_to_app()
     app.date_created = datetime.datetime.utcnow()
@@ -2126,27 +2072,6 @@ def overwrite_app_from_source(domain, app_id, source, extra_properties=None, req
                                     "multimedia file(s)."))
 
     return app
-
-
-class ExchangeApplication(models.Model):
-    domain = models.CharField(max_length=255, null=False)
-    app_id = models.CharField(max_length=255, null=False)
-    help_link = models.CharField(max_length=255, null=True)
-    changelog_link = models.CharField(max_length=255, null=True)
-    required_privileges = models.TextField(null=True, blank=True, help_text=_("Space-separated list of privilege"
-                                                                 " strings from corehq.privileges"))
-
-    class Meta(object):
-        unique_together = ('domain', 'app_id')
-
-
-class ExchangeApplicationAdmin(admin.ModelAdmin):
-    model = ExchangeApplication
-    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
-    list_filter = ['domain', 'app_id']
-
-
-admin.site.register(ExchangeApplication, ExchangeApplicationAdmin)
 
 
 class GlobalAppConfig(models.Model):

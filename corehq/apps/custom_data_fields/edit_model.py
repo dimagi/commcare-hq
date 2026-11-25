@@ -199,21 +199,40 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': gettext_lazy('A label is required for each field.')}
+        max_length=255,
+        error_messages={
+            'required': gettext_lazy('A label is required for each field.'),
+            'max_length': gettext_lazy('Labels must be at most %(limit_value)d characters.'),
+        }
     )
     slug = XmlSlugField(
         required=True,
+        max_length=127,
         error_messages={
             'required': gettext_lazy('A property name is required for each field.'),
             'invalid': gettext_lazy('Properties must start with a letter and '
                          'consist only of letters, numbers, underscores or hyphens.'),
+            'max_length': gettext_lazy('Property names must be at most %(limit_value)d characters.'),
         }
     )
     is_required = forms.BooleanField(required=False)
     required_for = forms.CharField(widget=forms.HiddenInput, required=False)
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
-    regex = forms.CharField(required=False)
-    regex_msg = forms.CharField(required=False)
+    regex = forms.CharField(
+        required=False,
+        max_length=127,
+        error_messages={
+            'max_length': gettext_lazy('Regular expressions must be at most %(limit_value)d characters '
+                                       '(this one has %(show_value)d).'),
+        }
+    )
+    regex_msg = forms.CharField(
+        required=False,
+        max_length=255,
+        error_messages={
+            'max_length': gettext_lazy('Regex error messages must be at most %(limit_value)d characters.'),
+        }
+    )
     upstream_id = forms.CharField(required=False, empty_value=None)
 
     def __init__(self, raw, *args, **kwargs):

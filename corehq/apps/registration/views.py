@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, resolve_url
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -69,6 +69,7 @@ from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import get_safe_redirect_url
 
 _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
@@ -341,8 +342,6 @@ class RegisterDomainView(TemplateView):
         return not (Domain.active_for_user(user) or user.is_superuser)
 
     def post(self, request, *args, **kwargs):
-        referer_url = request.GET.get('referer', '')
-        nextpage = request.POST.get('next')
         form = DomainRegistrationForm(request.POST)
         context = self.get_context_data(form=form)
         if not form.is_valid():
@@ -399,11 +398,7 @@ class RegisterDomainView(TemplateView):
             })
             return render(request, 'registration/confirmation_sent.html', context)
 
-        if nextpage:
-            return HttpResponseRedirect(nextpage)
-        if referer_url:
-            return redirect(referer_url)
-        return HttpResponseRedirect(reverse("domain_homepage", args=[domain_name]))
+        return HttpResponseRedirect(_get_domain_registered_redirect_url(request, domain_name))
 
     def get_context_data(self, **kwargs):
         request = self.request
@@ -438,6 +433,16 @@ class RegisterDomainView(TemplateView):
             'show_multiple_invites': len(invitations) > 1,
         })
         return context
+
+
+def _get_domain_registered_redirect_url(request, domain_name):
+    nextpage = get_safe_redirect_url(request, request.POST.get('next'), None)
+    if nextpage:
+        return nextpage
+    referer_url = get_safe_redirect_url(request, request.GET.get('referer'), None)
+    if referer_url:
+        return resolve_url(referer_url)
+    return reverse("domain_homepage", args=[domain_name])
 
 
 @transaction.atomic
@@ -575,7 +580,7 @@ def eula_agreement(request):
             current_user.eulas.append(new_agreement)
         current_user.save()
 
-    return HttpResponseRedirect(request.POST.get('next', '/'))
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.POST.get('next'), '/'))
 
 
 @login_required

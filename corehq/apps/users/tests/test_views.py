@@ -1,9 +1,11 @@
 import json
 import re
 from copy import deepcopy
+from datetime import datetime
 from io import BytesIO
 from unittest.mock import Mock, patch
 
+from django.contrib.messages import get_messages
 from django.http import Http404, HttpResponseRedirect
 from django.test import Client, TestCase
 from django.test.client import RequestFactory
@@ -12,12 +14,16 @@ from django.urls import reverse
 from openpyxl import Workbook
 
 from corehq import privileges
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.sms.verify import VERIFICATION__WORKFLOW_STARTED
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -27,13 +33,15 @@ from corehq.apps.users.models import (
     CouchUser,
     HQApiKey,
     HqPermissions,
+    Invitation,
     UserHistory,
     UserRole,
     WebUser,
 )
-from corehq.apps.users.views import BaseUploadUser
+from corehq.apps.users.views import BaseUploadUser, InviteWebUserView
 from corehq.apps.users.views.mobile.users import (
     CommCareUserPasswordResetView,
+    EditCommCareUserView,
     MobileWorkerListView,
 )
 from corehq.apps.users.views.role import (
@@ -41,7 +49,8 @@ from corehq.apps.users.views.role import (
     _update_role_from_view,
 )
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.tests.util.forms import csrf_client, submit_form
+from corehq.util.test_utils import flag_enabled, generate_cases, privilege_enabled
 from corehq.util.workbook_json.excel import WorkbookJSONError
 
 
@@ -244,6 +253,105 @@ class TestDeleteRole(TestCase):
         self.addCleanup(user_count_patcher.stop)
 
 
+class InvitationViewTestCase(TestCase):
+    domain = 'test-invitation-views'
+    password = '***'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.admin = WebUser.create(cls.domain, 'admin@example.com', cls.password, None, None, is_admin=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.admin.delete(cls.domain, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.client.login(username=self.admin.username, password=self.password)
+
+    def create_invitation(self, domain=None):
+        return Invitation.objects.create(
+            domain=domain or self.domain,
+            email='invitee@example.com',
+            invited_by='inviter-id',
+            invited_on=datetime.utcnow(),
+        )
+
+
+class TestInviteWebUserViewInvitation(InvitationViewTestCase):
+
+    def test_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._get_invitation(domain=self.domain, invitation_id=str(invitation.uuid)) == invitation
+
+    def test_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        with self.assertRaises(Http404):
+            self._get_invitation(domain=self.domain, invitation_id=str(invitation.uuid))
+
+    def test_no_invitation_id(self):
+        assert self._get_invitation(domain=self.domain) is None
+
+    def test_post_edits_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._post_admin_role(invitation).status_code == 302
+        invitation.refresh_from_db()
+        assert invitation.role == 'admin'
+
+    def test_post_cannot_edit_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        assert self._post_admin_role(invitation).status_code == 404
+        invitation.refresh_from_db()
+        assert invitation.role is None
+
+    def _get_invitation(self, **kwargs):
+        view = InviteWebUserView()
+        view.setup(RequestFactory().get('/'), **kwargs)
+        return view.invitation
+
+    def _post_admin_role(self, invitation):
+        return self.client.post(
+            reverse('edit_invitation', args=[self.domain, invitation.uuid]),
+            {'email': invitation.email, 'role': 'admin'},
+        )
+
+
+class TestReinviteWebUser(InvitationViewTestCase):
+
+    @patch('corehq.apps.users.models.Invitation.send_activation_email')
+    def test_resend_invitation_in_domain(self, send_activation_email):
+        self._post(self.create_invitation())
+        send_activation_email.assert_called_once()
+
+    @patch('corehq.apps.users.models.Invitation.send_activation_email')
+    def test_cannot_resend_invitation_in_other_domain(self, send_activation_email):
+        self._post(self.create_invitation(domain='other-domain'))
+        send_activation_email.assert_not_called()
+
+    def _post(self, invitation):
+        return self.client.post(reverse('reinvite_web_user', args=[self.domain]), {'uuid': invitation.uuid})
+
+
+class TestDeleteInvitation(InvitationViewTestCase):
+
+    def test_delete_invitation_in_domain(self):
+        invitation = self.create_invitation()
+        assert self._post(invitation).status_code == 200
+        assert not Invitation.objects.filter(pk=invitation.pk).exists()
+
+    def test_cannot_delete_invitation_in_other_domain(self):
+        invitation = self.create_invitation(domain='other-domain')
+        assert self._post(invitation).status_code == 404
+        assert Invitation.objects.filter(pk=invitation.pk).exists()
+
+    def _post(self, invitation):
+        return self.client.post(reverse('delete_invitation', args=[self.domain]), {'uuid': invitation.uuid})
+
+
 class TestDeletePhoneNumberView(TestCase):
     domain = 'test'
 
@@ -290,6 +398,104 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.by_domain, self.domain)
         self.assertEqual(user_history_log.for_domain, self.domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
+
+
+@patch('corehq.apps.users.views.initiate_sms_verification_workflow',
+       return_value=VERIFICATION__WORKFLOW_STARTED)
+class TestVerifyPhoneNumberView(TestCase):
+    domain = 'test-verify-phone-number'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'verify-phone-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+        cls.mobile_user = CommCareUser.create(cls.domain, 'verify-phone-mobile', 'password', None, None)
+        cls.addClassCleanup(cls.mobile_user.delete, cls.domain, deleted_by=None)
+        cls.url = reverse('verify_phone_number', args=[cls.domain, cls.mobile_user.user_id])
+
+    def setUp(self):
+        self.client.login(username='verify-phone-admin', password='password')
+
+    def test_get_is_rejected(self, initiate_verification):
+        response = self.client.get(self.url, {'phone_number': '99999999'})
+        assert response.status_code == 405
+        initiate_verification.assert_not_called()
+
+    def test_post_starts_verification(self, initiate_verification):
+        response = self.client.post(self.url, {'phone_number': '99999999'})
+        assert response.status_code == 302
+        initiate_verification.assert_called_once()
+        user, phone_number = initiate_verification.call_args.args
+        assert user.user_id == self.mobile_user.user_id
+        assert phone_number == '99999999'
+
+    def test_post_without_phone_number(self, initiate_verification):
+        response = self.client.post(self.url)
+        assert response.status_code == 404
+        initiate_verification.assert_not_called()
+
+    @es_test(requires=[app_adapter])  # the edit page looks up app languages
+    def test_verify_button_on_edit_page(self, initiate_verification):
+        self._submit_verify_button(pending=False)
+        initiate_verification.assert_called_once()
+        assert initiate_verification.call_args.args[1] == '99999999'
+
+    @es_test(requires=[app_adapter])  # the edit page looks up app languages
+    def test_reverify_button_on_edit_page(self, initiate_verification):
+        self._submit_verify_button(pending=True, within='reverify_99999999')
+        initiate_verification.assert_called_once()
+        assert initiate_verification.call_args.args[1] == '99999999'
+
+    def _submit_verify_button(self, pending, within=None):
+        user = CommCareUser.create(self.domain, 'verify-phone-page-mobile', 'password', None, None)
+        self.addCleanup(user.delete, self.domain, deleted_by=None)
+        user.add_phone_number('99999999')
+        user.save()
+        if pending:
+            entry = user.get_or_create_phone_entry('99999999')
+            entry.pending_verification = True
+            entry.save()
+        client = csrf_client('verify-phone-admin', 'password')
+        with privilege_enabled(privileges.INBOUND_SMS):
+            page = client.get(reverse(EditCommCareUserView.urlname, args=[self.domain, user.user_id]))
+            assert page.status_code == 200
+            response = submit_form(client, page, 'Verify', within=within)
+        assert response.status_code == 302
+
+
+class TestUndoRemoveWebUserView(TestCase):
+    domain = 'test-undo-remove-web-user'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.addClassCleanup(cls.project.delete)
+        cls.admin = WebUser.create(cls.domain, 'undo-remove-admin', 'password', None, None, is_admin=True)
+        cls.addClassCleanup(cls.admin.delete, cls.domain, deleted_by=None)
+
+    def setUp(self):
+        removed = WebUser.create(self.domain, 'undo-remove-member', 'password', None, None)
+        self.addCleanup(removed.delete, None, deleted_by=None)
+        record = removed.delete_domain_membership(self.domain, create_record=True)
+        removed.save()
+        self.addCleanup(record.delete)
+        self.removed_user_id = removed.user_id
+        self.url = reverse('undo_remove_web_user', args=[self.domain, record.get_id])
+        self.client.login(username='undo-remove-admin', password='password')
+
+    def test_get_is_rejected(self):
+        response = self.client.get(self.url)
+        assert response.status_code == 405
+        assert not WebUser.get(self.removed_user_id).is_member_of(self.domain)
+
+    def test_post_restores_membership(self):
+        response = self.client.post(self.url)
+        assert response.status_code == 302
+        assert WebUser.get(self.removed_user_id).is_member_of(self.domain)
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -367,7 +573,7 @@ class TestCountWebUsers(TestCase):
         self.assertEqual(json.loads(result.content)['user_count'], 2)
 
 
-class BulkUserUploadAPITest(TestCase):
+class BulkUploadCommCareUserAPITest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -375,7 +581,13 @@ class BulkUserUploadAPITest(TestCase):
         cls.domain = create_domain(cls.domain_name)
         cls.domain.save()
         cls.addClassCleanup(cls.domain.delete)
-        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None)
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.STANDARD)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+        edit_mobile_workers_role = UserRole.create(
+            cls.domain_name, 'can-edit-mobile-workers', permissions=HqPermissions(edit_commcare_users=True)
+        )
+        cls.user = WebUser.create(cls.domain_name, 'test@test.com', 'password', created_by=None, created_via=None,
+                                  role_id=edit_mobile_workers_role.get_id)
         cls.addClassCleanup(cls.user.delete, cls.domain_name, deleted_by=None)
         cls.api_key = HQApiKey.objects.create(user=cls.user.get_django_user(), domain=cls.domain_name)
 
@@ -465,52 +677,6 @@ class BulkUserUploadAPITest(TestCase):
             'success': False
         })
 
-    @flag_enabled('TABLEAU_USER_SYNCING')
-    def test_tableau_role_and_groups_headers(self):
-        workbook = Workbook()
-        users_sheet = workbook.create_sheet(title='users')
-        users_sheet.append(['username', 'email', 'password', 'tableau_role', 'tableau_groups'])
-        users_sheet.append(['test_user', 'test@example.com', 'password', 'fakerole', 'fakegroup'])
-
-        file = BytesIO()
-        workbook.save(file)
-        file.seek(0)
-        file.name = 'users.xlsx'
-
-        # Test user with permission to edit Tableau Configs
-        self.user.is_superuser = False
-        role_with_upload_and_edit_tableau_permission = UserRole.create(
-            self.domain, 'edit-tableau', permissions=HqPermissions(edit_web_users=True,
-                                                                   edit_user_tableau_config=True)
-        )
-        self.user.set_role(self.domain_name,
-                        role_with_upload_and_edit_tableau_permission.get_qualified_id())
-        self.user.save()
-
-        with patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users'):
-            response = self._make_post_request(file)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json(), {'success': True})
-
-        # Test user without permission to edit Tableau Configs
-        role_with_upload_permission = UserRole.create(
-            self.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
-        )
-        self.user.set_role(self.domain_name, role_with_upload_permission.get_qualified_id())
-        self.user.save()
-
-        file.seek(0)
-        response = self._make_post_request(file)
-        self.assertEqual(response.status_code, 400)
-
-        expected_pattern = re.compile(
-            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
-            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
-            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
-            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
-        )
-        self.assertRegex(response.json()['message'], expected_pattern)
-
     @patch('corehq.apps.users.views.mobile.users.BaseUploadUser.upload_users')
     def test_user_upload_error(self, mock_upload_users):
         mock_upload_users.side_effect = UserUploadError('User upload error')
@@ -549,6 +715,101 @@ class BulkUserUploadAPITest(TestCase):
             'success': False,
             'message': 'only one file can be uploaded at a time'
         })
+
+    def test_requires_edit_commcare_users_permission(self):
+        no_permissions = UserRole.create(self.domain_name, 'no-permissions')
+        member = WebUser.create(self.domain_name, 'member@test.com', 'password', None, None,
+                                role_id=no_permissions.get_id)
+        self.addCleanup(member.delete, self.domain_name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=member.get_django_user(), domain=self.domain_name)
+
+        response = self.client.post(
+            self.url,
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {member.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_requires_bulk_user_management_privilege(self):
+        free_domain = create_domain('bulk-user-upload-free-domain')
+        self.addCleanup(free_domain.delete)
+        admin = WebUser.create(free_domain.name, 'admin@test.com', 'password', None, None, is_admin=True)
+        self.addCleanup(admin.delete, free_domain.name, deleted_by=None)
+        api_key = HQApiKey.objects.create(user=admin.get_django_user(), domain=free_domain.name)
+
+        response = self.client.post(
+            reverse('bulk_user_upload_api', args=[free_domain.name]),
+            {'bulk_upload_file': self._create_valid_workbook()},
+            HTTP_AUTHORIZATION=f'ApiKey {admin.username}:{api_key.plaintext_key}',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+
+class BulkUploadWebUserTest(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_name = 'bulk-upload-web-user-domain'
+        cls.domain = create_domain(cls.domain_name)
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
+        cls.setup_subscription(cls.domain_name, SoftwarePlanEdition.STANDARD)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('upload_web_users', args=[self.domain_name])
+
+    def _create_user(self, username, permissions):
+        role = UserRole.create(self.domain_name, username, permissions=permissions)
+        user = WebUser.create(self.domain_name, username, 'password', None, None, role_id=role.get_id)
+        self.addCleanup(user.delete, self.domain_name, deleted_by=None)
+        return user
+
+    def _make_post_request(self, user, file):
+        self.client.login(username=user.username, password='password')
+        return self.client.post(self.url, {'bulk_upload_file': file})
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    def test_tableau_role_and_groups_headers(self):
+        workbook = Workbook()
+        users_sheet = workbook.create_sheet(title='users')
+        users_sheet.append(['username', 'email', 'role', 'tableau_role', 'tableau_groups'])
+        users_sheet.append(['test_user@example.com', 'test_user@example.com', 'Admin', 'fakerole', 'fakegroup'])
+
+        file = BytesIO()
+        workbook.save(file)
+        file.seek(0)
+        file.name = 'users.xlsx'
+
+        # Test user with permission to edit Tableau Configs
+        tableau_editor = self._create_user(
+            'tableau-editor@test.com', HqPermissions(edit_web_users=True, edit_user_tableau_config=True)
+        )
+        download_id = '0' * 32
+        with patch('corehq.apps.users.views.BaseUploadUser.upload_users',
+                   return_value=Mock(download_id=download_id)):
+            response = self._make_post_request(tableau_editor, file)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, reverse('web_user_upload_status', args=[self.domain_name, download_id]))
+
+        # Test user without permission to edit Tableau Configs
+        user_manager = self._create_user('user-manager@test.com', HqPermissions(edit_web_users=True))
+        file.seek(0)
+        response = self._make_post_request(user_manager, file)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.url)
+
+        expected_pattern = re.compile(
+            r"Only users with 'Manage Tableau Configuration' edit permission in domains "
+            r"where Tableau User Syncing is enabled can upload files with 'Tableau Role' "
+            r"and/or 'Tableau Groups' fields\.\nThe following are illegal column headers: "
+            r"(?:tableau_groups, tableau_role|tableau_role, tableau_groups)\.",
+        )
+        [message] = get_messages(response.wsgi_request)
+        self.assertRegex(str(message), expected_pattern)
 
 
 class BaseUploadUserTest(TestCase):
@@ -709,3 +970,58 @@ class TestCommCareUserPasswordResetView(TestCase):
         mock_messages.success.assert_called_once()
         success_call_args = mock_messages.success.call_args[0]
         self.assertIn('sent', str(success_call_args[1]).lower())
+
+
+class TestChangePasswordView(TestCase):
+    domain = 'test-change-password'
+    password = 'Old-passw0rd!'
+    new_password = 'N3w-passw0rd!'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.mobile_worker = CommCareUser.create(cls.domain, 'mobile-worker', cls.password, None, None)
+        cls.addClassCleanup(cls.mobile_worker.delete, cls.domain, deleted_by=None)
+        cls.url = reverse('change_password', args=[cls.domain, cls.mobile_worker.user_id])
+
+        cls.editor = cls._make_web_user('editor', HqPermissions(edit_commcare_users=True))
+        cls.viewer = cls._make_web_user('viewer', HqPermissions(view_commcare_users=True))
+        cls.no_permissions = cls._make_web_user('no-permissions', HqPermissions())
+
+    @classmethod
+    def _make_web_user(cls, name, permissions):
+        role = UserRole.create(cls.domain, name, permissions=permissions)
+        user = WebUser.create(cls.domain, f'{name}@{cls.domain}.com', cls.password, None, None,
+                              role_id=role.get_id)
+        cls.addClassCleanup(user.delete, cls.domain, deleted_by=None)
+        return user
+
+    def _post_new_password(self, user):
+        self.client.login(username=user.username, password=self.password)
+        return self.client.post(self.url, {
+            'new_password1': self.new_password,
+            'new_password2': self.new_password,
+        })
+
+    def _mobile_worker_password_was_changed(self):
+        django_user = CommCareUser.get_by_user_id(self.mobile_worker.user_id).get_django_user()
+        return django_user.check_password(self.new_password)
+
+    def test_user_who_can_edit_mobile_workers_can_change_password(self):
+        response = self._post_new_password(self.editor)
+        assert response.status_code == 200
+        assert response.json()['status'] == 'OK'
+        assert self._mobile_worker_password_was_changed()
+
+    def test_view_only_user_cannot_change_password(self):
+        response = self._post_new_password(self.viewer)
+        assert response.status_code == 403
+        assert not self._mobile_worker_password_was_changed()
+
+    def test_user_without_permissions_cannot_change_password(self):
+        response = self._post_new_password(self.no_permissions)
+        assert response.status_code == 403
+        assert not self._mobile_worker_password_was_changed()

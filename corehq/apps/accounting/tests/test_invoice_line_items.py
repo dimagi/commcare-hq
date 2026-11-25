@@ -1,20 +1,28 @@
 import datetime
 import random
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest import mock
 
+from django.test import TestCase
+
+import pytest
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting.invoicing import WebUserLineItemFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
+    BillingAccountWebUserHistory,
     DefaultProductPlan,
     DomainUserHistory,
+    DomainWebUserHistory,
     Feature,
     FeatureRate,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     Invoice,
+    SoftwarePlanEdition,
     Subscriber,
     Subscription,
 )
@@ -330,10 +338,7 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
 
     def setUp(self):
         super(TestWebUserLineItem, self).setUp()
-        self.web_user_rate = self.subscription.plan_version.feature_rates.filter(
-            feature__feature_type=FeatureType.WEB_USER)[:1].get()
-        self.subscription.account.bill_web_user = True
-        self.subscription.account.save()
+        self.web_user_rate = generator.add_web_user_feature_rate(self.subscription.plan_version)
 
     def test_under_limit(self):
         """
@@ -349,7 +354,8 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(0, self.web_user_rate.monthly_limit)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -377,7 +383,8 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
@@ -394,23 +401,107 @@ class TestWebUserLineItem(BaseInvoiceTestCase):
         self.assertEqual(web_user_line_item.subtotal, num_to_charge * self.web_user_rate.per_excess_fee)
         self.assertEqual(web_user_line_item.total, num_to_charge * self.web_user_rate.per_excess_fee)
 
-    def test_no_line_item_when_bill_web_user_flag_is_false(self):
+    def test_no_line_item_when_plan_has_no_web_user_feature(self):
         """
-        For a billing account that have bill_web_user flag set to False
+        For a software plan without a Web User feature rate
         - there should be no web user line item on the invoice
         """
-        self.subscription.account.bill_web_user = False
-        self.subscription.account.save()
+        self.subscription.plan_version.feature_rates.remove(self.web_user_rate)
 
         invoice_date = utils.get_first_day_x_months_later(self.subscription.date_start,
                                               random.randint(2, self.subscription_length))
 
         num_active = random.randint(self.web_user_rate.monthly_limit + 1, self.web_user_rate.monthly_limit + 2)
-        with mock.patch('corehq.apps.accounting.tasks.get_web_user_usage', return_value=num_active):
+        usernames = [f'user{i}@example.com' for i in range(num_active)]
+        with mock.patch.object(tasks, 'get_web_usernames', return_value=usernames):
             self.create_invoices(invoice_date, calculate_web_users=True)
 
         invoice = self.subscription.invoice_set.latest('date_created')
         self.assertEqual(invoice.lineitem_set.get_feature_by_type(FeatureType.WEB_USER).count(), 0)
+
+
+class TestWebUserTotalUsersForDate(TestCase):
+
+    month_end = datetime.date(2026, 9, 30)
+
+    @classmethod
+    def setUpTestData(cls):
+        generator.init_default_currency()
+        invoiced_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.ENTERPRISE)
+        other_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.STANDARD)
+
+        cls.account = cls._account(is_customer_account=True)
+        cls.invoiced_subscription = cls._subscribe(cls.account, 'billed-domain', invoiced_plan)
+        cls._subscribe(cls.account, 'sibling-domain', invoiced_plan, do_not_invoice=True)
+        cls._subscribe(cls.account, 'unrelated-domain', other_plan, do_not_invoice=True)
+
+        cls.non_customer_account = cls._account()
+        cls.non_customer_subscription = cls._subscribe(
+            cls.non_customer_account, 'standalone-domain', invoiced_plan,
+        )
+        cls._subscribe(cls.non_customer_account, 'sandbox-domain', invoiced_plan, do_not_invoice=True)
+
+    def setUp(self):
+        self.factory = self._factory(self.invoiced_subscription)
+
+    def test_counts_distinct_non_dimagi_users_on_same_plan(self):
+        self._record('billed-domain', ['a@example.com', 'b@example.com', 'staff@dimagi.com'])
+        self._record('sibling-domain', ['b@example.com', 'c@example.com'])
+        self._record('unrelated-domain', ['d@example.com'])
+        assert self.factory.total_users_for_date(self.month_end) == 3
+
+    def test_non_customer_account_counts_only_its_domain(self):
+        self._record('standalone-domain', ['a@example.com'])
+        self._record('sandbox-domain', ['b@example.com', 'c@example.com'])
+        factory = self._factory(self.non_customer_subscription)
+        assert factory.total_users_for_date(self.month_end) == 1
+
+    def test_missing_snapshot_raises(self):
+        self._record('billed-domain', ['a@example.com'])
+        with pytest.raises(DomainWebUserHistory.DoesNotExist, match='sibling-domain'):
+            self.factory.total_users_for_date(self.month_end)
+
+    def test_missing_snapshot_for_deleted_domain_is_skipped(self):
+        self._record('billed-domain', ['a@example.com'])
+        with mock.patch(
+            'corehq.apps.accounting.invoicing.deleted_domain_exists',
+            side_effect=lambda domain: domain == 'sibling-domain',
+        ):
+            assert self.factory.total_users_for_date(self.month_end) == 1
+
+    def test_falls_back_to_account_history_without_snapshots(self):
+        BillingAccountWebUserHistory.objects.create(
+            billing_account=self.account, record_date=self.month_end, num_users=4,
+        )
+        assert self.factory.total_users_for_date(self.month_end) == 4
+
+    def test_raises_without_snapshots_or_account_history(self):
+        with pytest.raises(BillingAccountWebUserHistory.DoesNotExist):
+            self.factory.total_users_for_date(self.month_end)
+
+    @staticmethod
+    def _account(is_customer_account=False):
+        return generator.billing_account(
+            generator.create_arbitrary_web_user_name(),
+            generator.create_arbitrary_web_user_name(),
+            is_customer_account=is_customer_account,
+        )
+
+    @staticmethod
+    def _subscribe(account, domain, plan_version, do_not_invoice=False):
+        return generator.generate_domain_subscription(
+            account, SimpleNamespace(name=domain), datetime.date(2026, 1, 1), None,
+            plan_version=plan_version, do_not_invoice=do_not_invoice,
+        )
+
+    def _factory(self, subscription):
+        invoice = SimpleNamespace(date_start=datetime.date(2026, 9, 1), date_end=self.month_end)
+        return WebUserLineItemFactory(subscription, None, invoice)
+
+    def _record(self, domain, usernames):
+        DomainWebUserHistory.objects.create(
+            domain=domain, record_date=self.month_end, usernames=usernames, num_users=len(usernames),
+        )
 
 
 class TestSmsLineItem(BaseInvoiceTestCase):

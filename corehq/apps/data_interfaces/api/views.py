@@ -92,6 +92,10 @@ def bulk_form_action(request, domain):
     data = serialize_job(job)
     data['status_url'] = reverse(
         'bulk_form_action_status', args=[domain, job.id.hex], absolute=True)
+    data['message'] = (
+        "The job has been queued for processing. "
+        "Poll status_url to track its progress and get the results."
+    )
     return JsonResponse(data, status=202)
 
 

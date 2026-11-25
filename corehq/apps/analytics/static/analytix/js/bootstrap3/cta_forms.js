@@ -58,6 +58,7 @@ let hubspotCtaForm = function (config) {
     self.language = ko.observable();
     self.discoverySource = ko.observable();
     self.otherSource = ko.observable();
+    self.marketingOptIn = ko.observable(false);
 
     self.areMainFieldsValid = ko.computed(function () {
         return _.every([
@@ -104,6 +105,10 @@ let hubspotCtaForm = function (config) {
             page_url: window.location.href,
             page_name: document.title,
         };
+
+        if (self.marketingOptIn()) {
+            submitData.all_marketing_email_opt_in = 'true';
+        }
 
         $.ajax({
             method: 'post',

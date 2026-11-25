@@ -452,6 +452,7 @@ function Form(json) {
     self.atLastIndex = ko.observable(false);
     self.atFirstIndex = ko.observable(true);
     self.shouldAutoSubmit = json.shouldAutoSubmit;
+    self.isDense = _.has(json.webAppsPragmas, 'Dense');  // Pragma-WebApps-Dense
     self.fileNameCache = {};
 
     var _updateIndexCallback = function (ix, isAtFirstIndex, isAtLastIndex) {

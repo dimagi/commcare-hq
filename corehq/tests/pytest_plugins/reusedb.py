@@ -15,9 +15,11 @@ The `REUSE_DB` environment variable may be overridden with
 import logging
 import os
 import sys
+import time
 import warnings
 from contextlib import ExitStack, contextmanager, nullcontext
 from functools import partial
+from importlib import import_module
 from unittest.mock import Mock, patch
 
 import pytest
@@ -29,7 +31,10 @@ from unmagic import get_request, use
 from django.conf import settings
 from django.core import cache
 from django.core.management import call_command
-from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import (
+    TEST_DATABASE_PREFIX,
+    BaseDatabaseCreation,
+)
 from django.db.utils import OperationalError
 from django.test import utils as djutils
 from django.test.utils import get_unique_databases_and_mirrors
@@ -236,7 +241,8 @@ class DeferredDatabaseContext:
         session = get_request().session
         with ExitStack() as stack:
             try:
-                setup(stack.enter_context, stack.callback)
+                with log_elapsed("database setup"):
+                    setup(stack.enter_context, stack.callback)
             except BaseException:
                 session.shouldfail = "Abort: database setup failed"
                 raise
@@ -249,8 +255,6 @@ class DeferredDatabaseContext:
 @unit_testing_only
 @contextmanager
 def couch_sql_context(config):
-    from corehq.apps.project_db.table_ddl import setup_project_db
-
     if config.skip_setup_for_reuse_db and sql_databases_ok():
         if config.reuse_db == "migrate":
             call_command('migrate_multi', interactive=False)
@@ -263,14 +267,14 @@ def couch_sql_context(config):
     else:
         if config.reuse_db == "reset":
             reset_databases(config.option.verbose)
-        dbs = djutils.setup_databases(
-            interactive=False,
-            verbosity=config.option.verbose,
-            # avoid re-creating databases that already exist
-            keepdb=config.skip_setup_for_reuse_db,
-            serialized_aliases=(),
-        )
-        setup_project_db()
+        with granular_create_test_db_timing():
+            dbs = djutils.setup_databases(
+                interactive=False,
+                verbosity=config.option.verbose,
+                # avoid re-creating databases that already exist
+                keepdb=config.skip_setup_for_reuse_db,
+                serialized_aliases=(),
+            )
 
     try:
         yield
@@ -280,6 +284,37 @@ def couch_sql_context(config):
                 reversed(dbs),  # tear down in reverse setup order
                 verbosity=config.option.verbose,
             )
+
+
+@contextmanager
+def granular_create_test_db_timing():
+    """Report how long each test database takes to create"""
+    create_test_db = BaseDatabaseCreation.create_test_db
+
+    def timed_create_test_db(self, *args, **kwargs):
+        with log_elapsed(f"create test database {self.connection.alias!r}"):
+            return create_test_db(self, *args, **kwargs)
+
+    with patch.object(BaseDatabaseCreation, "create_test_db", timed_create_test_db):
+        yield
+
+
+@contextmanager
+def log_elapsed(label):
+    """Report how long the block took
+
+    Suspends output capturing to write the report, because database
+    setup happens inside the first database test.
+    """
+    start = time.monotonic()
+    try:
+        yield
+    finally:
+        config = get_request().config
+        capture = config.pluginmanager.getplugin("capturemanager")
+        reporter = config.pluginmanager.getplugin("terminalreporter")
+        with capture.global_and_fixture_disabled():
+            reporter.write_line(f"[db] {label}: {time.monotonic() - start:.1f}s")
 
 
 def sql_databases_ok():
@@ -381,7 +416,8 @@ def flush_databases():
             db.flush()
         except (ResourceNotFound, HTTPError):
             pass
-    call_command('flush', interactive=False)
+    for connection, db_name, _ in get_sql_databases():
+        call_command('flush', interactive=False, database=connection.alias)
     bootstrap_migrated_db_state()
 
 
@@ -391,6 +427,21 @@ def bootstrap_migrated_db_state():
     from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
     bootstrap_accounting()
     bootstrap_smsbillables()
+    bootstrap_reference_data()
+
+
+@unit_testing_only
+def bootstrap_reference_data():
+    """Restore rows created by data migrations. Safe to call repeatedly."""
+    from django.apps import apps
+
+    from corehq.apps.users.models_role import Permission
+
+    Permission.create_all()
+    ota_migration = import_module('corehq.apps.ota.migrations.0012_integritysamplepercentage')
+    ota_migration.create_integrity_sample_percentage(apps, schema_editor=None)
+    toggles_migration = import_module('corehq.toggles.migrations.0006_alter_toggleeditpermission_tag_slug')
+    toggles_migration._sync_toggle_edit_permissions(apps, schema_editor=None)
 
 
 class HqDbBlocker(DjangoDbBlocker):

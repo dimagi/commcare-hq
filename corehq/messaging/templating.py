@@ -4,6 +4,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
+import _string
 import string
 
 UNKNOWN_VALUE = '(?)'
@@ -68,7 +69,7 @@ def _get_obj_template_info(obj):
     return {}
 
 
-class MessagingTemplateRenderer(object):
+class MessagingTemplateRenderer:
     context_params = None
 
     def __init__(self):
@@ -78,14 +79,61 @@ class MessagingTemplateRenderer(object):
         self.context_params[name] = value
 
     def render(self, message):
-        return string.Formatter().vformat(str(message), [], self.context_params)
+        return MessagingTemplateFormatter().vformat(str(message), [], self.context_params)
 
 
-class SimpleMessagingTemplateParam(object):
+class MessagingTemplateFormatter(string.Formatter):
+    """
+    A Formatter that resolves fields only through template params' own
+    data. A plain Formatter uses getattr() and indexing, which reach real
+    Python attributes like __class__ and from there any module's globals.
+    """
+
+    def get_field(self, field_name, args, kwargs):
+        """
+        Mirrors string.Formatter.get_field(), but resolves attributes with
+        get_template_value() instead of getattr(), and [index] lookups or
+        non-param values as unknown.
+
+        Uses the original's internal _string parser, as there is no public
+        one.
+        """
+        first, rest = _string.formatter_field_name_split(field_name)
+        obj = self.get_value(first, args, kwargs)
+        for is_attr, item in rest:
+            if is_attr and isinstance(obj, MessagingTemplateParam):
+                obj = obj.get_template_value(item)
+            else:
+                obj = SimpleMessagingTemplateParam(UNKNOWN_VALUE)
+        return obj, first
+
+    def convert_field(self, value, conversion):
+        """
+        Formatter calls this after get_field() for fields with a !r, !s or
+        !a conversion, which would render the param with repr(), str() or
+        ascii() instead of its own __format__. The conversion is ignored so
+        that params always render through __format__.
+        """
+        return value
+
+
+class MessagingTemplateParam:
+    """
+    A value that can be used in a messaging template. Subclasses expose
+    their data through get_template_value().
+    """
+
+    def get_template_value(self, item):
+        """
+        Returns the param for {param.item}, to be rendered or, for
+        {param.item.other}, looked up further.
+        """
+        raise NotImplementedError
+
+
+class SimpleMessagingTemplateParam(MessagingTemplateParam):
 
     def __init__(self, value):
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__value = value
 
     def __format__(self, format_spec):
@@ -95,25 +143,18 @@ class SimpleMessagingTemplateParam(object):
         """
         return str(self.__value)
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-
-        A simple value doesn't have any attributes, so trying to
-        access any attributes will always return another
-        SimpleMessagingTemplateParam that renders to the unknown value.
+        A simple value doesn't have any attributes, so this always
+        returns another SimpleMessagingTemplateParam that renders to the
+        unknown value.
         """
         return SimpleMessagingTemplateParam(UNKNOWN_VALUE)
 
 
-class SimpleDictTemplateParam(object):
+class SimpleDictTemplateParam(MessagingTemplateParam):
 
     def __init__(self, dict_of_values):
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__dict_of_values = dict_of_values
 
     def __format__(self, format_spec):
@@ -126,14 +167,9 @@ class SimpleDictTemplateParam(object):
         """
         return UNKNOWN_VALUE
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-
-        So we return a SimpleMessagingTemplateParam that either renders to the
+        Returns a SimpleMessagingTemplateParam that either renders to the
         item in the dictionary or to the unknown value if it doesn't exist.
         """
         if item in self.__dict_of_values:
@@ -147,7 +183,7 @@ class NestedDictTemplateParam(SimpleDictTemplateParam):
     def __init__(self, dict_of_values):
         self.__dict_of_values = dict_of_values
 
-    def __getattr__(self, item):
+    def get_template_value(self, item):
         """Works just like SimpleDictTemplateParam but it can contain nested dicts"""
         if val := self.__dict_of_values.get(item):
             if isinstance(val, dict):
@@ -163,8 +199,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
     def __init__(self, case):
         super(CaseMessagingTemplateParam, self).__init__(_get_case_template_info(case))
 
-        # Define all internal attributes as private so that they can't be
-        # accessed directly from a rendering context
         self.__case = case
         self.__domain = case.domain
         self.__owner_result = None
@@ -173,10 +207,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         self.__last_modified_by_result = None
 
     def __get_owner_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__owner_result:
             return self.__owner_result
 
@@ -192,10 +222,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__owner_result
 
     def __get_parent_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__parent_result:
             return self.__parent_result
 
@@ -208,10 +234,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__parent_result
 
     def __get_host_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__host_result:
             return self.__host_result
 
@@ -224,10 +246,6 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         return self.__host_result
 
     def __get_last_modified_by_result(self):
-        """
-        memoized doesn't seem to work with overriding __getattr__ at the same time,
-        so we cache the result using a private attribute.
-        """
         if self.__last_modified_by_result:
             return self.__last_modified_by_result
 
@@ -247,13 +265,7 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
 
         return self.__last_modified_by_result
 
-    def __getattr__(self, item):
-        """
-        __getattr__ is what is called when an attribute of this object is
-        accessed in a rendering, for example {object.attribute}. It should
-        return the attribute, which will itself be rendered by its own
-        __format__ method.
-        """
+    def get_template_value(self, item):
         if item == 'owner':
             return self.__get_owner_result()
         elif item == 'parent':
@@ -263,4 +275,4 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         elif item == 'last_modified_by':
             return self.__get_last_modified_by_result()
 
-        return super(CaseMessagingTemplateParam, self).__getattr__(item)
+        return super(CaseMessagingTemplateParam, self).get_template_value(item)

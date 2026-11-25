@@ -434,6 +434,9 @@ class BillingAccount(ValidateModelMixin, models.Model):
         default=list
     )
 
+    # Deprecated: no longer read. Web user billing is determined by the
+    # software plan (SoftwarePlanVersion.has_web_user_feature). Remove this
+    # field in a follow-up after deploy (SAAS-20367).
     bill_web_user = models.BooleanField(default=False)
 
     class Meta(object):
@@ -1009,6 +1012,10 @@ class SoftwarePlanVersion(models.Model):
         if self.user_feature is not None:
             return self.user_feature.monthly_limit
         return UNLIMITED_FEATURE_USAGE
+
+    @property
+    def has_web_user_feature(self):
+        return self.feature_rates.filter(feature__feature_type=FeatureType.WEB_USER).exists()
 
     @property
     def user_fee(self):
@@ -4000,11 +4007,24 @@ class FormSubmittingMobileWorkerHistory(DomainUserHistoryBase):
     pass
 
 
+class DomainWebUserHistory(DomainUserHistoryBase):
+    """
+    The usernames of active web users in a domain at the record_date,
+    including Dimagi users. Created by task calculate_web_users_in_all_domains
+    on the first of every month. A web user can belong to several domains, so
+    usernames are stored to count each user once across all the domains billed.
+    """
+    usernames = ArrayField(models.CharField(max_length=255), default=list)
+
+
 class BillingAccountWebUserHistory(models.Model):
     """
-    A record of the number of users for a billing account at the record_date.
-    Created by task calculate_web_users_in_all_billing_accounts on the first of every month.
-    It will be used to bill clients for the appropriate number of web users
+    This is now deprecated and replaced by DomainWebUserHistory.
+
+    The number of web users across all of a billing account's active
+    domains at the record_date. Kept as the historical record of what
+    accounts were billed against, and as the invoicing fallback before
+    DomainWebUserHistory existed.
     """
     billing_account = models.ForeignKey(BillingAccount, on_delete=models.CASCADE)
     record_date = models.DateField()

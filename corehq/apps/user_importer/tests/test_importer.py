@@ -9,6 +9,7 @@ from django.test.utils import tag
 from unittest.mock import patch
 
 from corehq import toggles
+from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
@@ -30,7 +31,10 @@ from corehq.apps.reports.models import TableauUser, TableauServer
 from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
 from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
-from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.exceptions import (
+    MobileWorkerLimitReached,
+    UserUploadError,
+)
 from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
@@ -1587,6 +1591,107 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'],
         _("Password must have at least 8 characters."))
+
+
+class TestMobileWorkerLimitBulkUpload(TestCase, DomainSubscriptionMixin):
+    # The test FREE plan allows 2 mobile workers and no excess users
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name(name='mw-limit')
+        cls.addClassCleanup(cls.domain.delete)
+        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.FREE)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+        cls.uploading_user = WebUser.create(cls.domain.name, "mw-limit-admin@example.com", 'password',
+                                            None, None, is_superuser=True)
+        cls.addClassCleanup(cls.uploading_user.delete, cls.domain.name, deleted_by=None)
+        cls.upload_record = UserUploadRecord(domain=cls.domain.name, user_id=cls.uploading_user.get_id)
+        cls.upload_record.save()
+
+    def test_new_users_beyond_limit_are_rejected(self):
+        flags = self._upload([
+            {'username': 'one', 'password': 'one-Secret-1'},
+            {'username': 'two', 'password': 'two-Secret-2'},
+            {'username': 'three', 'password': 'three-Secret-3'},
+        ])
+        assert flags == ['created', 'created', 'rejected']
+        assert CommCareUser.total_by_domain(self.domain.name) == 2
+
+    def test_new_inactive_user_does_not_use_slot(self):
+        self._create_user('one')
+        self._create_user('two')
+        flags = self._upload([{'username': 'three', 'password': 'three-Secret-3', 'is_active': 'False'}])
+        assert flags == ['created']
+        assert not self._is_active('three')
+
+    def test_reactivating_user_beyond_limit_is_rejected(self):
+        self._create_user('one')
+        self._create_user('two')
+        inactive = self._create_user('three', is_active=False)
+        flags = self._upload([{'username': 'three', 'user_id': inactive.user_id, 'is_active': 'True'}])
+        assert flags == ['rejected']
+        assert not self._is_active('three')
+
+    def test_updating_active_user_at_limit_is_allowed(self):
+        one = self._create_user('one')
+        self._create_user('two')
+        flags = self._upload([{'username': 'one', 'user_id': one.user_id, 'name': 'Uno', 'is_active': 'True'}])
+        assert flags == ['updated']
+        assert CommCareUser.get_by_user_id(one.user_id).first_name == 'Uno'
+
+    def test_deactivating_user_frees_slot(self):
+        one = self._create_user('one')
+        self._create_user('two')
+        flags = self._upload([
+            {'username': 'one', 'user_id': one.user_id, 'is_active': 'False'},
+            {'username': 'three', 'password': 'three-Secret-3'},
+        ])
+        assert flags == ['updated', 'created']
+        assert self._is_active('three')
+
+    @patch('corehq.apps.user_importer.importer.soft_assert', return_value=lambda *args: None)
+    def test_failed_save_frees_slot(self, _):
+        self._create_user('one')
+        save = CommCareUser.save
+
+        def fail_for_two(user, *args, **kwargs):
+            if user.username == self._username('two'):
+                raise Exception('save failed')
+            return save(user, *args, **kwargs)
+
+        with patch.object(CommCareUser, 'save', autospec=True, side_effect=fail_for_two):
+            flags = self._upload([
+                {'username': 'two', 'password': 'two-Secret-2'},
+                {'username': 'three', 'password': 'three-Secret-3'},
+            ])
+        assert flags == ['save failed', 'created']
+
+    def _create_user(self, name, is_active=True):
+        user = CommCareUser.create(
+            self.domain.name, self._username(name), 'secret', None, None, is_active=is_active,
+        )
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        return user
+
+    def _upload(self, specs):
+        result = create_or_update_commcare_users_and_groups(
+            self.domain.name, specs, self.uploading_user, self.upload_record.pk,
+        )
+        for row in result['rows']:
+            if row['flag'] == 'created':
+                user = CommCareUser.get_by_username(self._username(row['username']))
+                self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        return [self._row_outcome(row['flag']) for row in result['rows']]
+
+    def _row_outcome(self, flag):
+        return 'rejected' if flag == str(MobileWorkerLimitReached()) else flag
+
+    def _is_active(self, name):
+        return CommCareUser.get_by_username(self._username(name)).is_active
+
+    def _username(self, name):
+        return f'{name}@{self.domain.name}.commcarehq.org'
 
 
 class TestUserUploadRecord(TestCase):

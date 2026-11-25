@@ -1,22 +1,26 @@
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.app_manager.dbaccessors import (
-    get_latest_released_app,
     get_latest_released_build_ids_by_app_id,
     wrap_app,
 )
-from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import Application
 from corehq.apps.public_webforms.models import PublicWebformType
+from corehq.apps.public_webforms.utils import get_live_app_ids
 from corehq.util.quickcache import quickcache
 
 
 def get_public_webform_choices(domain):
     """Return the drilldown tree of applications, menus, and eligible forms
-    from latest released app builds. Menus and applications with no eligible
-    forms are omitted.
+    from latest released app builds. Deleted applications, and menus and
+    applications with no eligible forms, are omitted.
     """
-    build_ids = set(get_latest_released_build_ids_by_app_id(domain).values())
+    live_app_ids = get_live_app_ids(domain)
+    build_ids = {
+        build_id
+        for app_id, build_id in get_latest_released_build_ids_by_app_id(domain).items()
+        if app_id in live_app_ids
+    }
     return _get_choices_for_builds(build_ids)
 
 
@@ -62,19 +66,6 @@ def _get_build_choice(app):
         'version': app.version,
         'menus': menus,
     }
-
-
-def get_public_webform_eligible_form(domain, app_id, form_unique_id):
-    app = get_latest_released_app(domain, app_id)
-    if app is None:
-        return None
-    try:
-        form = app.get_form(form_unique_id)
-    except FormNotFoundException:
-        return None
-    if form.get_module().module_type != 'basic' or form.requires_case():
-        return None
-    return form
 
 
 def get_public_webform_type(form):

@@ -76,13 +76,17 @@ from corehq.apps.es.case_search import (
     wrap_case_search_hit,
 )
 from corehq.apps.es.profiling import ESQueryProfiler
-from corehq.apps.project_db.user_sql import UserSQL
+from corehq.apps.project_db.user_sql import (
+    UserSQL,
+    UserSQLProgrammingError,
+    UserSQLTimeout,
+)
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.util.metrics import metrics_histogram_timer
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import serialize
 
@@ -198,13 +202,27 @@ def get_project_db_fixture(domain, endpoint, config):
             _("Endpoint '{}' parameters are invalid").format(config.endpoint_id))
     user_sql = UserSQL(domain, version.dangerous_sql, CASE_SEARCH_MAX_RESULTS)
     query_params = bind_values(parameters, config.criteria)
+    result = _run_endpoint_query(domain, endpoint, user_sql, query_params)
+    return _rows_to_fixture(result.rows)
+
+
+def _run_endpoint_query(domain, endpoint, user_sql, query_params):
+    tags = {'domain': domain, 'endpoint_id': str(endpoint.id)}
     with metrics_histogram_timer(
         'commcare.project_db.endpoint_query.duration',
         timing_buckets=(.1, .5, 1, 2, 5, 10),
-        tags={'domain': domain, 'endpoint_id': str(endpoint.id)},
+        tags=tags,
     ):
-        result = user_sql.run(query_params)
-    return _rows_to_fixture(result.rows)
+        try:
+            return user_sql.run(query_params)
+        except UserSQLTimeout as e:
+            metrics_counter('commcare.project_db.endpoint_query.timeout', tags=tags)
+            raise CaseSearchUserError(_("Endpoint '{}' query timed out").format(endpoint.id)) from e
+        except UserSQLProgrammingError as e:
+            notify_exception(None, "ProjectDB endpoint query failed", details={
+                'endpoint': endpoint.id, 'error': e.msg,
+            })
+            raise CaseSearchUserError(_("Endpoint '{}' query failed").format(endpoint.id)) from e
 
 
 def _rows_to_fixture(rows):

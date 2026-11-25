@@ -11,7 +11,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from couchdbkit import ResourceNotFound
-from django_prbac.utils import has_privilege
 
 from casexml.apps.case.const import (
     ARCHIVED_CASE_OWNER_ID,
@@ -226,13 +225,30 @@ def doc_value_wrapper(doc_cls, value_cls):
     return wrapper
 
 
-def can_add_extra_mobile_workers(request):
+def can_add_extra_mobile_workers(domain):
+    remaining = get_remaining_mobile_worker_slots(domain)
+    return remaining is None or remaining > 0
+
+
+def get_remaining_mobile_worker_slots(domain):
+    """
+    Returns how many more active mobile workers the domain's plan allows,
+    or ``None`` if the domain is not limited. Negative if the domain is
+    already over its limit.
+    """
+    from corehq.apps.accounting.models import (
+        UNLIMITED_FEATURE_USAGE,
+        Subscription,
+    )
+    from corehq.apps.accounting.utils import domain_has_privilege
     from corehq.apps.users.models import CommCareUser
-    num_web_users = CommCareUser.total_by_domain(request.domain)
-    user_limit = request.plan.user_limit
-    if user_limit == -1 or num_web_users < user_limit:
-        return True
-    return has_privilege(request, privileges.ALLOW_EXCESS_USERS)
+
+    user_limit = Subscription.get_subscribed_plan_by_domain(domain).user_limit
+    if user_limit == UNLIMITED_FEATURE_USAGE:
+        return None
+    if domain_has_privilege(domain, privileges.ALLOW_EXCESS_USERS):
+        return None
+    return user_limit - CommCareUser.total_by_domain(domain)
 
 
 def user_display_string(username, first_name='', last_name=''):
@@ -545,7 +561,7 @@ def verify_modify_user_conditions(request, user, is_active) -> None:
     from corehq.apps.locations.permissions import can_edit_workers_location
 
     if (not can_edit_workers_location(request.couch_user, user)
-            or (is_active and not can_add_extra_mobile_workers(request))):
+            or (is_active and not can_add_extra_mobile_workers(request.domain))):
         raise ModifyUserStatusException("No Permission.")
     if not is_active and user.user_location_id:
         raise ModifyUserStatusException("This is a location user, archive or delete the "

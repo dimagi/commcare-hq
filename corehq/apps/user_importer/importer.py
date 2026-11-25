@@ -28,7 +28,10 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.util import get_tableau_group_ids_by_names
 from corehq.apps.sms.util import validate_phone_number
-from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.exceptions import (
+    MobileWorkerLimitReached,
+    UserUploadError,
+)
 from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -44,7 +47,10 @@ from corehq.apps.users.models import (
     InvitationStatus,
     UserRole,
 )
-from corehq.apps.users.util import generate_mobile_username
+from corehq.apps.users.util import (
+    generate_mobile_username,
+    get_remaining_mobile_worker_slots,
+)
 from corehq.const import (
     INVITATION_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_BULK_IMPORTER,
@@ -460,6 +466,11 @@ class BaseUserRow:
 
 class CCUserRow(BaseUserRow):
 
+    def __init__(self, importer, row):
+        super().__init__(importer, row)
+        # Fetched here so slots are counted before any row in this domain is saved
+        self.mobile_worker_slots = importer.mobile_worker_slots(self.domain)
+
     def process(self):
         from corehq.apps.user_importer.validation import is_password
         if not self._process_column_values():
@@ -467,11 +478,18 @@ class CCUserRow(BaseUserRow):
 
         try:
             self.validate_row()
+            is_new_user = not self.column_values["user_id"]
+            was_active = not is_new_user and self.user.is_active
             self._process_simple_fields()
+            is_activating = self.user.is_active and not was_active
+            if is_activating:
+                self.mobile_worker_slots.claim()
 
             try:
                 self.user.save(fail_hard=True)
             except Exception as e:
+                if is_activating:
+                    self.mobile_worker_slots.release()
                 # HACK: Catching all exception here is temporary. We believe that user critical sections
                 # are not behaving properly, and this catch-all is here to identify the problem
                 self.status_row['flag'] = str(e)
@@ -482,6 +500,9 @@ class CCUserRow(BaseUserRow):
                     e
                 )
                 return False
+
+            if was_active and not self.user.is_active:
+                self.mobile_worker_slots.release()
 
             log = self.import_helper.save_log()
 
@@ -960,6 +981,31 @@ class CCImporter(WebImporter):
         return EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
             self.upload_domain
         )
+
+    @memoized
+    def mobile_worker_slots(self, domain):
+        return MobileWorkerSlots(get_remaining_mobile_worker_slots(domain))
+
+
+class MobileWorkerSlots:
+    """
+    Running count of the mobile worker slots left in a domain during an
+    upload. ``remaining`` is ``None`` if the domain is not limited.
+    """
+
+    def __init__(self, remaining):
+        self.remaining = remaining
+
+    def claim(self):
+        if self.remaining is None:
+            return
+        if self.remaining <= 0:
+            raise MobileWorkerLimitReached()
+        self.remaining -= 1
+
+    def release(self):
+        if self.remaining is not None:
+            self.remaining += 1
 
 
 class DomainInfo:

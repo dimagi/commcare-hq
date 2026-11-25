@@ -47,10 +47,6 @@ class MockTranslationFormat(TranslationFormat):
 
 @nottest
 class TestTranslator(LLMTranslator):
-    @property
-    def supported_models(self):
-        return ["test-model"]
-
     def _call_llm(self, system_prompt, user_message):
         return json.dumps(["Message numero 1", "Message numero 2"])
 
@@ -84,24 +80,6 @@ def test_llm_translator_base_prompt_with_unsupported_lang():
     prompt = translator.base_prompt()
     assert "professional translator" in prompt
     assert "some_lang_code" in prompt
-
-
-def test_openai_translator_supported_models():
-    translation_format = MockTranslationFormat()
-    translator = OpenaiTranslator(
-        api_key="test-api-key",
-        model="gpt-4",
-        lang="es",
-        translation_format=translation_format
-    )
-
-    with patch.object(translator, 'client') as mock_client:
-        mock_client.return_value = mock_client
-        models = translator.supported_models
-        assert "gpt-4" in models
-        assert "gpt-4o" in models
-        assert "gpt-4o-mini" in models
-        assert "gpt-4.1" in models
 
 
 def test_openai_translator_call_llm():

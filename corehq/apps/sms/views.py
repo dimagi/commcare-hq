@@ -46,11 +46,6 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_plaintext_response,
     requires_privilege_with_fallback,
 )
-from corehq.apps.accounting.models import (
-    DefaultProductPlan,
-    SoftwarePlanEdition,
-    Subscription,
-)
 from corehq.apps.commtrack.models import AlertConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -113,6 +108,7 @@ from corehq.apps.sms.util import (
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
+    is_granted_messaging_access,
     is_superuser_or_contractor,
 )
 from corehq.apps.smsforms.models import (
@@ -132,6 +128,7 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_safe_redirect_url
 from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
@@ -159,21 +156,10 @@ class BaseMessagingSectionView(BaseDomainView):
     def is_system_admin(self):
         return is_superuser_or_contractor(self.request.couch_user)
 
-    @cached_property
-    def is_granted_messaging_access(self):
-        if settings.ENTERPRISE_MODE or self.domain_object.granted_messaging_access:
-            return True
-        subscription = Subscription.get_active_subscription_by_domain(self.domain_object)
-        if subscription is not None:
-            return subscription.plan_version.plan.name == DefaultProductPlan.get_default_plan_version(
-                edition=SoftwarePlanEdition.ENTERPRISE
-            ).plan.name
-        return False
-
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
-        if not self.is_granted_messaging_access:
+        if not is_granted_messaging_access(self.domain_object):
             return render(request, "sms/wall.html", self.main_context)
         return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
 
@@ -347,8 +333,11 @@ def send_to_recipients(request, domain):
             messages.success(request, _("Message sent"))
 
     return HttpResponseRedirect(
-        request.META.get('HTTP_REFERER')
-        or reverse(ComposeMessageView.urlname, args=[domain])
+        get_safe_redirect_url(
+            request,
+            request.META.get('HTTP_REFERER'),
+            reverse(ComposeMessageView.urlname, args=[domain]),
+        )
     )
 
 

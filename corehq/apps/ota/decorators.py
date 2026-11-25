@@ -3,22 +3,20 @@ from functools import wraps
 
 from django.http import HttpResponseForbidden
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
 from corehq.apps.domain.auth import BASIC
 from corehq.apps.domain.decorators import (
     get_multi_auth_decorator,
     two_factor_exempt,
 )
-from corehq.apps.public_webforms.decorators import get_public_form_session
-from corehq.apps.public_webforms.models import PublicFormUser
+from corehq.apps.ota.origin_token import (
+    ORIGIN_TOKEN_HEADER,
+    validate_origin_token,
+)
+from corehq.apps.public_webforms.decorators import allow_public_form_session
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 
 auth_logger = logging.getLogger("commcare_auth")
-
-ORIGIN_TOKEN_HEADER = 'HTTP_X_COMMCAREHQ_ORIGIN_TOKEN'
-ORIGIN_TOKEN_SLUG = 'OriginToken'
 
 
 def require_mobile_access(fn):
@@ -49,24 +47,6 @@ def require_mobile_access(fn):
     return _inner
 
 
-def is_from_formplayer(request):
-    token = request.META.get(ORIGIN_TOKEN_HEADER)
-    return token is not None and validate_origin_token(token)
-
-
-def validate_origin_token(origin_token):
-    """
-    This checks that the origin token passed in is a valid one set in redis
-    by Formplayer.
-    """
-    client = get_redis_client().client.get_client()
-    test_result = client.get("%s%s" % (ORIGIN_TOKEN_SLUG, origin_token))
-    if test_result:
-        return test_result.decode("UTF-8") == '"valid"'
-
-    return False
-
-
 def mobile_auth(view_func):
     """
     This decorator should be used for any endpoints used by CommCare mobile.
@@ -94,16 +74,10 @@ def mobile_auth_or_formplayer(view_func):
 
 def mobile_auth_or_public_form_session(view_func):
     """
-    Accepts a public form session alongside the usual mobile credentials.
+    Accepts a public form session, through formplayer only, alongside the
+    usual mobile credentials.
     """
-    @wraps(view_func)
-    def _inner(request, domain, *args, **kwargs):
-        session = get_public_form_session(request, domain)
-        if session is None:
-            return mobile_auth_or_formplayer(view_func)(request, domain, *args, **kwargs)
-
-        request.public_form_session = session
-        request.couch_user = PublicFormUser(session)
-        return view_func(request, domain, *args, **kwargs)
-
-    return _inner
+    return allow_public_form_session(
+        view_func,
+        fallback=mobile_auth_or_formplayer(view_func),
+    )

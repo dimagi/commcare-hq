@@ -4,7 +4,6 @@ from datetime import datetime
 from django.conf import settings
 
 import langcodes
-import urllib.parse
 from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
@@ -26,7 +25,7 @@ from django.http import (
     HttpResponseBadRequest,
 )
 from django.http.response import HttpResponseServerError
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -75,6 +74,7 @@ from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import (
     can_use_filtered_user_download,
+    require_can_edit_commcare_users,
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
     require_permission_to_edit_user,
@@ -825,6 +825,7 @@ def remove_web_user(request, domain, couch_user_id):
 
 @always_allow_project_access
 @require_can_edit_web_users
+@require_POST
 def undo_remove_web_user(request, domain, record_id):
     record = DomainRemovalRecord.get(record_id)
     record.undo()
@@ -1007,11 +1008,9 @@ class InviteWebUserView(BaseManageWebUserView):
 
     @property
     def invitation(self):
-        invitation_id = self.kwargs.get("invitation_id")
-        try:
-            return Invitation.objects.get(uuid=invitation_id)
-        except Invitation.DoesNotExist:
-            return None
+        if invitation_id := self.kwargs.get("invitation_id"):
+            return get_object_or_404(Invitation, uuid=invitation_id, domain=self.domain)
+        return None
 
     def post(self, request, *args, **kwargs):
         if self.invite_web_user_form.is_valid():
@@ -1379,16 +1378,13 @@ def delete_phone_number(request, domain, couch_user_id):
     return HttpResponseRedirect(redirect)
 
 
+@require_POST
 @always_allow_project_access
 @require_permission_to_edit_user
 def verify_phone_number(request, domain, couch_user_id):
-    """
-    phone_number cannot be passed in the url due to special characters
-    but it can be passed as %-encoded GET parameters
-    """
-    if 'phone_number' not in request.GET:
+    if 'phone_number' not in request.POST:
         raise Http404('Must include phone number in request.')
-    phone_number = urllib.parse.unquote(request.GET['phone_number'])
+    phone_number = request.POST['phone_number']
     user = CouchUser.get_by_user_id(couch_user_id, domain)
 
     try:
@@ -1438,7 +1434,7 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 
 @always_allow_project_access
 @sensitive_post_parameters('new_password1', 'new_password2')
-@login_and_domain_required
+@require_can_edit_commcare_users
 @location_safe
 def change_password(request, domain, login_id):
     # copied from auth's password_change

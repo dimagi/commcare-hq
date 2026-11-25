@@ -22,8 +22,8 @@ msgstr ""
 #: corehq/apps/accounting/emails.py
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
-#| "%(ending_on)s"
+#| "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends %"
+#| "(ending_on)s"
 msgid ""
 "CommCare Alert: {domain}'s subscription to {plan} automatically renewed for "
 "{date_start}"
@@ -213,6 +213,7 @@ msgstr "مخفي"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -535,6 +536,7 @@ msgstr "الاشتراك"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -733,6 +735,8 @@ msgstr "مطلوب اسم لهذا الدور الجديد."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1299,12 +1303,6 @@ msgstr[1] ""
 msgid "Payment Received - Thank You!"
 msgstr "تم استلام الدفعة - شكرًا لك!"
 
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr "تم رفض دفع الاشتراك لفاتورة CommCare رقم {context['invoice_number']}"
-
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
 msgstr "إدارة مسؤولي المحاسبة"
@@ -1400,6 +1398,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -2837,8 +2837,8 @@ msgid ""
 "      As a reminder, payments can be made via credit card, Electronic Fund\n"
 "      Transfer (EFT), or check by following these\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
 "        >instructions</a\n"
 "      >.\n"
 "    "
@@ -2847,8 +2847,8 @@ msgstr ""
 "      للتذكير، يمكن سداد المدفوعات عن طريق بطاقة الائتمان، التحويل "
 "الإلكتروني للأموال (EFT)، أو الشيك باتباع هذه\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143955299/Subscription+Management+Billing#Payment-Methods\"\n"
 "        >التعليمات</a\n"
 "      >.\n"
 "    "
@@ -2917,8 +2917,8 @@ msgstr ""
 #| "To see the full list of unpaid invoices you can follow this link: "
 #| "%(statements_url)s\n"
 #| "As a reminder, payments can be made via credit card, Electronic Fund "
-#| "Transfer (EFT), or check by following the instructions at https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+#| "Transfer (EFT), or check by following the instructions at https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 #| "Subscription+Management+Billing#Payment-Methods\n"
 #| "After you have paid the unpaid invoices you can re-subscribe to your plan "
 #| "here: %(subscription_url)s\n"
@@ -2940,8 +2940,8 @@ msgid ""
 "To see the full list of unpaid invoices you can follow this link: "
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Transfer (EFT), or check by following the instructions at https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 "Subscription+Management+Billing#Payment-Methods\n"
 "After you have paid the unpaid invoices you can re-subscribe to your plan "
 "here: %(subscription_url)s\n"
@@ -3019,8 +3019,8 @@ msgid ""
 "\n"
 "      You can also pre-pay for several months at any time by following\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
 "        >these steps</a\n"
 "      >.\n"
 "    "
@@ -3028,8 +3028,8 @@ msgstr ""
 "\n"
 "      يمكنك أيضًا الدفع مقدمًا لعدة أشهر في أي وقت باتباع\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
 "        >هذه الخطوات</a\n"
 "      >.\n"
 "    "
@@ -3050,12 +3050,12 @@ msgstr ""
 #| "To see the full list of unpaid invoices you can follow this link: "
 #| "%(statements_url)s\n"
 #| "As a reminder, payments can be made via credit card, Electronic Fund "
-#| "Transfer (EFT), or check by following the instructions at https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+#| "Transfer (EFT), or check by following the instructions at https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 #| "Subscription+Management+Billing#Payment-Methods\n"
 #| "You can also pre-pay for several months at any time by following the "
-#| "steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-#| "pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+#| "2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
 #| "\n"
 #| "If you have any questions, please don’t hesitate to contact "
 #| "%(contact_email)s. Thank you for using CommCare.\n"
@@ -3077,8 +3077,8 @@ msgid ""
 "To see the full list of unpaid invoices you can follow this link: "
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Transfer (EFT), or check by following the instructions at https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 "Subscription+Management+Billing#Payment-Methods\n"
 "You can also pre-pay for several months at any time by following the steps "
 "at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
@@ -3105,8 +3105,8 @@ msgstr ""
 "للأموال (EFT)، أو الشيك باتباع التعليمات على https://dimagi.atlassian.net/"
 "wiki/spaces/commcarepublic/pages/2143955299/"
 "Subscription+Management+Billing#Payment-Methods\n"
-"يمكنك أيضًا الدفع مقدمًا لعدة أشهر في أي وقت باتباع الخطوات على https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
+"يمكنك أيضًا الدفع مقدمًا لعدة أشهر في أي وقت باتباع الخطوات على https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
 "CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
 "\n"
 "إذا كان لديك أي أسئلة، لا تتردد في التواصل مع %(contact_email)s. شكرًا "
@@ -4022,9 +4022,9 @@ msgid ""
 "\n"
 "      You can also pre-pay for several months at any time by following\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143955299/Subscription+Management+Billing#How-to-Prepay-by-Credit-or-"
-"Debit-Card\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143955299/Subscription+Management+Billing#How-to-Prepay-by-Credit-or-Debit-"
+"Card\"\n"
 "        >these steps</a\n"
 "      >.\n"
 "    "
@@ -4032,8 +4032,8 @@ msgstr ""
 "\n"
 "      يمكنك أيضًا الدفع مقدمًا لعدة أشهر في أي وقت باتباع\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\"\n"
 "        >هذه الخطوات</a\n"
 "      >.\n"
 "    "
@@ -4112,12 +4112,12 @@ msgstr ""
 #| "To see the full list of unpaid invoices you can follow this link: "
 #| "%(statements_url)s\n"
 #| "As a reminder, payments can be made via credit card, Electronic Fund "
-#| "Transfer (EFT), or check by following the instructions at https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+#| "Transfer (EFT), or check by following the instructions at https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 #| "Subscription+Management+Billing#Payment-Methods\n"
 #| "You can also pre-pay for several months at any time by following the "
-#| "steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-#| "pages/2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
+#| "steps at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+#| "2143950358/CommCare+Subscriptions+Pricing+FAQs#Monthly-Billing\n"
 #| "\n"
 #| "Please make a payment as soon as possible for the amount due.\n"
 #| "If you are not able to make a payment, your subscription will be paused "
@@ -4143,8 +4143,8 @@ msgid ""
 "To see the full list of unpaid invoices you can follow this link: "
 "%(statements_url)s\n"
 "As a reminder, payments can be made via credit card, Electronic Fund "
-"Transfer (EFT), or check by following the instructions at https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
+"Transfer (EFT), or check by following the instructions at https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/"
 "Subscription+Management+Billing#Payment-Methods\n"
 "You can also pre-pay for several months at any time by following the steps "
 "at https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143950358/"
@@ -5866,23 +5866,14 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "نود أن نسمع المزيد! يرجى التوضيح -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
-"\n"
-"      By clicking this button, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
-"target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
-"target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"Yes, I would like to receive relevant email updates from Dimagi, including "
+"newsletters, product updates, webinars, podcasts, and related resources. I "
+"can unsubscribe at any time."
 msgstr ""
-"\n"
-"      بالنقر على هذا الزر، أنت توافق على\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
-"target=\"_blank\">شروط الخدمة</a> و\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
-"target=\"_blank\">سياسة الخصوصية</a> الخاصة بـ Dimagi.\n"
-"    "
 
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 #, fuzzy
 #| msgid ""
@@ -5894,13 +5885,12 @@ msgstr ""
 #| "target=\"_blank\">Privacy Policy</a>.\n"
 #| "    "
 msgid ""
-"\n"
-"      By clicking Submit Request, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
-"target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
-"target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"By clicking Submit Request, I agree to Dimagi's <a href=\"https://"
+"www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> "
+"and <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a> and to receive follow-up emails about "
+"my request, including invitations to schedule a conversation with Dimagi's "
+"team. I can unsubscribe at any time."
 msgstr ""
 "\n"
 "      بالنقر على هذا الزر، أنت توافق على\n"
@@ -6089,9 +6079,10 @@ msgstr "'role' مطلوب لكل مستخدم"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' معرف بواسطة الملف الشخصي لذلك لا يمكن تعيينه مباشرة"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "معامل(ات) غير صالحة: {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr "، "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -6289,6 +6280,12 @@ msgstr "لم يتم العثور على إصدار البناء المطلوب"
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "يرجى تسجيل الدخول إلى التطبيق للتحقق من وجود تحديث."
+
+#: corehq/apps/app_manager/exceptions.py
+#, fuzzy
+#| msgid "Remote apps are not supported"
+msgid "RemoteApps are no longer supported"
+msgstr "التطبيقات البعيدة غير مدعومة"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6725,11 +6722,6 @@ msgid "Copy of {name}"
 msgstr "نسخة من {name}"
 
 #: corehq/apps/app_manager/models/applications.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr "حدثت مشكلة في تحميل ملف المجموعة من ملف التعريف. هل ملف التعريف صحيح؟"
-
-#: corehq/apps/app_manager/models/applications.py
 msgid "Remote Application"
 msgstr "تطبيق عن بُعد"
 
@@ -6797,10 +6789,6 @@ msgid ""
 "Updating the application succeeded, but the application is missing "
 "multimedia file(s)."
 msgstr "تم نسخ التطبيق بنجاح، لكن التطبيق يفتقد ملف/ملفات وسائط متعددة."
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr "قائمة مفصولة بمسافات من سلاسل الامتيازات من corehq.privileges"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -7007,6 +6995,18 @@ msgstr "اسم المستخدم الخاص بالمستخدم"
 #: corehq/apps/app_manager/models/report_app_config.py
 msgid "The user's ID"
 msgstr "معرّف المستخدم"
+
+#: corehq/apps/app_manager/models/template_apps.py
+#, fuzzy
+#| msgid "Started On"
+msgid "Starter App"
+msgstr "بدأ في"
+
+#: corehq/apps/app_manager/models/template_apps.py
+#, fuzzy
+#| msgid "Feature Type"
+msgid "Feature Template"
+msgstr "نوع الميزة"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
@@ -7235,14 +7235,15 @@ msgstr "تلقائي"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
-"Automatically resizes images within forms. Follow <a href='https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Automatically resizes images within forms. Follow <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
 "Images+in+CommCare#Auto-Resize-Images-on-Android'> the instructions here</a> "
 "to determine which value to use."
 msgstr ""
-"يغير حجم الصور تلقائيًا داخل النماذج. اتبع <a href='https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2143946731/Images+in+CommCare#Auto-"
-"Resize-Images-on-Android'>التعليمات هنا</a> لتحديد القيمة التي يجب استخدامها."
+"يغير حجم الصور تلقائيًا داخل النماذج. اتبع <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"Images+in+CommCare#Auto-Resize-Images-on-Android'>التعليمات هنا</a> لتحديد "
+"القيمة التي يجب استخدامها."
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "Automatically trigger a two-way sync on a regular schedule"
@@ -7632,6 +7633,7 @@ msgstr "لا"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -8056,18 +8058,18 @@ msgstr "ما الذي يفعله زر 'المفتاح الإضافي' (# في ه
 msgid ""
 "When a value is selected, this feature controls the display size of any user-"
 "provided image such that it will be consistent with the size of the original "
-"image file, and consistent across devices. Follow <a href='https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
+"image file, and consistent across devices. Follow <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143946731/"
 "Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-Multiple-"
 "Android-Device-Models'> the instructions here</a> to determine which value "
 "to use."
 msgstr ""
 "عند تحديد قيمة، تتحكم هذه الميزة في حجم عرض أي صورة مقدمة من المستخدم بحيث "
 "تكون متوافقة مع حجم ملف الصورة الأصلي ومتسقة عبر الأجهزة. اتبع <a "
-"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143946731/Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-"
-"with-Multiple-Android-Device-Models'>التعليمات هنا</a> لتحديد القيمة التي "
-"يجب استخدامها."
+"href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143946731/Images+in+CommCare#CommCare-Developer-Toolkit-Image-Sizing-with-"
+"Multiple-Android-Device-Models'>التعليمات هنا</a> لتحديد القيمة التي يجب "
+"استخدامها."
 
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
@@ -8373,10 +8375,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-msgid "Version History"
-msgstr "سجل الإصدارات"
-
-#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
 msgid "Import"
 msgstr "استيراد"
 
@@ -8543,16 +8541,19 @@ msgstr "إعدادات القائمة"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8700,6 +8701,8 @@ msgstr "تثبيت CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -9098,6 +9101,180 @@ msgstr "ترجمات CommCare بالجملة"
 msgid "Bulk Application Translations"
 msgstr "ترجمات التطبيق بالجملة"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Translate Me"
+msgid "Translate with AI"
+msgstr "ترجم لي"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "جديد"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"AI fills in missing translations. Manual edits are kept. Review AI "
+"translations before releasing your app."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Learn More About Pricing Plans"
+msgid "Learn more about AI translations"
+msgstr "تعرف على المزيد حول خطط الأسعار"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Source lang selected not available for the project"
+msgid "AI translations are available on Standard plans and above."
+msgstr "اللغة المصدر المحددة غير متوفرة لهذا المشروع"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "CommCare plans"
+msgid "Compare plans"
+msgstr "خطط CommCare"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Linked apps get their translations from their upstream app. Translate the "
+"upstream app instead."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Please select an upstream app."
+msgid "Go to the upstream app"
+msgstr "يرجى اختيار تطبيق أصلي."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Add a language in the Language List below, then refresh to translate it with "
+"AI."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid "Refresh"
+msgstr "تحديث"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "You do not have permission to edit locations."
+msgid "You need permission to edit this app to translate it."
+msgstr "ليس لديك إذن لتعديل المواقع."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/views.py
+msgid ""
+"This project has reached its monthly AI translation limit. Contact support "
+"to raise it."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The language list has changed. Refresh to update the languages below."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
+#: corehq/apps/reports/forms.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+msgid "Language"
+msgstr "اللغة"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "app translation"
+msgid "Last AI translated"
+msgstr "ترجمة التطبيق"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Translations"
+msgid "Translation progress"
+msgstr "الترجمات"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Search Filter"
+msgid "Show labels"
+msgstr "مرشح البحث"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Search Filter"
+msgid "Hide labels"
+msgstr "مرشح البحث"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "The following report configuration could not be found: {}"
+msgid "The labels couldn't be loaded. Try again."
+msgstr "لم يتم العثور على تكوين التقرير التالي: {}"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Loading"
+msgid "Loading…"
+msgstr "جارٍ التحميل"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "No longer available"
+msgid "No longer in the app"
+msgstr "لم يعد متوفرًا"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "مفتوح"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Show All Statements"
+msgid "Show all labels"
+msgstr "عرض جميع الفواتير"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#, fuzzy
+#| msgid "Translate Me"
+msgid "AI Translate"
+msgstr "ترجم لي"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Status reflects the last AI Translate run; the percentage is how much of the "
+"whole app is AI translated as of that run. Labels you add or change "
+"afterwards are translated the next time you run AI Translate. Translations "
+"are applied to the current draft; make a new version to release them."
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
@@ -9161,17 +9338,6 @@ msgstr ""
 "\n"
 "    مرتبط من %(name)s | الإصدار %(version)s\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-#: corehq/apps/reports/forms.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-msgid "Language"
-msgstr "اللغة"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -10952,6 +11118,7 @@ msgstr "أنت على وشك حذف هذا التطبيق"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -11197,6 +11364,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
@@ -12214,6 +12382,18 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public Webform"
+msgstr "الاسم العام"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+#, fuzzy
+#| msgid "Public Name"
+msgid "Create public webform from latest released version"
+msgstr "الاسم العام"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
 msgstr "نسخ النموذج"
 
@@ -12480,11 +12660,6 @@ msgstr "تفعيل الربط اليدوي"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "تعطيل الربط اليدوي"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-msgid "Refresh"
-msgstr "تحديث"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -13234,9 +13409,9 @@ msgstr "النماذج المتاحة من قائمة الحالات"
 #| msgid ""
 #| "Minimize duplicate registrations by requiring mobile workers to search "
 #| "the case list before registering a new case. Read more on the <a "
-#| "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-#| "pages/2143951603/Case+List+and+Case+Detail+Configuration#Minimize-"
-#| "Duplicates:-Registration-From-the-Case-List'>Help Site</a>."
+#| "href='https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+#| "2143951603/Case+List+and+Case+Detail+Configuration#Minimize-Duplicates:-"
+#| "Registration-From-the-Case-List'>Help Site</a>."
 msgid ""
 "Use Registration Forms to minimize duplicate registrations by requiring "
 "mobile workers to search the case list before registering a new case. Read "
@@ -13247,8 +13422,8 @@ msgid ""
 "module uses Select Parent First workflow"
 msgstr ""
 "قلل من التسجيلات المكررة من خلال مطالبة العاملين الميدانيين بالبحث في قائمة "
-"الحالات قبل تسجيل حالة جديدة. اقرأ المزيد على <a href='https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/"
+"الحالات قبل تسجيل حالة جديدة. اقرأ المزيد على <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/"
 "Case+List+and+Case+Detail+Configuration#Minimize-Duplicates:-Registration-"
 "From-the-Case-List'>موقع المساعدة</a>."
 
@@ -13267,8 +13442,8 @@ msgid ""
 "From-the-Case-List'>Help Site</a>."
 msgstr ""
 "قلل من التسجيلات المكررة من خلال مطالبة العاملين الميدانيين بالبحث في قائمة "
-"الحالات قبل تسجيل حالة جديدة. اقرأ المزيد على <a href='https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/"
+"الحالات قبل تسجيل حالة جديدة. اقرأ المزيد على <a href='https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143951603/"
 "Case+List+and+Case+Detail+Configuration#Minimize-Duplicates:-Registration-"
 "From-the-Case-List'>موقع المساعدة</a>."
 
@@ -14618,8 +14793,9 @@ msgid ""
 "\n"
 "                               Nest this menu under another for easier "
 "application navigation.\n"
-"                               <a target='_blank' href='https://confluence."
-"dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</a>\n"
+"                               <a target='_blank' href='https://"
+"confluence.dimagi.com/display/commcarepublic/Sub+Menus'>(More Information)</"
+"a>\n"
 "                               "
 msgstr ""
 "\n"
@@ -14940,8 +15116,9 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        تعرف أكثر على ملفات تعريف التطبيق في <a href='https://confluence."
-"dimagi.com/display/commcarepublic/Application+Profiles'>موقع المساعدة</a>\n"
+"        تعرف أكثر على ملفات تعريف التطبيق في <a href='https://"
+"confluence.dimagi.com/display/commcarepublic/Application+Profiles'>موقع "
+"المساعدة</a>\n"
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
@@ -15679,6 +15856,7 @@ msgid "Loading ..."
 msgstr "جارٍ التحميل ..."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
 msgid "Try again"
 msgstr "حاول مرة أخرى"
 
@@ -15964,13 +16142,13 @@ msgstr "غير محدد"
 #: corehq/apps/app_manager/views/apps.py
 #, fuzzy
 #| msgid "U​I translation"
-msgid "U\\u200BI translation"
+msgid "U​I translation"
 msgstr "ترجمة واجهة المستخدم"
 
 #: corehq/apps/app_manager/views/apps.py
 #, fuzzy
 #| msgid "U​I translations"
-msgid "U\\u200BI translations"
+msgid "U​I translations"
 msgstr "ترجمات واجهة المستخدم"
 
 #: corehq/apps/app_manager/views/apps.py
@@ -16378,9 +16556,9 @@ msgstr ""
 #: corehq/apps/app_manager/views/releases.py
 #, python-format
 msgid ""
-"One or more forms for v%(app_version)s contain V1 Mobile UCR references."
-"Please refer to the <a href='%(url)s'>migration documentation</a> for more "
-"details."
+"One or more forms for v%(app_version)s contain V1 Mobile UCR "
+"references.Please refer to the <a href='%(url)s'>migration documentation</a> "
+"for more details."
 msgstr ""
 "نموذج أو أكثر للإصدار v%(app_version)s يحتوي على إشارات إلى UCR المحمول V1. "
 "يرجى الرجوع إلى <a href='%(url)s'>وثائق الترحيل</a> لمزيد من التفاصيل."
@@ -16419,11 +16597,6 @@ msgstr "تعذر إنشاء بناء جديد. يرجى النقر على 'إن�
 #: corehq/apps/app_manager/views/releases.py
 msgid "App diff"
 msgstr "مقارنة التطبيق"
-
-#: corehq/apps/app_manager/views/releases.py
-#, fuzzy
-msgid "Reverted to version {log.info['version']}"
-msgstr "تم الرجوع إلى الإصدار {old_version}"
 
 #: corehq/apps/app_manager/views/utils.py
 msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
@@ -16583,8 +16756,8 @@ msgid ""
 "your form."
 msgstr ""
 "تعذر الحصول على XML الحالة من أحد نماذجك. سبب شائع لذلك هو عدم وجود مساحة "
-"اسم xforms معرفة في النموذج. يرجى التأكد من وجود السمة xmlns=\"http://www.w3."
-"org/2002/xforms\" في النموذج."
+"اسم xforms معرفة في النموذج. يرجى التأكد من وجود السمة xmlns=\"http://"
+"www.w3.org/2002/xforms\" في النموذج."
 
 #: corehq/apps/app_manager/xpath.py
 msgid ""
@@ -16613,11 +16786,13 @@ msgstr "نوع المرجع {ref} لا يمكن أن يكون تابعًا لن�
 
 #: corehq/apps/app_manager/xpath.py
 msgid ""
-"Property not correctly formatted. Must be formatted like: loacation:mytype:"
-"referencetype/property. For example: location:outlet:state/name"
+"Property not correctly formatted. Must be formatted like: "
+"loacation:mytype:referencetype/property. For example: location:outlet:state/"
+"name"
 msgstr ""
-"الخاصية غير منسقة بشكل صحيح. يجب أن تكون بالتنسيق التالي: location:mytype:"
-"referencetype/property. على سبيل المثال: location:outlet:state/name"
+"الخاصية غير منسقة بشكل صحيح. يجب أن تكون بالتنسيق التالي: "
+"location:mytype:referencetype/property. على سبيل المثال: "
+"location:outlet:state/name"
 
 #: corehq/apps/builds/models.py
 #, python-format
@@ -16835,6 +17010,7 @@ msgstr "تعديل الأداة"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -16913,12 +17089,6 @@ msgstr "قيمة غير صالحة لعمود 'parent_relationship_type'"
 #, python-brace-format
 msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "عينة: الخلية في الصف {row_num} تحتوي على \"{sample}\""
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"يمكن أن تحتوي واردات الحالات على حد أقصى قدره {MAX_CASE_IMPORTER_ROWS} صفوف. "
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
@@ -17089,21 +17259,8 @@ msgid "Name Too Long"
 msgstr "الاسم طويل جداً"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr "لا يمكن أن يكون اسم الحالة أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "المعرّف الخارجي طويل جداً"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"لا يمكن أن يكون المعرف الخارجي أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -17632,15 +17789,15 @@ msgstr "يرجى رفع ملف بامتداد .xls أو .xlsx"
 
 #: corehq/apps/case_importer/views.py
 msgid ""
-"Column names correspond to <a target=\"_blank\" href=\"https://confluence."
-"dimagi.com/display/commcarepublic/Case+Configuration\">case property names</"
-"a>. They must start with a letter, and can only contain letters, numbers and "
-"underscores. Please update the following: {}."
+"Column names correspond to <a target=\"_blank\" href=\"https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Configuration\">case "
+"property names</a>. They must start with a letter, and can only contain "
+"letters, numbers and underscores. Please update the following: {}."
 msgstr ""
-"أسماء الأعمدة تتوافق مع <a target=\"_blank\" href=\"https://confluence."
-"dimagi.com/display/commcarepublic/Case+Configuration\">أسماء خصائص الحالة</"
-"a>. يجب أن تبدأ بحرف، ويمكن أن تحتوي فقط على أحرف وأرقام وشرطات سفلية. يرجى "
-"تحديث ما يلي: {}."
+"أسماء الأعمدة تتوافق مع <a target=\"_blank\" href=\"https://"
+"confluence.dimagi.com/display/commcarepublic/Case+Configuration\">أسماء "
+"خصائص الحالة</a>. يجب أن تبدأ بحرف، ويمكن أن تحتوي فقط على أحرف وأرقام "
+"وشرطات سفلية. يرجى تحديث ما يلي: {}."
 
 #: corehq/apps/case_importer/views.py
 msgid ""
@@ -17911,10 +18068,6 @@ msgid "{param} must be a string"
 msgstr "يجب أن يكون {param} نصًا"
 
 #: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr ""
-
-#: corehq/apps/case_search/models.py
 #, fuzzy
 #| msgid "Project Data"
 msgid "Project Database"
@@ -18062,6 +18215,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -18071,6 +18225,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -18426,6 +18581,18 @@ msgid "Endpoint '{}' parameters are invalid"
 msgstr "لم يتم العثور على نوع الموقع '{}'"
 
 #: corehq/apps/case_search/utils.py
+#, fuzzy
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' query timed out"
+msgstr "لم يتم العثور على نوع الموقع '{}'"
+
+#: corehq/apps/case_search/utils.py
+#, fuzzy
+#| msgid "LocationType '{}' not found"
+msgid "Endpoint '{}' query failed"
+msgstr "لم يتم العثور على نوع الموقع '{}'"
+
+#: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
 msgstr "البحث يحتوي على عدد كبير جدًا من النتائج. يرجى محاولة بحث أكثر تحديدًا."
 
@@ -18456,11 +18623,6 @@ msgid "Profile Case Search"
 msgstr "بحث القضايا حسب الملف الشخصي"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} غير مدعوم مع ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many cases"
@@ -18478,49 +18640,6 @@ msgid ""
 msgstr ""
 "يجب أن يكون الجانب الأيمن من المقارنة رقمًا أو تاريخًا. يجب أن تكون التواريخ "
 "محاطة بعلامات اقتباس"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} ليس تاريخًا أو وقتًا بتنسيق صحيح."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, fuzzy, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{} ليس تاريخًا صالحًا"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, fuzzy, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{} ليس تاريخًا ووقتًا صالحًا"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "يجب أن تكون الوسيطة الثانية لـ '{node.name}' إحداثيات صالحة"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"يجب أن تكون الوسيطة الثالثة لـ '{node.name}' رقمًا، تم الحصول على '{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', '."
-"join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' ليست وحدة مسافة صالحة. المتوقع واحدة من {', '.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, fuzzy, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "يرجى إدخال تاريخ صحيح بالتنسيق YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr "يجب أن تكون الوسيطة الأولى لـ '{node.name}' اسم خاصية حالة صالح"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -18556,14 +18675,6 @@ msgstr "'{name}' يتطلب وسيطًا واحدًا أو وسيطين"
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr "خطأ في '{name}'. يجب أن يكون معرف الفهرس سلسلة نصية"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got {actual}"
-msgstr ""
-"تقبل دالة '{node.name}' عددًا محددًا من الوسيطات وهو {expected}، تم الحصول على "
-"{actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -19452,6 +19563,12 @@ msgid "A label is required for each field."
 msgstr "مطلوب تسمية لكل حقل."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, fuzzy, python-format
+#| msgid "Table ID must be between 1 and 31 characters."
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "يجب أن يكون معرف الجدول بين 1 و31 حرفًا."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "مطلوب اسم خاصية لكل حقل."
 
@@ -19462,6 +19579,23 @@ msgid ""
 msgstr ""
 "يجب أن تبدأ الخصائص بحرف وأن تتكون فقط من أحرف أو أرقام أو شرطات سفلية أو "
 "شرطات."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has "
+"%(show_value)d)."
+msgstr ""
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -21318,8 +21452,8 @@ msgid ""
 "Case property \"{}\" referenced in \"{}-vl\" sheet that does not exist in "
 "\"{}\" sheet. Row(s) affected: {}"
 msgstr ""
-"خاصية الحالة \"{}\" المشار إليها في ورقة \"{}-vl\" غير موجودة في ورقة "
-"\"{}\". الصفوف المتأثرة: {}"
+"خاصية الحالة \"{}\" المشار إليها في ورقة \"{}-vl\" غير موجودة في ورقة \"{}"
+"\". الصفوف المتأثرة: {}"
 
 #: corehq/apps/data_dictionary/models.py
 #, python-brace-format
@@ -22439,10 +22573,6 @@ msgstr "متوقف"
 msgid "Error"
 msgstr "خطأ"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "لم يتم توفير أي نماذج"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -22460,8 +22590,8 @@ msgid ""
 "\n"
 "            Create rules for updating or closing cases from CommCare HQ.\n"
 "            All rules run every day at %(time)s GMT.\n"
-"            For more information, see the <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2143957601/"
+"            For more information, see the <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143957601/"
 "Automatically+Update+Cases\">Help Site</a>.\n"
 "          "
 msgstr ""
@@ -22630,7 +22760,7 @@ msgstr "إضافة قاعدة إزالة التكرار"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -23155,7 +23285,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -23229,25 +23358,12 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "فشلت إعادة تعيين الحالة! التفاصيل:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to "
-"reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>العودة إلى <a href=\"%(form_management_url)s\">إدارة النماذج</a> "
-"لعكس هذا الإجراء.</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 #, fuzzy
 #| msgid "Please try again."
 msgid "The job failed. Please try again."
 msgstr "يرجى المحاولة مرة أخرى."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy, python-format
 #| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
@@ -23259,13 +23375,13 @@ msgstr[3] "تمت معالجة النموذج بنجاح."
 msgstr[4] "تمت معالجة النموذج بنجاح."
 msgstr[5] "تمت معالجة النموذج بنجاح."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy
 #| msgid "No Forms are supplied"
 msgid "Some forms were skipped:"
 msgstr "لم يتم توفير أي نماذج"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, fuzzy, python-format
 #| msgid ""
 #| "\n"
@@ -23305,43 +23421,6 @@ msgstr "هناك حالة بالمعرف '{}' موجودة بالفعل في ه�
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "تمت إضافة الحالة بالمعرف '{}' إلى هذه المجموعة."
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "تعذر العثور على النموذج XForm {form_id}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "النموذج XForm {form_id} للنطاق {domain} بواسطة المستخدم '{username}'"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "تم أرشفة {form} بنجاح"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "تم إلغاء أرشفة {form} بنجاح"
-
-#: corehq/apps/data_interfaces/utils.py
-#, fuzzy, python-brace-format
-#| msgid "Could not archive {form}: {error}"
-msgid "Could not archive {form}"
-msgstr "تعذر أرشفة {form}: {error}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, fuzzy, python-brace-format
-#| msgid "Could not archive {form}: {error}"
-msgid "Could not unarchive {form}"
-msgstr "تعذر أرشفة {form}: {error}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} نموذج/نماذج"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -23624,6 +23703,77 @@ msgstr "تم تحديث القاعدة {name} وتمت إضافتها إلى ق�
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "لم يتم تحديث القاعدة {name}، لأنه لم يحدث أي تغيير"
+
+#: corehq/apps/document_templates/templates/document_templates/partials/preview_modal_body.html
+msgid "The template does not use any variables."
+msgstr ""
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "رمز التعريف"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Document Template"
+msgid "Document Templates"
+msgstr "قالب المستند"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "Document Template"
+msgid "New Document Template"
+msgstr "قالب المستند"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "Document Template"
+msgid "Delete Document Template"
+msgstr "قالب المستند"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                  Are you sure you want to permanently delete\n"
+#| "                  <strong>%(friendly_name)s</strong>?\n"
+#| "                "
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  هل أنت متأكد أنك تريد حذف\n"
+"                  <strong>%(friendly_name)s</strong> بشكل دائم؟\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, fuzzy
+#| msgid "SNS Endpoint Secret"
+msgid "No document templates configured."
+msgstr "سر نقطة نهاية SNS"
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "A case type with this name already exists."
+msgid "A template with this slug already exists."
+msgstr "يوجد بالفعل نوع حالة بهذا الاسم."
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "Chat Template"
+msgid "New Template"
+msgstr "قالب الدردشة"
+
+#: corehq/apps/document_templates/views.py
+#, fuzzy
+#| msgid "Document Template"
+msgid "Edit Document Template"
+msgstr "قالب المستند"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -24018,8 +24168,8 @@ msgstr "البيانات والمشاركة"
 #: corehq/apps/domain/forms.py
 #, fuzzy
 #| msgid ""
-#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
+#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
 #| "Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
 #| "Filter Definitions</a>."
 msgid ""
@@ -24027,10 +24177,20 @@ msgid ""
 "pages/2386001966/Data+Sharing+Opt-Outs+-+CommCare\" target=\"_blank\"> "
 "Aggregate Data Usage</a>"
 msgstr ""
-"<i class=\"fa fa-info-circle\"></i> راجع <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2215051298/"
+"<i class=\"fa fa-info-circle\"></i> راجع <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
 "Organization+Data+Management#Search-for-Locations\" "
 "target=\"_blank\">تعريفات التصفية</a>."
+
+#: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "CommCare Version Compliance"
+msgid "Opt out of CommCare Companion"
+msgstr "الامتثال لإصدار CommCare"
+
+#: corehq/apps/domain/forms.py
+msgid "Hide the CommCare Companion chatbot for all users in this project space"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Default timezone"
@@ -24285,11 +24445,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "خطأ غير معروف"
-
-#: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
 msgstr "يرجى تحديد حد لتغذيات OData."
 
@@ -24411,11 +24566,16 @@ msgid "Partner Contact Emails"
 msgstr "عناوين البريد الإلكتروني لجهات الاتصال الشريكة"
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid ""
+#| "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as "
+#| "you hit \"Update\" and end on <span data-bind=\"text: end_date\"></"
+#| "span>.  On <span data-bind=\"text: end_date\"></span> the project space "
+#| "will be automatically paused.</p>"
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-"hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-"<span data-bind=\"text: end_date\"></span> the project space will be "
-"automatically paused.</p>"
+"hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span x-"
+"text=\"endDate\"></span> the project space will be automatically paused.</p>"
 msgstr ""
 "<p><i class=\"fa fa-info-circle\"></i> ستبدأ الفترة التجريبية بمجرد النقر "
 "على \"تحديث\" وتنتهي في <span data-bind=\"text: end_date\"></span>. في <span "
@@ -25215,8 +25375,8 @@ msgstr "وضع الإصدار"
 #, fuzzy
 #| msgid ""
 #| "\n"
-#| "                    Will delete <strong>all</strong> of "
-#| "%(friendly_name)s's\n"
+#| "                    Will delete <strong>all</strong> of %"
+#| "(friendly_name)s's\n"
 #| "                    form submissions.\n"
 #| "                  "
 msgid ""
@@ -26226,48 +26386,6 @@ msgstr "اقرأ المزيد عن خططنا"
 msgid "Change My Plan"
 msgstr "تغيير خطتي"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
-#, python-format
-msgid ""
-"\n"
-"    <p>\n"
-"      This page is visible to Dimagi employees only (you have an @dimagi.com "
-"email address).  You can use this page\n"
-"      to set up a subscription for this project space.\n"
-"\n"
-"      Use this tool only for projects that are:\n"
-"    <ul>\n"
-"      <li>an internal test project</li>\n"
-"      <li>part of a contracted project</li>\n"
-"      <li>a short term extended trial for biz dev</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Your project is currently subscribed to %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      هذه الصفحة مرئية فقط لموظفي Dimagi (لديك بريد إلكتروني @dimagi.com). "
-"يمكنك استخدام هذه الصفحة\n"
-"      لإعداد اشتراك لمساحة المشروع هذه.\n"
-"\n"
-"      استخدم هذه الأداة فقط للمشاريع التي هي:\n"
-"    <ul>\n"
-"      <li>مشروع اختبار داخلي</li>\n"
-"      <li>جزء من مشروع متعاقد عليه</li>\n"
-"      <li>تجربة موسعة قصيرة الأجل لتطوير الأعمال</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      مشروعك مشترك حاليًا في خطة %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -26709,8 +26827,8 @@ msgid ""
 "the\n"
 "                    subscription will be paused. The selected autopay card "
 "will\n"
-"                    not be automatically charged to pay this invoice&mdash;"
-"it\n"
+"                    not be automatically charged to pay this "
+"invoice&mdash;it\n"
 "                    must be paid directly.\n"
 "                  "
 msgstr ""
@@ -27151,6 +27269,47 @@ msgstr "تحميل الكل"
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load Property"
 msgstr "تحميل الخاصية"
+
+#: corehq/apps/domain/templates/domain/internal_subscription_management.html
+#, python-format
+msgid ""
+"\n"
+"    <p>\n"
+"      This page is visible to Dimagi employees only (you have an @dimagi.com "
+"email address).  You can use this page\n"
+"      to set up a subscription for this project space.\n"
+"\n"
+"      Use this tool only for projects that are:\n"
+"    <ul>\n"
+"      <li>an internal test project</li>\n"
+"      <li>part of a contracted project</li>\n"
+"      <li>a short term extended trial for biz dev</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Your project is currently subscribed to %(plan_name)s.\n"
+"    </h3>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      هذه الصفحة مرئية فقط لموظفي Dimagi (لديك بريد إلكتروني @dimagi.com). "
+"يمكنك استخدام هذه الصفحة\n"
+"      لإعداد اشتراك لمساحة المشروع هذه.\n"
+"\n"
+"      استخدم هذه الأداة فقط للمشاريع التي هي:\n"
+"    <ul>\n"
+"      <li>مشروع اختبار داخلي</li>\n"
+"      <li>جزء من مشروع متعاقد عليه</li>\n"
+"      <li>تجربة موسعة قصيرة الأجل لتطوير الأعمال</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      مشروعك مشترك حاليًا في خطة %(plan_name)s.\n"
+"    </h3>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 #, fuzzy
@@ -27970,8 +28129,8 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/partials/how_to_download_app_json.html
 msgid ""
 "\n"
-"        In the dialog: Change the name to end with .json (e.g., my_app."
-"json)\n"
+"        In the dialog: Change the name to end with .json (e.g., "
+"my_app.json)\n"
 "      "
 msgstr ""
 
@@ -28513,8 +28672,8 @@ msgid ""
 "\n"
 "      Learn more about our\n"
 "      <a\n"
-"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/3101491209/CommCare+Cloud+Server+Locations\"\n"
+"        href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"3101491209/CommCare+Cloud+Server+Locations\"\n"
 "        target=\"_blank\"\n"
 "        >cloud environments</a\n"
 "      >.\n"
@@ -28983,6 +29142,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/export/templates/export/schema_build_waiting.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
 msgid "Go back"
@@ -29488,11 +29648,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "اختر مشروعاً"
-
-#: corehq/apps/domain/views/base.py
-#, fuzzy, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "تمت إضافتك إلى مساحة المشروع \"{}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -31234,8 +31389,8 @@ msgid ""
 "\n"
 "                                  <p>Checking this will add a button to "
 "download a configuration file\n"
-"                                     for the <a href=\"https://dimagi."
-"atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
+"                                     for the <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
 "CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 "                                     CommCare Data Export Tool</a> for the "
 "export.</p>\n"
@@ -31244,8 +31399,8 @@ msgstr ""
 "\n"
 "                                  <p>تحديد هذا الخيار سيضيف زرًا لتنزيل ملف "
 "إعدادات\n"
-"                                     لـ <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2143955952/"
+"                                     لـ <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
 "CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 "                                     أداة تصدير بيانات CommCare</a> لهذا "
 "التصدير.</p>\n"
@@ -32233,6 +32388,7 @@ msgstr "إخفاء الخيارات"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "إضافة"
 
@@ -32264,6 +32420,14 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid "Ok"
 msgstr "موافق"
+
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
+msgid "We couldn't load the available columns."
+msgstr ""
+
+#: corehq/apps/export/templates/export/partials/schema_build_status.html
+msgid "Progress finding columns"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -32442,8 +32606,8 @@ msgstr ""
 msgid ""
 "\n"
 "                Your export exceeds the limit of %(max_rows)s rows. Please "
-"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-bs-"
+"see <a href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2337669143/Setting+up+a+Data+Pipeline+via+CommCare\" data-bs-"
 "toggle=\"modal\">documentation</a> for more information.\n"
 "              "
 msgstr ""
@@ -32679,6 +32843,17 @@ msgstr "تعرف على المزيد حول خطط الأسعار"
 #: corehq/apps/export/templates/export/paywall.html
 msgid "Change My Subscription"
 msgstr "تغيير اشتراكي"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid "Finding available columns…"
+msgstr ""
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid ""
+"We're checking your applications for the questions and case properties you "
+"can include. This can take a few minutes for projects with many "
+"applications. Please keep this page open."
+msgstr ""
 
 #: corehq/apps/export/views/download.py
 msgid "You have no submissions in this project."
@@ -33413,14 +33588,14 @@ msgstr "فشل الرفع! التفاصيل:"
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 msgid ""
 "Linked Tables are tables that are controlled by a separate project space "
-"linked to this project. Click <a target=\"_blank\" href=\"https://confluence."
-"dimagi.com/display/commcarepublic/Enterprise+Release+Management\">here</a> "
-"to learn more."
+"linked to this project. Click <a target=\"_blank\" href=\"https://"
+"confluence.dimagi.com/display/commcarepublic/"
+"Enterprise+Release+Management\">here</a> to learn more."
 msgstr ""
 "الجداول المرتبطة هي جداول يتم التحكم بها من مساحة مشروع منفصلة مرتبطة بهذا "
-"المشروع. انقر <a target=\\\"_blank\\\" href=\\\"https://confluence.dimagi."
-"com/display/commcarepublic/Enterprise+Release+Management\\\">هنا</a> لمعرفة "
-"المزيد."
+"المشروع. انقر <a target=\\\"_blank\\\" href=\\\"https://"
+"confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management\\"
+"\">هنا</a> لمعرفة المزيد."
 
 #: corehq/apps/fixtures/templates/fixtures/partials/modal_edit.html
 msgid ""
@@ -35295,6 +35470,38 @@ msgstr ""
 "سيؤدي إعادة تعيين كلمة مرور المستخدم إلى إجباره على اتباع سير عمل 'نسيت كلمة "
 "المرور'. استخدم هذا إذا كان هناك اشتباه في أن كلمة المرور قد تم اختراقها."
 
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr ""
+
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+#, fuzzy
+#| msgid "A case type with this name already exists."
+msgid "A sector with this name already exists."
+msgstr "يوجد بالفعل نوع حالة بهذا الاسم."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py corehq/tabs/tabclasses.py
+#, fuzzy
+#| msgid "Manage Tables"
+msgid "Manage Template Apps"
+msgstr "إدارة الجداول"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+#, fuzzy
+#| msgid "{} cannot be deleted"
+msgid "Sector label deleted."
+msgstr "لا يمكن حذف {}"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+#, fuzzy
+#| msgid "Search Filter"
+msgid "Sector label saved."
+msgstr "مرشح البحث"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label added."
+msgstr ""
+
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, fuzzy, python-brace-format
 #| msgid "Disable auto update"
@@ -35397,8 +35604,8 @@ msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
 msgid ""
-"Invalid IP address filter. Use single IPs, CIDR notation "
-"(/8, /16, /24, /32), or comma-separated combinations."
+"Invalid IP address filter. Use single IPs, CIDR notation (/8, /16, /24, /"
+"32), or comma-separated combinations."
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -35480,8 +35687,16 @@ msgid "UCR rebuild restriction status"
 msgstr "حالة تقييد إعادة بناء UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "مطلوب تقييد إعادة البناء"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "إعادة البناء مقيدة"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "تقييد إعادة البناء غير مطلوب"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -35607,6 +35822,53 @@ msgstr "تنزيل كملف CSV"
 #: corehq/apps/hqadmin/templates/hqadmin/malt_downloader.html
 msgid "Enter a month to download all MALT data as csv for that month"
 msgstr "أدخل شهرًا لتنزيل جميع بيانات MALT كملف csv لهذا الشهر"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+#, fuzzy
+#| msgid "Manage Forms"
+msgid "Manage sectors"
+msgstr "إدارة النماذج"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+#, fuzzy
+#| msgid "Template Name"
+msgid "Template Apps"
+msgstr "اسم القالب"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+#, fuzzy
+#| msgid "Use question labels"
+msgid "New sector label"
+msgstr "استخدام تسميات الأسئلة"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+#, fuzzy
+#| msgid "Add User"
+msgid "Add sector"
+msgstr "إضافة مستخدم"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+#, fuzzy
+#| msgid "Search Filter"
+msgid "Sector label"
+msgstr "مرشح البحث"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+#, fuzzy
+#| msgid "Template String"
+msgid "Templates using it"
+msgstr "سلسلة القالب"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid ""
@@ -36429,8 +36691,8 @@ msgstr ""
 "    <p>\n"
 "      على سبيل المثال، <code>jr://file/commcare/images/hin/image.jpg</code> "
 "وملف zip الخاص بك <code>commcare/images/hin/image.jpg</code> سيكونان "
-"متطابقين، لكنهما <strong>لن</strong> يتطابقا مع <code>commcare/images/image."
-"jpg</code>.\n"
+"متطابقين، لكنهما <strong>لن</strong> يتطابقا مع <code>commcare/images/"
+"image.jpg</code>.\n"
 "    </p>\n"
 "  "
 
@@ -39668,6 +39930,10 @@ msgstr ""
 "المشكلة."
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+
+#: corehq/apps/integration/payments/const.py
 #, fuzzy
 #| msgid "maximum password attempts exceeded"
 msgid "Maximum retry attempts exceeded with request error."
@@ -39676,7 +39942,7 @@ msgstr "تم تجاوز الحد الأقصى لمحاولات كلمة المر
 #: corehq/apps/integration/payments/const.py
 #, fuzzy
 #| msgid "maximum password attempts exceeded"
-msgid "Maximum retry attempts exceeded with pending status"
+msgid "Maximum retry attempts exceeded with pending status."
 msgstr "تم تجاوز الحد الأقصى لمحاولات كلمة المرور"
 
 #: corehq/apps/integration/payments/filters.py
@@ -39747,10 +40013,17 @@ msgid "Payment request failed"
 msgstr "فشل طلب الدفع"
 
 #: corehq/apps/integration/payments/services.py
+#: corehq/apps/public_webforms/tables.py
 #, fuzzy
 #| msgid "Phone Verification"
 msgid "Verification"
 msgstr "التحقق من الهاتف"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -40206,11 +40479,11 @@ msgstr ""
 
 #: corehq/apps/linked_domain/models.py
 msgid ""
-"should be the full link without the trailing /. Example: https://www."
-"commcarehq.org"
+"should be the full link without the trailing /. Example: https://"
+"www.commcarehq.org"
 msgstr ""
-"يجب أن يكون الرابط كاملاً بدون الشرطة المائلة في النهاية /. مثال: https://www."
-"commcarehq.org"
+"يجب أن يكون الرابط كاملاً بدون الشرطة المائلة في النهاية /. مثال: https://"
+"www.commcarehq.org"
 
 #: corehq/apps/linked_domain/models.py
 msgid ""
@@ -40467,9 +40740,9 @@ msgstr ""
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 msgid ""
 "This project space is linked to the upstream project space <a data-"
-"bind=\"attr: {'href': domainLink.upstreamUrl}, text: domainLink."
-"upstreamDomain\"></a>.<br/> The content below can be synced with the "
-"existing content in the upstream project space.<br/> <a href=\"https://"
+"bind=\"attr: {'href': domainLink.upstreamUrl}, text: "
+"domainLink.upstreamDomain\"></a>.<br/> The content below can be synced with "
+"the existing content in the upstream project space.<br/> <a href=\"https://"
 "confluence.dimagi.com/display/commcarepublic/Linked+Project+Spaces\" "
 "target=\"_blank\">Learn more</a> about pulling content with Linked Project "
 "Spaces."
@@ -41006,12 +41279,8 @@ msgstr ""
 "الفهرس '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"لا يمكن حذف نوع الموقع '{deleted_type.code}'. يتم الإشارة إليه من قبل النوع "
+msgid " and try again."
+msgstr " وحاول مرة أخرى."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -41171,17 +41440,8 @@ msgstr ""
 "href=\"{}\">هنا</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "رمز موقع الموقع: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "تعذر التحديث: لم يتم العثور على الموقع مع"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "تم تضمين حقول غير صالحة في الطلب: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -41746,8 +42006,8 @@ msgid ""
 "            Once this structure has been defined, you can use it for "
 "reporting and\n"
 "            case sharing. Learn more about Organizations on our <a "
-"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/2143955032/Organizations+Locations\" target=\"_blank\">Help Site</a>.\n"
+"href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"2143955032/Organizations+Locations\" target=\"_blank\">Help Site</a>.\n"
 "          "
 msgstr ""
 "\n"
@@ -41755,8 +42015,9 @@ msgstr ""
 "            لمشروعك (المناطق، المرافق، العاملين في الخطوط الأمامية، إلخ).\n"
 "            بمجرد تحديد هذا الهيكل، يمكنك استخدامه للتقارير ومشاركة "
 "الحالات.\n"
-"            تعرف على المزيد حول المؤسسات في <a href=\"https://help."
-"commcarehq.org/display/commcarepublic/Organizations\">موقع المساعدة</a>.\n"
+"            تعرف على المزيد حول المؤسسات في <a href=\"https://"
+"help.commcarehq.org/display/commcarepublic/Organizations\">موقع المساعدة</"
+"a>.\n"
 "          "
 
 #: corehq/apps/locations/templates/locations/manage/locations.html
@@ -42510,25 +42771,67 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
+#, fuzzy
+#| msgid "Allow endpoint to access hidden forms"
+msgid "How Respondents Access the Form"
+msgstr "السماح لنقطة النهاية بالوصول إلى النماذج المخفية"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "One-time link by email or text message"
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+msgid "Anyone with the link"
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A branded email with a one-time-use link."
+msgstr ""
+
+#: corehq/apps/public_webforms/forms.py
+msgid "A short text with a shortened link. Billed per message sent."
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
 #, fuzzy
 #| msgid "Delete Request"
-msgid "Open to Requests"
+msgid "Open to Respondents"
 msgstr "حذف الطلب"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Immediately open this public webform to one-time link requests."
+#, fuzzy
+#| msgid "Public Name"
+msgid "Open this public webform to respondents."
+msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/forms.py
+#, fuzzy
+#| msgid "Phone Verification"
+msgid "Verification Method"
+msgstr "التحقق من الهاتف"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"To protect your data and project, CommCare runs automated checks on every "
+"respondent who starts the form. If a check flags a respondent, CommCare "
+"sends them a one-time link to open before the form starts. Choose how "
+"CommCare can send that link."
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr ""
+#, fuzzy
+#| msgid "Expiration Date must be in the future"
+msgid "Webform must close in the future."
+msgstr "يجب أن يكون تاريخ الانتهاء في المستقبل"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "A short text with a shortened link. Billed per message sent."
+#, fuzzy
+#| msgid "Push content to a downstream project space"
+msgid "Choose at least one verification method."
+msgstr "دفع المحتوى إلى مساحة مشروع فرعية"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webforms open to anyone with the link must close within 90 days."
 msgstr ""
 
 #: corehq/apps/public_webforms/forms.py
@@ -42551,12 +42854,6 @@ msgstr "الاسم العام"
 msgid "Please select an application, menu, and form."
 msgstr "يرجى اختيار التطبيق"
 
-#: corehq/apps/public_webforms/forms.py
-#, fuzzy
-#| msgid "The selected form does not have a schedule enabled."
-msgid "The selected form can't be used for a public webform."
-msgstr "النموذج المحدد لا يحتوي على جدول زمني مفعل."
-
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 #, fuzzy
 #| msgid "Public Name"
@@ -42569,6 +42866,10 @@ msgstr "الاسم العام"
 #: corehq/motech/openmrs/forms.py
 msgid "Save Changes"
 msgstr "حفظ التغييرات"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "This webform's application has been deleted, so it can't be opened."
+msgstr ""
 
 #: corehq/apps/public_webforms/messaging.py
 #, fuzzy, python-brace-format
@@ -42583,13 +42884,6 @@ msgid ""
 "Your one-time link for {form_name}:\n"
 "{url}"
 msgstr "المتابعة إلى {form_name}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "مفتوح"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -42650,15 +42944,43 @@ msgstr "منتهي الصلاحية"
 
 #: corehq/apps/public_webforms/tables.py
 #, fuzzy
-#| msgid "Delivered"
-msgid "Delivery"
-msgstr "تم التسليم"
+#| msgid "IP Access"
+msgid "Access"
+msgstr "وصول IP"
 
 #: corehq/apps/public_webforms/tables.py
 #, fuzzy
 #| msgid "Public Name"
 msgid "Public URL"
 msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/tables.py
+msgid "One-time link"
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#, fuzzy
+#| msgid "Email Delivered"
+msgid "Email enabled"
+msgstr "تم تسليم البريد الإلكتروني"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#, fuzzy
+#| msgid "disabled"
+msgid "Email disabled"
+msgstr "معطل"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#, fuzzy
+#| msgid "Is enabled"
+msgid "SMS enabled"
+msgstr "مفعل"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#, fuzzy
+#| msgid "disabled"
+msgid "SMS disabled"
+msgstr "معطل"
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, fuzzy, python-format
@@ -42805,6 +43127,19 @@ msgid ""
 "        "
 msgstr ""
 
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+#, fuzzy
+#| msgid "Messaging"
+msgid "Enable Messaging"
+msgstr "الرسائل"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
 msgstr ""
@@ -42937,10 +43272,40 @@ msgid "Check Your Messages"
 msgstr "رسالة التغيير"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
+msgstr ""
+"\n"
+"        مرحبًا بعودتك إلى %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        Welcome Back to %(cc_name)s\n"
+#| "      "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        مرحبًا بعودتك إلى %(cc_name)s\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
 msgstr ""
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
@@ -43031,6 +43396,11 @@ msgstr "الاسم العام"
 #| msgid "Public Name"
 msgid "Public webform updated."
 msgstr "الاسم العام"
+
+#: corehq/apps/public_webforms/views.py
+msgid ""
+"This public webform's application has been deleted, so it can't be opened."
+msgstr ""
 
 #: corehq/apps/public_webforms/views.py
 #, fuzzy
@@ -43548,8 +43918,8 @@ msgstr ""
 #| "\n"
 #| "                                  <p>Checking this will add a button to "
 #| "download a configuration file\n"
-#| "                                     for the <a href=\"https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
+#| "                                     for the <a href=\"https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
 #| "CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 #| "                                     CommCare Data Export Tool</a> for "
 #| "the export.</p>\n"
@@ -43570,8 +43940,8 @@ msgstr ""
 "\n"
 "                                  <p>تحديد هذا الخيار سيضيف زرًا لتنزيل ملف "
 "إعدادات\n"
-"                                     لـ <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2143955952/"
+"                                     لـ <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955952/"
 "CommCare+Data+Export+Tool+DET\" target=\"_blank\">\n"
 "                                     أداة تصدير بيانات CommCare</a> لهذا "
 "التصدير.</p>\n"
@@ -43581,8 +43951,8 @@ msgstr ""
 #, fuzzy
 #| msgid ""
 #| "\n"
-#| "                    Will delete <strong>all</strong> of "
-#| "%(friendly_name)s's\n"
+#| "                    Will delete <strong>all</strong> of %"
+#| "(friendly_name)s's\n"
 #| "                    form submissions.\n"
 #| "                  "
 msgid ""
@@ -43986,8 +44356,8 @@ msgid ""
 "will\n"
 "    be hosted.\n"
 "    <a\n"
-"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/"
-"pages/3101491209/CommCare+Cloud+Hosting+Locations\"\n"
+"      href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/"
+"3101491209/CommCare+Cloud+Hosting+Locations\"\n"
 "      target=\"_blank\"\n"
 "      ><b>Learn more</b></a\n"
 "    >\n"
@@ -44359,9 +44729,8 @@ msgstr ""
 "استمرت المشكلة، يرجى التواصل مع الدعم."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "يرجى الانتظار على الأقل {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "ثوانٍ قبل إعادة الطلب."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -45498,6 +45867,12 @@ msgid "Current Indian Financial Year"
 msgstr "السنة المالية الهندية الحالية"
 
 #: corehq/apps/reports/display.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "public user"
+msgstr "الاسم العام"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "لا توجد بيانات لاسم المستخدم"
 
@@ -45847,17 +46222,17 @@ msgstr "أضف المستخدمين والمجموعات لتصفية هذا ا�
 #: corehq/apps/reports/filters/users.py
 #, fuzzy
 #| msgid ""
-#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi."
-#| "atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
+#| "<i class=\"fa fa-info-circle\"></i> See <a href=\"https://"
+#| "dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
 #| "Organization+Data+Management#Search-for-Locations\" target=\"_blank\"> "
 #| "Filter Definitions</a>."
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2143947350/"
+"<i class=\"fa fa-info-circle\"></i> See <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143947350/"
 "Report+and+Export+Filters\"target=\"_blank\"> Filter Definitions</a>."
 msgstr ""
-"<i class=\"fa fa-info-circle\"></i> راجع <a href=\"https://dimagi.atlassian."
-"net/wiki/spaces/commcarepublic/pages/2215051298/"
+"<i class=\"fa fa-info-circle\"></i> راجع <a href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2215051298/"
 "Organization+Data+Management#Search-for-Locations\" "
 "target=\"_blank\">تعريفات التصفية</a>."
 
@@ -46090,6 +46465,12 @@ msgstr "عدد المستخدمين النشطين"
 #| msgid "Show Deactivated Mobile Workers"
 msgid "Deactivated Web Users"
 msgstr "عرض مستخدمي الأجهزة المحمولة المعطلين"
+
+#: corehq/apps/reports/models.py
+#, fuzzy
+#| msgid "Public Name"
+msgid "Public Users"
+msgstr "الاسم العام"
 
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
@@ -46393,6 +46774,14 @@ msgstr "عدد النماذج غير المرسلة في هاتف المستخد
 #, python-brace-format
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr "عدد النماذج غير المرسلة في هواتف المستخدمين لـ {app_info}"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...عرض المزيد"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...إخفاء"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -47659,15 +48048,15 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/filters/bootstrap5/xpath_textarea.html
 msgid ""
 "\n"
-"      Filter your cases by entering a <a href=\"https://confluence.dimagi."
-"com/pages/viewpage.action?"
+"      Filter your cases by entering a <a href=\"https://"
+"confluence.dimagi.com/pages/viewpage.action?"
 "spaceKey=commcarepublic&title=Case+Query+Language\" target=\"_blank\">Case "
 "Search Query</a>.\n"
 "      "
 msgstr ""
 "\n"
-"      قم بتصفية الحالات الخاصة بك عن طريق إدخال <a href=\"https://confluence."
-"dimagi.com/pages/viewpage.action?"
+"      قم بتصفية الحالات الخاصة بك عن طريق إدخال <a href=\"https://"
+"confluence.dimagi.com/pages/viewpage.action?"
 "spaceKey=commcarepublic&title=Case+Query+Language\" "
 "target=\"_blank\">استعلام بحث الحالة</a>.\n"
 "      "
@@ -48773,11 +49162,6 @@ msgid "Can't archive documents of type %s. How did you get here??"
 msgstr "لا يمكن أرشفة مستندات من النوع %s. كيف وصلت إلى هنا؟؟"
 
 #: corehq/apps/reports/views.py
-#, fuzzy, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr "تعذر حذف الملف الشخصي '{}' لأنه تم تعيين مستخدمين له."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (هذه الحالة)"
 
@@ -49367,12 +49751,6 @@ msgstr "انسخ هذا في مكان آمن. لن يتم عرضه مرة أخر
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "جميع عناوين IP"
-
-#: corehq/apps/settings/views.py
-#, fuzzy
-msgid ""
-"Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr "هناك قاعدة باسم {name} موجودة بالفعل"
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -50504,6 +50882,12 @@ msgid "Connect user not found for recipient."
 msgstr "لم يتم العثور على رموز FCM للمستلم."
 
 #: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Connect Messaging Users"
+msgid "Connect Messaging Gateway Error"
+msgstr "ربط مستخدمي الرسائل"
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -51343,10 +51727,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "غير مطلوب/لم يتم إنشاؤه بعد."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "رمز التعريف"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -52651,21 +53031,11 @@ msgid "today!"
 msgstr "اليوم!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "في {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
 "%(expires_on)s"
 msgstr "تنبيه CommCare: شهادة موفر الهوية %(idp_name)s تنتهي في %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "حسابات Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -53473,6 +53843,51 @@ msgstr "النطاقات النشطة"
 msgid "Last Usage"
 msgstr "آخر استخدام"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The app didn't accept the AI's translation."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI's translation has characters the app can't save."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#, fuzzy
+#| msgid "The message was blank."
+msgid "The AI changed a web link."
+msgstr "الرسالة كانت فارغة."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+#, fuzzy
+#| msgid "No app could be found"
+msgid "The label couldn't be translated."
+msgstr "تعذر العثور على أي تطبيق"
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid "Remote apps can't be translated with AI."
+msgstr ""
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Only the current version of an app can be translated, not a previous version."
+msgstr ""
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-format
@@ -53729,30 +54144,19 @@ msgstr ""
 #, fuzzy
 #| msgid "Something went wrong. Please reload the page and try again."
 msgid ""
-"Something went wrong while translating the app. Review its translations and "
-"run it again."
+"Something went wrong and the translation didn't finish. Run it again, and "
+"contact support if it keeps failing."
 msgstr "حدث خطأ ما. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى."
 
 #: corehq/apps/translations/tasks.py
-msgid "No strings could be translated."
-msgstr ""
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
+#, fuzzy
+#| msgid "No app could be found"
+msgid "No labels could be translated."
+msgstr "تعذر العثور على أي تطبيق"
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
 msgstr "الترجمات مفقودة لـ {} في الورقة المرفوعة"
-
-#: corehq/apps/translations/validator.py
-#, fuzzy, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app '{self."
-"app.name}'"
-msgstr "تعذر العثور على الوحدة بمعرّف='{unique_id}' في التطبيق '{app_name}'."
 
 #: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
@@ -53781,6 +54185,68 @@ msgstr "تم تحديث ترجمات واجهة المستخدم!"
 #: corehq/apps/translations/views.py
 msgid "Please select language to validate."
 msgstr "يرجى اختيار اللغة للتحقق."
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Source lang selected not available for the project"
+msgid "AI translation isn't available for this project."
+msgstr "اللغة المصدر المحددة غير متوفرة لهذا المشروع"
+
+#: corehq/apps/translations/views.py
+msgid "This language can't be translated with AI."
+msgstr ""
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Dear enterprise administrator,"
+msgid "This language is already being translated."
+msgstr "عزيزي مسؤول المؤسسة،"
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "case list"
+msgid "Case list"
+msgstr "قائمة الحالات"
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "case detail"
+msgid "Case detail"
+msgstr "تفاصيل الحالة"
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Case Search"
+msgid "Case search"
+msgstr "بحث القضايا"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr ""
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Help Text"
+msgid "help text"
+msgstr "نص المساعدة"
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Validation Message"
+msgid "validation message"
+msgstr "رسالة التحقق"
+
+#: corehq/apps/translations/views.py
+#, fuzzy
+#| msgid "Choices"
+msgid "choice"
+msgstr "الخيارات"
+
+#: corehq/apps/user_importer/exceptions.py
+msgid ""
+"This project has reached the mobile worker limit for its subscription plan. "
+"Deactivate other mobile workers or upgrade the plan to add more."
+msgstr ""
 
 #: corehq/apps/user_importer/helpers.py
 msgid "Double Entry for {}"
@@ -53848,11 +54314,6 @@ msgid ""
 msgstr ""
 "تم ارتداد البريد الإلكتروني لدعوة هذا المستخدم: {}. يرجى المحاولة مرة أخرى "
 "باستخدام اسم مستخدم مختلف"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "لا يمكن تعيين النطاق إلى '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -54112,16 +54573,6 @@ msgstr "إعادة بناء"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "حذف"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression غير مسموح به للنطاق {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, fuzzy, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -54836,8 +55287,8 @@ msgstr "مستند JSON"
 msgid ""
 "\n"
 "            Your document JSON has parse errors!\n"
-"            For more details, try pasting into a <a href=\"http://jsonlint."
-"com/\" target=\"_blank\">JSON Validator</a>.\n"
+"            For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
 "          "
 msgstr ""
 "\n"
@@ -54893,8 +55344,8 @@ msgstr "تعبير JSON"
 msgid ""
 "\n"
 "            Your expression has parse errors!\n"
-"            For more details, try pasting into a <a href=\"http://jsonlint."
-"com/\" target=\"_blank\">JSON Validator</a>.\n"
+"            For more details, try pasting into a <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">JSON Validator</a>.\n"
 "          "
 msgstr ""
 "\n"
@@ -54970,8 +55421,8 @@ msgid ""
 msgstr ""
 "\n"
 "                    يحتوي تعبيرك على أخطاء في التحليل!\n"
-"                    لمزيد من التفاصيل، جرب لصقه في <a href=\"http://jsonlint."
-"com/\" target=\"_blank\">مدقق JSON</a>.\n"
+"                    لمزيد من التفاصيل، جرب لصقه في <a href=\"http://"
+"jsonlint.com/\" target=\"_blank\">مدقق JSON</a>.\n"
 "                  "
 
 #: corehq/apps/userreports/templates/userreports/bootstrap3/ucr_expressions.html
@@ -55682,8 +56133,8 @@ msgstr ""
 msgid ""
 "Look at <a target=\"_blank\" href=\"https://commcare-hq.readthedocs.io/ucr/"
 "examples.html#data-source-indicators\">these examples</a> and <a "
-"target=\"_blank\" href=\"https://commcare-hq.readthedocs.io/ucr."
-"html#indicators\">these docs</a>"
+"target=\"_blank\" href=\"https://commcare-hq.readthedocs.io/"
+"ucr.html#indicators\">these docs</a>"
 msgstr ""
 "اطلع على <a target=\"_blank\" href=\"https://commcare-hq.readthedocs.io/ucr/"
 "examples.html#data-source-indicators\">هذه الأمثلة</a> و<a target=\"_blank\" "
@@ -55965,20 +56416,8 @@ msgid "UCR Expressions"
 msgstr "تعبيرات UCR"
 
 #: corehq/apps/userreports/views.py
-#, fuzzy
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr "هناك قاعدة باسم {name} موجودة بالفعل"
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "تعديل تعبير UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "أكد حسابك في CommCare للنطاق {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -56397,13 +56836,21 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                        Are you sure you want to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as "
+#| "<strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Are you sure you want to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as "
-"<strong>%(username)s</strong>?\n"
+"                        Are you sure you want to accept the invitation to "
+"join\n"
+"                        the CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
@@ -56415,13 +56862,20 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                        Would you like to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as "
+#| "<strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Would you like to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as "
-"<strong>%(username)s</strong>?\n"
+"                        Would you like to accept the invitation to join the\n"
+"                        CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
@@ -56461,6 +56915,27 @@ msgstr "إنشاء حساب ويب"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                      Turn off demo mode to allow this mobile worker to "
+#| "start\n"
+#| "                      sending data to %(hq_name)s again.\n"
+#| "                    "
+msgid ""
+"\n"
+"                    You are signed in as %(username)s, but this invitation "
+"was\n"
+"                    sent to %(invited_user)s.\n"
+"                  "
+msgstr ""
+"\n"
+"                      أوقف وضع العرض التجريبي للسماح لهذا العامل بإرسال "
+"البيانات إلى %(hq_name)s مرة أخرى.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
+#: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
 msgid ""
 "\n"
@@ -56478,12 +56953,19 @@ msgstr "تبديل الحسابات"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your email is managed by %(idp_name)s.\n"
+#| "                    You will be asked to authenticate with Single Sign-"
+#| "On\n"
+#| "                    in the next step.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your email is managed by %(idp_name)s.\n"
-"                    You will be asked to authenticate with Single Sign-On\n"
-"                    in the next step.\n"
+"                    Your email is managed by %(idp_name)s. You will be "
+"asked\n"
+"                    to authenticate with Single Sign-On in the next step.\n"
 "                  "
 msgstr ""
 "\n"
@@ -56494,11 +56976,17 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    To accept this %(invite_type_lower)s invitation, you "
+#| "must create an account.\n"
+#| "                  "
 msgid ""
 "\n"
 "                    To accept this %(invite_type_lower)s invitation, you "
-"must create an account.\n"
+"must\n"
+"                    create an account.\n"
 "                  "
 msgstr ""
 "\n"
@@ -56651,8 +57139,8 @@ msgstr "أنت مسجل الدخول بالفعل."
 #, fuzzy
 #| msgid ""
 #| "\n"
-#| "                  To accept this invitation, you must first <a "
-#| "href=\"%(sign_out_url)s\">sign out</a>.\n"
+#| "                  To accept this invitation, you must first <a href=\"%"
+#| "(sign_out_url)s\">sign out</a>.\n"
 #| "                "
 msgid ""
 "\n"
@@ -56660,8 +57148,8 @@ msgid ""
 "                "
 msgstr ""
 "\n"
-"                  لقبول هذه الدعوة، يجب عليك أولاً <a "
-"href=\"%(sign_out_url)s\">تسجيل الخروج</a>.\n"
+"                  لقبول هذه الدعوة، يجب عليك أولاً <a href=\"%"
+"(sign_out_url)s\">تسجيل الخروج</a>.\n"
 "                "
 
 #: corehq/apps/users/templates/users/bootstrap3/commcare_user_confirm_account.html
@@ -57427,11 +57915,6 @@ msgstr "مستخدمو الأجهزة المحمولة الجدد"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Pending..."
 msgstr "قيد الانتظار..."
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "جديد"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -59780,11 +60263,10 @@ msgid "is_active"
 msgstr "نشط"
 
 #: corehq/apps/users/views/mobile/users.py
-#, fuzzy, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now "
-"login"
-msgstr "تمت إعادة تعيين كلمة المرور لـ {} بنجاح. يمكنك الآن تسجيل الدخول."
+#, fuzzy
+#| msgid "You can now login"
+msgid "You can now login"
+msgstr "يمكنك الآن تسجيل الدخول"
 
 #: corehq/apps/users/views/mobile/users.py
 #, fuzzy
@@ -62712,11 +63194,6 @@ msgstr ""
 "تم تعيين \"التكرار\" إلى \"ربع سنوي\". يرجى إدخال فترة ربع سنوية صحيحة "
 "بالصيغة yyyyQn (مثال: \"2004Q1\" من يناير إلى مارس 2004)، أو إدخال عمود صحيح."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, fuzzy, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "إضافة إعدادات الاتصال"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "تقرير قابل للتكوين من قبل المستخدم"
@@ -62725,11 +63202,12 @@ msgstr "تقرير قابل للتكوين من قبل المستخدم"
 #, fuzzy
 #| msgid ""
 #| "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a href=\"https://"
-#| "github.com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/README."
-#| "md#datasets\" target=\"_new\">More info</a>. "
+#| "github.com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/"
+#| "README.md#datasets\" target=\"_new\">More info</a>. "
 msgid ""
-"DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a href=\"https://github."
-"com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a href=\"https://"
+"github.com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/"
+"README.md#datasets\" target=\"_new\">More info</a>. "
 msgstr ""
 "تقوم خرائط مجموعة البيانات بربط UCRs في CommCare بمجموعات بيانات DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-hq/blob/master/corehq/motech/dhis2/"
@@ -63200,10 +63678,9 @@ msgstr "هناك خطأ في عمليات التحقق من بيانات واج�
 
 #: corehq/motech/models.py
 #, fuzzy
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr "يرجى اختيار إعدادات مصادقة واجهة برمجة التطبيقات المناسبة لـ "
+#| msgid "Please select the applicable day(s) of the week."
+msgid "Please select the applicable API auth settings for the "
+msgstr "يرجى تحديد اليوم/الأيام المناسبة من الأسبوع."
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -63237,46 +63714,18 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "هناك خطأ في بناء جملة XML في Atom feed الخاص بـ OpenMRS عند "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"لم يتم العثور على مستخدمين في الموقع \"{repeater.location_id}\" لامتلاك "
-"المرضى المضافين من موجز OpenMRS Atom."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "تمت إضافة المرضى من Atom feed الخاص بـ OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr "{repeater.domain}: {repeater}: خطأ في الإعدادات: غير قادر على التحديث "
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "المرضى من OpenMRS ما لم يتم تحديد نوع حالة واحد فقط."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب المريض "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب الزيارة "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, fuzzy, python-brace-format
-#| msgid "{repeater.domain}: {repeater}: More than one case found "
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, fuzzy, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr "مستوى المنظمة الذي سيملك عامل الهاتف المحمول فيه الحالات الجديدة"
+#, fuzzy
+#| msgid "matching unique OpenMRS UUID. case external_id: "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "مطابقة UUID فريد لـ OpenMRS. معرف الحالة الخارجي: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -63396,6 +63845,20 @@ msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr "مثال: [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 
 #: corehq/motech/openmrs/forms.py
+msgid "Each column mapping must be an object."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Unknown column mapping keys: %(keys)s"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Each column mapping must have a \"%(key)s\"."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
 msgid ""
 "Cases at this location and below will be forwarded. Leave empty if this is "
 "the only OpenMRS Forwarder"
@@ -63462,6 +63925,24 @@ msgstr "استيراد الآن"
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "OpenMRS Importer"
 msgstr "مستورد OpenMRS"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "No OpenMRS Importers were submitted."
+msgstr "تم حفظ مستوردي OpenMRS"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers are not valid JSON."
+msgstr "تم حفظ مستوردي OpenMRS"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers must be a list of objects."
+msgstr "تم حفظ مستوردي OpenMRS"
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -63547,9 +64028,9 @@ msgstr ""
 #: corehq/motech/repeaters/expression/forms.py
 msgid ""
 "Use this to create a Case API payload which will be used to create or update "
-"a case. For more info see <a target=\"_blank\" href=\"https://dimagi."
-"atlassian.net/wiki/spaces/GS/pages/2146602964/Configurable+Repeaters\">these "
-"docs</a>"
+"a case. For more info see <a target=\"_blank\" href=\"https://"
+"dimagi.atlassian.net/wiki/spaces/GS/pages/2146602964/"
+"Configurable+Repeaters\">these docs</a>"
 msgstr ""
 "استخدم هذا لإنشاء حمولة واجهة برمجة تطبيقات الحالة (Case API) والتي ستُستخدم "
 "لإنشاء أو تحديث حالة. لمزيد من المعلومات راجع <a target=\"_blank\" "
@@ -64558,7 +65039,9 @@ msgid "WhatsApp Settings"
 msgstr "إعدادات واتساب"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
+#, fuzzy
+#| msgid "Connect Messsaging"
+msgid "Connect Messaging"
 msgstr "ربط الرسائل"
 
 #: corehq/tabs/tabclasses.py
@@ -64774,8 +65257,8 @@ msgstr "%(exc)s"
 
 #: corehq/util/workbook_json/excel.py
 msgid ""
-"Upload failed! Please make sure you are using a valid Excel 2007 or later (."
-"xlsx) file. Error details: {}."
+"Upload failed! Please make sure you are using a valid Excel 2007 or later "
+"(.xlsx) file. Error details: {}."
 msgstr ""
 "فشل التحميل! يرجى التأكد من أنك تستخدم ملف Excel 2007 أو أحدث (.xlsx) صالح. "
 "تفاصيل الخطأ: {}."
@@ -65418,6 +65901,418 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#~ msgid ""
+#~ "\n"
+#~ "      By clicking this button, you agree to Dimagi's\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+#~ "target=\"_blank\">Terms of Service</a> and\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+#~ "target=\"_blank\">Privacy Policy</a>.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      بالنقر على هذا الزر، أنت توافق على\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" "
+#~ "target=\"_blank\">شروط الخدمة</a> و\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" "
+#~ "target=\"_blank\">سياسة الخصوصية</a> الخاصة بـ Dimagi.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "Problem loading suite file from profile file. Is your profile file "
+#~ "correct?"
+#~ msgstr ""
+#~ "حدثت مشكلة في تحميل ملف المجموعة من ملف التعريف. هل ملف التعريف صحيح؟"
+
+#, fuzzy
+#~| msgid "Delivered"
+#~ msgid "Delivery"
+#~ msgstr "تم التسليم"
+
+#, fuzzy, python-format
+#~| msgid ""
+#~| "\n"
+#~| "            Thanks for using %(cc_name)s!\n"
+#~| "          "
+#~ msgid ""
+#~ "\n"
+#~ "            Enable messaging for %(domain_name)s\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            شكرًا لاستخدامك %(cc_name)s!\n"
+#~ "          "
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "                To select a range of fields hold the Shift key and "
+#~| "select\n"
+#~| "                the first and last field in the range.\n"
+#~| "              "
+#~ msgid ""
+#~ "\n"
+#~ "                A public webform with SMS turned on sends a text to any "
+#~ "phone\n"
+#~ "                number a respondent enters, and each text is charged.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                لتحديد نطاق من الحقول، اضغط مع الاستمرار على مفتاح Shift "
+#~ "وحدد\n"
+#~ "                أول وآخر حقل في النطاق.\n"
+#~ "              "
+
+#, fuzzy
+#~| msgid "Role is required for web users."
+#~ msgid "Action is required to enable messaging."
+#~ msgstr "الدور مطلوب لمستخدمي الويب."
+
+#, fuzzy
+#~| msgid "Outgoing Messaging"
+#~ msgid "How to Enable Messaging"
+#~ msgstr "الرسائل الصادرة"
+
+#, fuzzy, python-format
+#~| msgid ""
+#~| "\n"
+#~| "                  <a href=\"%(login_url)s\">Login</a> to access your "
+#~| "account.\n"
+#~| "                "
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to "
+#~ "your user\n"
+#~ "          account.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "                  <a href=\"%(login_url)s\">تسجيل الدخول</a> للوصول إلى "
+#~ "حسابك.\n"
+#~ "                "
+
+#, fuzzy, python-format
+#~| msgid ""
+#~| "\n"
+#~| "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#~| "                has no reports.\n"
+#~| "              "
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+#~ "          for this project space.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "                <a href=\"%(module_url)s\">%(module_name)s</a>\n"
+#~ "                لا يحتوي على تقارير.\n"
+#~ "              "
+
+#, fuzzy
+#~| msgid "Back to Forms"
+#~ msgid "Back to Home"
+#~ msgstr "العودة إلى النماذج"
+
+#, fuzzy
+#~| msgid "Usage Charge"
+#~ msgid "Who is Charged"
+#~ msgstr "رسوم الاستخدام"
+
+#, fuzzy
+#~| msgid "Invoice No."
+#~ msgid "Invoices Emailed to"
+#~ msgstr "رقم الفاتورة"
+
+#, fuzzy
+#~| msgid ""
+#~| "Filtering by unknown forms is currently unavailable for this project."
+#~ msgid "Messaging is currently disabled for this project space."
+#~ msgstr "تصفية النماذج غير المعروفة غير متاحة حاليًا لهذا المشروع."
+
+#, fuzzy
+#~| msgid ""
+#~| "\n"
+#~| "      Please contact a project administrator to restore access.\n"
+#~| "    "
+#~ msgid ""
+#~ "\n"
+#~ "            Please contact your project administrator to enable "
+#~ "messaging.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "      يرجى التواصل مع مسؤول المشروع لاستعادة الوصول.\n"
+#~ "    "
+
+#, fuzzy
+#~| msgid "{} fields saved successfully."
+#~ msgid "Messaging enabled successfully."
+#~ msgstr "تم حفظ الحقول ({}) بنجاح."
+
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "تم رفض دفع الاشتراك لفاتورة CommCare رقم {context['invoice_number']}"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "معامل(ات) غير صالحة: {', '.join(invalid_params)}"
+
+#, fuzzy
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "تم الرجوع إلى الإصدار {old_version}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "يمكن أن تحتوي واردات الحالات على حد أقصى قدره {MAX_CASE_IMPORTER_ROWS} "
+#~ "صفوف. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr "لا يمكن أن يكون اسم الحالة أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} "
+#~ "characters"
+#~ msgstr ""
+#~ "لا يمكن أن يكون المعرف الخارجي أطول من {STANDARD_CHARFIELD_LENGTH} حرفًا"
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} غير مدعوم مع ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} ليس تاريخًا أو وقتًا بتنسيق صحيح."
+
+#, fuzzy, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{} ليس تاريخًا صالحًا"
+
+#, fuzzy, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{} ليس تاريخًا ووقتًا صالحًا"
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "يجب أن تكون الوسيطة الثانية لـ '{node.name}' إحداثيات صالحة"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "يجب أن تكون الوسيطة الثالثة لـ '{node.name}' رقمًا، تم الحصول على "
+#~ "'{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' ليست وحدة مسافة صالحة. المتوقع واحدة من {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, fuzzy, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "يرجى إدخال تاريخ صحيح بالتنسيق YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr "يجب أن تكون الوسيطة الأولى لـ '{node.name}' اسم خاصية حالة صالح"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "تقبل دالة '{node.name}' عددًا محددًا من الوسيطات وهو {expected}، تم الحصول "
+#~ "على {actual}"
+
+#, fuzzy, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "خطأ غير معروف"
+
+#, fuzzy, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "تمت إضافتك إلى مساحة المشروع \"{}\"."
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by "
+#~ "the type "
+#~ msgstr ""
+#~ "لا يمكن حذف نوع الموقع '{deleted_type.code}'. يتم الإشارة إليه من قبل "
+#~ "النوع "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "رمز موقع الموقع: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "تم تضمين حقول غير صالحة في الطلب: {list(data.keys())}."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "يرجى الانتظار على الأقل {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, fuzzy, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr "تعذر حذف الملف الشخصي '{}' لأنه تم تعيين مستخدمين له."
+
+#, fuzzy
+#~ msgid ""
+#~ "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr "هناك قاعدة باسم {name} موجودة بالفعل"
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "في {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "حسابات Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, fuzzy, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr "تعذر العثور على الوحدة بمعرّف='{unique_id}' في التطبيق '{app_name}'."
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "لا يمكن تعيين النطاق إلى '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression غير مسموح به للنطاق {self.domain}"
+
+#, fuzzy, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "النموذج XForm {form_id} لا ينتمي إلى النطاق {domain}"
+
+#, fuzzy
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr "هناك قاعدة باسم {name} موجودة بالفعل"
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "أكد حسابك في CommCare للنطاق {commcare_user.domain}"
+
+#, fuzzy, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can "
+#~ "now login"
+#~ msgstr "تمت إعادة تعيين كلمة المرور لـ {} بنجاح. يمكنك الآن تسجيل الدخول."
+
+#, fuzzy, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "إضافة إعدادات الاتصال"
+
+#, fuzzy
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr "يرجى اختيار إعدادات مصادقة واجهة برمجة التطبيقات المناسبة لـ "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients "
+#~ "added from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "لم يتم العثور على مستخدمين في الموقع \"{repeater.location_id}\" لامتلاك "
+#~ "المرضى المضافين من موجز OpenMRS Atom."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: خطأ في الإعدادات: غير قادر على التحديث "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب المريض "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: حدث خطأ أثناء جلب الزيارة "
+
+#, fuzzy, python-brace-format
+#~| msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgid ""
+#~ "{repeater.domain}: {repeater}: More than one case found matching unique "
+#~ "OpenMRS UUID. case external_id: "
+#~ msgstr "{repeater.domain}: {repeater}: تم العثور على أكثر من حالة واحدة "
+
+#, fuzzy, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr "مستوى المنظمة الذي سيملك عامل الهاتف المحمول فيه الحالات الجديدة"
+
+#, fuzzy
+#~| msgid "The selected form does not have a schedule enabled."
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr "النموذج المحدد لا يحتوي على جدول زمني مفعل."
+
+#~ msgid "Space-separated list of privilege strings from corehq.privileges"
+#~ msgstr "قائمة مفصولة بمسافات من سلاسل الامتيازات من corehq.privileges"
+
+#~ msgid "Version History"
+#~ msgstr "سجل الإصدارات"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "لم يتم توفير أي نماذج"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> "
+#~ "to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>العودة إلى <a href=\"%(form_management_url)s\">إدارة النماذج</"
+#~ "a> لعكس هذا الإجراء.</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "تعذر العثور على النموذج XForm {form_id}"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr ""
+#~ "النموذج XForm {form_id} للنطاق {domain} بواسطة المستخدم '{username}'"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "تم أرشفة {form} بنجاح"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "تم إلغاء أرشفة {form} بنجاح"
+
+#, fuzzy, python-brace-format
+#~| msgid "Could not archive {form}: {error}"
+#~ msgid "Could not archive {form}"
+#~ msgstr "تعذر أرشفة {form}: {error}"
+
+#, fuzzy, python-brace-format
+#~| msgid "Could not archive {form}: {error}"
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "تعذر أرشفة {form}: {error}"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} نموذج/نماذج"
 
 #, fuzzy, python-format
 #~| msgid ""
@@ -66985,11 +67880,11 @@ msgstr "أدخل JSON صالحًا"
 #~ "(+) and in digits only.\n"
 #~ "            </div>\n"
 #~ "            <div id=\"phone-error\">\n"
-#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root."
-#~ "STATUS.NONE\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== "
+#~ "$root.STATUS.NONE\">\n"
 #~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-#~ "                    data-bind=\"visible: $root.phoneStatus() === $root."
-#~ "STATUS.ERROR\"></i>\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === "
+#~ "$root.STATUS.ERROR\"></i>\n"
 #~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko --"
 #~ ">\n"
 #~ "                </span>\n"
@@ -67003,11 +67898,11 @@ msgstr "أدخل JSON صالحًا"
 #~ "فقط.\n"
 #~ "            </div>\n"
 #~ "            <div id=\"phone-error\">\n"
-#~ "                <span data-bind=\"visible: $root.phoneStatus() !== $root."
-#~ "STATUS.NONE\">\n"
+#~ "                <span data-bind=\"visible: $root.phoneStatus() !== "
+#~ "$root.STATUS.NONE\">\n"
 #~ "                    <i class=\"fa-solid fa-triangle-exclamation\"\n"
-#~ "                    data-bind=\"visible: $root.phoneStatus() === $root."
-#~ "STATUS.ERROR\"></i>\n"
+#~ "                    data-bind=\"visible: $root.phoneStatus() === "
+#~ "$root.STATUS.ERROR\"></i>\n"
 #~ "                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko --"
 #~ ">\n"
 #~ "                </span>\n"
@@ -67233,9 +68128,9 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "              بالنقر على \"قبول\" أدناه، فإنك تقر بأنك تقبل الملكية "
 #~ "الكاملة لمساحة المشروع هذه (\"%(domain)s\").\n"
-#~ "              أنت توافق على الالتزام بشروط <a href=\"https://www.dimagi."
-#~ "com/terms/latest/privacy/\">اتفاقية الخدمة والأعمال</a> الخاصة بـ "
-#~ "Dimagi.\n"
+#~ "              أنت توافق على الالتزام بشروط <a href=\"https://"
+#~ "www.dimagi.com/terms/latest/privacy/\">اتفاقية الخدمة والأعمال</a> الخاصة "
+#~ "بـ Dimagi.\n"
 #~ "              بقبولك لهذا الاتفاق، فإنك تقر بأن لديك الإذن والصلاحية "
 #~ "لقبول هذه الشروط. سيقوم ممثل من Dimagi بإبلاغك عند اكتمال النقل.\n"
 #~ "            "
@@ -67456,18 +68351,18 @@ msgstr "أدخل JSON صالحًا"
 #~| msgid ""
 #~| "\n"
 #~| "If you think you have received this by mistake, you can go ahead and "
-#~| "ignore this email. To find out more about CommCare HQ visit http://www."
-#~| "commcarehq.org/.\n"
+#~| "ignore this email. To find out more about CommCare HQ visit http://"
+#~| "www.commcarehq.org/.\n"
 #~ msgid ""
 #~ "\n"
 #~ "If you think you have received this by mistake, you can go ahead and "
-#~ "ignore this email. To find out more about CommCare visit http://www."
-#~ "commcarehq.org/.\n"
+#~ "ignore this email. To find out more about CommCare visit http://"
+#~ "www.commcarehq.org/.\n"
 #~ msgstr ""
 #~ "\n"
 #~ "إذا كنت تعتقد أنك تلقيت هذه الرسالة عن طريق الخطأ، يمكنك تجاهل هذا البريد "
-#~ "الإلكتروني. لمعرفة المزيد عن CommCare HQ قم بزيارة http://www.commcarehq."
-#~ "org/.\n"
+#~ "الإلكتروني. لمعرفة المزيد عن CommCare HQ قم بزيارة http://"
+#~ "www.commcarehq.org/.\n"
 
 #, python-brace-format
 #~ msgid "Resent transfer request for project '{domain}'"
@@ -68549,9 +69444,6 @@ msgstr "أدخل JSON صالحًا"
 #~ msgid "Printing"
 #~ msgstr "الطباعة"
 
-#~ msgid "Document Template"
-#~ msgstr "قالب المستند"
-
 #~ msgid "Opens file in new tab."
 #~ msgstr "يفتح الملف في تبويب جديد."
 
@@ -68680,19 +69572,19 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "                      Treat this property as\n"
 #~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root."
-#~ "editColumnController.availableFilterNames,\n"
+#~ "                              data-bind=\"options: "
+#~ "$root.editColumnController.availableFilterNames,\n"
 #~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root."
-#~ "editColumnController.filterTitleByName[val];\n"
+#~ "                                           return "
+#~ "$root.editColumnController.filterTitleByName[val];\n"
 #~ "                                         },\n"
 #~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilterName }\"></select>\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilterName }\"></select>\n"
 #~ "                      and match\n"
 #~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilter }\"\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilter }\"\n"
 #~ "                              class=\"form-control filter-clause\">\n"
 #~ "                        <option value=\"all\">\n"
 #~ "                          all of the\n"
@@ -68707,19 +69599,19 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "                      اعتبر هذه الخاصية\n"
 #~ "                      <select class=\"form-control filter-type\"\n"
-#~ "                              data-bind=\"options: $root."
-#~ "editColumnController.availableFilterNames,\n"
+#~ "                              data-bind=\"options: "
+#~ "$root.editColumnController.availableFilterNames,\n"
 #~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root."
-#~ "editColumnController.filterTitleByName[val];\n"
+#~ "                                           return "
+#~ "$root.editColumnController.filterTitleByName[val];\n"
 #~ "                                         },\n"
 #~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilterName }\"></select>\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilterName }\"></select>\n"
 #~ "                      ووافق\n"
 #~ "                      <select data-bind=\"value: $parent.clause,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilter }\"\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilter }\"\n"
 #~ "                              class=\"form-control filter-clause\">\n"
 #~ "                        <option value=\"all\">\n"
 #~ "                          جميع الشروط التالية\n"
@@ -68746,19 +69638,19 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "                      Treat this property as\n"
 #~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root."
-#~ "editColumnController.availableFilterNames,\n"
+#~ "                              data-bind=\"options: "
+#~ "$root.editColumnController.availableFilterNames,\n"
 #~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root."
-#~ "editColumnController.filterTitleByName[val];\n"
+#~ "                                           return "
+#~ "$root.editColumnController.filterTitleByName[val];\n"
 #~ "                                         },\n"
 #~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilterName }\"></select>\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilterName }\"></select>\n"
 #~ "                      and match\n"
 #~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilter }\"\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilter }\"\n"
 #~ "                              class=\"form-control filter-clause\">\n"
 #~ "                        <option value=\"all\">\n"
 #~ "                          all of the\n"
@@ -68773,19 +69665,19 @@ msgstr "أدخل JSON صالحًا"
 #~ "\n"
 #~ "                      اعتبر هذه الخاصية\n"
 #~ "                      <select class=\"form-select filter-type\"\n"
-#~ "                              data-bind=\"options: $root."
-#~ "editColumnController.availableFilterNames,\n"
+#~ "                              data-bind=\"options: "
+#~ "$root.editColumnController.availableFilterNames,\n"
 #~ "                                         optionsText: function (val) {\n"
-#~ "                                           return $root."
-#~ "editColumnController.filterTitleByName[val];\n"
+#~ "                                           return "
+#~ "$root.editColumnController.filterTitleByName[val];\n"
 #~ "                                         },\n"
 #~ "                                         value: filterName,\n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilterName }\"></select>\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilterName }\"></select>\n"
 #~ "                      ووافق\n"
 #~ "                      <select data-bind=\"value: $parent.clause,  \n"
-#~ "                                         event: { change: $root."
-#~ "editColumnController.updateFilter }\"\n"
+#~ "                                         event: { change: "
+#~ "$root.editColumnController.updateFilter }\"\n"
 #~ "                              class=\"form-control filter-clause\">\n"
 #~ "                        <option value=\"all\">\n"
 #~ "                          جميع الشروط التالية\n"
@@ -69051,45 +69943,8 @@ msgstr "أدخل JSON صالحًا"
 #~ "      المسموح به في خطتك، سيتم فرض رسوم وفقًا لشروط الخطة.\n"
 #~ "    "
 
-#~ msgid ", "
-#~ msgstr "، "
-
 #~ msgid "Workflow:"
 #~ msgstr "سير العمل:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "مطلوب تقييد إعادة البناء"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "تقييد إعادة البناء غير مطلوب"
-
-#~ msgid " and try again."
-#~ msgstr " وحاول مرة أخرى."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "ثوانٍ قبل إعادة الطلب."
-
-#~ msgid "...See more"
-#~ msgstr "...عرض المزيد"
-
-#~ msgid "...Collapse"
-#~ msgstr "...إخفاء"
-
-#, fuzzy
-#~| msgid "Please select the applicable day(s) of the week."
-#~ msgid "Please select the applicable API auth settings for the "
-#~ msgstr "يرجى تحديد اليوم/الأيام المناسبة من الأسبوع."
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "تمت إضافة المرضى من Atom feed الخاص بـ OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "المرضى من OpenMRS ما لم يتم تحديد نوع حالة واحد فقط."
-
-#, fuzzy
-#~| msgid "matching unique OpenMRS UUID. case external_id: "
-#~ msgid "matching unique OpenMRS UUID. case external_id: "
-#~ msgstr "مطابقة UUID فريد لـ OpenMRS. معرف الحالة الخارجي: "
 
 #~ msgid "Data cleaning action"
 #~ msgstr "إجراء تنظيف البيانات"
@@ -69207,8 +70062,8 @@ msgstr "أدخل JSON صالحًا"
 #~ msgid ""
 #~ "Use Registration Forms to minimize duplicate registrations by requiring "
 #~ "mobile workers to search the case list before registering a new case. "
-#~ "Read more on the <a href='https://help.commcarehq.org/pages/viewpage."
-#~ "action?pageId=30605985'>Help Site</a>.\n"
+#~ "Read more on the <a href='https://help.commcarehq.org/pages/"
+#~ "viewpage.action?pageId=30605985'>Help Site</a>.\n"
 #~ "                You can use followup forms for Parent Case button if this "
 #~ "module uses Select Parent First workflow"
 #~ msgstr ""

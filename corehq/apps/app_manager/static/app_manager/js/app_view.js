@@ -20,6 +20,7 @@ import "app_manager/js/widgets";  // app version widget when copying an app
 import "app_manager/js/bootstrap5/download_async_modal";  // for the "Download ZIP" button on the multimedia tab
 import "hqwebapp/js/bootstrap5/widgets";
 import "app_manager/js/bootstrap5/add_ons";
+import "app_manager/js/settings/ai_translations";
 import "app_manager/js/settings/translations";
 import "app_manager/js/custom_assertions";
 import "hqwebapp/js/components/select_toggle";

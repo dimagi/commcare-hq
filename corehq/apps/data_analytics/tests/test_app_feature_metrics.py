@@ -1,6 +1,15 @@
 from unittest.mock import MagicMock, patch
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
+
+from corehq.apps.app_manager.models import AdvancedModule, LinkedApplication, Module
+from corehq.apps.app_manager.tests.test_get_questions import AppFormTestCase
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.public_webforms.tests.utils import DOMAIN, create_session, create_webform
 
 from ..feature_calcs import (
     calc_bulk_case_editing_sessions,
@@ -11,6 +20,9 @@ from ..feature_calcs import (
     calc_has_multimedia,
     calc_has_save_to_case,
     calc_has_web_apps,
+    calc_public_webforms,
+    calc_public_webform_submissions,
+    calc_questions_locked,
 )
 from ..metric_registry import DomainContext
 
@@ -192,6 +204,62 @@ class TestCalcHasSaveToCase(SimpleTestCase):
         assert calc_has_save_to_case(ctx) is False
 
 
+class TestCalcQuestionsLocked(AppFormTestCase):
+
+    def test_counts_locked_questions_in_every_form(self):
+        self.add_form('case_in_form')
+        self.add_form('locked_questions')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 3
+
+    def test_zero_when_no_questions_are_locked(self):
+        self.add_form('form_with_repeats')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 0
+
+    def test_shadow_form_does_not_count_its_parent_again(self):
+        parent = self.add_form('locked_questions')
+        module = self.app.add_module(AdvancedModule.new_module('Advanced', 'en'))
+        shadow = module.new_shadow_form('Shadow', 'en')
+        shadow.shadow_parent_form_id = parent.unique_id
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 2
+
+    def test_malformed_form_counts_zero(self):
+        self.add_form('case_in_form')
+        self.app.new_form(self.module.id, 'Broken', 'en', attachment='<data><unclosed>')
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 1
+
+    def test_form_with_entities_counts_zero(self):
+        self.add_form('case_in_form')
+        self.app.new_form(
+            self.module.id, 'Entities', 'en',
+            attachment='<!DOCTYPE data [<!ENTITY e "x">]><data>&e;</data>',
+        )
+        ctx = _make_domain_context(apps=[self.app])
+        assert calc_questions_locked(ctx) == 1
+
+
+@es_test(requires=[app_adapter], setup_class=True)
+class TestCalcQuestionsLockedInLinkedApp(TestCase):
+    domain = 'locked-questions-downstream'
+
+    def test_counts_locked_questions_pulled_from_upstream(self):
+        project = create_domain(self.domain)
+        self.addCleanup(project.delete)
+        app = LinkedApplication.new_app(self.domain, 'Linked')
+        module = app.add_module(Module.new_module('Module', 'en'))
+        app.new_form(
+            module.id, 'Form', 'en',
+            attachment=AppFormTestCase.get_xml('locked_questions').decode('utf-8'),
+        )
+        app.save()
+        self.addCleanup(app.delete_app)
+        ctx = DomainContext(Domain.get_by_name(self.domain))
+        assert calc_questions_locked(ctx) == 2
+
+
 class TestCalcBulkCaseEditingSessions(SimpleTestCase):
 
     @patch('corehq.apps.data_cleaning.models.BulkEditSession.objects')
@@ -230,3 +298,34 @@ class TestCalcHasCustomBranding(SimpleTestCase):
     def test_false_when_no_apps(self):
         ctx = _make_domain_context(apps=[], has_custom_logo=False)
         assert calc_has_custom_branding(ctx) is False
+
+
+class TestCalcPublicWebforms(SimpleTestCase):
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_counts_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 5
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 5
+
+    @patch('corehq.apps.public_webforms.models.PublicWebform.objects')
+    def test_zero_when_no_webforms(self, mock_manager):
+        mock_manager.filter.return_value.count.return_value = 0
+        ctx = _make_domain_context()
+        assert calc_public_webforms(ctx) == 0
+
+
+class TestPublicWebformSubmissions(TestCase):
+
+    def test_counts_only_submitted_sessions(self):
+        webform = create_webform()
+        for _ in range(3):
+            create_session(webform, submitted_at=timezone.now())
+        for _ in range(2):
+            create_session(webform)
+        ctx = _make_domain_context(name=DOMAIN)
+        assert calc_public_webform_submissions(ctx) == 3
+
+    def test_zero_when_no_submissions(self):
+        ctx = _make_domain_context()
+        assert calc_public_webform_submissions(ctx) == 0

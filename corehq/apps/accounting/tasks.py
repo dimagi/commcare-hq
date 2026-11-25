@@ -51,11 +51,11 @@ from corehq.apps.accounting.models import (
     INACTIVE_SUBSCRIPTION_REASON,
     BillingAccount,
     BillingAccountDomainHistory,
-    BillingAccountWebUserHistory,
     CreditLine,
     Currency,
     DefaultProductPlan,
     DomainUserHistory,
+    DomainWebUserHistory,
     FeatureType,
     FormSubmittingMobileWorkerHistory,
     ScheduledPrepaymentInvoice,
@@ -76,6 +76,7 @@ from corehq.apps.accounting.task_utils import (
     get_context_to_send_autopay_failed_email,
     get_context_to_send_purchase_receipt,
 )
+from corehq.apps.accounting.usage import get_web_usernames
 from corehq.apps.accounting.utils import (
     count_form_submitting_mobile_workers,
     get_change_status,
@@ -89,7 +90,6 @@ from corehq.apps.accounting.utils.unpaid_invoice import (
     Downgrade,
     InvoiceReminder,
 )
-from corehq.apps.accounting.usage import get_web_user_usage
 from corehq.apps.app_manager.dbaccessors import get_all_apps
 from corehq.apps.celery import periodic_task, serial_task, task
 from corehq.apps.domain.models import Domain
@@ -965,20 +965,21 @@ def calculate_form_submitting_mobile_workers_in_all_domains(today=None):
 
 
 @periodic_task(run_every=crontab(hour=1, minute=0, day_of_month='1'), acks_late=True, durable=True)
-def calculate_web_users_in_all_billing_accounts(today=None):
+def calculate_web_users_in_all_domains(today=None):
     today = today or datetime.date.today()
-    for account in BillingAccount.objects.all():
-        record_date = today - relativedelta(days=1)
-        num_users = get_web_user_usage(account.get_domains())
+    record_date = today - relativedelta(days=1)
+    for domain in Domain.get_all_names():
         try:
-            BillingAccountWebUserHistory.objects.create(
-                billing_account=account,
-                num_users=num_users,
-                record_date=record_date
+            usernames = get_web_usernames(domain)
+            DomainWebUserHistory.objects.create(
+                domain=domain,
+                record_date=record_date,
+                usernames=usernames,
+                num_users=len(usernames),
             )
         except Exception as e:
             log_accounting_error(
-                f"Unable to create BillingAccountWebUserHistory for account {account.name}: {e}",
+                f"Something went wrong while creating DomainWebUserHistory for domain {domain}: {e}",
                 show_stack_trace=True,
             )
 

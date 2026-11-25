@@ -35,7 +35,8 @@ class PaymentProperties(str, Enum):
 PAYMENT_SUCCESS_STATUS_CODE = 202
 PAYMENT_SUBMITTED_DEVICE_ID = 'momo_payment_service'
 PAYMENT_STATUS_DEVICE_ID = 'momo_payment_status_service'
-PAYMENT_STATUS_RETRY_MAX_ATTEMPTS = 4
+# Retries after the original attempt, so a payment status is fetched at most 5 times
+PAYMENT_STATUS_MAX_RETRIES = 4
 
 
 class PaymentStatus(models.TextChoices):
@@ -145,5 +146,15 @@ class PaymentStatusErrorCode(models.TextChoices):
         'PaymentRequestError',
         _("Error occurred during payment request. Reach out to support if the issue persists.")
     )
-    MaxRetryExceededRequestError = _("Maximum retry attempts exceeded with request error.")
-    MaxRetryExceededPendingStatus = _("Maximum retry attempts exceeded with pending status")
+    PAYMENT_STATUS_REQUEST_ERROR = (
+        'PaymentStatusRequestError',
+        _("Unable to fetch the payment status. It will be retried automatically.")
+    )
+    MaxRetryExceededRequestError = (
+        'MaxRetryExceededRequestError',
+        _("Maximum retry attempts exceeded with request error.")
+    )
+    MaxRetryExceededPendingStatus = (
+        'MaxRetryExceededPendingStatus',
+        _("Maximum retry attempts exceeded with pending status.")
+    )

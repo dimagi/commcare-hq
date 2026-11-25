@@ -34,7 +34,7 @@ def project_db_table(domain, case_type, properties, data=None):
             rows = [dict(zip(columns, r)) for r in raw_rows]
             table = CaseTable(domain, case_type).reflect()
             with get_project_db_engine().begin() as conn:
-                conn.execute(table.insert(), rows)
+                conn.execute(table.insert().values(rows))
         yield
     finally:
         with get_project_db_engine().begin() as conn:

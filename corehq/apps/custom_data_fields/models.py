@@ -1,7 +1,7 @@
 import re
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
@@ -150,11 +150,11 @@ class CustomDataFieldsDefinition(models.Model):
         fields = [Field.objects.get(id=o) for o in order]
         return [f for f in fields if _is_match(f)]
 
-    # Note that this does not save
     def set_fields(self, fields):
-        self.field_set.all().delete()
-        self.field_set.set(fields, bulk=False)
-        self.set_field_order([f.id for f in fields])
+        with transaction.atomic():
+            self.field_set.all().delete()
+            self.field_set.set(fields, bulk=False)
+            self.set_field_order([f.id for f in fields])
 
     def get_profiles(self):
         return list(CustomDataFieldsProfile.objects.filter(definition=self).order_by(Lower('name')))

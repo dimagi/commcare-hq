@@ -205,6 +205,7 @@ msgstr "Приховано"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -505,6 +506,7 @@ msgstr "%s Підписка"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -699,6 +701,8 @@ msgstr "Для цієї нової ролі потрібне ім'я."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1277,14 +1281,6 @@ msgstr[3] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_roles)d Custom Role configured for your project. If you "
-#| "select this plan, all users with that role will change to having the Read "
-#| "Only role."
-#| msgid_plural ""
-#| "You have %(num_roles)d Custom Roles configured for your project . If you "
-#| "select this plan, all users with these roles will change to having the Read "
-#| "Only role."
 msgid ""
 "You have %(num_roles)d Custom Role configured for your project. If you "
 "select this plan, all users with that role will change to having the Read "
@@ -1385,12 +1381,6 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_apps)d application that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
-#| msgid_plural ""
-#| "You have %(num_apps)d applications that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
 msgid ""
 "You have %(num_apps)d application that has a practice mobile worker "
 "configured, it will be unset on downgrade."
@@ -1413,14 +1403,6 @@ msgstr[3] ""
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
 msgstr "Платіж отримано — Дякуємо!"
-
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Платіж за підписку для рахунку CommCare {context['invoice_number']} було "
-"відхилено"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
@@ -1515,6 +1497,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -5313,32 +5297,40 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Нам буде цікаво дізнатися більше! Будь ласка, уточніть -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-msgid ""
-"\n"
-"      By clicking this button, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
-msgstr ""
-"\n"
-"      Натискаючи цю кнопку, ви погоджуєтеся з\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
-"    "
-
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
-"\n"
-"      By clicking Submit Request, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"Yes, I would like to receive relevant email updates from Dimagi, including "
+"newsletters, product updates, webinars, podcasts, and related resources. I "
+"can unsubscribe at any time."
 msgstr ""
-"\n"
-"      Натискаючи «Надіслати запит», ви погоджуєтеся з\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
-"    "
+"Так, я хочу отримувати від Dimagi актуальні оновлення електронною поштою, "
+"зокрема інформаційні бюлетені, оновлення продуктів, запрошення на вебінари, "
+"подкасти та пов’язані ресурси. Я можу будь-коли скасувати підписку."
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking Submit Request, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"By clicking Submit Request, I agree to Dimagi's <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
+" Service</a> and <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a> and to receive follow-up emails about "
+"my request, including invitations to schedule a conversation with Dimagi's "
+"team. I can unsubscribe at any time."
+msgstr ""
+"Натискаючи «Надіслати запит», я погоджуюся з <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами "
+"надання послуг</a> і <a "
+"href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Політикою конфіденційності</a> Dimagi, а також на "
+"отримання електронних листів із подальшою інформацією про мій запит, зокрема"
+" запрошень домовитися про розмову з командою Dimagi. Я можу будь-коли "
+"скасувати підписку."
 
 #: corehq/apps/analytics/views.py
 msgid "No hubspot API ID is present."
@@ -5510,9 +5502,10 @@ msgstr "'role' є обов'язковою для кожного користув
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' визначено профілем, тому не може бути встановлено напряму"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Недійсний(і) параметр(и): {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -5712,6 +5705,11 @@ msgstr "Збірка для запрошеної версії не знайде�
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "Будь ласка, увійдіть у додаток, щоб перевірити наявність оновлення."
+
+#: corehq/apps/app_manager/exceptions.py
+#| msgid "Remote apps are not supported"
+msgid "RemoteApps are no longer supported"
+msgstr "RemoteApps більше не підтримуються"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6148,18 +6146,10 @@ msgid "Copy of {name}"
 msgstr "Копія {name}"
 
 #: corehq/apps/app_manager/models/applications.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr ""
-"Проблема із завантаженням файлу suite з профільного файлу. Чи правильний ваш"
-" профільний файл?"
-
-#: corehq/apps/app_manager/models/applications.py
 msgid "Remote Application"
 msgstr "Віддалений додаток"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid ""
 "Application successfully copied. The following lookup tables were also "
 "copied: {}."
@@ -6168,7 +6158,6 @@ msgstr ""
 "{}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid "Application successfully copied."
 msgstr "Застосунок успішно скопійовано."
 
@@ -6178,7 +6167,6 @@ msgstr ""
 "Не вдалося скопіювати таблиці пошуку, яких немає у вихідному проєкті: {}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "An error occurred during the download."
 msgid "An error occurred while copying the following lookup tables: {}."
 msgstr "Під час копіювання наступних таблиць пошуку сталася помилка: {}."
 
@@ -6218,10 +6206,6 @@ msgid ""
 msgstr ""
 "Оновлення застосунку виконано успішно, але у застосунку відсутній "
 "мультимедійний файл(и)."
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr "Список рядків привілеїв, розділених пробілами, з corehq.privileges"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -6430,6 +6414,14 @@ msgstr "Ім'я користувача користувача"
 #: corehq/apps/app_manager/models/report_app_config.py
 msgid "The user's ID"
 msgstr "ID користувача"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Starter App"
+msgstr "Стартовий додаток"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Feature Template"
+msgstr "Шаблон функції"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
@@ -7071,6 +7063,7 @@ msgstr "Ні"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -7803,10 +7796,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-msgid "Version History"
-msgstr "Історія версій"
-
-#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
 msgid "Import"
 msgstr "Імпортувати"
 
@@ -7968,16 +7957,19 @@ msgstr "Налаштування меню"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8123,6 +8115,8 @@ msgstr "Встановити CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -8508,6 +8502,170 @@ msgstr "Масові переклади CommCare"
 msgid "Bulk Application Translations"
 msgstr "Масові переклади додатку"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Translate with AI"
+msgstr "Перекласти за допомогою ШІ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "НОВИЙ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"AI fills in missing translations. Manual edits are kept. Review AI "
+"translations before releasing your app."
+msgstr ""
+"ШІ заповнює відсутні переклади. Ручні правки зберігаються. Перевірте "
+"переклади ШІ перед випуском додатка."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Learn more about AI translations"
+msgstr "Дізнатися більше про переклади за допомогою ШІ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "AI translations are available on Standard plans and above."
+msgstr "Переклади ШІ доступні на тарифах Standard і вище."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Compare plans"
+msgstr "Порівняти тарифи"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Linked apps get their translations from their upstream app. Translate the "
+"upstream app instead."
+msgstr ""
+"Пов'язані додатки отримують переклади від основного додатка. Перекладайте "
+"основний додаток."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Go to the upstream app"
+msgstr "Перейти до основного додатка"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Add a language in the Language List below, then refresh to translate it with"
+" AI."
+msgstr ""
+"Додайте мову у списку мов нижче, потім оновіть сторінку, щоб перекласти її "
+"за допомогою ШІ."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid "Refresh"
+msgstr "Оновити"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "You need permission to edit this app to translate it."
+msgstr "Вам потрібен дозвіл на редагування цього додатка для перекладу."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/views.py
+msgid ""
+"This project has reached its monthly AI translation limit. Contact support "
+"to raise it."
+msgstr ""
+"У цьому проєкті досягнуто місячного ліміту перекладів ШІ. Зверніться до "
+"служби підтримки, щоб його збільшити."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The language list has changed. Refresh to update the languages below."
+msgstr "Список мов змінився. Оновіть сторінку, щоб побачити зміни нижче."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
+#: corehq/apps/reports/forms.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+msgid "Language"
+msgstr "Мова"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Last AI translated"
+msgstr "Останній переклад ШІ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Translation progress"
+msgstr "Прогрес перекладу"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
+msgstr ""
+"Повторний запуск AI Translate може перекласти решту. Якщо цього не "
+"станеться, перекладіть їх самостійно за допомогою <a href=\"#bulk-"
+"application-translations\" data-bs-toggle=\"collapse\" data-bs-"
+"target=\"#bulk-application-translations\" >Масовий переклад застосунків</a "
+">."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Show labels"
+msgstr "Показати мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Hide labels"
+msgstr "Приховати мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The labels couldn't be loaded. Try again."
+msgstr "Не вдалося завантажити мітки. Спробуйте ще раз."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Loading…"
+msgstr "Завантаження…"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+"Список міток більше недоступний. Запустіть AI Translate ще раз, щоб "
+"побачити, які мітки не вдалося перекласти."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "No longer in the app"
+msgstr "Більше не в застосунку"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Відкрити"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Show all labels"
+msgstr "Показати всі мітки"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "AI Translate"
+msgstr "Перекласти ШІ"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Status reflects the last AI Translate run; the percentage is how much of the"
+" whole app is AI translated as of that run. Labels you add or change "
+"afterwards are translated the next time you run AI Translate. Translations "
+"are applied to the current draft; make a new version to release them."
+msgstr ""
+"Статус відображає останній запуск Перекладу ШІ; відсоток показує, яку "
+"частину додатка перекладено ШІ під час цього запуску. Додані або змінені "
+"після цього мітки перекладаються під час наступного запуску Перекладу ШІ. "
+"Переклади застосовуються до поточного чернеткового варіанту; створіть нову "
+"версію для їх випуску."
+
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
@@ -8571,17 +8729,6 @@ msgstr ""
 "\n"
 "    Пов'язано з %(name)s | V%(version)s\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-#: corehq/apps/reports/forms.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-msgid "Language"
-msgstr "Мова"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -9762,6 +9909,7 @@ msgstr "Ви збираєтеся видалити цю програму"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -10011,6 +10159,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
@@ -10947,6 +11096,14 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+msgid "Public Webform"
+msgstr "Публічна вебформа"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+msgid "Create public webform from latest released version"
+msgstr "Створити публічну вебформу на основі останньої опублікованої версії"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
 msgstr "Копіювати форму"
 
@@ -11197,11 +11354,6 @@ msgstr "Увімкнути ручне зв'язування"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "Вимкнути ручне зв'язування"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-msgid "Refresh"
-msgstr "Оновити"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -12467,7 +12619,6 @@ msgstr "Підзаголовок екрана пошуку"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Display Condition"
 msgid "Search Button Display Condition"
 msgstr "Умова відображення кнопки пошуку"
 
@@ -14065,6 +14216,7 @@ msgid "Loading ..."
 msgstr "Завантаження ..."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
 msgid "Try again"
 msgstr "Спробувати ще раз"
 
@@ -14337,12 +14489,12 @@ msgid "Not set"
 msgstr "Не встановлено"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "U\\u200BI переклад"
+msgid "U​I translation"
+msgstr "Переклад U​I"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "U\\u200BI переклади"
+msgid "U​I translations"
+msgstr "Переклади U​I"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -14813,10 +14965,6 @@ msgstr ""
 msgid "App diff"
 msgstr "Відмінності додатку"
 
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Повернуто до версії {log.info['version']}"
-
 #: corehq/apps/app_manager/views/utils.py
 msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
 msgstr ""
@@ -15240,6 +15388,7 @@ msgstr "Редагувати віджет"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -15319,11 +15468,6 @@ msgstr "Недійсне значення для стовпця 'parent_relation
 #, python-brace-format
 msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Зразок: Клітинка в рядку {row_num} містить \"{sample}\""
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr "Імпорт кейсів може містити максимум {MAX_CASE_IMPORTER_ROWS} рядків. "
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
@@ -15488,23 +15632,8 @@ msgid "Name Too Long"
 msgstr "Ім'я занадто довге"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Назва кейсу не може бути довшою за {STANDARD_CHARFIELD_LENGTH} символів"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "Зовнішній ідентифікатор занадто довгий"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Зовнішній ідентифікатор не може бути довшим за {STANDARD_CHARFIELD_LENGTH} "
-"символів"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -16168,12 +16297,10 @@ msgid "Only one value may be given for '{}'"
 msgstr "Для '{}' можна вказати лише одне значення"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "Dates are presented in YYYY-MM-DD format"
 msgid "'{}' must be a date in YYYY-MM-DD format"
 msgstr "'{}' має бути датою у форматі РРРР-ММ-ДД"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "'name' must be unique"
 msgid "'{}' must be a number"
 msgstr "'{}' має бути числом"
 
@@ -16256,10 +16383,6 @@ msgstr "Пошуковий запит повинен містити {param}"
 #, python-brace-format
 msgid "{param} must be a string"
 msgstr "{param} має бути рядком"
-
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
 
 #: corehq/apps/case_search/models.py
 msgid "Project Database"
@@ -16399,6 +16522,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -16408,6 +16532,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -16491,12 +16616,10 @@ msgid "date"
 msgstr "дата"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Date range"
 msgid "date range"
 msgstr "діапазон дат"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Select"
 msgid "select"
 msgstr "вибрати"
 
@@ -16548,7 +16671,6 @@ msgid "Updated By"
 msgstr "Оновлено користувачем"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Pull content from an upstream project space"
 msgid "Linked from an upstream project space"
 msgstr "Пов'язано з проєктного простору вище за потоком"
 
@@ -16686,9 +16808,16 @@ msgid "Endpoint '{}' query is invalid"
 msgstr "Запит кінцевої точки '{}' є некоректним"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "Параметри кінцевої точки '{}' недійсні"
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query timed out"
+msgstr "Час очікування запиту до кінцевої точки '{}' минув"
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query failed"
+msgstr "Не вдалося виконати запит до кінцевої точки '{}'"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -16723,11 +16852,6 @@ msgid "Profile Case Search"
 msgstr "Профіль пошуку справ"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} не підтримується з ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -16746,51 +16870,6 @@ msgid ""
 "surrounded in quotation marks"
 msgstr ""
 "Правий бік порівняння має бути числом або датою. Дати повинні бути в лапках"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} не є коректно відформатованою датою або датою-часом."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} є некоректною датою."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} є некоректною датою-часом."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr "Другий аргумент для '{node.name}' має бути дійсними координатами"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Третій аргумент для '{node.name}' має бути числом, отримано '{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' не є дійсною одиницею відстані. Очікується одна з {', "
-"'.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' не є коректною датою. Очікується 'YYYY-MM-DD"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Перший аргумент для '{node.name}' має бути дійсною назвою властивості кейсу"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -16826,15 +16905,6 @@ msgstr "'{name}' очікує один або два аргументи"
 #, python-brace-format
 msgid "'{name}' error. Index identifier must be a string"
 msgstr "Помилка у '{name}'. Ідентифікатор індексу має бути рядком"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"Функція '{node.name}' приймає рівно {expected} аргумент(ів), отримано "
-"{actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -17381,20 +17451,14 @@ msgid "Date Registered"
 msgstr "Дата реєстрації"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "# Forms Submitted"
 msgid "Form Submitted"
 msgstr "Форму надіслано"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "Message received!"
 msgid "Response Received"
 msgstr "Відповідь отримано"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Thank you for your feedback! We appreciate it.\n"
-#| "            "
 msgid ""
 "\n"
 "              Thank you. Your response has been submitted.\n"
@@ -17405,10 +17469,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Not Active\n"
-#| "            "
 msgid ""
 "\n"
 "              You can close this page.\n"
@@ -17672,6 +17732,11 @@ msgid "A label is required for each field."
 msgstr "Для кожного поля потрібна мітка."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "Мітки мають містити не більше ніж %(limit_value)d символів."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "Для кожного поля потрібна назва властивості."
 
@@ -17682,6 +17747,28 @@ msgid ""
 msgstr ""
 "Властивості повинні починатися з літери та складатися лише з літер, цифр, "
 "підкреслень або дефісів."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+"Назви властивостей мають містити не більше ніж %(limit_value)d символів."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has"
+" %(show_value)d)."
+msgstr ""
+"Регулярні вирази мають містити не більше ніж %(limit_value)d символів (цей "
+"містить %(show_value)d)."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
+"Повідомлення про помилки регулярних виразів мають містити не більше ніж "
+"%(limit_value)d символів."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -19046,7 +19133,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 #, python-format
-#| msgid "Sending will be retried."
 msgid "%(count)s edit will be cleared."
 msgid_plural "A total of %(count)s edits will be cleared."
 msgstr[0] "Буде скасовано %(count)s зміну."
@@ -20275,10 +20361,6 @@ msgstr "Зупинено"
 msgid "Error"
 msgstr "Помилка"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "Форми не надано"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -20449,7 +20531,7 @@ msgstr "Додати правило дедуплікації"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -20953,7 +21035,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -21019,23 +21100,11 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "Не вдалося перепризначити справу! Деталі:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>Повернутися до <a href=\"%(form_management_url)s\">Управління формами</a>, щоб скасувати це.</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "The job failed. Please try again."
 msgstr "Завдання не виконано. Будь ласка, спробуйте ще раз."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
-#| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
 msgid_plural "%(counter)s forms processed successfully"
 msgstr[0] "Успішно оброблено %(counter)s форму"
@@ -21043,11 +21112,11 @@ msgstr[1] "Успішно оброблено %(counter)s форми"
 msgstr[2] "Успішно оброблено %(counter)s форм"
 msgstr[3] "Успішно оброблено %(counter)s форм"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 msgid "Some forms were skipped:"
 msgstr "Деякі форми були пропущені:"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
 msgid ""
 "\n"
@@ -21083,41 +21152,6 @@ msgstr "Справу з ідентифікатором '{}' вже додано 
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "Справу з ідентифікатором '{}' додано до цієї групи."
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Не вдалося знайти XForm {form_id}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "XForm {form_id} для домену {domain} користувачем '{username}'"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "Успішно заархівовано {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "Успішно розархівовано {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not archive {form}"
-msgstr "Не вдалося архівувати {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not unarchive {form}"
-msgstr "Не вдалося розархівувати {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} форма(и)"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -21387,6 +21421,58 @@ msgstr "Правило {name} було оновлено і поставлено 
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "Правило {name} не було оновлено, оскільки нічого не змінилося"
+
+#: corehq/apps/document_templates/templates/document_templates/partials/preview_modal_body.html
+msgid "The template does not use any variables."
+msgstr "У шаблоні не використовуються змінні."
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "Слаг"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+msgid "Document Templates"
+msgstr "Шаблони документів"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "New Document Template"
+msgstr "Новий шаблон документа"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "Delete Document Template"
+msgstr "Видалити шаблон документа"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, python-format
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  Ви впевнені, що хочете видалити шаблон документа\n"
+"                  \"%(name)s\"? Цю дію неможливо скасувати.\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "No document templates configured."
+msgstr "Шаблони документів не налаштовано."
+
+#: corehq/apps/document_templates/views.py
+msgid "A template with this slug already exists."
+msgstr "Шаблон із таким слагом уже існує."
+
+#: corehq/apps/document_templates/views.py
+msgid "New Template"
+msgstr "Новий шаблон"
+
+#: corehq/apps/document_templates/views.py
+msgid "Edit Document Template"
+msgstr "Редагувати шаблон документа"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -21779,6 +21865,17 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> агрегованого використання даних</a>"
 
 #: corehq/apps/domain/forms.py
+msgid "Opt out of CommCare Companion"
+msgstr "Відмовитися від CommCare Companion"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Hide the CommCare Companion chatbot for all users in this project space"
+msgstr ""
+"Приховати чат-бот CommCare Companion для всіх користувачів у цьому робочому "
+"просторі"
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Часовий пояс за замовчуванням"
 
@@ -22036,11 +22133,6 @@ msgstr ""
 "налаштування."
 
 #: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Невідомий вираз {expr}"
-
-#: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
 msgstr "Будь ласка, вкажіть обмеження для OData-стрічок."
 
@@ -22158,14 +22250,14 @@ msgstr "Email-и контактних осіб партнера"
 #: corehq/apps/domain/forms.py
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-"hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-"<span data-bind=\"text: end_date\"></span> the project space will be "
-"automatically paused.</p>"
+"hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
+"x-text=\"endDate\"></span> the project space will be automatically "
+"paused.</p>"
 msgstr ""
-"<p><i class=\"fa fa-info-circle\"></i> Пробний період почнеться, як тільки "
-"ви натиснете \"Оновити\", і завершиться <span data-bind=\"text: "
-"end_date\"></span>. У <span data-bind=\"text: end_date\"></span> простір "
-"проєкту буде автоматично призупинено.</p>"
+"<p><i class=\"fa fa-info-circle\"></i> Пробний період почнеться, щойно ви "
+"натиснете \"Оновити\", і завершиться <span x-text=\"endDate\"></span>.  "
+"<span x-text=\"endDate\"></span> робочий простір буде автоматично "
+"призупинено.</p>"
 
 #: corehq/apps/domain/forms.py
 msgid "Contracted Partner"
@@ -23775,46 +23867,6 @@ msgstr "Дізнатися більше про наші плани"
 msgid "Change My Plan"
 msgstr "Змінити мій план"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
-#, python-format
-msgid ""
-"\n"
-"    <p>\n"
-"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
-"      to set up a subscription for this project space.\n"
-"\n"
-"      Use this tool only for projects that are:\n"
-"    <ul>\n"
-"      <li>an internal test project</li>\n"
-"      <li>part of a contracted project</li>\n"
-"      <li>a short term extended trial for biz dev</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Your project is currently subscribed to %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      Ця сторінка видима лише співробітникам Dimagi (у вас має бути email з доменом @dimagi.com). Ви можете використовувати цю сторінку\n"
-"      для налаштування підписки для цього простору проєкту.\n"
-"\n"
-"      Використовуйте цей інструмент лише для проєктів, які є:\n"
-"    <ul>\n"
-"      <li>внутрішнім тестовим проєктом</li>\n"
-"      <li>частиною контрактного проєкту</li>\n"
-"      <li>короткостроковою розширеною пробною версією для бізнес-розвитку</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Ваш проєкт наразі підписаний на %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -24511,6 +24563,45 @@ msgstr "Завантажити ВСЕ"
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load Property"
 msgstr "Завантажити властивість"
+
+#: corehq/apps/domain/templates/domain/internal_subscription_management.html
+#, python-format
+msgid ""
+"\n"
+"    <p>\n"
+"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
+"      to set up a subscription for this project space.\n"
+"\n"
+"      Use this tool only for projects that are:\n"
+"    <ul>\n"
+"      <li>an internal test project</li>\n"
+"      <li>part of a contracted project</li>\n"
+"      <li>a short term extended trial for biz dev</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Your project is currently subscribed to %(plan_name)s.\n"
+"    </h3>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Ця сторінка видима лише співробітникам Dimagi (у вас має бути email з доменом @dimagi.com). Ви можете використовувати цю сторінку\n"
+"      для налаштування підписки для цього простору проєкту.\n"
+"\n"
+"      Використовуйте цей інструмент лише для проєктів, які є:\n"
+"    <ul>\n"
+"      <li>внутрішнім тестовим проєктом</li>\n"
+"      <li>частиною контрактного проєкту</li>\n"
+"      <li>короткостроковою розширеною пробною версією для бізнес-розвитку</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Ваш проєкт наразі підписаний на %(plan_name)s.\n"
+"    </h3>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 msgid "Autopay Terms and Conditions"
@@ -26180,6 +26271,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/export/templates/export/schema_build_waiting.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
 msgid "Go back"
@@ -26676,11 +26768,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Виберіть проект"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Вас додано до простору проєкту \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -29309,6 +29396,7 @@ msgstr "Сховати параметри"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Додати"
 
@@ -29338,6 +29426,14 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid "Ok"
 msgstr "Ок"
+
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
+msgid "We couldn't load the available columns."
+msgstr "Не вдалося завантажити доступні стовпці."
+
+#: corehq/apps/export/templates/export/partials/schema_build_status.html
+msgid "Progress finding columns"
+msgstr "Пошук стовпців"
 
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -29723,6 +29819,20 @@ msgstr "Дізнатися більше про тарифні плани"
 #: corehq/apps/export/templates/export/paywall.html
 msgid "Change My Subscription"
 msgstr "Змінити мою підписку"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid "Finding available columns…"
+msgstr "Пошук доступних стовпців…"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid ""
+"We're checking your applications for the questions and case properties you "
+"can include. This can take a few minutes for projects with many "
+"applications. Please keep this page open."
+msgstr ""
+"Ми перевіряємо ваші застосунки на наявність запитань і властивостей справ, "
+"які можна додати. У проєктах із багатьма застосунками це може тривати кілька"
+" хвилин. Не закривайте цю сторінку."
 
 #: corehq/apps/export/views/download.py
 msgid "You have no submissions in this project."
@@ -30720,7 +30830,6 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py
 #, python-format
-#| msgid "Table ID must be between 1 and 31 characters."
 msgid "Table ID must be between 1 and %(max_length)s characters."
 msgstr "ID таблиці має містити від 1 до %(max_length)s символів."
 
@@ -32260,15 +32369,37 @@ msgstr ""
 "Скидання пароля користувача змусить його пройти процедуру \"Забули пароль\"."
 " Використовуйте це, якщо є підозра, що пароль скомпрометовано."
 
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "Наприклад, сільське господарство"
+
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "A sector with this name already exists."
+msgstr "Сектор із такою назвою вже існує."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py corehq/tabs/tabclasses.py
+msgid "Manage Template Apps"
+msgstr "Керування шаблонними застосунками"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label deleted."
+msgstr "Мітку сектора видалено."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label saved."
+msgstr "Мітку сектора збережено."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label added."
+msgstr "Мітку сектора додано."
+
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Disable auto update"
 msgid "Disabled Datadog user {label}"
 msgstr "Вимкнено користувача Datadog {label}"
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Remove Mobile Workers From Organizations"
 msgid "Removed {label} from the Sentry organization"
 msgstr "Видалено {label} з організації Sentry"
 
@@ -32283,7 +32414,6 @@ msgid "Removed HubSpot user {label}"
 msgstr "Видалено користувача HubSpot {label}"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Please enter a valid email address."
 msgid "Enter a valid email address."
 msgstr "Введіть дійсну електронну адресу."
 
@@ -32292,7 +32422,6 @@ msgid "Offboard staff from external platforms"
 msgstr "Видалення співробітників із зовнішніх платформ"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "A send date is required."
 msgid "An email address is required."
 msgstr "Потрібна електронна адреса."
 
@@ -32301,7 +32430,6 @@ msgid "'{}' is protected and cannot be offboarded with this tool."
 msgstr "'{}' захищено і не може бути видалено цим інструментом."
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Unknown command: '{0}'"
 msgid "Unknown platform '{}'."
 msgstr "Невідома платформа '{}'."
 
@@ -32458,8 +32586,16 @@ msgid "UCR rebuild restriction status"
 msgstr "Статус обмеження перебудови UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "Потрібне обмеження на перебудову"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Перебудова обмежена"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "Обмеження на перебудову не потрібне"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -32569,6 +32705,43 @@ msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 "Введіть місяць, щоб завантажити всі дані MALT у форматі csv за цей місяць"
 
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Manage sectors"
+msgstr "Керування секторами"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Template Apps"
+msgstr "Шаблонні застосунки"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"Мітки секторів спільні для всіх шаблонних застосунків. Перейменування мітки "
+"оновить її в кожному шаблоні, де вона використовується."
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "New sector label"
+msgstr "Нова мітка сектора"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Add sector"
+msgstr "Додати сектор"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Sector label"
+msgstr "Мітка сектора"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Templates using it"
+msgstr "Шаблони, у яких використовується"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr "Міток секторів поки немає. Додайте першу мітку вище."
+
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid ""
 "\n"
@@ -32596,12 +32769,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Email Address"
 msgid "Email address"
 msgstr "Електронна адреса"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Lookup Tables"
 msgid "Look up accounts"
 msgstr "Знайти облікові записи"
 
@@ -32632,47 +32803,35 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Select a Form"
 msgid "Select all platforms"
 msgstr "Вибрати всі платформи"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "form"
 msgid "Platform"
 msgstr "Платформа"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#, fuzzy
-#| msgid "De-activate Alert"
 msgid "Deactivate selected…"
-msgstr "Деактивувати сповіщення"
+msgstr "Деактивувати вибране…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid "Working…"
-msgstr ""
+msgstr "Виконується…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Confirm Plan"
 msgid "Confirm offboarding"
 msgstr "Підтвердити видалення"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "You are about to delete"
 msgid "You are about to:"
 msgstr "Ви збираєтеся:"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Whenever Possible"
 msgid "irreversible"
 msgstr "необоротно"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid ""
-#| "\n"
-#| "                    List of devices used to access CommCare applications, with\n"
-#| "                    approximate last-use dates.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    This is not a dimagi.com address. Only continue once TechOps\n"
@@ -32686,30 +32845,25 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 msgid "Looking up account…"
-msgstr ""
+msgstr "Пошук облікового запису…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No endpoints configured."
 msgid "Not configured"
 msgstr "Не налаштовано"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "FCM is not setup on this environment!"
 msgid "Credentials are not configured on this environment."
 msgstr "Облікові дані не налаштовані в цьому середовищі."
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No transaction found"
 msgid "No account found"
 msgstr "Обліковий запис не знайдено"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Only Deactivated"
 msgid "Already deactivated"
 msgstr "Вже деактивовано"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Lookup Table"
 msgid "Lookup failed:"
 msgstr "Помилка пошуку:"
 
@@ -32720,7 +32874,6 @@ msgstr "Повторити спробу"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 #, python-format
-#| msgid "Request failed"
 msgid "%(verb)s failed:"
 msgstr "%(verb)s не вдалося:"
 
@@ -32873,8 +33026,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "{count} domain membership"
-#| msgid_plural "{count} domain memberships"
 msgid "%(count)s domain membership"
 msgid_plural "%(count)s domain memberships"
 msgstr[0] "%(count)s членство в домені"
@@ -36339,12 +36490,17 @@ msgstr ""
 " проблема не зникне."
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+"Не вдалося отримати статус оплати. Спроба буде виконана автоматично ще раз."
+
+#: corehq/apps/integration/payments/const.py
 msgid "Maximum retry attempts exceeded with request error."
 msgstr "Перевищено максимальну кількість спроб із помилкою запиту."
 
 #: corehq/apps/integration/payments/const.py
-msgid "Maximum retry attempts exceeded with pending status"
-msgstr "Перевищено максимальну кількість спроб зі статусом \"очікує\"."
+msgid "Maximum retry attempts exceeded with pending status."
+msgstr "Перевищено максимальну кількість спроб із відкладеним статусом."
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -36406,8 +36562,17 @@ msgid "Payment request failed"
 msgstr "Запит на платіж не виконано"
 
 #: corehq/apps/integration/payments/services.py
+#: corehq/apps/public_webforms/tables.py
 msgid "Verification"
 msgstr "Верифікація"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
+"Лише платежі з користувачами, які мають статус KYC '{}', підлягають "
+"перевірці."
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -36716,8 +36881,6 @@ msgstr ""
 "Ви не можете отримати доступ до цієї сторінки з вашої поточної IP-адреси"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid ""
-#| "Linking expressions to a remote link is not currently supported"
 msgid ""
 "Linking case search endpoints to a remote link is not currently supported"
 msgstr ""
@@ -36725,14 +36888,12 @@ msgstr ""
 "підтримується"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid "Expression does not exist in the upstream domain"
 msgid ""
 "Endpoint does not exist in the upstream domain. Maybe it has been deleted?"
 msgstr "Кінцева точка не існує у вихідному домені. Можливо, її було видалено?"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
 #, python-brace-format
-#| msgid "Profile conflicts with existing data"
 msgid "Endpoint {name} conflicts with an existing endpoint in {domain}"
 msgstr "Кінцева точка {name} конфліктує з існуючою кінцевою точкою в {domain}"
 
@@ -37635,13 +37796,8 @@ msgstr ""
 "індексом '{i}' — '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Не можна видалити тип розташування '{deleted_type.code}'. Він "
-"використовується типом "
+msgid " and try again."
+msgstr " і спробуйте ще раз."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -37805,17 +37961,8 @@ msgstr ""
 "тут</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Код сайту розташування: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Не вдалося оновити: не вдалося знайти місце з"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr "У запиті були включені недійсні поля: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -38911,7 +39058,6 @@ msgid "Run"
 msgstr "Запустити"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "Query"
 msgid "Query plan"
 msgstr "План запиту"
 
@@ -38922,7 +39068,6 @@ msgstr "Оцінено за %(duration)s секунд"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "This report's timezone is %(timezone)s."
 msgid "Datetimes are in %(timezone)s"
 msgstr "Дата та час у %(timezone)s"
 
@@ -38990,27 +39135,66 @@ msgstr ""
 "вже надіслано, можна використовувати до завершення їх терміну дії."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Як респонденти отримують своє одноразове посилання"
+#| msgid "How Respondents Open the Form"
+msgid "How Respondents Access the Form"
+msgstr "Як респонденти отримують доступ до форми"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Open to Requests"
-msgstr "Відкрити для запитів"
+msgid "One-time link by email or text message"
+msgstr "Одноразове посилання електронною поштою або в текстовому повідомленні"
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+msgid "Anyone with the link"
+msgstr "Будь-хто, хто має посилання"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Immediately open this public webform to one-time link requests."
-msgstr ""
-"Негайно відкрити цю публічну веб-форму для запитів на одноразове посилання."
-
-#: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Брендований електронний лист з одноразовим посиланням."
+msgid "A branded email with a one-time-use link."
+msgstr "Фірмовий електронний лист з одноразовим посиланням."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "A short text with a shortened link. Billed per message sent."
 msgstr ""
 "Коротке текстове повідомлення зі скороченим посиланням. Оплата за кожне "
 "надіслане повідомлення."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open to Respondents"
+msgstr "Відкрити для респондентів"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open this public webform to respondents."
+msgstr "Відкрийте цю загальнодоступну вебформу для респондентів."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Verification Method"
+msgstr "Спосіб перевірки"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"To protect your data and project, CommCare runs automated checks on every "
+"respondent who starts the form. If a check flags a respondent, CommCare "
+"sends them a one-time link to open before the form starts. Choose how "
+"CommCare can send that link."
+msgstr ""
+"Щоб захистити ваші дані та проєкт, CommCare автоматично перевіряє кожного "
+"респондента, який починає заповнювати форму. Якщо перевірка позначає "
+"респондента, CommCare надсилає йому одноразове посилання, яке потрібно "
+"відкрити перед початком заповнення форми. Виберіть, як CommCare може "
+"надіслати це посилання."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webform must close in the future."
+msgstr "Термін дії вебформи має завершуватися в майбутньому."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Choose at least one verification method."
+msgstr "Виберіть принаймні один спосіб перевірки."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webforms open to anyone with the link must close within 90 days."
+msgstr ""
+"Термін дії вебформ, доступних усім, хто має посилання, має завершуватися "
+"протягом 90 днів."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -39026,10 +39210,6 @@ msgstr "Створити публічну веб-форму"
 msgid "Please select an application, menu, and form."
 msgstr "Будь ласка, виберіть застосунок, меню та форму."
 
-#: corehq/apps/public_webforms/forms.py
-msgid "The selected form can't be used for a public webform."
-msgstr "Обрану форму не можна використовувати для публічної веб-форми."
-
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 msgid "Edit Public Webform"
 msgstr "Редагувати публічну веб-форму"
@@ -39041,6 +39221,10 @@ msgstr "Редагувати публічну веб-форму"
 msgid "Save Changes"
 msgstr "Зберегти зміни"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "This webform's application has been deleted, so it can't be opened."
+msgstr "Додаток цієї веб-форми було видалено, тому її неможливо відкрити."
+
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
 msgid "Your one-time link for {form_name}"
@@ -39048,20 +39232,12 @@ msgstr "Ваш одноразовий лінк для {form_name}"
 
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
-#| msgid "Your one-time link for {form_name} is: {url}"
 msgid ""
 "Your one-time link for {form_name}:\n"
 "{url}"
 msgstr ""
 "Ваш одноразовий лінк для {form_name}:\n"
 "{url}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Відкрити"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -39097,7 +39273,6 @@ msgid "Enter a valid phone number."
 msgstr "Введіть дійсний номер телефону."
 
 #: corehq/apps/public_webforms/public/views.py
-#| msgid "Webforms"
 msgid "Webform Request"
 msgstr "Запит вебформи"
 
@@ -39110,12 +39285,38 @@ msgid "Expires"
 msgstr "Термін дії"
 
 #: corehq/apps/public_webforms/tables.py
-msgid "Delivery"
-msgstr "Доставка"
+#| msgid "IP Access"
+msgid "Access"
+msgstr "Доступ"
 
 #: corehq/apps/public_webforms/tables.py
 msgid "Public URL"
 msgstr "Публічний URL"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "One-Time Link Request"
+msgid "One-time link"
+msgstr "Одноразове посилання"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Email Delivered"
+msgid "Email enabled"
+msgstr "Електронну пошту ввімкнено"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "Email disabled"
+msgstr "Електронну пошту вимкнено"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Is enabled"
+msgid "SMS enabled"
+msgstr "SMS увімкнено"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "SMS disabled"
+msgstr "SMS вимкнено"
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, python-format
@@ -39252,6 +39453,20 @@ msgstr ""
 "          дозволені. Форми, які оновлюють існуючі справи, не можуть бути публічними.\n"
 "        "
 
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+"\n"
+"    Для SMS-посилань потрібен обмін повідомленнями, який вимкнено для цього проєкту.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid "Enable Messaging"
+msgstr "Увімкнути обмін повідомленнями"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
 msgstr "QR-код публічного URL"
@@ -39339,7 +39554,6 @@ msgid "Send my link"
 msgstr "Надіслати моє посилання"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid "Webforms"
 msgid "Webform Closed"
 msgstr "Вебформа закрита"
 
@@ -39362,21 +39576,39 @@ msgid "Check Your Messages"
 msgstr "Перевірте свої повідомлення"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
 msgstr ""
 "\n"
-"      Ми надіслали посилання, використовуючи надану вами контактну інформацію.\n"
-"    "
+"        Ми надіслали посилання в SMS на номер %(masked_phone_number)s.\n"
+"      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Ми надіслали посилання на електронну адресу %(masked_email)s.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
+msgstr ""
+"\n"
+"        Ми надіслали посилання, скориставшись наданими вами контактними даними.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
 msgid ""
 "\n"
 "      The link expires %(link_lifespan)s after it was created and only works\n"
@@ -39393,20 +39625,14 @@ msgid "Request another link"
 msgstr "Запросити інше посилання"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "Unavailable"
 msgid "Form Link Unavailable"
 msgstr "Посилання на форму недоступне"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "No longer available"
 msgid "Link No Longer Available"
 msgstr "Посилання більше недоступне"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      One-time links expire after a short time, and can only be used once.\n"
@@ -39417,10 +39643,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      Please start a new bulk edit session above.\n"
-#| "    "
 msgid ""
 "\n"
 "      Request a new link to fill out this form.\n"
@@ -39461,6 +39683,12 @@ msgstr "Публічну веб-форму створено."
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform updated."
 msgstr "Публічна вебформа оновлена."
+
+#: corehq/apps/public_webforms/views.py
+msgid ""
+"This public webform's application has been deleted, so it can't be opened."
+msgstr ""
+"Додаток цієї публічної веб-форми було видалено, тому її неможливо відкрити."
 
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform closed to new requests."
@@ -40629,9 +40857,8 @@ msgstr ""
 "хвилин. Якщо проблема не зникне, зверніться до служби підтримки."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Будь ласка, зачекайте щонайменше {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "секунд до повторного запиту."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -41774,6 +42001,10 @@ msgid "Current Indian Financial Year"
 msgstr "Поточний фінансовий рік Індії"
 
 #: corehq/apps/reports/display.py
+msgid "public user"
+msgstr "публічний користувач"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "Немає даних для імені користувача"
 
@@ -42345,6 +42576,10 @@ msgstr "Активні веб-користувачі"
 msgid "Deactivated Web Users"
 msgstr "Деактивовані веб-користувачі"
 
+#: corehq/apps/reports/models.py
+msgid "Public Users"
+msgstr "Публічні користувачі"
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -42644,6 +42879,14 @@ msgstr "Кількість ненадісланих форм у телефоні
 #, python-brace-format
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr "Кількість ненадісланих форм у телефонах користувачів для {app_info}"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...Детальніше"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Згорнути"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -44965,11 +45208,6 @@ msgid "Can't archive documents of type %s. How did you get here??"
 msgstr "Не можна архівувати документи типу %s. Як ви сюди потрапили??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr "Не можна видалити форму {instance_id}, оскільки вона не заархівована."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (цей випадок)"
 
@@ -45534,10 +45772,6 @@ msgstr "Скопіюйте це у безпечне місце. Воно біл�
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Усі IP-адреси"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr "API-ключ з назвою \"{create_form.cleaned_data['name']}\" вже існує."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -46301,7 +46535,7 @@ msgstr "Ключове слово не знайдено: '{0}'"
 #: corehq/apps/sms/messages.py
 #, python-brace-format
 msgid "Usage: {0} <keyword>"
-msgstr ""
+msgstr "Використання: {0} <keyword>"
 
 #: corehq/apps/sms/messages.py
 #, python-brace-format
@@ -46668,6 +46902,10 @@ msgstr "Одержувач не відповідає фільтрам:"
 #: corehq/apps/sms/models.py
 msgid "Connect user not found for recipient."
 msgstr "Користувача Connect для одержувача не знайдено."
+
+#: corehq/apps/sms/models.py
+msgid "Connect Messaging Gateway Error"
+msgstr "Помилка шлюзу обміну повідомленнями Connect"
 
 #: corehq/apps/sms/models.py
 msgid ""
@@ -47465,10 +47703,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "Поки не потрібно/не згенеровано."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "Слаг"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -48620,11 +48854,6 @@ msgid "today!"
 msgstr "сьогодні!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "на {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -48632,11 +48861,6 @@ msgid ""
 msgstr ""
 "Сповіщення CommCare: Сертифікат для постачальника ідентифікації %(idp_name)s"
 " спливає %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -49407,6 +49631,48 @@ msgstr "Активні домени"
 msgid "Last Usage"
 msgstr "Останнє використання"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr "ШІ не повернув переклад."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The app didn't accept the AI's translation."
+msgstr "Застосунок не прийняв переклад ШІ."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr "ШІ повернув порожній переклад."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI's translation has characters the app can't save."
+msgstr "Переклад ШІ містить символи, які застосунок не може зберегти."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr "ШІ змінив або пропустив значення, вставлене з іншого запитання."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr "ШІ змінив форматування, наприклад жирний текст або список."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed a web link."
+msgstr "ШІ змінив вебпосилання."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The label couldn't be translated."
+msgstr "Не вдалося перекласти мітку."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid "Remote apps can't be translated with AI."
+msgstr "Віддалені додатки не можна перекладати за допомогою ШІ."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Only the current version of an app can be translated, not a previous "
+"version."
+msgstr "Перекладати можна лише поточну версію додатка, а не попередню."
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-format
@@ -49640,12 +49906,10 @@ msgstr ""
 "завантаженні перекладу додатку. Для цього рядка переклади не оновлено."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "The deposit transaction could not be performed."
 msgid "The translation couldn't be queued. Run it again."
 msgstr "Не вдалося поставити переклад у чергу. Спробуйте ще раз."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Source lang selected not available for the project"
 msgid "AI translation is no longer available for this project."
 msgstr "AI-переклад більше недоступний для цього проєкту."
 
@@ -49663,36 +49927,20 @@ msgstr ""
 "Інші переклади цього додатку виконувалися занадто довго. Спробуйте ще раз."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Something went wrong. Please reload the page and try again."
 msgid ""
-"Something went wrong while translating the app. Review its translations and "
-"run it again."
+"Something went wrong and the translation didn't finish. Run it again, and "
+"contact support if it keeps failing."
 msgstr ""
-"Щось пішло не так під час перекладу додатку. Перевірте переклади та "
-"спробуйте ще раз."
+"Щось пішло не так, і переклад не завершився. Запустіть ще раз і зверніться "
+"до підтримки, якщо проблема повторюється."
 
 #: corehq/apps/translations/tasks.py
-msgid "No strings could be translated."
-msgstr "Не вдалося перекласти жодного рядка."
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
+msgid "No labels could be translated."
+msgstr "Не вдалося перекласти жодної мітки."
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
 msgstr "Відсутні переклади для {} у завантаженому файлі"
-
-#: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Не вдалося знайти модуль або форму з ID '{module_or_form_id}' у додатку "
-"'{self.app.name}'"
 
 #: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
@@ -49723,6 +49971,55 @@ msgstr "Переклади інтерфейсу оновлено!"
 #: corehq/apps/translations/views.py
 msgid "Please select language to validate."
 msgstr "Будь ласка, виберіть мову для перевірки."
+
+#: corehq/apps/translations/views.py
+msgid "AI translation isn't available for this project."
+msgstr "Переклад ШІ недоступний для цього проєкту."
+
+#: corehq/apps/translations/views.py
+msgid "This language can't be translated with AI."
+msgstr "Цю мову не можна перекласти за допомогою ШІ."
+
+#: corehq/apps/translations/views.py
+msgid "This language is already being translated."
+msgstr "Ця мова вже перекладається."
+
+#: corehq/apps/translations/views.py
+msgid "Case list"
+msgstr "Список справ"
+
+#: corehq/apps/translations/views.py
+msgid "Case detail"
+msgstr "Деталі справи"
+
+#: corehq/apps/translations/views.py
+msgid "Case search"
+msgstr "Пошук справ"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr "підказка"
+
+#: corehq/apps/translations/views.py
+msgid "help text"
+msgstr "довідковий текст"
+
+#: corehq/apps/translations/views.py
+msgid "validation message"
+msgstr "повідомлення про помилку перевірки"
+
+#: corehq/apps/translations/views.py
+msgid "choice"
+msgstr "варіант відповіді"
+
+#: corehq/apps/user_importer/exceptions.py
+msgid ""
+"This project has reached the mobile worker limit for its subscription plan. "
+"Deactivate other mobile workers or upgrade the plan to add more."
+msgstr ""
+"У цьому проєкті досягнуто ліміту мобільних працівників для обраного тарифу. "
+"Деактивуйте інших мобільних працівників або оновіть тариф, щоб додати "
+"більше."
 
 #: corehq/apps/user_importer/helpers.py
 msgid "Double Entry for {}"
@@ -49795,11 +50092,6 @@ msgid ""
 msgstr ""
 "Електронна пошта для запрошення цього користувача повернулася: {}. Будь "
 "ласка, спробуйте ще раз з іншим іменем користувача"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Домен не може бути встановлено як '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -50079,16 +50371,6 @@ msgstr "Перебудувати"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Видалити"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression не дозволено для домену {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} не дозволено для домену {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -51890,19 +52172,8 @@ msgid "UCR Expressions"
 msgstr "Вирази UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr "UCR-вираз із назвою \"{create_form.cleaned_data['name']}\" вже існує."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Редагувати вираз UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Підтвердіть свій обліковий запис CommCare для {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -52320,12 +52591,19 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                        Are you sure you want to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Are you sure you want to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Are you sure you want to accept the invitation to join\n"
+"                        the CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
@@ -52336,12 +52614,19 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                        Would you like to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Would you like to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Would you like to accept the invitation to join the\n"
+"                        CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
@@ -52381,6 +52666,25 @@ msgstr "створіть веб-обліковий запис"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                      Turn off demo mode to allow this mobile worker to start\n"
+#| "                      sending data to %(hq_name)s again.\n"
+#| "                    "
+msgid ""
+"\n"
+"                    You are signed in as %(username)s, but this invitation was\n"
+"                    sent to %(invited_user)s.\n"
+"                  "
+msgstr ""
+"\n"
+"                      Вимкніть демонстраційний режим, щоб цей мобільний працівник знову міг\n"
+"                      надсилати дані до %(hq_name)s.\n"
+"                    "
+
+#: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
+#: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
 msgid ""
 "\n"
@@ -52398,12 +52702,17 @@ msgstr "Змінити обліковий запис"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your email is managed by %(idp_name)s.\n"
+#| "                    You will be asked to authenticate with Single Sign-On\n"
+#| "                    in the next step.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your email is managed by %(idp_name)s.\n"
-"                    You will be asked to authenticate with Single Sign-On\n"
-"                    in the next step.\n"
+"                    Your email is managed by %(idp_name)s. You will be asked\n"
+"                    to authenticate with Single Sign-On in the next step.\n"
 "                  "
 msgstr ""
 "\n"
@@ -52413,10 +52722,15 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+"                    To accept this %(invite_type_lower)s invitation, you must\n"
+"                    create an account.\n"
 "                  "
 msgstr ""
 "\n"
@@ -53247,11 +53561,6 @@ msgstr "Нові мобільні працівники"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Pending..."
 msgstr "Очікує..."
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "НОВИЙ"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -55226,13 +55535,8 @@ msgid "is_active"
 msgstr "is_active"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Ви успішно підтвердили обліковий запис {user.raw_username}. Тепер ви можете "
-"увійти"
+msgid "You can now login"
+msgstr "Тепер ви можете увійти"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -58089,11 +58393,6 @@ msgstr ""
 "квартальний період у форматі yyyyQn (наприклад, \"2004Q1\" для січня-березня"
 " 2004 року), або введіть дійсний стовпець."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Додати/Редагувати налаштування підключень</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Звіт із налаштуванням користувача"
@@ -58102,11 +58401,13 @@ msgstr "Звіт із налаштуванням користувача"
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
 "Карти DataSet зіставляють UCR CommCare з наборами даних DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
 "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"target=\"_new\">Докладніше</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -58578,12 +58879,8 @@ msgid "There is an error in your data API validations"
 msgstr "У ваших перевірках даних API є помилка"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Не вдалося визначити кінцеві точки API {self.api_auth_settings!r}. Будь "
-"ласка, виберіть відповідні налаштування автентифікації API для "
+msgid "Please select the applicable API auth settings for the "
+msgstr "Будь ласка, виберіть відповідні налаштування автентифікації API для "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -58618,50 +58915,17 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "У Atom feed OpenMRS виявлено синтаксичну помилку XML за адресою "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "пацієнтів додано з Atom feed OpenMRS."
+
+#: corehq/motech/openmrs/atom_feed.py
+msgid "patients from OpenMRS unless only one case type is specified."
+msgstr "пацієнтів з OpenMRS, якщо не вказано лише один тип випадку."
+
+#: corehq/motech/openmrs/atom_feed.py
+msgid "matching unique OpenMRS UUID. case external_id: "
 msgstr ""
-"Не знайдено користувачів у розташуванні \"{repeater.location_id}\", які "
-"могли б володіти пацієнтами, доданими з OpenMRS Atom feed."
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
-msgstr ""
-"{repeater.domain}: {repeater}: Помилка в налаштуваннях: не вдалося оновити "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr "{repeater.domain}: {repeater}: Помилка при отриманні пацієнта "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Знайдено більше ніж один випадок "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr "{repeater.domain}: {repeater}: Помилка під час отримання Encounter "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Знайдено більше одного випадку, що відповідає"
-" унікальному OpenMRS UUID. зовнішній ідентифікатор case: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Не вдалося визначити мобільного працівника для володіння новим "
-"\"{case_type}\" "
+"відповідний унікальний UUID OpenMRS. зовнішній ідентифікатор випадку: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -58781,6 +59045,20 @@ msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr "наприклад, [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 
 #: corehq/motech/openmrs/forms.py
+msgid "Each column mapping must be an object."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Unknown column mapping keys: %(keys)s"
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Each column mapping must have a \"%(key)s\"."
+msgstr ""
+
+#: corehq/motech/openmrs/forms.py
 msgid ""
 "Cases at this location and below will be forwarded. Leave empty if this is "
 "the only OpenMRS Forwarder"
@@ -58849,6 +59127,24 @@ msgstr "Імпортувати зараз"
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "OpenMRS Importer"
 msgstr "Імпортер OpenMRS"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "No OpenMRS Importers were submitted."
+msgstr "Імпортери OpenMRS збережено"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers are not valid JSON."
+msgstr "Імпортери OpenMRS збережено"
+
+#: corehq/motech/openmrs/views.py
+#, fuzzy
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers must be a list of objects."
+msgstr "Імпортери OpenMRS збережено"
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -59784,7 +60080,6 @@ msgid "Save to Case"
 msgstr "Зберегти до справи"
 
 #: corehq/privileges.py
-#| msgid "App Translations"
 msgid "AI App Translations"
 msgstr "AI-переклади додатку"
 
@@ -59909,8 +60204,8 @@ msgid "WhatsApp Settings"
 msgstr "Налаштування WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
-msgstr "Підключити месенджинг"
+msgid "Connect Messaging"
+msgstr "Обмін повідомленнями Connect"
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
@@ -60776,6 +61071,459 @@ msgstr "Обов'язкові колонки: {column_names}"
 msgid "Enter valid JSON"
 msgstr "Введіть коректний JSON"
 
+#~ msgid ""
+#~ "\n"
+#~ "      By clicking this button, you agree to Dimagi's\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Натискаючи цю кнопку, ви погоджуєтеся з\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Умовами надання послуг</a> та\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Політикою конфіденційності</a> Dimagi.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "Problem loading suite file from profile file. Is your profile file correct?"
+#~ msgstr ""
+#~ "Проблема із завантаженням файлу suite з профільного файлу. Чи правильний ваш"
+#~ " профільний файл?"
+
+#~ msgid "Delivery"
+#~ msgstr "Доставка"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            Enable messaging for %(domain_name)s\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Увімкнути обмін повідомленнями для %(domain_name)s\n"
+#~ "          "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              %(billing_account)s\n"
+#~ "              will be charged for every SMS this project sends and receives.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              З рахунку %(billing_account)s\n"
+#~ "              стягуватиметься плата за кожне SMS, надіслане та отримане цим проєктом.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                A public webform with SMS turned on sends a text to any phone\n"
+#~ "                number a respondent enters, and each text is charged.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Публічна вебформа з увімкненими SMS надсилає повідомлення на будь-який номер телефону,\n"
+#~ "                який вказує респондент, і за кожне повідомлення стягується плата.\n"
+#~ "              "
+
+#~ msgid "Action is required to enable messaging."
+#~ msgstr "Щоб увімкнути обмін повідомленнями, потрібна дія."
+
+#~ msgid "How to Enable Messaging"
+#~ msgstr "Як увімкнути обмін повідомленнями"
+
+#~ msgid ""
+#~ "\n"
+#~ "        To enable messaging features for this project space, please do at least\n"
+#~ "        <strong>one</strong> of the following:\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Щоб увімкнути функції обміну повідомленнями для цього проєктного простору, виконайте принаймні\n"
+#~ "        <strong>одну</strong> з наведених нижче дій:\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+#~ "          account.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Збережіть платіжну картку</a> у своєму\n"
+#~ "          обліковому записі користувача.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+#~ "          for this project space.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Увімкніть автоматичні платежі</a>\n"
+#~ "          для цього проєктного простору.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+#~ "          or\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+#~ "          totaling %(self_enable_payment_threshold)s or more.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">Сплатіть рахунки</a>\n"
+#~ "          або\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">придбайте передплачені кредити</a>\n"
+#~ "          на загальну суму %(self_enable_payment_threshold)s або більше.\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+#~ "        charges can be billed correctly.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Потім поверніться на цю сторінку, щоб увімкнути обмін повідомленнями. Це допоможе нам переконатися,\n"
+#~ "        що плату за SMS можна буде правильно виставити.\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        If none of these options are available for you, please email\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+#~ "        to request access to messaging features. Include your full name and the\n"
+#~ "        name of the organization you work for.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Якщо жоден із цих варіантів вам недоступний, надішліть електронного листа на адресу\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>,\n"
+#~ "        щоб запросити доступ до функцій обміну повідомленнями. Укажіть своє повне ім’я та\n"
+#~ "        назву організації, у якій ви працюєте.\n"
+#~ "      "
+
+#~ msgid "Back to Home"
+#~ msgstr "На головну"
+
+#~ msgid "Turning on messaging will cost this project money."
+#~ msgstr "Увімкнення обміну повідомленнями коштуватиме цьому проєкту грошей."
+
+#~ msgid ""
+#~ "\n"
+#~ "      This project is charged for every SMS it sends and receives. The price of\n"
+#~ "      each SMS depends on the country of the phone number. Charges appear on the\n"
+#~ "      project's monthly CommCare invoice.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      За кожне SMS, надіслане та отримане цим проєктом, стягується плата. Вартість\n"
+#~ "      кожного SMS залежить від країни номера телефону. Плата відображається в\n"
+#~ "      щомісячному рахунку CommCare проєкту.\n"
+#~ "    "
+
+#~ msgid "See SMS prices by country"
+#~ msgstr "Переглянути ціни на SMS за країнами"
+
+#~ msgid "Who is Charged"
+#~ msgstr "Хто сплачує"
+
+#~ msgid "Invoices Emailed to"
+#~ msgstr "Рахунки надсилаються на адресу"
+
+#~ msgid ""
+#~ "\n"
+#~ "        Messaging lets this project send and receive SMS, including one-time\n"
+#~ "        links for public webforms, broadcasts, and conditional alerts.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Обмін повідомленнями дає змогу цьому проєкту надсилати й отримувати SMS, зокрема одноразові\n"
+#~ "        посилання для публічних вебформ, масових розсилок і умовних сповіщень.\n"
+#~ "      "
+
+#~ msgid "Messaging is currently disabled for this project space."
+#~ msgstr "Обмін повідомленнями наразі вимкнено для цього проєктного простору."
+
+#~ msgid ""
+#~ "\n"
+#~ "            Please contact your project administrator to enable messaging.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Зверніться до адміністратора проєкту, щоб увімкнути обмін повідомленнями.\n"
+#~ "          "
+
+#~ msgid "Messaging enabled successfully."
+#~ msgstr "Обмін повідомленнями успішно ввімкнено."
+
+#~ msgid "Messaging cannot be enabled right now."
+#~ msgstr "Зараз не вдається ввімкнути обмін повідомленнями."
+
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "Платіж за підписку для рахунку CommCare {context['invoice_number']} було "
+#~ "відхилено"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Недійсний(і) параметр(и): {', '.join(invalid_params)}"
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Повернуто до версії {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr "Імпорт кейсів може містити максимум {MAX_CASE_IMPORTER_ROWS} рядків. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Назва кейсу не може бути довшою за {STANDARD_CHARFIELD_LENGTH} символів"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Зовнішній ідентифікатор не може бути довшим за {STANDARD_CHARFIELD_LENGTH} "
+#~ "символів"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Недійсний оператор \"{criteria[\"operator\"]}\". Дозволені значення: "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} не підтримується з ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} не є коректно відформатованою датою або датою-часом."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} є некоректною датою."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} є некоректною датою-часом."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr "Другий аргумент для '{node.name}' має бути дійсними координатами"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Третій аргумент для '{node.name}' має бути числом, отримано '{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' не є дійсною одиницею відстані. Очікується одна з {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' не є коректною датою. Очікується 'YYYY-MM-DD"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Перший аргумент для '{node.name}' має бути дійсною назвою властивості кейсу"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "Функція '{node.name}' приймає рівно {expected} аргумент(ів), отримано "
+#~ "{actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Невідомий вираз {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Вас додано до простору проєкту \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Не можна видалити тип розташування '{deleted_type.code}'. Він "
+#~ "використовується типом "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Код сайту розташування: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr "У запиті були включені недійсні поля: {list(data.keys())}."
+
+#~ msgid "Choose at least one way for respondents to receive one-time links."
+#~ msgstr ""
+#~ "Виберіть принаймні один спосіб отримання респондентами одноразових посилань."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Будь ласка, зачекайте щонайменше {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr "Не можна видалити форму {instance_id}, оскільки вона не заархівована."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr "API-ключ з назвою \"{create_form.cleaned_data['name']}\" вже існує."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "на {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Не вдалося знайти модуль або форму з ID '{module_or_form_id}' у додатку "
+#~ "'{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Домен не може бути встановлено як '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression не дозволено для домену {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} не дозволено для домену {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr "UCR-вираз із назвою \"{create_form.cleaned_data['name']}\" вже існує."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Підтвердіть свій обліковий запис CommCare для {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Ви успішно підтвердили обліковий запис {user.raw_username}. Тепер ви можете "
+#~ "увійти"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Додати/Редагувати налаштування підключень</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "Не вдалося визначити кінцеві точки API {self.api_auth_settings!r}. Будь "
+#~ "ласка, виберіть відповідні налаштування автентифікації API для "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "Не знайдено користувачів у розташуванні \"{repeater.location_id}\", які "
+#~ "могли б володіти пацієнтами, доданими з OpenMRS Atom feed."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Помилка в налаштуваннях: не вдалося оновити "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr "{repeater.domain}: {repeater}: Помилка при отриманні пацієнта "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Знайдено більше ніж один випадок "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr "{repeater.domain}: {repeater}: Помилка під час отримання Encounter "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr ""
+#~ "Не вдалося визначити мобільного працівника для володіння новим "
+#~ "\"{case_type}\" "
+
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr "Обрану форму не можна використовувати для публічної веб-форми."
+
+#~ msgid "Space-separated list of privilege strings from corehq.privileges"
+#~ msgstr "Список рядків привілеїв, розділених пробілами, з corehq.privileges"
+
+#~ msgid "Version History"
+#~ msgstr "Історія версій"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "Форми не надано"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>Повернутися до <a href=\"%(form_management_url)s\">Управління формами</a>, щоб скасувати це.</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "Не вдалося знайти XForm {form_id}"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr "XForm {form_id} для домену {domain} користувачем '{username}'"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "Успішно заархівовано {form}"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "Успішно розархівовано {form}"
+
+#, python-brace-format
+#~ msgid "Could not archive {form}"
+#~ msgstr "Не вдалося архівувати {form}"
+
+#, python-brace-format
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "Не вдалося розархівувати {form}"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} форма(и)"
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -60833,9 +61581,6 @@ msgstr "Введіть коректний JSON"
 #~ "\n"
 #~ "                        Довідка %(count)s\n"
 #~ "                    "
-
-#~ msgid "One-Time Link Request"
-#~ msgstr "Запит одноразового посилання"
 
 #~ msgid "Case list used by Select Parent First in '{}' not found"
 #~ msgstr ""
@@ -63452,9 +64197,6 @@ msgstr "Введіть коректний JSON"
 #~ msgid "Printing"
 #~ msgstr "Друк"
 
-#~ msgid "Document Template"
-#~ msgstr "Шаблон документа"
-
 #~ msgid "Opens file in new tab."
 #~ msgstr "Відкриває файл у новій вкладці."
 
@@ -63913,38 +64655,8 @@ msgstr "Введіть коректний JSON"
 #~ "      включених у ваш план, з вас буде стягнута плата згідно з умовами тарифу.\n"
 #~ "    "
 
-#~ msgid ", "
-#~ msgstr ", "
-
 #~ msgid "Workflow:"
 #~ msgstr "Робочий процес:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Потрібне обмеження на перебудову"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Обмеження на перебудову не потрібне"
-
-#~ msgid " and try again."
-#~ msgstr " і спробуйте ще раз."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "секунд до повторного запиту."
-
-#~ msgid "...See more"
-#~ msgstr "...Детальніше"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Згорнути"
-
-#~ msgid "Please select the applicable API auth settings for the "
-#~ msgstr "Будь ласка, виберіть відповідні налаштування автентифікації API для "
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "пацієнтів додано з Atom feed OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr "пацієнтів з OpenMRS, якщо не вказано лише один тип випадку."
 
 #~ msgid "Data cleaning action"
 #~ msgstr "Дія з очищення даних"

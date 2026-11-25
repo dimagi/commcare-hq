@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 
 from django.conf import settings
@@ -22,7 +23,11 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.middleware import CCHQPRBACMiddleware
 from corehq.apps.enterprise.models import EnterprisePermissions
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
+from corehq.apps.ip_access.middleware import is_valid_ip
+from corehq.apps.ip_access.utils import get_origin_ip
 from corehq.apps.public_webforms.models import PublicFormSession
+from corehq.apps.public_webforms.rate_limiter import rate_limit_session_request
+from corehq.apps.public_webforms.utils import public_webforms_enabled
 from corehq.apps.users.middleware import UsersMiddleware
 from corehq.apps.users.models import CouchUser
 from corehq.feature_previews import previews_enabled_for_domain
@@ -34,6 +39,8 @@ from corehq.util.metrics import (
 )
 
 FORMPLAYER_PERMISSIONS = ['edit_data']
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -51,7 +58,8 @@ class SessionDetailsView(View):
         requests.post(url, data=data, headers={'X-MAC-DIGEST': digest})
 
     A 404 response means the session is not valid for the project space it
-    asks about.
+    asks about. A 403 response means the project space denies the session
+    for the reason given in the body, e.g. ``{"reason": "ip_access_denied"}``.
     """
     urlname = 'session_details'
     http_method_names = ['post']
@@ -93,6 +101,10 @@ class SessionDetailsView(View):
         if not _may_act_in_domain(session, domain):
             raise Http404
 
+        if not _ip_allowed(session, domain, get_origin_ip(request)):
+            session.save()  # remember the denied IP, sparing repeat lookups
+            return JsonResponse({'reason': 'ip_access_denied'}, status=403)
+
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
         TimeoutMiddleware.update_secure_session(session, secure_session, couch_user, domain=domain)
@@ -126,7 +138,9 @@ class SessionDetailsView(View):
 
     def _public_session_details(self, public_session_key, start_time):
         session = PublicFormSession.get_active_session_by_key(public_session_key)
-        if session is None:
+        if session is None or not public_webforms_enabled(session.public_webform.domain):
+            raise Http404
+        if rate_limit_session_request(session.id.hex):
             raise Http404
 
         domain = session.public_webform.domain
@@ -204,3 +218,23 @@ def _may_act_in_domain(session, domain):
 @login_and_domain_required
 def _sentinel_view(request, domain):
     return ALLOWED
+
+
+def _ip_allowed(session, domain, origin_ip):
+    """
+    Applies the domain's IP access controls, if it has them, to the Web
+    Apps client's IP address.
+
+    (Formplayer forwards the client's IP address because otherwise HQ
+    only sees Formplayer's.)
+    """
+    if not toggles.IP_ACCESS_CONTROLS.enabled(domain):
+        return True
+    if origin_ip is None:
+        logger.warning(
+            "Refusing Web Apps session for domain %r: Formplayer did not "
+            "forward the client's IP address.",
+            domain,
+        )
+        return False
+    return is_valid_ip(session, origin_ip, domain)

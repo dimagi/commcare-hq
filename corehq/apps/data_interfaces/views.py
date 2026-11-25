@@ -555,33 +555,14 @@ class XFormManagementStatusView(DataInterfaceSection):
 @require_can_edit_data
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
-                              template="data_interfaces/partials/xform_management_status_new.html"):
+                              template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
-    if download_id.startswith('dl-'):
-        return _legacy_xform_management_job_poll(request, domain, download_id, mode)
     try:
         job = BulkAsyncJob.objects.get(id=download_id, domain=domain)
     except (BulkAsyncJob.DoesNotExist, ValueError, ValidationError):
         raise Http404()
     context = _xform_management_job_context(job, mode)
     return render(request, template, context)
-
-
-def _legacy_xform_management_job_poll(request, domain, download_id, mode):
-    """Supports the legacy soil download_id. To be removed in followup PR"""
-    legacy_template = 'data_interfaces/partials/xform_management_status.html'
-    try:
-        context = get_download_context(download_id)
-    except TaskFailedError:
-        return HttpResponseServerError()
-
-    context.update({
-        'on_complete_short': mode.complete_short,
-        'mode': mode,
-        'form_management_url': reverse(EditDataInterfaceDispatcher.name(),
-                                       args=[domain, BulkFormManagementInterface.slug])
-    })
-    return render(request, legacy_template, context)
 
 
 def _job_percent(job):

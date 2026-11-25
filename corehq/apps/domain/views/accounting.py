@@ -1050,8 +1050,9 @@ class BillingStatementPdfView(View):
         return response
 
 
+@method_decorator(use_bootstrap5, name='dispatch')
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
-    template_name = 'domain/bootstrap3/internal_subscription_management.html'
+    template_name = 'domain/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
     page_title = gettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
@@ -1601,9 +1602,6 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             self.current_subscription,
         )
 
-    def is_autopay_required(self):
-        return not self.is_annual_plan or self.account.require_auto_pay
-
     @property
     def page_context(self):
         return {
@@ -1611,7 +1609,6 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
             'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
             'downgrade_email_note': self.downgrade_email_note,
             'cancel_url': reverse(DomainSubscriptionView.urlname, args=[self.domain]),
-            'is_autopay_required': self.is_autopay_required(),
             'is_annual_plan': self.is_annual_plan,
             'days_date_due_annual': SUBSCRIPTION_PREPAY_MIN_DAYS_UNTIL_DUE,
         }
@@ -1724,26 +1721,6 @@ class ConfirmBillingAccountInfoView(HqHtmxActionMixin, ConfirmSelectedPlanView, 
     @hq_hx_action('get')
     def select_autopay_method(self, request, *args, **kwargs):
         return self.render_select_autopay_method(request)
-
-    @hq_hx_action('post')
-    def unset_autopay(self, request, *args, **kwargs):
-        if self.account.require_auto_pay:
-            return HttpResponseForbidden('Cannot unset autopay when it is required.')
-
-        token = request.POST.get('token')
-        if not token:
-            return HttpResponseForbidden("Missing required parameter: 'token'")
-
-        error = None
-        try:
-            payment_method = get_payment_method_for_user(request.user.username)
-            card = payment_method.get_card(token)
-            payment_method.unset_autopay(card, self.account)
-        except StripePaymentMethod.STRIPE_GENERIC_ERROR as e:
-            error = e.json_body.get('error', {}).get(
-                'message', _('Unknown error unsetting autopay method. Please contact Support.')
-            )
-        return self.render_select_autopay_method(request, error=error)
 
     @hq_hx_action('post')
     def set_as_autopay(self, request, *args, **kwargs):

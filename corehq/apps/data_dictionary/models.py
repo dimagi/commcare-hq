@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 
-from django.db import models, transaction
+from django.db import models
 from django.utils.translation import gettext as _, gettext_lazy
 
 from dimagi.utils.couch import CriticalSection
@@ -16,7 +16,7 @@ from corehq.apps.case_importer import exceptions
 def sync_project_db(domain):
     if toggles.PROJECT_DB.enabled(domain):
         from corehq.apps.project_db.tasks import schedule_project_db_sync
-        transaction.on_commit(lambda: schedule_project_db_sync(domain))
+        schedule_project_db_sync(domain)
 
 
 class CaseType(models.Model):

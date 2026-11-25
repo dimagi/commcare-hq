@@ -1,0 +1,16 @@
+{% load i18n %}
+
+<div
+  class="alert alert-warning d-flex align-items-center justify-content-between mt-2 mb-0 py-2"
+>
+  {% blocktrans %}
+    SMS links need messaging, which is turned off for this project.
+  {% endblocktrans %}
+  {% if request.couch_user.can_edit_messaging and request.couch_user.can_edit_billing %}
+    <a
+      class="btn btn-outline-primary float-end flex-shrink-0"
+      href="{% url 'messaging_dashboard' domain %}"
+      >{% trans "Enable Messaging" %}</a
+    >
+  {% endif %}
+</div>

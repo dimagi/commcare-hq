@@ -8,9 +8,8 @@ cat << "EOF" > serializer-pickle-files.lock
 
 EOF
 
-grep -rEc "serializer=['\"]pickle['\"]" --include='*.py' . \
-    | grep -Ev ':0$' \
-    | cut -c3- \
+# only search files tracked in git
+git grep -Ec "serializer=['\"]pickle['\"]" -- '*.py' \
     | sort \
     | awk -F: '{printf("%3i %s\n", $2, $1)}' \
     >> serializer-pickle-files.lock

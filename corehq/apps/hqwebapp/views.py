@@ -33,7 +33,6 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -86,6 +85,8 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import (
     DEPLOY_IN_PROGRESS_FLAG,
 )
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
+from corehq.apps.hqwebapp.chat_access import require_chatbot_enabled
+from corehq.apps.hqwebapp.chat_metrics import record_chatbot_message
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import (
     fetch_chat_usage_from_ocs,
@@ -134,7 +135,7 @@ from corehq.util.public_only_requests.public_only_requests import (
     get_public_only_session,
 )
 from corehq.util.timezones.conversions import ServerTime, UserTime
-from corehq.util.view_utils import reverse, set_language_cookie
+from corehq.util.view_utils import get_safe_redirect_url, reverse, set_language_cookie
 
 
 def is_deploy_in_progress():
@@ -211,9 +212,10 @@ def not_found(request, template_name='404.html', exception=None):
     ))
 
 
-@login_required
+@login_and_domain_required
+@require_chatbot_enabled
 @require_http_methods(['GET', 'POST'])
-def chat_quota(request):
+def chat_quota(request, domain):
     couch_user = getattr(request, 'couch_user')
 
     limit = get_chatbot_message_quota(couch_user)
@@ -229,8 +231,14 @@ def chat_quota(request):
         else:
             used = get_cached_chat_usage(couch_user.user_id)
     except ChatUsageUnavailable:
-        return JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
-    return JsonResponse({'limit': limit, 'used': used})
+        used = None
+        response = JsonResponse({'error': 'chat_usage_unavailable'}, status=503)
+    else:
+        response = JsonResponse({'limit': limit, 'used': used})
+
+    if request.method == 'POST':
+        record_chatbot_message(domain, couch_user, limit, used)
+    return response
 
 
 @require_GET
@@ -417,13 +425,11 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
     if req.user.is_authenticated and req.method == "GET":
-        redirect_to = req.GET.get('next', '')
-        if redirect_to:
-            return HttpResponseRedirect(redirect_to)
         if not domain_name:
-            return HttpResponseRedirect(reverse('homepage'))
+            default_url = reverse('homepage')
         else:
-            return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
+            default_url = reverse('domain_homepage', args=[domain_name])
+        return HttpResponseRedirect(get_safe_redirect_url(req, req.GET.get('next'), default_url))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
         with mutable_querydict(req.POST):
@@ -676,13 +682,13 @@ def domain_login_new_window(request):
 @login_and_domain_required
 @track_domain_request(calculated_prop='cp_n_downloads_custom_exports')
 def retrieve_download(req, domain, download_id, template="hqwebapp/includes/bootstrap3/file_download.html"):
-    next_url = req.GET.get('next', reverse('my_project_settings', args=[domain]))
+    next_url = get_safe_redirect_url(req, req.GET.get('next'), reverse('my_project_settings', args=[domain]))
     return soil_views.retrieve_download(req, download_id, template,
                                         extra_context={'domain': domain, 'next_url': next_url})
 
 
 def dropbox_next_url(request, download_id):
-    return request.META.get('HTTP_REFERER', '/')
+    return get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), '/')
 
 
 @login_required
@@ -720,7 +726,7 @@ def dropbox_upload(request, download_id):
             'The file is in the process of being synced to dropbox! It is {0:.2f}% '
             'complete.'.format(uploader.progress * 100)
         )
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+        return HttpResponseRedirect(dropbox_next_url(request, download_id))
 
     uploader.upload()
 
@@ -730,7 +736,7 @@ def dropbox_upload(request, download_id):
             " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
     )
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    return HttpResponseRedirect(dropbox_next_url(request, download_id))
 
 
 @require_superuser
@@ -1550,12 +1556,8 @@ def set_language(request):
     If no http referer is available or it is not safe, just set the language.
     Based on django.views.i18n.set_language.
     """
-    next_url = request.META.get("HTTP_REFERER")
-    if next_url and url_has_allowed_host_and_scheme(
-        url=next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
+    next_url = get_safe_redirect_url(request, request.META.get("HTTP_REFERER"), None)
+    if next_url:
         response = HttpResponseRedirect(next_url)
     else:
         response = HttpResponse(status=204)

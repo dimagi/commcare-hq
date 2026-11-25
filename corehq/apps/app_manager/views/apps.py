@@ -17,12 +17,11 @@ from django.http import (
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq import privileges, toggles
-from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import add_ons, id_strings
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_layout,
@@ -48,6 +47,7 @@ from corehq.apps.app_manager.exceptions import (
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     RearrangeError,
+    RemoteAppsUnsupported,
 )
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager.models import (
@@ -56,7 +56,6 @@ from corehq.apps.app_manager.models import (
     DeleteApplicationRecord,
     ExchangeApplication,
     LinkedApplication,
-    Module,
 )
 from corehq.apps.app_manager.models import (
     import_app_from_doc,
@@ -64,7 +63,6 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tasks import update_linked_app_and_notify_task
 from corehq.apps.app_manager.util import (
-    app_doc_types,
     get_and_assert_practice_user_in_domain,
     get_settings_values,
     is_linked_app,
@@ -101,6 +99,7 @@ from corehq.elastic import ESError
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
+from corehq.util.view_utils import get_safe_redirect_url
 from corehq.util.view_utils import reverse as reverse_util
 
 
@@ -424,6 +423,9 @@ def app_source(request, domain, app_id):
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     app = get_app(domain, app_id)
+    if is_remote_app(app):
+        messages.error(request, str(RemoteAppsUnsupported()))
+        return HttpResponseRedirect(reverse_util('app_settings', params={}, args=[domain, app_id]))
     form = CopyApplicationForm(domain, app, request.POST)
     if not form.is_valid():
         from corehq.apps.app_manager.views.view_generic import view_generic
@@ -484,6 +486,7 @@ def _copy_app_helper(request, from_app_id, to_domain, to_app_name):
     return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
 
+@require_POST
 @require_can_edit_apps
 def app_from_template(request, domain, slug):
     clear_app_cache(request, domain)
@@ -571,10 +574,6 @@ def app_exchange(request, domain):
         results.reverse()
         first = results[0]
 
-        required_privileges = str(obj.required_privileges or '').split()
-        if not all(domain_has_privilege(domain, privilege) for privilege in required_privileges):
-            continue
-
         def _version_text(result):
             if result['_id'] == first['_id']:
                 return _("Latest Version")
@@ -585,7 +584,6 @@ def app_exchange(request, domain):
             "id": first['_id'],
             "name": first['name'],
             "help_link": obj.help_link,
-            "changelog_link": obj.changelog_link,
             "last_released": iso_string_to_datetime(first['built_on']).date(),
             "versions": [{
                 "id": r['_id'],
@@ -633,32 +631,6 @@ def app_settings(request, domain, app_id):
 def view_app(request, domain, app_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, release_manager=True)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def new_app(request, domain):
-    "Adds an app to the database"
-    lang = 'en'
-    type = request.POST["type"]
-    cls = app_doc_types()[type]
-    form_args = []
-    if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Menu", lang)
-        app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
-        form_args = [module.id, form.id]
-    else:
-        app = cls.new_app(domain, "Untitled Application", lang=lang)
-    if request.project.secure_submissions:
-        app.secure_submissions = True
-    app.save()
-    clear_app_cache(request, domain)
-    main_args = [request, domain, app.id]
-    main_args.extend(form_args)
-
-    return back_to_main(*main_args)
 
 
 @no_conflict_require_POST
@@ -775,9 +747,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
-        # RemoteApp only
-        'profile_url',
-        'manage_urls',
         'mobile_ucr_restore_version',
         'custom_assertions',
     ]
@@ -804,7 +773,6 @@ def edit_app_attr(request, domain, app_id, attr):
         ('practice_mobile_worker_id', None, _always_allowed),
         ('case_sharing', None, lambda x: can_use_case_sharing or getattr(app, x)),
         ('cloudcare_enabled', None, _always_allowed),
-        ('manage_urls', None, _always_allowed),
         ('name', None, _always_allowed),
         ('recipients', None, _always_allowed),
         ('use_custom_suite', None, _always_allowed),
@@ -865,17 +833,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit('custom_assertions'):
         app.custom_assertions = validate_custom_assertions(hq_settings[attr], app.custom_assertions, lang)
-
-    def require_remote_app():
-        if not is_remote_app(app):
-            raise Exception("App type %s does not support profile url" % app.get_doc_type())
-
-    # For RemoteApps
-    if should_edit("profile_url"):
-        require_remote_app()
-        app['profile_url'] = hq_settings['profile_url']
-    if should_edit("manage_urls"):
-        require_remote_app()
 
     app.save(resp)
     # this is a put_attachment, so it has to go after everything is saved
@@ -949,10 +906,11 @@ def move_child_modules_after_parents(request, domain, app_id):
     app = get_app(domain, app_id)
     app.move_child_modules_after_parents()
     app.save()
-    return HttpResponseRedirect(request.META['HTTP_REFERER'])
+    default_url = reverse('view_app', args=[domain, app_id])
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.META.get('HTTP_REFERER'), default_url))
 
 
-@require_GET
+@no_conflict_require_POST
 @require_can_edit_apps
 def drop_usercase(request, domain, app_id):
     app = get_app(domain, app_id)

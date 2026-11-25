@@ -143,7 +143,7 @@ class ApplicationBaseValidator(object):
                                     "subscription before using this feature."
                                 ),
                             }]
-            return []
+        return []
 
     @time_method()
     def _validate_practice_users(self):

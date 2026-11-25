@@ -143,4 +143,7 @@ class Command(BaseCommand):
             print("\nNo command set, please see --help for runtime instructions")
             sys.exit()
 
-        start_pillows(pillows=[pillow_config.get_instance() for pillow_config in pillows_to_run])
+        start_pillows(pillows=[
+            pillow_config.get_instance(processor_chunk_size=options['processor_chunk_size'])
+            for pillow_config in pillows_to_run
+        ])

@@ -173,6 +173,7 @@ from corehq.util.couch import get_document_or_404
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.util.view_utils import get_safe_redirect_url
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -743,6 +744,8 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
+@require_permission(HqPermissions.edit_reports)
+@require_POST
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
     report = get_document_or_404(ReportConfiguration, domain, report_id,
@@ -829,6 +832,7 @@ def _assert_report_delete_privileges(request):
 
 @login_and_domain_required
 @require_permission(HqPermissions.edit_reports)
+@require_POST
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id,
@@ -870,14 +874,13 @@ def delete_report(request, domain, report_id):
               "It has been removed from there too.")
         )
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
-    redirect = request.GET.get("redirect", None)
-    if not redirect:
-        redirect = reverse('saved_reports', args=[domain])
-    return HttpResponseRedirect(redirect)
+    default_url = reverse('saved_reports', args=[domain])
+    return HttpResponseRedirect(get_safe_redirect_url(request, request.GET.get("redirect"), default_url))
 
 
 @login_and_domain_required
 @require_permission(HqPermissions.edit_reports)
+@require_POST
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
@@ -1256,6 +1259,7 @@ class EditDataSourceView(BaseEditDataSourceView):
         return page_context
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
@@ -1296,6 +1300,7 @@ def delete_data_source_shared(domain, config_id, request=None):
         )
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def undelete_data_source(request, domain, config_id):
@@ -1317,6 +1322,7 @@ def undelete_data_source(request, domain, config_id):
     ))
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def rebuild_data_source(request, domain, config_id):
@@ -1445,6 +1451,7 @@ def _error_message_for_restricting_rebuild(number_of_records_to_be_iterated):
     )
 
 
+@require_permission(HqPermissions.edit_ucrs)
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def build_data_source_in_place(request, domain, config_id):

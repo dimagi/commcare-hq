@@ -6,6 +6,8 @@ from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser, UserHistory
@@ -13,8 +15,10 @@ from corehq.apps.users.util import (
     SYSTEM_USER_ID,
     bulk_auto_deactivate_commcare_users,
     cached_user_id_to_user_display,
+    can_add_extra_mobile_workers,
     generate_mobile_username,
     get_complete_username,
+    get_remaining_mobile_worker_slots,
     is_username_available,
     user_display_string,
     user_id_to_username,
@@ -195,6 +199,66 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
+
+
+class TestGetRemainingMobileWorkerSlots(TestCase, DomainSubscriptionMixin):
+    # The test FREE plan allows 2 mobile workers and no excess users
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.free_domain = create_domain('slots-free')
+        cls.addClassCleanup(cls.free_domain.delete)
+        cls.setup_subscription(cls.free_domain.name, SoftwarePlanEdition.FREE)
+        cls.addClassCleanup(cls.teardown_subscriptions)
+
+    def test_no_users(self):
+        assert get_remaining_mobile_worker_slots(self.free_domain.name) == 2
+        assert can_add_extra_mobile_workers(self.free_domain.name)
+
+    def test_under_limit(self):
+        self._create_user('one')
+        assert get_remaining_mobile_worker_slots(self.free_domain.name) == 1
+        assert can_add_extra_mobile_workers(self.free_domain.name)
+
+    def test_at_limit(self):
+        self._create_user('one')
+        self._create_user('two')
+        assert get_remaining_mobile_worker_slots(self.free_domain.name) == 0
+        assert not can_add_extra_mobile_workers(self.free_domain.name)
+
+    def test_over_limit(self):
+        self._create_user('one')
+        self._create_user('two')
+        self._create_user('three')
+        assert get_remaining_mobile_worker_slots(self.free_domain.name) == -1
+        assert not can_add_extra_mobile_workers(self.free_domain.name)
+
+    def test_inactive_users_are_not_counted(self):
+        self._create_user('one')
+        self._create_user('two', is_active=False)
+        assert get_remaining_mobile_worker_slots(self.free_domain.name) == 1
+
+    def test_excess_users_privilege_is_not_limited(self):
+        # Standard grants ALLOW_EXCESS_USERS despite its user limit
+        domain = create_domain('slots-standard')
+        self.addCleanup(domain.delete)
+        self.setup_subscription(domain.name, SoftwarePlanEdition.STANDARD)
+        assert get_remaining_mobile_worker_slots(domain.name) is None
+        assert can_add_extra_mobile_workers(domain.name)
+
+    def test_unlimited_plan_is_not_limited(self):
+        domain = create_domain('slots-enterprise')
+        self.addCleanup(domain.delete)
+        self.setup_subscription(domain.name, SoftwarePlanEdition.ENTERPRISE)
+        assert get_remaining_mobile_worker_slots(domain.name) is None
+        assert can_add_extra_mobile_workers(domain.name)
+
+    def _create_user(self, username, is_active=True):
+        user = CommCareUser.create(
+            self.free_domain.name, username, 'secret', None, None, is_active=is_active
+        )
+        self.addCleanup(user.delete, self.free_domain.name, deleted_by=None)
 
 
 class TestGenerateMobileUsername(TestCase):

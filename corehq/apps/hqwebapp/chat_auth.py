@@ -7,7 +7,8 @@ from django.views.decorators.http import require_POST
 from oauthlib.oauth2 import BackendApplicationClient, OAuth2Error
 from requests_oauthlib import OAuth2Session
 
-from corehq.apps.domain.decorators import login_required
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.hqwebapp.chat_access import require_chatbot_enabled
 from corehq.apps.hqwebapp.chat_quota import UNLIMITED, get_chatbot_message_quota
 from corehq.apps.hqwebapp.chat_usage import fetch_chat_usage_from_ocs
 from corehq.apps.hqwebapp.exceptions import ChatTokenUnavailable, ChatUsageUnavailable
@@ -16,9 +17,10 @@ _TOKEN_URL = 'https://www.openchatstudio.com/o/token/'
 _TOKEN_SCOPE = 'chat:start'
 
 
-@login_required
+@login_and_domain_required
+@require_chatbot_enabled
 @require_POST
-def chat_token(request):
+def chat_token(request, domain):
     couch_user = getattr(request, 'couch_user')
 
     try:

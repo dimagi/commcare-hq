@@ -1,12 +1,23 @@
 from copy import deepcopy
 import json
+from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.urls import reverse
+
+import pytest
 
 from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
+from corehq.motech.openmrs.models import OpenmrsImporter
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.views import (
+    build_importer_forms,
+    format_form_errors,
+    parse_posted_importers,
+)
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -75,3 +86,170 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
 
         # Config should not change
         self.assertEqual(updated_repeater.to_json(), self.repeater.to_json())
+
+
+@flag_enabled('OPENMRS_INTEGRATION')
+class TestOpenmrsImporterView(BaseViewTest):
+    @classmethod
+    def _create_data(cls):
+        cls.url = reverse('openmrs_importer_view', kwargs={'domain': cls.domain.name})
+        cls.importer_data = {
+            'server_url': 'http://www.example.com/openmrs',
+            'username': 'admin',
+            'password': 'Admin123',
+            'report_uuid': 'c0ffee',
+            'report_params': '{"endDate": "{{ today }}"}',
+            'case_type': 'patient',
+            'external_id_column': 'NID',
+            'name_columns': 'givenName familyName',
+            'column_map': '[{"column": "givenName", "property": "first_name"}]',
+        }
+
+    def tearDown(self):
+        for importer in get_openmrs_importers_by_domain(self.domain.name):
+            importer.delete()
+        get_openmrs_importers_by_domain.clear(self.domain.name)
+        super().tearDown()
+
+    def post_importers(self, *importers):
+        return self.client.post(self.url, {'openmrs_importers': json.dumps(importers)})
+
+    def test_post_creates_importer(self):
+        response = self.post_importers(self.importer_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()['error'])
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(len(importers), 1)
+        self.assertEqual(importers[0].domain, self.domain.name)
+        self.assertEqual(importers[0].report_params, {'endDate': '{{ today }}'})
+
+    def test_post_ignores_domain_and_id(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'domain': 'other-domain',
+            '_id': 'attacker-chosen-id',
+        })
+        self.assertEqual(response.status_code, 200)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(len(importers), 1)
+        self.assertEqual(importers[0].domain, self.domain.name)
+        self.assertNotEqual(importers[0]._id, 'attacker-chosen-id')
+
+    def test_post_rejects_bad_report_params(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'report_params': '{"endDate": "{{ \'\'.__class__ }}"}',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('report_params', response.json()['error'])
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
+    def test_post_rejects_bad_column_map(self):
+        response = self.post_importers({
+            **self.importer_data,
+            'column_map': '["givenName"]',
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('column_map', response.json()['error'])
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
+    def test_post_rejects_malformed_payload(self):
+        response = self.client.post(self.url, {'openmrs_importers': 'not json'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('not valid JSON', response.json()['error'])
+
+    def test_post_does_not_swallow_unexpected_errors(self):
+        # Unexpected errors reach Django's error handling (and Sentry)
+        # instead of being returned to the browser as text
+        with patch.object(OpenmrsImporter, 'save', side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                self.post_importers(self.importer_data)
+
+    def test_post_updates_existing_importer(self):
+        self.post_importers(self.importer_data)
+        [original] = get_openmrs_importers_by_domain(self.domain.name)
+        response = self.post_importers({**self.importer_data, 'case_type': 'person'})
+        self.assertEqual(response.status_code, 200)
+        [updated] = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual(updated._id, original._id)
+        self.assertEqual(updated.case_type, 'person')
+
+    def test_post_deletes_removed_importers(self):
+        self.post_importers(
+            self.importer_data,
+            {**self.importer_data, 'case_type': 'person'},
+        )
+        response = self.post_importers(self.importer_data)
+        self.assertEqual(response.status_code, 200)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual([i.case_type for i in importers], ['patient'])
+
+    def test_post_clears_cache_if_save_fails(self):
+        self.post_importers(self.importer_data)
+        get_openmrs_importers_by_domain(self.domain.name)  # Populate the cache
+        new_importer = {**self.importer_data, 'case_type': 'person'}
+        real_save = OpenmrsImporter.save
+
+        def save_first_only(importer, *args, **kwargs):
+            if importer._id:
+                return real_save(importer, *args, **kwargs)
+            raise RuntimeError('boom')
+
+        with patch.object(OpenmrsImporter, 'save', save_first_only):
+            with self.assertRaises(RuntimeError):
+                self.post_importers(new_importer, new_importer)
+        importers = get_openmrs_importers_by_domain(self.domain.name)
+        self.assertEqual([i.case_type for i in importers], ['person'])
+
+    def test_post_saves_nothing_if_any_importer_invalid(self):
+        response = self.post_importers(
+            self.importer_data,
+            {**self.importer_data, 'report_uuid': ''},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(get_openmrs_importers_by_domain(self.domain.name), [])
+
+
+@pytest.mark.parametrize('post_data, message', [
+    ({}, 'No OpenMRS Importers'),
+    ({'openmrs_importers': 'not json'}, 'not valid JSON'),
+    ({'openmrs_importers': '{"server_url": "x"}'}, 'list of objects'),
+    ({'openmrs_importers': '"x"'}, 'list of objects'),
+    ({'openmrs_importers': '["x"]'}, 'list of objects'),
+    ({'openmrs_importers': '[{}, null]'}, 'list of objects'),
+])
+def test_parse_posted_importers_rejects(post_data, message):
+    with pytest.raises(ValidationError, match=message):
+        parse_posted_importers(post_data)
+
+
+@pytest.mark.parametrize('payload, expected', [
+    ('[]', []),
+    ('[{"server_url": "x"}]', [{'server_url': 'x'}]),
+])
+def test_parse_posted_importers_accepts(payload, expected):
+    assert parse_posted_importers({'openmrs_importers': payload}) == expected
+
+
+def test_build_importer_forms_pairs_by_position():
+    current = [OpenmrsImporter(domain='test'), OpenmrsImporter(domain='test')]
+    forms = build_importer_forms('test', [{}, {}, {}], current)
+    assert forms[0].instance is current[0]
+    assert forms[1].instance is current[1]
+    assert forms[2].instance not in current
+    assert forms[2].instance.domain == 'test'
+
+
+def test_build_importer_forms_binds_posted_data():
+    [form] = build_importer_forms('test', [{'case_type': 'patient'}], [])
+    assert form.data == {'case_type': 'patient'}
+
+
+def test_format_form_errors():
+    forms = build_importer_forms('test', [{}, {'server_url': 'x'}], [])
+    for form in forms:
+        assert not form.is_valid()
+    errors = format_form_errors(forms)
+    assert errors.startswith('server_url: This field is required.; ')
+    assert errors.count('server_url') == 1
+    assert errors.count('report_uuid: This field is required.') == 2

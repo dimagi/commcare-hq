@@ -32,11 +32,11 @@
 <div
   class="
     alert alert-subscription
-    {% if is_same_edition %}
-      alert-info
-    {% else %}
-      alert-warning
-    {% endif %}
+  {% if is_same_edition %}
+    alert-info
+  {% else %}
+    alert-warning
+  {% endif %}
   "
 >
   <h4>
@@ -72,8 +72,10 @@
         {% endblocktrans %}
       {% endif %}
       {% blocktrans %}
-        In case you incur any on-demand fees for excess users or SMS, you
-        will receive invoices for these charges on a monthly basis. See
+        In case you incur any on-demand fees for excess users or SMS, you will
+        receive invoices for these charges on a monthly basis. A credit card
+        must be added to the account for automatic payment of these invoices.
+        See
         <a
           href="https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription"
           >here</a

@@ -483,6 +483,7 @@ def revert_to_copy(request, domain, app_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+@toggles.SUPPORT.required_decorator()
 def delete_copy(request, domain, app_id):
     """
     Deletes a saved copy permanently from the database.

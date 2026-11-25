@@ -62,7 +62,6 @@ from corehq.apps.ota.decorators import (
     mobile_auth,
     mobile_auth_or_public_form_session,
 )
-from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
     RegistryNotFound,
@@ -119,8 +118,8 @@ def restore(request, domain, app_id=None):
         return HttpTooManyRequests()
 
     params = get_restore_params(request, domain)
-    if isinstance(request.couch_user, PublicFormUser):
-        session = request.couch_user.session
+    session = getattr(request, 'public_form_session', None)
+    if session:
         # restore the build the link is pinned to, as this session's own device,
         # so respondents get their own reports and their own cache entry
         app_id = session.public_webform.app_build_id

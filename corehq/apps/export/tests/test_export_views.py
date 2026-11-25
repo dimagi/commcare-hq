@@ -3,7 +3,7 @@ import json
 import pytest
 import os
 from io import BytesIO
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.parse import urlencode
 
 from django.http import HttpResponse
@@ -11,28 +11,40 @@ from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
+from soil.progress import STATES, TaskStatus
 from couchdbkit.exceptions import ResourceNotFound
 
 from corehq import privileges
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.export.models import CaseExportInstance, FormExportInstance
+from corehq.apps.export.models import (
+    CaseExportDataSchema,
+    CaseExportInstance,
+    FormExportInstance,
+)
 from corehq.apps.export.models.new import DataFile
 from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
+from corehq.apps.export.views.list import CaseExportListView
 from corehq.apps.export.views.new import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewDailySavedCaseExport,
+    with_schema_build,
 )
-from corehq.apps.export.views.utils import DataFileDownloadDetail
-from corehq.apps.users.models import WebUser
+from corehq.apps.export.schema_builds import BuildRecord, SchemaBuildKey
+from corehq.apps.export.tasks import build_export_schema
+from corehq.apps.export.tests.util import StoreEagerCeleryResults
+from corehq.apps.export.views.utils import DataFileDownloadDetail, ExportSchemaBuildStatusView
+from corehq.apps.locations.models import LocationType, make_location
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 
@@ -56,18 +68,14 @@ class ViewTestCase(TestCase):
         super(ViewTestCase, cls).setUpClass()
         cls.domain = Domain(name="donkeykong", is_active=True)
         cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
         cls.username = 'bananafana'
         cls.password = '*******'
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(ViewTestCase, cls).tearDownClass()
+        cls.addClassCleanup(cls.user.delete, cls.domain.name, deleted_by=None)
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
@@ -115,6 +123,35 @@ class DataFileDownloadDetailTest(ViewTestCase):
         resp = self.client.get(self.data_file_url)
         self.assertEqual(resp.status_code, 404)
 
+    def test_data_file_download_suffix_range(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=-500')
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(
+            resp['Content-Range'],
+            'bytes {}-{}/{}'.format(content_length - 500, content_length - 1, content_length),
+        )
+        self.assertEqual(resp['Content-Length'], '500')
+        self.assertEqual(resp.getvalue(), self.content[-500:])
+
+    def test_data_file_download_range_end_beyond_content(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=1000-{}'.format(content_length + 1000))
+        self.assertEqual(resp.status_code, 206)
+        self.assertEqual(resp['Content-Range'], 'bytes 1000-{}/{}'.format(content_length - 1, content_length))
+        self.assertEqual(resp.getvalue(), self.content[1000:])
+
+    def test_data_file_download_range_not_satisfiable(self):
+        content_length = len(self.content)
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes={}-'.format(content_length))
+        self.assertEqual(resp.status_code, 416)
+        self.assertEqual(resp['Content-Range'], 'bytes */{}'.format(content_length))
+
+    def test_data_file_download_multiple_ranges_ignored(self):
+        resp = self.client.get(self.data_file_url, HTTP_RANGE='bytes=0-99,200-299')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.getvalue(), self.content)
+
 
 @generate_cases([
     (0, 999),
@@ -142,7 +179,7 @@ def test_data_file_download_partial(self, start, end):
     self.assertEqual(resp.getvalue(), expected_content)
 
 
-class ExportViewTest(ViewTestCase):
+class ExportViewTest(StoreEagerCeleryResults, ViewTestCase):
 
     def tearDown(self):
         delete_all_export_instances()
@@ -380,7 +417,6 @@ class ExportListCrossDomainTest(ViewTestCase):
         delete_all_export_instances()
         super().tearDown()
 
-
     def test_get_saved_export_progress(self):
         def _get_saved_export_progress(export_id):
             return self.client.get(
@@ -389,7 +425,6 @@ class ExportListCrossDomainTest(ViewTestCase):
             )
         assert _get_saved_export_progress(self.export._id).status_code == 200
         assert _get_saved_export_progress(self.other_export._id).status_code == 404
-
 
     def test_toggle_saved_export_enabled(self):
         def _toggle_saved_export_enabled(export_id):
@@ -400,7 +435,6 @@ class ExportListCrossDomainTest(ViewTestCase):
         assert _toggle_saved_export_enabled(self.export._id).status_code == 200
         assert _toggle_saved_export_enabled(self.other_export._id).status_code == 404
         assert FormExportInstance.get(self.other_export._id).auto_rebuild_enabled
-
 
     @patch('corehq.apps.export.views.list.rebuild_saved_export')
     def test_update_emailed_export_data(self, rebuild_saved_export):
@@ -414,7 +448,6 @@ class ExportListCrossDomainTest(ViewTestCase):
 
         assert _update_emailed_export_data(self.other_export._id).status_code == 404
         assert rebuild_saved_export.call_count == 1
-
 
     def test_commit_filters(self):
         def _commit_filters(export_id):
@@ -494,7 +527,6 @@ class ExportSchemaAndMultimediaCrossDomainTest(ViewTestCase):
     def tearDown(self):
         delete_all_export_instances()
         super().tearDown()
-
 
     def test_has_multimedia(self):
         def _has_multimedia(export_id):
@@ -580,6 +612,20 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
 
         assert _copy(self.other_export._id).status_code == 404
 
+    def test_copy_export_next_url(self):
+        def _copy_location(next_url):
+            response = self.client.get(
+                reverse('copy_export', args=[self.domain.name, self.export._id]),
+                {'next': next_url},
+                follow=False,
+            )
+            assert response.status_code == 302
+            return response['Location']
+
+        assert _copy_location('/a/test/data/export/') == '/a/test/data/export/'
+        default_url = reverse('data_interfaces_default', args=[self.domain.name])
+        assert _copy_location('https://example.com/') == default_url
+        assert _copy_location('//example.com/') == default_url
 
     def test_edit_export_name(self):
         def _edit_name(export_id, value):
@@ -599,3 +645,203 @@ class ExportEditDeleteCopyCrossDomainTest(ViewTestCase):
         response = self.client.get(
             reverse('edit_odata_form_feed', args=[self.domain.name, self.other_export._id]))
         assert response.status_code == 404
+
+
+class ExportSchemaBuildStatusViewTest(ViewTestCase):
+    download_id = 'abc-123'
+
+    def get_status(self, state, percent=None, record_domain=None, params=None):
+        """GET the status endpoint for a build in ``state``
+
+        ``state=None`` means soil has lost the build. ``record_domain=False``
+        means there is no build record for ``download_id``.
+        """
+        if record_domain is False:
+            record = None
+        else:
+            record = BuildRecord('key', record_domain or self.domain.name)
+        if state is None:
+            status = None
+        else:
+            progress = Mock(percent=percent)
+            status = TaskStatus(result=None, error=None, state=state, progress=progress, exception=None)
+        url = reverse(ExportSchemaBuildStatusView.urlname, args=[self.domain.name, self.download_id])
+        with patch('corehq.apps.export.views.utils.get_build_record', return_value=record), \
+                patch('corehq.apps.export.views.utils.get_build_status', return_value=status):
+            return self.client.get(url, params or {})
+
+    def test_status_unfinished_keeps_polling(self):
+        resp = self.get_status(STATES.started, percent=42)
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert 'hx-trigger="every 2s"' in content
+        assert '42%' in content
+
+    def test_status_success_triggers_event_without_redirect(self):
+        resp = self.get_status(STATES.success, params={'next': 'https://evil'})
+        assert resp.status_code == 200
+        assert resp['HX-Trigger'] == 'schemaBuildSucceeded'
+        assert not resp.has_header('HX-Redirect')
+        content = resp.content.decode()
+        assert 'hx-trigger' not in content
+        assert 'evil' not in content
+
+    @generate_cases([
+        (STATES.failed,),
+        (None,),  # the build vanished from soil
+    ])
+    def test_status_failed_stops_polling(self, state):
+        resp = self.get_status(state)
+        assert resp.status_code == 200
+        content = resp.content.decode()
+        assert 'hx-trigger' not in content
+        assert "We couldn't load the available columns." in content
+        assert '@click="window.location.reload()"' in content
+
+    @generate_cases([
+        (False,),  # unknown download_id
+        ('other-domain',),
+    ])
+    def test_status_404(self, record_domain):
+        resp = self.get_status(STATES.started, record_domain=record_domain)
+        assert resp.status_code == 404
+
+    def test_status_requires_edit_data_permission(self):
+        reader = WebUser.create(self.domain.name, 'reader', '*******', None, None)
+        reader.set_role(self.domain.name, 'none')
+        reader.save()
+        self.addCleanup(reader.delete, self.domain.name, deleted_by=None)
+        self.client.login(username='reader', password='*******')
+        resp = self.get_status(STATES.started, percent=5)
+        assert resp.status_code == 403
+
+    def test_status_allows_location_restricted_user(self):
+        role = UserRole.create(self.domain.name, 'Restricted editor', HqPermissions(
+            edit_data=True, access_all_locations=False,
+        ))
+        LocationType.objects.create(domain=self.domain.name, name='district')
+        location = make_location(domain=self.domain.name, name='Kigali', location_type='district')
+        location.save()
+        user = WebUser.create(self.domain.name, 'restricted', '*******', None, None)
+        self.addCleanup(user.delete, self.domain.name, deleted_by=None)
+        user.set_role(self.domain.name, role.get_qualified_id())
+        user.set_location(self.domain.name, location)
+        user.save()
+        self.client.login(username='restricted', password='*******')
+        resp = self.get_status(STATES.started, percent=5)
+        assert resp.status_code == 200
+        assert '5%' in resp.content.decode()
+
+
+@patch("corehq.apps.export.views.new.get_case_types_for_domain", lambda *a: ['random_case'])
+class ExportViewSchemaBuildTest(StoreEagerCeleryResults, ViewTestCase):
+    """Create and edit views build schemas in the background"""
+
+    def tearDown(self):
+        delete_all_export_instances()
+        super().tearDown()
+
+    def create_case_url(self, urlname=CreateNewCustomCaseExportView.urlname):
+        return reverse(urlname, args=[self.domain.name])
+
+    def edit_case_url(self):
+        export = CaseExportInstance(name='export', domain=self.domain.name, case_type='random_case')
+        export.save()
+        return reverse(EditNewCustomCaseExportView.urlname, args=[self.domain.name, export._id])
+
+    def get_while_build_is_slow(self, url, params=None, download_id='build-1'):
+        with (
+            patch('corehq.apps.export.views.new.start_or_join_build', return_value=download_id) as start,
+            patch('corehq.apps.export.views.new.wait_for_build', return_value=False),
+            patch.object(CaseExportDataSchema, 'generate_schema_from_builds') as generate,
+        ):
+            resp = self.client.get(url, params or {})
+        generate.assert_not_called()
+        start.assert_called_once()
+        return resp
+
+    def test_create_case_export_shows_waiting_page_when_build_slow(self):
+        resp = self.get_while_build_is_slow(self.create_case_url(), {'export_tag': 'random_case'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+        self.assertTemplateNotUsed(resp, 'export/customize_export_new.html')
+        assert resp.context['download_id'] == 'build-1'
+        assert resp.context['success_url'] == (
+            self.create_case_url() + '?export_tag=random_case&schema_build=build-1'
+        )
+        assert resp.context['export_home_url'] == reverse(CaseExportListView.urlname, args=[self.domain.name])
+
+    @generate_cases([
+        ('create',),
+        ('edit',),
+    ])
+    def test_case_export_uses_finished_build(self, view):
+        url = self.create_case_url() if view == 'create' else self.edit_case_url()
+        params = {'export_tag': 'random_case'} if view == 'create' else {}
+        schema = CaseExportDataSchema(domain=self.domain.name, case_type='random_case')
+        with (
+            patch('corehq.apps.export.views.new.get_built_schema', return_value=schema) as get_built,
+            patch('corehq.apps.export.views.new.start_or_join_build') as start,
+            patch.object(CaseExportDataSchema, 'get_number_of_apps_to_process', return_value=3),
+        ):
+            resp = self.client.get(url, {**params, 'schema_build': 'build-1'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        start.assert_not_called()
+        key, download_id = get_built.call_args.args
+        assert download_id == 'build-1'
+        assert key.identifier == 'random_case'
+        # The page context reads the schema that prepare_export_schema() set
+        assert resp.context['number_of_apps_to_process'] == 3
+
+    def test_edit_case_export_shows_waiting_page_when_build_slow(self):
+        resp = self.get_while_build_is_slow(self.edit_case_url())
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/schema_build_waiting.html')
+
+    def test_create_case_export_builds_once_per_request(self):
+        generate = CaseExportDataSchema.generate_schema_from_builds
+        with (
+            patch.object(build_export_schema, 'delay', wraps=build_export_schema.delay) as delay,
+            patch.object(CaseExportDataSchema, 'generate_schema_from_builds', wraps=generate) as gen,
+        ):
+            resp = self.client.get(self.create_case_url(), {'export_tag': 'random_case'})
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        delay.assert_called_once()
+        gen.assert_called_once()
+
+    @patch("couchforms.analytics.get_form_count_breakdown_for_domain", lambda *a: {})
+    def test_create_form_export_builds_in_background(self):
+        with patch.object(build_export_schema, 'delay', wraps=build_export_schema.delay) as delay:
+            resp = self.client.get(
+                reverse(CreateNewCustomFormExportView.urlname, args=[self.domain.name]),
+                {'export_tag': 'my_sweet_xmlns', 'app_id': 'r2d2'},
+            )
+        assert resp.status_code == 200
+        self.assertTemplateUsed(resp, 'export/customize_export_new.html')
+        delay.assert_called_once_with(FORM_EXPORT, self.domain.name, 'r2d2', 'my_sweet_xmlns', False)
+
+    @generate_cases([
+        ('create', True),
+        ('edit', False),
+    ])
+    def test_build_key_for_new_export_instance(self, view, expected):
+        url = self.create_case_url() if view == 'create' else self.edit_case_url()
+        params = {'export_tag': 'random_case'} if view == 'create' else {}
+        with (
+            patch('corehq.apps.export.views.new.start_or_join_build', return_value='b') as start,
+            patch('corehq.apps.export.views.new.wait_for_build', return_value=False),
+        ):
+            self.client.get(url, params)
+        key, = start.call_args.args
+        assert key == SchemaBuildKey(CASE_EXPORT, self.domain.name, None, 'random_case', expected)
+
+
+@pytest.mark.parametrize('full_path, download_id, expected', [
+    ('/a/d/new/', 'b1', '/a/d/new/?schema_build=b1'),
+    ('/a/d/new/?schema_build=a&export_tag=x&schema_build=b', 'c', '/a/d/new/?export_tag=x&schema_build=c'),
+    ('/a/d/new/?export_tag=%22a+b%22&app_id=', 'b1', '/a/d/new/?export_tag=%22a+b%22&app_id=&schema_build=b1'),
+])
+def test_with_schema_build(full_path, download_id, expected):
+    assert with_schema_build(full_path, download_id) == expected

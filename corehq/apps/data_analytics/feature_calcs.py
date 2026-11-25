@@ -8,6 +8,7 @@ from dimagi.utils.couch.cache import cache_core
 
 from corehq.apps.accounting.models import BillingAccount
 from corehq.apps.app_manager.const import WORKFLOW_DEFAULT
+from corehq.apps.app_manager.exceptions import DangerousXmlException, XFormException
 from corehq.apps.app_manager.util import actions_use_usercase
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_cleaning.models import BulkEditSession
@@ -17,6 +18,7 @@ from corehq.apps.export.utils import is_dashboard_feed
 from corehq.apps.groups.models import Group
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.locations.models import LocationType
+from corehq.apps.public_webforms.models import PublicFormSession, PublicWebform
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.sso.models import (
     IdentityProvider,
@@ -84,6 +86,22 @@ def calc_has_save_to_case(domain_context):
     )
 
 
+def calc_questions_locked(domain_context):
+    return sum(
+        _count_locked_questions(form)
+        for app in domain_context.apps
+        for form in app.get_forms(bare=True)
+        if form.form_type != 'shadow_form'
+    )
+
+
+def _count_locked_questions(form):
+    try:
+        return len(form.wrapped_xform().locked_question_paths)
+    except (XFormException, DangerousXmlException):
+        return 0
+
+
 def calc_bulk_case_editing_sessions(domain_context):
     """Count bulk case editing sessions."""
     return BulkEditSession.objects.filter(domain=domain_context.domain).count()
@@ -97,6 +115,17 @@ def calc_has_custom_branding(domain_context):
         getattr(app, 'logo_refs', None)
         for app in domain_context.apps
     )
+
+
+def calc_public_webforms(domain_context):
+    return PublicWebform.objects.filter(domain=domain_context.domain).count()
+
+
+def calc_public_webform_submissions(domain_context):
+    return PublicFormSession.objects.filter(
+        public_webform__domain=domain_context.domain,
+        submitted_at__isnull=False,
+    ).count()
 
 
 # Data & Export Feature metric calculations
@@ -267,11 +296,17 @@ FEATURE_METRICS = [
               calc_has_app_profiles),
     MetricDef('has_save_to_case', 'cp_has_save_to_case',
               calc_has_save_to_case),
+    MetricDef('questions_locked', 'cp_n_questions_locked',
+              calc_questions_locked, is_boolean=False),
     MetricDef('bulk_case_editing_sessions',
               'cp_n_bulk_case_editing_sessions',
               calc_bulk_case_editing_sessions, is_boolean=False),
     MetricDef('has_custom_branding', 'cp_has_custom_branding',
               calc_has_custom_branding),
+    MetricDef('public_webforms', 'cp_n_public_webforms',
+              calc_public_webforms),
+    MetricDef('public_webform_submissions', 'cp_n_public_webform_submissions',
+              calc_public_webform_submissions),
 
     # Data & Export Features
     MetricDef('has_data_dictionary', 'cp_has_data_dictionary',

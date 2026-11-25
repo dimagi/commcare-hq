@@ -10,7 +10,6 @@ import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.public_webforms.decorators import allow_public_form_session
-from corehq.apps.public_webforms.models import PublicFormUser
 from corehq.apps.public_webforms.submissions import (
     consume_public_form_session,
     public_form_session_already_submitted,
@@ -46,7 +45,7 @@ from corehq.apps.domain.decorators import (
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.ota.decorators import is_from_formplayer
+from corehq.apps.ota.origin_token import is_from_formplayer
 from corehq.apps.ota.utils import handle_401_response
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
@@ -149,10 +148,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         if should_limit:
             return HttpNotAcceptable(DEVICE_RATE_LIMIT_MESSAGE)
 
-    couch_user = getattr(request, 'couch_user', None)
-    is_public = isinstance(couch_user, PublicFormUser) and instance_json is not None
+    public_session = getattr(request, 'public_form_session', None)
+    is_public = public_session is not None and instance_json is not None
     if is_public:
-        error = validate_public_form_submission(couch_user.session, instance_json)
+        error = validate_public_form_submission(public_session, instance_json)
         if error is not None:
             metrics_counter(
                 'commcare.public_form.rejected_submission',
@@ -163,11 +162,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             return response
 
     with (
-        CriticalSection([f'public-form-session-{couch_user.session.id}'], fail_hard=True)
+        CriticalSection([f'public-form-session-{public_session.id}'], fail_hard=True)
         if is_public else nullcontext()
     ):
         # Ensure concurrent submissions on a public form session cannot persist more than one form.
-        if is_public and public_form_session_already_submitted(couch_user.session):
+        if is_public and public_form_session_already_submitted(public_session):
             metrics_counter(
                 'commcare.public_form.already_consumed',
                 tags={'domain': domain},
@@ -218,11 +217,22 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         response.request_timer = timer  # logged as Sentry breadcrumbs in LogLongRequestMiddleware
 
         if is_public and result.xform is not None and response.status_code < 400:
-            consume_public_form_session(couch_user.session, result.xform)
+            consume_public_form_session(public_session, result.xform)
 
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
     return response
+
+
+def _public_form_post(request, domain, app_id):
+    # allow_public_form_session has already authenticated the submitter
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
 
 
 def _submission_error(request, message, metric_tags,
@@ -302,6 +312,8 @@ def post_api(request, domain):
 @set_request_duration_reporting_threshold(60)
 @allow_public_form_session
 def post(request, domain, app_id=None):
+    if getattr(request, 'public_form_session', None):
+        return _public_form_post(request, domain, app_id)
     try:
         if domain_requires_auth(domain):
             # "redirect" to the secure version
@@ -464,15 +476,8 @@ def secure_post(request, domain, app_id=None):
         OAUTH2: _secure_post_oauth2,
     }
 
-    if isinstance(getattr(request, 'couch_user', None), PublicFormUser):
-        # no mobile credential; _process_form authorizes against the public form session
-        return _process_form(
-            request=request,
-            domain=domain,
-            app_id=app_id,
-            user_id=None,
-            authenticated=False,
-        )
+    if getattr(request, 'public_form_session', None):
+        return _public_form_post(request, domain, app_id)
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']

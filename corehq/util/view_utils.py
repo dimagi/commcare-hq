@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse as _reverse
-from django.utils.http import urlencode
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 
 from corehq.util.timezones.conversions import UserTime
 from dimagi.utils.logging import notify_exception
@@ -219,3 +219,22 @@ def set_language_cookie(response, lang_code):
         samesite=settings.LANGUAGE_COOKIE_SAMESITE,
     )
     return response
+
+
+def get_safe_redirect_url(request, url, default):
+    """Return ``url`` if it points to the current host, else ``default``
+
+    Relative paths are accepted. Absolute URLs must use the request's host
+    and, when the request is over HTTPS, the ``https`` scheme. Use this for
+    any redirect target or link that comes from the request (query string,
+    POST data, Referer header, session values set from those, etc.).
+    """
+    # Pass ``url`` positionally: CodeQL's py/url-redirection query does not
+    # recognize this check when ``url`` is passed by keyword.
+    if url and url_has_allowed_host_and_scheme(
+        url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return url
+    return default

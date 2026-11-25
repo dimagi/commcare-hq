@@ -42,16 +42,6 @@ WHITELIST = [
         re.compile(r"Invalid index settings key .+, expected one of \["),
         UserWarning,
     ),
-    (
-        # Should be removed  after es5 references are removed
-        "elasticsearch5.connection.http_urllib3",
-        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
-    ),
-    (
-        # This should be tested on a newer version(>6.8) of ES.Should be removed if fixed
-        "elasticsearch6.connection.http_urllib3",
-        "HTTPResponse.getheaders() is deprecated and will be removed in urllib3 v2.1.0."
-    ),
     # Open files are leaked all over the place, it will probably take a long time to fix all of them
     ("", "unclosed file", ResourceWarning),
 

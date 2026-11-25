@@ -1,5 +1,3 @@
-/* eslint-env mocha */
-
 import _ from "underscore";
 import sinon from "sinon";
 import moment from "moment";
@@ -426,6 +424,13 @@ describe('Entries', function () {
         assertParsesAs("03/04/20", "2020-03-04");
         assertParsesAs("3/4/20", "2020-03-04");
         assertParsesAs("2020-03-04", "2020-03-04");
+        assertParsesAs("03/04/2020", "2020-03-04");
+        assertParsesAs("3/04/2020", "2020-03-04");
+        assertParsesAs("03/4/2020", "2020-03-04");
+        assertParsesAs("03-04-2020", "2020-03-04");
+        assertParsesAs("3-04-2020", "2020-03-04");
+        assertParsesAs("03-4-2020", "2020-03-04");
+        assertParsesAs("3-4-2020", "2020-03-04");
     });
 
     it('Should fail to interpret invalid date inputs', function () {

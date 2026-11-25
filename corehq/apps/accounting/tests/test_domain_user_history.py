@@ -1,21 +1,13 @@
 import datetime
-import uuid
+from unittest import mock
 
 from django.test import TestCase
 
 from corehq.apps.accounting import tasks
-from corehq.apps.accounting.models import (
-    BillingAccountWebUserHistory,
-    DomainUserHistory,
-    SoftwarePlanEdition,
-)
+from corehq.apps.accounting.models import DomainUserHistory, DomainWebUserHistory
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from corehq.apps.domain.tests.test_utils import delete_all_domains
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.users import user_adapter
-from corehq.apps.users.dbaccessors import delete_all_users, get_all_web_users_by_domain
-from corehq.apps.users.models import WebUser
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):
@@ -55,109 +47,43 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
         self.assertEqual(domain_user_history.record_date, self.record_date)
 
 
-@es_test(requires=[user_adapter], setup_class=True)
-class TestBillingAccountWebUserHistory(TestCase):
+class TestCalculateWebUsersInAllDomains(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.billing_contact_enterprise = generator.create_arbitrary_web_user_name()
-        cls.billing_contact_standard = generator.create_arbitrary_web_user_name()
-
-        cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
-        cls.currency = generator.init_default_currency()
-        cls.account_enterprise = generator.billing_account(
-            cls.dimagi_user, cls.billing_contact_enterprise, is_customer_account=True)
-        cls.account_standard = generator.billing_account(
-            cls.dimagi_user, cls.billing_contact_standard, is_customer_account=True
-        )
-
         cls.domain_1 = generator.arbitrary_domain()
         cls.domain_2 = generator.arbitrary_domain()
-        cls.domain_3 = generator.arbitrary_domain()
+        cls.domain_without_web_users = generator.arbitrary_domain()
+        for domain in [cls.domain_1, cls.domain_2, cls.domain_without_web_users]:
+            cls.addClassCleanup(domain.delete)
 
-        subscription_start_date = datetime.date(2022, 3, 1)
-        enterprise_plan = generator.subscribable_plan_version(edition=SoftwarePlanEdition.ENTERPRISE)
+    def _get_web_usernames(self, domain):
+        if domain == self.domain_1.name:
+            return ['a@example.com', 'staff@dimagi.com']
+        if domain == self.domain_2.name:
+            raise Exception('ES is down')
+        return []
 
-        cls.domain_1_enterprise_subscription = generator.generate_domain_subscription(
-            cls.account_enterprise,
-            cls.domain_1,
-            date_start=subscription_start_date,
-            date_end=None,
-            plan_version=enterprise_plan,
-            is_active=True,
-        )
-        cls.domain_2_enterprise_subscription = generator.generate_domain_subscription(
-            cls.account_enterprise,
-            cls.domain_2,
-            date_start=subscription_start_date,
-            date_end=None,
-            plan_version=enterprise_plan,
-            is_active=True,
-        )
+    def test_records_usernames_per_domain(self):
+        with mock.patch.object(tasks, 'get_web_usernames', side_effect=self._get_web_usernames):
+            tasks.calculate_web_users_in_all_domains(datetime.date(2026, 10, 1))
 
-        cls.standard_subscription = generator.generate_domain_subscription(
-            cls.account_standard,
-            cls.domain_3,
-            date_start=subscription_start_date,
-            date_end=None,
-            is_active=True,
-        )
+        history = DomainWebUserHistory.objects.get(domain=self.domain_1.name)
+        assert history.record_date == datetime.date(2026, 9, 30)
+        assert history.usernames == ['a@example.com', 'staff@dimagi.com']
+        assert history.num_users == 2
 
-        # Give each domain two active and one inactive user
-        for domain_obj in [cls.domain_1, cls.domain_2, cls.domain_3]:
-            generator.arbitrary_webusers_for_domain(domain_obj.name, 3)
+    def test_records_empty_row_for_domain_without_web_users(self):
+        with mock.patch.object(tasks, 'get_web_usernames', side_effect=self._get_web_usernames):
+            tasks.calculate_web_users_in_all_domains(datetime.date(2026, 10, 1))
 
-            is_first = True
-            for user in get_all_web_users_by_domain(domain_obj.name):
-                if is_first:
-                    is_first = False
-                    user.set_is_active(domain_obj.name, False)
-                    user.save()
-                user_adapter.index(user)
-                cls.addClassCleanup(user_adapter.delete, user._id)
+        history = DomainWebUserHistory.objects.get(domain=self.domain_without_web_users.name)
+        assert (history.usernames, history.num_users) == ([], 0)
 
-        # Add another user that's a member of both domains 1 and 2
-        cross_domain_user = WebUser.create(None, str(uuid.uuid4()), "***********", None, None)
-        cross_domain_user.add_domain_membership(cls.domain_1.name)
-        cross_domain_user.add_domain_membership(cls.domain_2.name)
-        cross_domain_user.save()
-        user_adapter.index(cross_domain_user, refresh=True)
-        cls.addClassCleanup(user_adapter.delete, cross_domain_user._id)
+    def test_failure_in_one_domain_does_not_stop_others(self):
+        with mock.patch.object(tasks, 'get_web_usernames', side_effect=self._get_web_usernames):
+            tasks.calculate_web_users_in_all_domains(datetime.date(2026, 10, 1))
 
-    def test_calculate_web_users_for_enterprise_account(self):
-        tasks.calculate_web_users_in_all_billing_accounts()
-        enterprise_users = BillingAccountWebUserHistory.objects.get(
-            billing_account=self.account_enterprise
-        ).num_users
-
-        # Should have users from both domain_1 and domain_2
-        # with the cross domain user counted once
-        self.assertEqual(enterprise_users, 5)
-
-    def test_calculate_web_users_for_standard_account(self):
-        tasks.calculate_web_users_in_all_billing_accounts()
-        standard_users = BillingAccountWebUserHistory.objects.get(billing_account=self.account_standard).num_users
-
-        # Should only have the two active users from domain_2
-        self.assertEqual(standard_users, 2)
-
-    def test_mobile_workers_are_not_counted(self):
-        generator.arbitrary_commcare_users_for_domain(self.domain_3.name, 3)
-        tasks.calculate_web_users_in_all_billing_accounts()
-        standard_users = BillingAccountWebUserHistory.objects.get(billing_account=self.account_standard).num_users
-
-        # Should only have users from both domain_2
-        self.assertEqual(standard_users, 2)
-
-    def _get_domain_user_from_account(self):
-        domain = self.account_standard.get_domains()[0]
-        web_users = get_all_web_users_by_domain(domain)
-        for u in web_users:
-            return domain, u
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_domains()
-        return super().tearDownClass()
+        assert not DomainWebUserHistory.objects.filter(domain=self.domain_2.name).exists()
+        assert DomainWebUserHistory.objects.filter(domain=self.domain_1.name).exists()

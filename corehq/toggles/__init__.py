@@ -923,6 +923,17 @@ PUBLIC_WEBFORMS = FeatureRelease(
     """
 )
 
+GA_OCS_CHATBOT = StaticToggle(
+    'ga_ocs_chatbot',
+    'GA CommCare Companion',
+    TAG_GA_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+        Enable to GA the chatbot and hide the OCS_CHATBOT feature preview.
+        Domains can opt out in Project Settings > Basic.
+    """,
+)
+
 WEB_APPS_PERMISSIONS_VIA_GROUPS = StaticToggle(
     'web_apps_permissions_via_groups',
     "USH: Allow users to control access to specific web apps via mobile worker groups.",
@@ -1025,6 +1036,13 @@ PROJECT_DB = StaticToggle(
     [NAMESPACE_DOMAIN],
     description="Note that this is in testing and will not work without a dev helping.",
     save_fn=_sync_project_db_schema,
+)
+
+DOCUMENT_TEMPLATES = StaticToggle(
+    'document_templates',
+    'Document templates: Generate documents from templates',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
 )
 
 GEOCODER_MY_LOCATION_BUTTON = StaticToggle(

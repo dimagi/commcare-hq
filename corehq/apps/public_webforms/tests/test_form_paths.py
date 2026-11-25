@@ -77,6 +77,7 @@ class TestGetPublicWebformPaths:
         assert path['menu_name'] == MENU_NAME
         assert path['form_name'] == FORM_NAME
         assert path['app_url'].endswith(f'/{app.app_id}/')
+        assert path['is_app_deleted'] is False
 
     def test_app_uses_current_name(self):
         app = app_with_build()
@@ -112,4 +113,5 @@ class TestGetPublicWebformPaths:
 
         assert path['app_name'] == f'{APP_NAME} (Deleted)'
         assert path['app_url'] is None
+        assert path['is_app_deleted'] is True
         assert path['form_name'] == FORM_NAME

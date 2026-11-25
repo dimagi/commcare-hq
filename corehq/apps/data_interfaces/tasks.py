@@ -4,7 +4,6 @@ from typing import List, Literal, Optional, Sequence  # noqa: F401
 from django.conf import settings
 from django.core.cache import cache
 from django.template.loader import render_to_string
-from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
 from celery.signals import task_failure
@@ -31,7 +30,6 @@ from corehq.util.log import send_HTML_email
 
 from .bulk_form_actions import mark_job_failed, run_bulk_form_action
 from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
-from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,
     BulkAsyncJob,
@@ -42,7 +40,6 @@ from .models import (
 )
 from .utils import (
     add_cases_to_case_group,
-    archive_or_restore_forms,
     iter_cases_and_run_rules,
     operate_on_payloads,
     run_rules_for_case,
@@ -110,18 +107,6 @@ def bulk_form_action_async(job_id, domain):
 def _mark_bulk_form_action_job_failed(sender=None, args=None, **kwargs):
     if job_id := (args[0] if args else None):
         mark_job_failed(job_id)
-
-
-@task(serializer='pickle')
-def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
-    task = bulk_form_management_async
-    mode = FormManagementMode(archive_or_restore, validate=True)
-
-    if not form_ids:
-        return {'messages': {'errors': [_('No Forms are supplied')]}}
-
-    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, form_ids, mode, task)
-    return response
 
 
 @periodic_task(

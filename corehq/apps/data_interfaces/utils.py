@@ -1,8 +1,9 @@
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, Optional
 
 from django.conf import settings
+from django.db import close_old_connections
+from django.db.utils import InterfaceError, OperationalError
 from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
@@ -13,7 +14,7 @@ from soil import DownloadBase
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.form_processor.models import CommCareCase
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
@@ -62,98 +63,6 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_track
         case_group.save()
 
     return response
-
-
-SUCCEEDED = 'succeeded'
-SKIPPED = 'skipped'
-
-
-@dataclass(frozen=True)
-class FormActionResult:
-    """Outcome of a bulk form action for a single requested form id."""
-    form_id: str
-    status: str  # SUCCEEDED | SKIPPED
-    reason: Optional[str] = None  # not_found | unexpected_error
-
-
-def apply_form_action(domain, form_ids, action_fn):
-    """Apply ``action_fn`` to each form and yield a ``FormActionResult`` per id.
-
-    :param action_fn: callable taking an ``XFormInstance``
-    """
-    unresolved_ids = set(form_ids)
-    for xform in XFormInstance.objects.iter_forms(form_ids):
-        if xform.domain != domain or xform.is_deleted:
-            # a form in another domain or a deleted form does not exist as
-            # far as the caller is concerned, so both are reported not_found
-            continue
-        unresolved_ids.discard(xform.form_id)
-        try:
-            action_fn(xform)
-        except Exception:
-            notify_exception(None, "Error applying bulk form action", {
-                'domain': domain,
-                'form_id': xform.form_id,
-            })
-            yield FormActionResult(xform.form_id, SKIPPED, 'unexpected_error')
-        else:
-            yield FormActionResult(xform.form_id, SUCCEEDED)
-    for form_id in unresolved_ids:
-        yield FormActionResult(form_id, SKIPPED, 'not_found')
-
-
-def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_restore, task=None, from_excel=False):
-    response = {
-        'errors': [],
-        'success': [],
-    }
-    is_archive = archive_or_restore.is_archive_mode()
-
-    def action_fn(xform):
-        if is_archive:
-            xform.archive(user_id=user_id)
-        else:
-            xform.unarchive(user_id=user_id)
-
-    success_count = 0
-    if task:
-        DownloadBase.set_progress(task, 0, len(form_ids))
-
-    for result in apply_form_action(domain, form_ids, action_fn):
-        if result.reason == 'not_found':
-            response['errors'].append(
-                _("Could not find XForm {form_id}").format(form_id=result.form_id))
-            continue
-
-        xform_string = _("XForm {form_id} for domain {domain} by user '{username}'").format(
-            form_id=result.form_id,
-            domain=domain,
-            username=username)
-
-        if result.status == SUCCEEDED:
-            if is_archive:
-                message = _("Successfully archived {form}").format(form=xform_string)
-            else:
-                message = _("Successfully unarchived {form}").format(form=xform_string)
-            response['success'].append(message)
-            success_count = success_count + 1
-        else:
-            if is_archive:
-                message = _("Could not archive {form}").format(form=xform_string)
-            else:
-                message = _("Could not unarchive {form}").format(form=xform_string)
-            response['errors'].append(message)
-
-        if task:
-            DownloadBase.set_progress(task, success_count, len(form_ids))
-
-    if from_excel:
-        return response
-
-    response["success_count_msg"] = _("{success_msg} {count} form(s)").format(
-        success_msg=archive_or_restore.success_text,
-        count=success_count)
-    return {"messages": response}
 
 
 def property_references_parent(case_property):
@@ -290,13 +199,20 @@ def run_rules_for_case(case, rules, now):
 
         try:
             last_result = rule.run_rule(case, now)
-        except Exception:
+        except Exception as exc:
             last_result = CaseRuleActionResult(num_errors=1)
             notify_exception(None, "Error applying case update rule", {
                 'domain': case.domain,
                 'rule_pk': rule.pk,
                 'case_id': case.case_id,
             })
+            if isinstance(exc, (InterfaceError, OperationalError)):
+                # Django does not reconnect a connection the server has
+                # dropped, so every later query on it would fail. Call
+                # close_old_connections() so the next query reconnects.
+                # The failed rule is not retried. This only protects the
+                # rules and cases that follow.
+                close_old_connections()
 
         aggregated_result.add_result(last_result)
         if last_result.num_closes > 0:

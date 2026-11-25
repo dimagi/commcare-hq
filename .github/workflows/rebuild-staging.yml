@@ -27,7 +27,7 @@ jobs:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
     - name: Harden runner
-      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a  # v2.22.4
       with:
         egress-policy: audit
 
@@ -80,7 +80,7 @@ jobs:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
     - name: Harden runner
-      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a  # v2.22.4
       with:
         egress-policy: audit
 
@@ -116,7 +116,7 @@ jobs:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
     - name: Harden runner
-      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a  # v2.22.4
       with:
         egress-policy: audit
 
@@ -138,6 +138,11 @@ jobs:
       run: |
         if ! git fetch origin vellum-staging 2>/dev/null; then
           echo "vellum-staging branch not found, skipping"
+          echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if git merge-base --is-ancestor origin/vellum-staging HEAD; then
+          echo "vellum-staging is already merged into master, no rebuild needed"
           echo "needs-rebuild=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi

@@ -13,6 +13,8 @@ from dimagi.utils.logging import notify_error, notify_exception
 
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqcase.utils import bulk_update_cases
+from corehq.apps.integration.kyc.models import KycVerificationStatus
+from corehq.apps.integration.kyc.services import get_kyc_config
 from corehq.apps.integration.payments.const import (
     PAYMENT_STATUS_DEVICE_ID,
     PaymentStatusErrorCode,
@@ -20,7 +22,7 @@ from corehq.apps.integration.payments.const import (
     PAYMENT_SUCCESS_STATUS_CODE,
     PaymentProperties,
     PaymentStatus,
-    PAYMENT_STATUS_RETRY_MAX_ATTEMPTS,
+    PAYMENT_STATUS_MAX_RETRIES,
 )
 from corehq.apps.integration.payments.exceptions import PaymentRequestError
 from corehq.apps.integration.payments.models import MoMoConfig, MoMoProviders
@@ -267,11 +269,42 @@ def verify_payment_cases(domain, case_ids: list, verifying_user: WebUser):
     return updated_cases
 
 
+def get_user_or_case_ids(cases):
+    return [
+        user_or_case_id for case in cases
+        if (user_or_case_id := case.get_case_property(PaymentProperties.USER_OR_CASE_ID))
+    ]
+
+
+def get_kyc_verification_statuses(kyc_config, user_or_case_ids):
+    if not kyc_config or not user_or_case_ids:
+        return {}
+    return {
+        kyc_user.user_id: kyc_user.kyc_verification_status
+        for kyc_user in kyc_config.get_kyc_users_by_ids(user_or_case_ids)
+    }
+
+
 def _validate_payment_cases_for_verification(case_ids, domain):
     valid_statuses = [PaymentStatus.NOT_VERIFIED, PaymentStatus.REQUEST_FAILED]
-    for case in CommCareCase.objects.iter_cases(case_ids):
-        _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
-        _validate_final_mobile_validation(case)
+    kyc_config = get_kyc_config(domain)
+    for case_ids_chunk in chunked(case_ids, CHUNK_SIZE):
+        cases = CommCareCase.objects.get_cases(list(case_ids_chunk))
+        kyc_statuses = get_kyc_verification_statuses(kyc_config, get_user_or_case_ids(cases))
+        for case in cases:
+            _validate_payment_case_status(case, domain, valid_statuses, operation=_("Verification"))
+            _validate_final_mobile_validation(case)
+            _validate_kyc_passed(case, kyc_statuses)
+
+
+def _validate_kyc_passed(case, kyc_statuses):
+    user_or_case_id = case.get_case_property(PaymentProperties.USER_OR_CASE_ID)
+    if kyc_statuses.get(user_or_case_id) != KycVerificationStatus.PASSED:
+        raise PaymentRequestError(
+            _("Only payments with users that have KYC status '{}' are eligible for verification.").format(
+                KycVerificationStatus.PASSED.label
+            )
+        )
 
 
 def _validate_payment_case_status(case, domain, valid_statuses, operation):
@@ -416,9 +449,9 @@ def request_payments_status_for_cases(case_ids, config):
                 status_update = request_payment_status(payment_case, config)
                 if status_update.get(PaymentProperties.PAYMENT_STATUS) == PaymentStatus.PENDING_PROVIDER:
                     # If status is still pending, we need to retry fetching status in future runs
-                    status_update = _handle_payment_status_retry(payment_case, status_update=status_update)
+                    status_update = _handle_pending_status(payment_case, status_update)
             except PaymentRequestError as err:
-                status_update = _handle_payment_status_retry(payment_case, request_error=err)
+                status_update = _handle_status_request_error(payment_case, err)
 
             status_updates.append(
                 (payment_case.case_id, status_update, False)
@@ -428,32 +461,39 @@ def request_payments_status_for_cases(case_ids, config):
         )
 
 
-def _handle_payment_status_retry(payment_case, status_update=None, request_error=None):
+def _get_status_retry_count(payment_case):
     try:
-        retry_count = int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
+        return int(payment_case.case_json.get(PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT, 0))
     except ValueError:
-        retry_count = 0
+        return 0
 
-    if request_error:
-        if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
-            details = _get_notify_error_details(
-                payment_case.domain,
-                payment_case.case_id,
-                str(request_error),
-                payment_case.get_case_property('transaction_id')
-            )
-            notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
-            return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
-        else:
-            # We only increment the retry count for request errors. Will retry in the next scheduled run
-            # TODO Consider updating status and error so user is aware of the issue
-            return {PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
 
-    if retry_count > PAYMENT_STATUS_RETRY_MAX_ATTEMPTS:
+def _handle_status_request_error(payment_case, request_error):
+    retry_count = _get_status_retry_count(payment_case)
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
+        details = _get_notify_error_details(
+            payment_case.domain,
+            payment_case.case_id,
+            str(request_error),
+            payment_case.get_case_property('transaction_id')
+        )
+        notify_error("[MoMo Payments] Max retries exceeded for payment status with request errors.", details)
+        return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededRequestError)
+
+    # The status is left unchanged so that the payment is picked up again in the next scheduled run.
+    # The error lets the user know the status could not be fetched.
+    return {
+        PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1,
+        PaymentProperties.PAYMENT_ERROR: PaymentStatusErrorCode.PAYMENT_STATUS_REQUEST_ERROR,
+    }
+
+
+def _handle_pending_status(payment_case, status_update):
+    retry_count = _get_status_retry_count(payment_case)
+    if retry_count >= PAYMENT_STATUS_MAX_RETRIES:
         return _get_status_details(PaymentStatus.ERROR, PaymentStatusErrorCode.MaxRetryExceededPendingStatus)
-    else:
-        status_update[PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT] = retry_count + 1
-    return status_update
+
+    return {**status_update, PaymentProperties.PAYMENT_STATUS_ATTEMPT_COUNT: retry_count + 1}
 
 
 def request_payment_status(payment_case: CommCareCase, config: MoMoConfig):
@@ -641,20 +681,12 @@ def _get_status_details(status, error_code=None):
         error_code = "UnexpectedStatus-{}".format(status)
         status = PaymentStatus.ERROR
 
-    if status == PaymentStatus.SUCCESSFUL:
-        # Clear any previous error if payment was successful
-        error_code = ''
-
-    status_update = {
+    return {
         PaymentProperties.PAYMENT_STATUS: status,
         PaymentProperties.PAYMENT_STATUS_CONFIRMED_ON: datetime.utcnow().isoformat(),
+        # Clears any previous error when the new status has none
+        PaymentProperties.PAYMENT_ERROR: error_code or '',
     }
-
-    if error_code is not None:
-        status_update.update({
-            PaymentProperties.PAYMENT_ERROR: error_code,
-        })
-    return status_update
 
 
 def _get_http_error_code(code, response):

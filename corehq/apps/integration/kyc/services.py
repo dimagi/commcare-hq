@@ -11,10 +11,18 @@ import jsonschema
 import requests
 
 from corehq.apps.integration.kyc.models import (
+    KycConfig,
     KycVerificationFailureCause,
     KycVerificationStatus,
 )
 from corehq.util.metrics import metrics_counter
+
+
+def get_kyc_config(domain):
+    try:
+        return KycConfig.objects.get(domain=domain)
+    except KycConfig.DoesNotExist:
+        return None
 
 
 def verify_users(kyc_users, config, verified_by):

@@ -147,9 +147,14 @@ from corehq.util.test_utils import flag_enabled
 from settings import HQ_ACCOUNT_ROOT
 
 from .. import deletion as mod
-from .test_utils import delete_es_docs_patch, domain_tombstone_patch
+from .test_utils import (
+    delete_es_docs_patch,
+    domain_tombstone_patch,
+    sql_deletion_patch,
+)
 
 
+@suspend(sql_deletion_patch)
 class TestDeleteDomain(TestCase):
 
     def _create_data(self, domain_name, i):

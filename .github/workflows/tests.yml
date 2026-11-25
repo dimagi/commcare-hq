@@ -8,28 +8,42 @@ on:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
   workflow_dispatch:
+concurrency:
+  # Cancel a PR's in-progress run when a newer one starts, freeing runner
+  # slots for other PRs. Scheduled and manual runs each get their own group
+  # (keyed on run_id) and are never cancelled.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   tests:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    # A hung job holds a runner slot (blocking other PRs) until this timeout,
+    # so keep it tight. PR jobs (no coverage) take up to 20 minutes;
+    # scheduled and manual runs collect coverage and take up to 35.
+    timeout-minutes: ${{ github.event_name == 'pull_request' && 25 || 40 }}
     strategy:
       fail-fast: false
       matrix:
         include:
-        - {TEST: python, DIVIDED_WE_RUN: '03'}
-        - {TEST: python, DIVIDED_WE_RUN: '47'}
-        - {TEST: python, DIVIDED_WE_RUN: '8b'}
-        - {TEST: python, DIVIDED_WE_RUN: 'cf'}
+        # Ranges of divided-we-run hash buckets, chosen so each python job
+        # takes about as long as python-sharded-and-javascript. Rebalance
+        # when one job becomes the clear long pole.
+        - {TEST: python, DIVIDED_WE_RUN: '05'}
+        - {TEST: python, DIVIDED_WE_RUN: '6a'}
+        - {TEST: python, DIVIDED_WE_RUN: 'bf'}
         - {TEST: python-sharded-and-javascript}
     env:
       DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
       DATADOG_APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
       REUSE_DB: true  # do not drop databases on completion to save time
+      # Coverage tracing slows tests, and the Codecov check is informational
+      # only, so collect coverage on scheduled and manual runs, not PRs.
+      COVERAGE: ${{ github.event_name != 'pull_request' && 'yes' || 'no' }}
     steps:
     # Audit-only: records egress from the runner, never fails the build.
     # Tighten to egress-policy: block once audit logs confirm the endpoint list.
     - name: Harden runner
-      uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40  # v2.20.1
+      uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a  # v2.22.4
       with:
         egress-policy: audit
 
@@ -49,6 +63,22 @@ jobs:
       with:
         username: dimagi
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    # `yarn install` in the test container still runs on top of the restored
+    # node_modules, applying any difference from yarn.lock. A stale or
+    # partial cache only makes it slower, not wrong.
+    - name: Restore node_modules
+      id: node-modules
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', '.yarnrc') }}
+        restore-keys: node-modules-${{ runner.os }}-
+    # An older cache's .yarn-integrity doesn't match yarn.lock, so yarn ignores
+    # it anyway. Remove it so that "Save node_modules" only sees one written by
+    # this run's install, and can't save a failed install under the new key.
+    - name: Discard stale yarn integrity marker
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      run: rm -f node_modules/.yarn-integrity
     - name: Run tests
       env:
         TEST: ${{ matrix.TEST }}
@@ -67,10 +97,26 @@ jobs:
         --max-test-time=29
         --durations=50
         -p no:cacheprovider
+    # Save only from scheduled and manual runs: PR runs can restore caches
+    # saved on master, but a cache saved by a PR run is only visible to that
+    # PR. One job saves, since every job installs the same node_modules.
+    # `yarn install` runs inside "Run tests", so save even if tests failed,
+    # as long as the install finished (it writes .yarn-integrity last).
+    - name: Save node_modules
+      if: >-
+        always()
+        && hashFiles('node_modules/.yarn-integrity') != ''
+        && github.event_name != 'pull_request'
+        && matrix.DIVIDED_WE_RUN == '05'
+        && steps.node-modules.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      with:
+        path: node_modules
+        key: ${{ steps.node-modules.outputs.cache-primary-key }}
     - name: "Codecov upload"
       env:
         TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      if: env.TOKEN != ''
+      if: env.TOKEN != '' && env.COVERAGE == 'yes'
       uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4.6.0
       with:
         token: ${{ secrets.CODECOV_TOKEN }}

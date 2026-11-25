@@ -9,6 +9,7 @@ from memoized import memoized
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.analytics.tasks import record_google_analytics_event
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.hqwebapp.decorators import use_bootstrap5
@@ -21,7 +22,10 @@ from corehq.apps.public_webforms.forms import (
     EditPublicWebformForm,
     PublicWebformFilterForm,
 )
-from corehq.apps.public_webforms.models import PublicWebform
+from corehq.apps.public_webforms.models import (
+    PublicWebform,
+    PublicWebformAppDeleted,
+)
 from corehq.apps.public_webforms.tables import PublicWebformTable
 from corehq.apps.settings.views import get_qrcode
 from corehq.apps.users.decorators import require_permission
@@ -122,7 +126,14 @@ class CreatePublicWebformView(BasePublicWebformsView):
     def post(self, request, *args, **kwargs):
         if not self.form.is_valid():
             return self.get(request, *args, **kwargs)
-        self.form.create_public_webform()
+        webform = self.form.create_public_webform()
+        record_google_analytics_event('public_webform_created', request.couch_user, {
+            'domain': self.domain,
+            'webform_id': webform.id,
+            'session_type': webform.session_type,
+            'allow_email': 'yes' if webform.allow_email else 'no',
+            'allow_sms': 'yes' if webform.allow_sms else 'no',
+        })
         messages.success(request, _("Public webform created."))
         return HttpResponseRedirect(
             reverse(ManagePublicWebformsView.urlname, args=[self.domain]))
@@ -138,9 +149,15 @@ class CreatePublicWebformView(BasePublicWebformsView):
     @property
     @memoized
     def form(self):
-        data = self.request.POST if self.request.method == 'POST' else None
+        timezone = self.domain_object.get_default_timezone()
+        if self.request.method == 'POST':
+            return CreatePublicWebformForm(self.domain, timezone, self.request.POST)
         return CreatePublicWebformForm(
-            self.domain, self.domain_object.get_default_timezone(), data)
+            self.domain,
+            timezone,
+            app_id=self.request.GET.get('app_id'),
+            form_unique_id=self.request.GET.get('form_unique_id'),
+        )
 
 
 class EditPublicWebformView(BasePublicWebformsView):
@@ -199,7 +216,12 @@ def public_webform_qr_code(request, domain, webform_id):
 def set_public_webform_status(request, domain, webform_id):
     """Open or close a webform to requests for a one-time link."""
     webform = get_object_or_404(PublicWebform, domain=domain, id=webform_id)
-    webform.is_disabled = request.POST.get('is_disabled') == 'true'
+    try:
+        webform.set_disabled(request.POST.get('is_disabled') == 'true')
+    except PublicWebformAppDeleted:
+        messages.error(request, _(
+            "This public webform's application has been deleted, so it can't be opened."))
+        return HttpResponseRedirect(_dashboard_url(request, domain))
     webform.save()
     messages.success(request, _("Public webform closed to new requests.")
                      if webform.is_disabled
@@ -209,6 +231,4 @@ def set_public_webform_status(request, domain, webform_id):
 
 def _dashboard_url(request, domain):
     """The dashboard as the admin left it, filters and page included."""
-    url = reverse(ManagePublicWebformsView.urlname, args=[domain])
-    query = request.GET.urlencode()
-    return f'{url}?{query}' if query else url
+    return reverse(ManagePublicWebformsView.urlname, args=[domain], query=request.GET)

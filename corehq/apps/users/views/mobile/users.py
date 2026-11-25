@@ -41,7 +41,10 @@ from soil.util import get_download_context
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.accounting.decorators import (
+    requires_privilege_json_response,
+    requires_privilege_with_fallback,
+)
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
@@ -702,7 +705,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     def can_add_extra_users(self):
-        return can_add_extra_mobile_workers(self.request)
+        return can_add_extra_mobile_workers(self.domain)
 
     @property
     @memoized
@@ -1571,6 +1574,8 @@ def link_connectid_user(request, domain):
 @csrf_exempt
 @require_POST
 @api_auth()
+@require_can_edit_commcare_users
+@requires_privilege_json_response(privileges.BULK_USER_MANAGEMENT)
 def bulk_user_upload_api(request, domain):
     try:
         if len(request.FILES) > 1:

@@ -168,3 +168,9 @@ class ServerLocation:
     @classmethod
     def get_subdomains(cls):
         return {env: server['subdomain'] for env, server in cls.get_envs().items()}
+
+
+class ChatbotQuotaPressure(models.Model):
+    user_id = models.CharField(max_length=255, unique=True)
+    last_quota_warning_at = models.DateTimeField(null=True)
+    last_quota_limit_at = models.DateTimeField(null=True)

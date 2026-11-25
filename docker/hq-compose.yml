@@ -6,6 +6,7 @@ services:
     environment:
       CI: "${CI}"
       CODECOV_TOKEN: "${CODECOV_TOKEN}"
+      COVERAGE: "${COVERAGE}"
       DATADOG_API_KEY: "${DATADOG_API_KEY}"
       DATADOG_APP_KEY: "${DATADOG_APP_KEY}"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
@@ -72,6 +73,8 @@ services:
       - "5432"
     healthcheck:
       test: pg_isready -h postgres -U commcarehq
+      start_period: 30s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -89,6 +92,8 @@ services:
       COUCHDB_PASSWORD: commcarehq
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/couch/5984'
+      start_period: 30s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -100,6 +105,8 @@ services:
       - "6379"
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/redis/6379'
+      start_period: 30s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -115,6 +122,8 @@ services:
       - "9200"
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/elasticsearch6/9200'
+      start_period: 30s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -130,6 +139,7 @@ services:
     healthcheck:
       test: echo ruok | nc localhost 2181
       start_period: 15s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -157,6 +167,7 @@ services:
     healthcheck:
       test: bash -c 'exec 6<>/dev/tcp/kafka/9092'
       start_period: 15s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -175,6 +186,7 @@ services:
       # but we felt it was less disruptive to use this workaround
       test: mc alias set local http://localhost:9980 "" "" >/dev/null && mc ready local
       start_period: 15s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:
@@ -195,6 +207,7 @@ services:
       # the image has no shell, so use the garage binary directly
       test: ["CMD", "/garage", "health"]
       start_period: 10s
+      start_interval: 1s
       interval: 10s
       retries: 10
     volumes:

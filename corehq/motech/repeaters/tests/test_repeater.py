@@ -18,7 +18,10 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.accounting.utils import clear_plan_version_cache
+from corehq.apps.accounting.utils import (
+    clear_plan_version_cache,
+    domain_has_privilege,
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -38,6 +41,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.models import ConnectionSettings
 from corehq.pillows.case import get_case_pillow
+from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import flag_disabled, flag_enabled
 
@@ -132,6 +136,10 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
         # DATA_FORWARDING is on PRO and above
         cls.setup_subscription(cls.domain, SoftwarePlanEdition.PRO)
         cls.addClassCleanup(cls.teardown_subscriptions)
+        # An earlier test may have cached "no privilege" for this domain
+        # before it had a subscription.
+        for privilege in (DATA_FORWARDING, ZAPIER_INTEGRATION):
+            domain_has_privilege.clear(cls.domain, privilege)
 
     def enqueued_repeat_records(self):
         # Enqueued repeat records have next_check set 48 hours in the future.

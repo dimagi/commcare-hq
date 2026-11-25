@@ -13,6 +13,9 @@ from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
@@ -330,3 +333,26 @@ def get_language_list(domain):
 
 def is_superuser_or_contractor(user: CouchUser):
     return IS_CONTRACTOR.enabled(user.username) or user.is_superuser
+
+
+def is_granted_messaging_access(domain_obj):
+    from corehq.apps.accounting.models import (
+        DefaultProductPlan,
+        SoftwarePlanEdition,
+        Subscription,
+    )
+    if settings.ENTERPRISE_MODE or domain_obj.granted_messaging_access:
+        return True
+    subscription = Subscription.get_active_subscription_by_domain(domain_obj)
+    if subscription is not None:
+        return subscription.plan_version.plan.name == DefaultProductPlan.get_default_plan_version(
+            edition=SoftwarePlanEdition.ENTERPRISE
+        ).plan.name
+    return False
+
+
+def domain_can_send_sms(domain):
+    return (
+        domain_has_privilege(domain, privileges.OUTBOUND_SMS)
+        and is_granted_messaging_access(Domain.get_by_name(domain))
+    )

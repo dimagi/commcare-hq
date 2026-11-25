@@ -4,7 +4,7 @@
 	    <DeviceID>WebAppsLogin</DeviceID>
 	    <TimeStart>2010-06-29T13:42:50.137</TimeStart>
 	    <TimeEnd>2010-06-29T13:55:50.137</TimeEnd>
-	    <username>public</username>
+	    <username>{username}</username>
 	    <userID>{userID}</userID>
 	    <instanceID>{instanceID}</instanceID>
 	</meta>

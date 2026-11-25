@@ -58,9 +58,12 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
     expires_at = columns.Column(
         verbose_name=_("Expires"),
     )
+    direct_access = columns.Column(
+        verbose_name=_("Access"),
+    )
     delivery = columns.TemplateColumn(
         template_name='public_webforms/columns/delivery.html',
-        verbose_name=_("Delivery"),
+        verbose_name=_("Verification"),
         attrs={'td': {'class': 'text-nowrap'}},
         empty_values=(),
     )
@@ -112,7 +115,11 @@ class PublicWebformTable(BaseHtmxTable, tables.Table):
         return render_to_string('public_webforms/columns/actions.html', {
             'domain': self.domain,
             'record': record,
+            'is_app_deleted': self.form_paths[record.id]['is_app_deleted'],
         })
 
     def render_expires_at(self, value):
         return ServerTime(value).user_time(self.timezone).ui_string()
+
+    def render_direct_access(self, value):
+        return _("Anyone with the link") if value else _("One-time link")

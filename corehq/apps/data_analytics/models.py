@@ -203,6 +203,9 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'outgoing_sms_in_last_30_days': 'cp_n_sms_out_30_d',
     'outgoing_sms_in_last_60_days': 'cp_n_sms_out_60_d',
     'outgoing_sms_in_last_90_days': 'cp_n_sms_out_90_d',
+    'public_webforms': 'cp_n_public_webforms',
+    'public_webform_submissions': 'cp_n_public_webform_submissions',
+    'questions_locked': 'cp_n_questions_locked',
     'repeaters': 'cp_n_repeaters',
     'report_builder_reports': 'cp_n_rb_reports',
     'saved_exports': 'cp_n_saved_exports',
@@ -218,6 +221,9 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'users_with_web_apps_submission_in_last_30_days': 'cp_n_users_submitted_web_apps_30_days',
     'web_users': 'cp_n_web_users',
     'web_users_accessed_in_last_30_days': 'cp_n_web_users_accessed_in_30_days',
+    'chatbot_active_users_in_last_30_days': 'cp_n_chatbot_active_users_30_days',
+    'chatbot_users_near_quota_in_last_30_days': 'cp_n_chatbot_users_near_quota_30_days',
+    'chatbot_users_at_quota_in_last_30_days': 'cp_n_chatbot_users_at_quota_30_days',
     # Feature Usage Metrics
     'has_multimedia': 'cp_has_multimedia',
     'has_case_management': 'cp_has_case_management',
@@ -277,6 +283,9 @@ class DomainMetrics(models.Model):
     web_users_accessed_in_last_30_days = models.IntegerField()
     users_with_submission = models.IntegerField()
     users_with_web_apps_submission_in_last_30_days = models.IntegerField()
+    chatbot_active_users_in_last_30_days = models.IntegerField(null=True)
+    chatbot_users_near_quota_in_last_30_days = models.IntegerField(null=True)
+    chatbot_users_at_quota_in_last_30_days = models.IntegerField(null=True)
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()
@@ -337,6 +346,9 @@ class DomainMetrics(models.Model):
     has_app_profiles = models.BooleanField(null=True, default=None)
     has_save_to_case = models.BooleanField(null=True, default=None)
     has_custom_branding = models.BooleanField(null=True, default=None)
+    public_webforms = models.IntegerField(null=True)
+    public_webform_submissions = models.IntegerField(null=True)
+    questions_locked = models.IntegerField(null=True)
 
     # -- Data & Export Features --
     form_exports = models.IntegerField(null=True, default=None)

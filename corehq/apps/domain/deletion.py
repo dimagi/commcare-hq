@@ -519,9 +519,12 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'CaseSearchEndpoint', 'domain',
                   extra_models=['CaseSearchEndpointVersion']),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    ModelDeletion('project_db', 'PendingOperation', 'domain'),
     CustomDeletion('project_db', drop_project_db, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
+    ModelDeletion('domain', 'ChatbotDomainSettings', 'domain'),
+    ModelDeletion('domain', 'ChatbotDomainUsage', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),
@@ -531,6 +534,7 @@ DOMAIN_DELETE_OPERATIONS = [
         'DashboardReport',
         'DashboardGauge'
     ]),
+    ModelDeletion('document_templates', 'Template', 'domain'),
 ]
 
 

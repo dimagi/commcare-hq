@@ -205,6 +205,7 @@ msgstr "È nascosto"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_cleaning/tables.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
@@ -506,6 +507,7 @@ msgstr "Abbonamento %s"
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_list_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_list_properties.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html
@@ -700,6 +702,8 @@ msgstr "È richiesto un nome per questo nuovo ruolo."
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/partials/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/templates/export/partials/table.html
@@ -1220,14 +1224,6 @@ msgstr[1] ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_roles)d Custom Role configured for your project. If you "
-#| "select this plan, all users with that role will change to having the Read "
-#| "Only role."
-#| msgid_plural ""
-#| "You have %(num_roles)d Custom Roles configured for your project . If you "
-#| "select this plan, all users with these roles will change to having the Read "
-#| "Only role."
 msgid ""
 "You have %(num_roles)d Custom Role configured for your project. If you "
 "select this plan, all users with that role will change to having the Read "
@@ -1321,12 +1317,6 @@ msgstr ""
 
 #: corehq/apps/accounting/subscription_changes.py
 #, python-format
-#| msgid ""
-#| "You have %(num_apps)d application that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
-#| msgid_plural ""
-#| "You have %(num_apps)d applications that has a practice mobile worker "
-#| "configured, it will be unset on downgrade."
 msgid ""
 "You have %(num_apps)d application that has a practice mobile worker "
 "configured, it will be unset on downgrade."
@@ -1343,14 +1333,6 @@ msgstr[1] ""
 #: corehq/apps/accounting/tasks.py
 msgid "Payment Received - Thank You!"
 msgstr "Pagamento ricevuto - Grazie!"
-
-#: corehq/apps/accounting/tasks.py
-msgid ""
-"Subscription Payment for CommCare Invoice {context['invoice_number']} was "
-"declined"
-msgstr ""
-"Il pagamento dell'abbonamento per la fattura CommCare "
-"{context['invoice_number']} è stato rifiutato"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
 msgid "Manage Accounting Admins"
@@ -1444,6 +1426,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/admin/partials/ocs_chatbot_enable_modal.html
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -1917,6 +1901,9 @@ msgid ""
 "Please update your billing information to prevent disruption to your CommCare\n"
 "subscription."
 msgstr ""
+"\n"
+"Aggiorna i tuoi dati di fatturazione per evitare interruzioni del tuo\n"
+"abbonamento a CommCare."
 
 #: corehq/apps/accounting/templates/accounting/email/autopay_failed.txt
 #, python-format
@@ -5266,32 +5253,39 @@ msgid "We'd love to hear more! Please specify -"
 msgstr "Ci piacerebbe saperne di più! Specifica -"
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
-msgid ""
-"\n"
-"      By clicking this button, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
-msgstr ""
-"\n"
-"      Facendo clic su questo pulsante, accetti i\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini di servizio</a> e la\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a> di Dimagi.\n"
-"    "
-
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
 msgid ""
-"\n"
-"      By clicking Submit Request, you agree to Dimagi's\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-"    "
+"Yes, I would like to receive relevant email updates from Dimagi, including "
+"newsletters, product updates, webinars, podcasts, and related resources. I "
+"can unsubscribe at any time."
 msgstr ""
-"\n"
-"      Facendo clic su Invia richiesta, accetti i\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini di servizio</a> e la\n"
-"      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Politica sulla privacy</a> di Dimagi.\n"
-"    "
+"Sì, desidero ricevere da Dimagi aggiornamenti via email pertinenti, tra cui "
+"newsletter, aggiornamenti sui prodotti, webinar, podcast e risorse "
+"correlate. Posso annullare l’iscrizione in qualsiasi momento."
+
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
+#: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
+#| msgid ""
+#| "\n"
+#| "      By clicking Submit Request, you agree to Dimagi's\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#| "    "
+msgid ""
+"By clicking Submit Request, I agree to Dimagi's <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
+" Service</a> and <a href=\"https://www.dimagi.com/terms/latest/privacy/\" "
+"target=\"_blank\">Privacy Policy</a> and to receive follow-up emails about "
+"my request, including invitations to schedule a conversation with Dimagi's "
+"team. I can unsubscribe at any time."
+msgstr ""
+"Facendo clic su Invia richiesta, accetto i <a "
+"href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini "
+"di servizio</a> e l’<a href=\"https://www.dimagi.com/terms/latest/privacy/\""
+" target=\"_blank\">Informativa sulla privacy</a> di Dimagi e acconsento a "
+"ricevere email di follow-up sulla mia richiesta, inclusi inviti a fissare un"
+" colloquio con il team di Dimagi. Posso annullare l’iscrizione in qualsiasi "
+"momento."
 
 #: corehq/apps/analytics/views.py
 msgid "No hubspot API ID is present."
@@ -5459,9 +5453,10 @@ msgstr "'role' è obbligatorio per ogni utente"
 msgid "'{}' is defined by the profile so cannot be set directly"
 msgstr "'{}' è definito dal profilo e non può essere impostato direttamente"
 
-#: corehq/apps/api/validation.py
-msgid "Invalid parameter(s): {', '.join(invalid_params)}"
-msgstr "Parametro/i non valido/i: {', '.join(invalid_params)}"
+#: corehq/apps/api/validation.py corehq/apps/case_search/models.py
+#: corehq/apps/case_search/xpath_functions/query_functions.py
+msgid ", "
+msgstr ", "
 
 #: corehq/apps/api/validation.py corehq/apps/registration/validation.py
 msgid "You do not have permission to edit Tableau Configuration."
@@ -5665,6 +5660,11 @@ msgstr "Build per la versione richiesta non trovata"
 #: corehq/apps/app_manager/decorators.py
 msgid "Please log in to the app to check for an update."
 msgstr "Accedi all'app per verificare la presenza di un aggiornamento."
+
+#: corehq/apps/app_manager/exceptions.py
+#| msgid "Remote apps are not supported"
+msgid "RemoteApps are no longer supported"
+msgstr "RemoteApps non è più supportato"
 
 #: corehq/apps/app_manager/fields.py corehq/apps/enterprise/enterprise.py
 #: corehq/apps/export/views/list.py corehq/apps/hqwebapp/doc_info.py
@@ -6114,18 +6114,10 @@ msgid "Copy of {name}"
 msgstr "Copia di {name}"
 
 #: corehq/apps/app_manager/models/applications.py
-msgid ""
-"Problem loading suite file from profile file. Is your profile file correct?"
-msgstr ""
-"Problema nel caricamento del file suite dal file profilo. Il tuo file "
-"profilo è corretto?"
-
-#: corehq/apps/app_manager/models/applications.py
 msgid "Remote Application"
 msgstr "Applicazione remota"
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid ""
 "Application successfully copied. The following lookup tables were also "
 "copied: {}."
@@ -6134,7 +6126,6 @@ msgstr ""
 "tabelle di ricerca: {}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "Application successfully copied and linked."
 msgid "Application successfully copied."
 msgstr "Applicazione copiata con successo."
 
@@ -6145,7 +6136,6 @@ msgstr ""
 "{}."
 
 #: corehq/apps/app_manager/models/applications.py
-#| msgid "An error occurred during the download."
 msgid "An error occurred while copying the following lookup tables: {}."
 msgstr ""
 "Si è verificato un errore durante la copia delle seguenti tabelle di "
@@ -6188,11 +6178,6 @@ msgid ""
 msgstr ""
 "Aggiornamento dell'applicazione riuscito, ma mancano uno o più file "
 "multimediali."
-
-#: corehq/apps/app_manager/models/applications.py
-msgid "Space-separated list of privilege strings from corehq.privileges"
-msgstr ""
-"Elenco di stringhe di privilegi separati da spazi dalla corehq.privileges"
 
 #: corehq/apps/app_manager/models/applications.py
 msgid ""
@@ -6406,6 +6391,14 @@ msgstr "Nome utente dell'utente"
 #: corehq/apps/app_manager/models/report_app_config.py
 msgid "The user's ID"
 msgstr "ID dell'utente"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Starter App"
+msgstr "App Starter"
+
+#: corehq/apps/app_manager/models/template_apps.py
+msgid "Feature Template"
+msgstr "Modello di funzionalità"
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
@@ -7058,6 +7051,7 @@ msgstr "No"
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap3/review_assignment_modal.html
 #: corehq/apps/geospatial/templates/geospatial/partials/bootstrap5/review_assignment_modal.html
 #: corehq/apps/reports/standard/monitoring.py
+#: corehq/apps/reports/standard/users/reports.py
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap5/scheduled_reports_table.html
 #: corehq/apps/sms/models.py corehq/motech/dhis2/const.py
@@ -7799,10 +7793,6 @@ msgstr ""
 "                  "
 
 #: corehq/apps/app_manager/templates/app_manager/app_exchange.html
-msgid "Version History"
-msgstr "Cronologia delle versioni"
-
-#: corehq/apps/app_manager/templates/app_manager/app_exchange.html
 msgid "Import"
 msgstr "Importa"
 
@@ -7966,16 +7956,19 @@ msgstr "Impostazioni menu"
 #: corehq/apps/app_manager/templates/app_manager/bootstrap3/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/bootstrap5/module_view.html
 #: corehq/apps/app_manager/templates/app_manager/form_view.html
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/views.py
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/enterprise/templates/enterprise/partials/enterprise_admins_table.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/public_webforms/tables.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/bootstrap3/scheduled_reports_table.html
@@ -8122,6 +8115,8 @@ msgstr "Installa CommCare"
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/offcanvas.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap3/case_management.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/bootstrap5/case_management.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/bootstrap3/confirm_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap3/select_plan.html
 #: corehq/apps/domain/templates/domain/bootstrap5/confirm_plan.html
@@ -8510,6 +8505,171 @@ msgstr "Traduzioni CommCare in blocco"
 msgid "Bulk Application Translations"
 msgstr "Traduzioni applicazione in blocco"
 
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Translate with AI"
+msgstr "Traduci con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
+#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
+msgid "NEW"
+msgstr "NUOVO"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"AI fills in missing translations. Manual edits are kept. Review AI "
+"translations before releasing your app."
+msgstr ""
+"L’IA completa le traduzioni mancanti. Le modifiche manuali vengono "
+"mantenute. Rivedi le traduzioni dell’IA prima di pubblicare l’app."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Learn more about AI translations"
+msgstr "Scopri di più sulle traduzioni con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "AI translations are available on Standard plans and above."
+msgstr "Le traduzioni con IA sono disponibili nei piani Standard e superiori."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Compare plans"
+msgstr "Confronta i piani"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Linked apps get their translations from their upstream app. Translate the "
+"upstream app instead."
+msgstr ""
+"Le app collegate ricevono le traduzioni dalla loro app a monte. Traduci "
+"invece l’app a monte."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Go to the upstream app"
+msgstr "Vai all’app a monte"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Add a language in the Language List below, then refresh to translate it with"
+" AI."
+msgstr ""
+"Aggiungi una lingua nell’elenco delle lingue qui sotto, poi aggiorna la "
+"pagina per tradurla con IA."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
+#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
+msgid "Refresh"
+msgstr "Aggiorna"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "You need permission to edit this app to translate it."
+msgstr "Hai bisogno dei permessi di modifica per tradurre questa app."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/translations/views.py
+msgid ""
+"This project has reached its monthly AI translation limit. Contact support "
+"to raise it."
+msgstr ""
+"Questo progetto ha raggiunto il limite mensile di traduzioni IA. Contatta il"
+" supporto per aumentarlo."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The language list has changed. Refresh to update the languages below."
+msgstr ""
+"L’elenco delle lingue è cambiato. Aggiorna la pagina per aggiornare le "
+"lingue qui sotto."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
+#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
+#: corehq/apps/reports/forms.py
+#: corehq/apps/sms/templates/sms/whatsapp_templates.html
+#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
+#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
+msgid "Language"
+msgstr "Lingua"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Last AI translated"
+msgstr "Ultima traduzione IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Translation progress"
+msgstr "Avanzamento della traduzione"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Running AI Translate again may translate the rest. If it doesn't, translate "
+"them yourself with <a href=\"#bulk-application-translations\" data-bs-"
+"toggle=\"collapse\" data-bs-target=\"#bulk-application-translations\" >Bulk "
+"Application Translations</a >."
+msgstr ""
+"Eseguire di nuovo AI Translate potrebbe tradurre il resto. In caso "
+"contrario, traducili manualmente con <a href=\"#bulk-application-"
+"translations\" data-bs-toggle=\"collapse\" data-bs-target=\"#bulk-"
+"application-translations\" >Traduzioni in blocco dell'applicazione</a >."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Show labels"
+msgstr "Mostra etichette"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Hide labels"
+msgstr "Nascondi etichette"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "The labels couldn't be loaded. Try again."
+msgstr "Impossibile caricare le etichette. Riprova."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Loading…"
+msgstr "Caricamento…"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"The list of labels is no longer available. Run AI Translate again to see "
+"which labels can't be translated."
+msgstr ""
+"L'elenco delle etichette non è più disponibile. Esegui di nuovo AI Translate"
+" per vedere quali etichette non possono essere tradotte."
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "No longer in the app"
+msgstr "Non più nell'app"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+#: corehq/apps/public_webforms/models.py
+#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
+#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
+#: corehq/ex-submodules/casexml/apps/case/views.py
+msgid "Open"
+msgstr "Apri"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "Show all labels"
+msgstr "Mostra tutte le etichette"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid "AI Translate"
+msgstr "Traduci con IA"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/ai_translations.html
+msgid ""
+"Status reflects the last AI Translate run; the percentage is how much of the"
+" whole app is AI translated as of that run. Labels you add or change "
+"afterwards are translated the next time you run AI Translate. Translations "
+"are applied to the current draft; make a new version to release them."
+msgstr ""
+"Lo stato riflette l’ultima esecuzione di Traduci con IA; la percentuale "
+"indica quanto dell’app è stato tradotto con IA in quell’esecuzione. Le "
+"etichette aggiunte o modificate successivamente vengono tradotte al prossimo"
+" avvio di Traduci con IA. Le traduzioni vengono applicate alla bozza "
+"corrente; crea una nuova versione per pubblicarle."
+
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/add_item_templates.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/add_item_templates.html
 #: corehq/apps/app_manager/views/forms.py
@@ -8573,17 +8733,6 @@ msgstr ""
 "\n"
 "    Collegato da %(name)s | V%(version)s\n"
 "    "
-
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/appnav_menu_langs.html
-#: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/appnav_menu_langs.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap3/audio_translator.html
-#: corehq/apps/hqmedia/templates/hqmedia/bootstrap5/audio_translator.html
-#: corehq/apps/reports/forms.py
-#: corehq/apps/sms/templates/sms/whatsapp_templates.html
-#: corehq/apps/styleguide/examples/bootstrap5/crispy_forms_basic.py
-#: corehq/apps/styleguide/examples/simple_crispy_form/forms.py
-msgid "Language"
-msgstr "Lingua"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap3/build_errors.html
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/build_errors.html
@@ -9737,6 +9886,7 @@ msgstr "Stai per eliminare questa applicazione"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
 #: corehq/apps/domain/templates/domain/admin/manage_alerts.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -9988,6 +10138,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/bootstrap5/nav_menu_media_single_type.html
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/commcare_settings.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/views/internal.py
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap3/reference_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/partials/bootstrap5/reference_table.html
@@ -10917,6 +11068,14 @@ msgstr ""
 "      "
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+msgid "Public Webform"
+msgstr "Modulo web pubblico"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
+msgid "Create public webform from latest released version"
+msgstr "Crea un modulo web pubblico dall'ultima versione rilasciata"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_tab_advanced.html
 msgid "Copy Form"
 msgstr "Copia Modulo"
 
@@ -11171,11 +11330,6 @@ msgstr "Abilita collegamento manuale"
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 msgid "Disable manual linking"
 msgstr "Disabilita collegamento manuale"
-
-#: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
-#: corehq/apps/export/templates/export/dialogs/process_deprecated_properties.html
-msgid "Refresh"
-msgstr "Aggiorna"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/forms/form_workflow.html
 #: corehq/apps/cloudcare/templates/cloudcare/partials/case_detail.html
@@ -12449,7 +12603,6 @@ msgstr "Sottotitolo schermata di ricerca"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap3/case_search_properties.html
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/bootstrap5/case_search_properties.html
-#| msgid "Display Condition"
 msgid "Search Button Display Condition"
 msgstr "Condizione di visualizzazione del pulsante di ricerca"
 
@@ -14052,6 +14205,7 @@ msgid "Loading ..."
 msgstr "Caricamento ..."
 
 #: corehq/apps/app_manager/templates/app_manager/partials/settings/app_settings.html
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
 msgid "Try again"
 msgstr "Riprova"
 
@@ -14325,12 +14479,12 @@ msgid "Not set"
 msgstr "Non impostato"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translation"
-msgstr "Traduzione U\\u200BI"
+msgid "U​I translation"
+msgstr "Traduzione dell’interfaccia utente"
 
 #: corehq/apps/app_manager/views/apps.py
-msgid "U\\u200BI translations"
-msgstr "Traduzioni U\\u200BI"
+msgid "U​I translations"
+msgstr "Traduzioni dell’interfaccia utente"
 
 #: corehq/apps/app_manager/views/apps.py
 msgid "app translation"
@@ -14810,10 +14964,6 @@ msgstr ""
 msgid "App diff"
 msgstr "Differenza app"
 
-#: corehq/apps/app_manager/views/releases.py
-msgid "Reverted to version {log.info['version']}"
-msgstr "Ripristinato alla versione {log.info['version']}"
-
 #: corehq/apps/app_manager/views/utils.py
 msgid "Endpoint for module '{}' not found. Try pushing endpoints first"
 msgstr ""
@@ -15237,6 +15387,7 @@ msgstr "Modifica Widget"
 #: corehq/apps/campaign/templates/campaign/partials/widget_modal.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/bulk_edit_session.html
 #: corehq/apps/data_cleaning/templates/data_cleaning/partials/loading_indicator.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/tables/bootstrap5_htmx.html
 #: corehq/apps/hqwebapp/views.py
 #: corehq/apps/integration/templates/kyc/kyc_verify_report.html
@@ -15317,13 +15468,6 @@ msgstr "Valore non valido per la colonna 'parent_relationship_type'"
 #, python-brace-format
 msgid "Sample: Cell in row {row_num} contains \"{sample}\""
 msgstr "Esempio: La cella nella riga {row_num} contiene \"{sample}\""
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
-msgstr ""
-"Le importazioni di casi possono contenere un massimo di "
-"{MAX_CASE_IMPORTER_ROWS} righe. "
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Invalid Owner Name"
@@ -15494,21 +15638,8 @@ msgid "Name Too Long"
 msgstr "Nome troppo lungo"
 
 #: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr ""
-"Il nome del caso non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
-
-#: corehq/apps/case_importer/exceptions.py
 msgid "External ID Too Long"
 msgstr "ID esterno troppo lungo"
-
-#: corehq/apps/case_importer/exceptions.py
-#, python-brace-format
-msgid ""
-"The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
-msgstr "L'id esterno non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
 
 #: corehq/apps/case_importer/exceptions.py
 msgid "Unexpected error"
@@ -16179,12 +16310,10 @@ msgid "Only one value may be given for '{}'"
 msgstr "Può essere fornito solo un valore per '{}'"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "Dates are presented in YYYY-MM-DD format"
 msgid "'{}' must be a date in YYYY-MM-DD format"
 msgstr "'{}' deve essere una data nel formato AAAA-MM-GG"
 
 #: corehq/apps/case_search/endpoint_query_spec.py
-#| msgid "'name' must be unique"
 msgid "'{}' must be a number"
 msgstr "'{}' deve essere un numero"
 
@@ -16266,10 +16395,6 @@ msgstr "La richiesta di ricerca deve specificare {param}"
 #, python-brace-format
 msgid "{param} must be a string"
 msgstr "{param} deve essere una stringa"
-
-#: corehq/apps/case_search/models.py
-msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
-msgstr "Operatore non valido \"{criteria[\"operator\"]}\". I valori consentiti sono "
 
 #: corehq/apps/case_search/models.py
 msgid "Project Database"
@@ -16409,6 +16534,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/case_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/edit_deduplication_rule.html
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/bootstrap3/new_stripe_card_template.html
 #: corehq/apps/domain/templates/domain/partials/bootstrap5/new_stripe_card_template.html
@@ -16418,6 +16544,7 @@ msgstr ""
 #: corehq/apps/geospatial/templates/geospatial/bootstrap3/gps_capture.html
 #: corehq/apps/geospatial/templates/geospatial/bootstrap5/gps_capture.html
 #: corehq/apps/groups/templates/groups/group_members.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/oauth_application_registration_form.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/oauth_application_registration_form.html
 #: corehq/apps/integration/kyc/forms.py
@@ -16501,12 +16628,10 @@ msgid "date"
 msgstr "data"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Date range"
 msgid "date range"
 msgstr "intervallo di date"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_edit.html
-#| msgid "Select"
 msgid "select"
 msgstr "seleziona"
 
@@ -16558,7 +16683,6 @@ msgid "Updated By"
 msgstr "Aggiornato da"
 
 #: corehq/apps/case_search/templates/case_search/endpoint_list.html
-#| msgid "Pull content from an upstream project space"
 msgid "Linked from an upstream project space"
 msgstr "Collegato da uno spazio di progetto a monte"
 
@@ -16699,9 +16823,16 @@ msgid "Endpoint '{}' query is invalid"
 msgstr "La query dell'endpoint '{}' non è valida"
 
 #: corehq/apps/case_search/utils.py
-#| msgid "Endpoint '{}' query is invalid"
 msgid "Endpoint '{}' parameters are invalid"
 msgstr "I parametri dell’endpoint '{}' non sono validi"
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query timed out"
+msgstr "La query dell'endpoint '{}' è scaduta"
+
+#: corehq/apps/case_search/utils.py
+msgid "Endpoint '{}' query failed"
+msgstr "La query dell'endpoint '{}' non è riuscita"
 
 #: corehq/apps/case_search/utils.py
 msgid "Search has too many results. Please try a more specific search."
@@ -16734,11 +16865,6 @@ msgid "Profile Case Search"
 msgstr "Profilo ricerca casi"
 
 #: corehq/apps/case_search/xpath_functions/ancestor_functions.py
-#, python-brace-format
-msgid "{node.name} is not supported with ancestor-exists"
-msgstr "{node.name} non è supportato con ancestor-exists"
-
-#: corehq/apps/case_search/xpath_functions/ancestor_functions.py
 #: corehq/apps/case_search/xpath_functions/subcase_functions.py
 msgid ""
 "The related case lookup you are trying to perform would return too many "
@@ -16758,55 +16884,6 @@ msgid ""
 msgstr ""
 "Il lato destro di un confronto deve essere un numero o una data. Le date "
 "devono essere racchiuse tra virgolette"
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is not a correctly formatted date or datetime."
-msgstr "{value} non è una data o data/ora formattata correttamente."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid date."
-msgstr "{value} non è una data valida."
-
-#: corehq/apps/case_search/xpath_functions/comparison.py
-#, python-brace-format
-msgid "{value} is an invalid datetime."
-msgstr "{value} non è una data/ora valida."
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The second argument to '{node.name}' must be valid coordinates"
-msgstr ""
-"Il secondo argomento di '{node.name}' deve essere un insieme di coordinate "
-"valide"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
-msgstr ""
-"Il terzo argomento di '{node.name}' deve essere un numero, ricevuto "
-"'{distance}'"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-msgid ""
-"'{unit}' is not a valid distance unit. Expected one of {', "
-"'.join(DISTANCE_UNITS)}"
-msgstr ""
-"'{unit}' non è un'unità di distanza valida. Atteso uno tra {', "
-"'.join(DISTANCE_UNITS)}"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
-msgstr "'{value}' non è una data valida. Atteso 'AAAA-MM-GG"
-
-#: corehq/apps/case_search/xpath_functions/query_functions.py
-#, python-brace-format
-msgid "The first argument to '{node.name}' must be a valid case property name"
-msgstr ""
-"Il primo argomento di '{node.name}' deve essere un nome di proprietà del "
-"caso valido"
 
 #: corehq/apps/case_search/xpath_functions/query_functions.py
 msgid "'match-all()' does not take any arguments"
@@ -16843,15 +16920,6 @@ msgstr "'{name}' si aspetta uno o due argomenti"
 msgid "'{name}' error. Index identifier must be a string"
 msgstr ""
 "Errore in '{name}'. L'identificatore dell'indice deve essere una stringa"
-
-#: corehq/apps/case_search/xpath_functions/utils.py
-#, python-brace-format
-msgid ""
-"The '{node.name}' function accepts exactly {expected} arguments, got "
-"{actual}"
-msgstr ""
-"La funzione '{node.name}' accetta esattamente {expected} argomenti, ricevuti"
-" {actual}"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid "{} is not a valid date"
@@ -17402,20 +17470,14 @@ msgid "Date Registered"
 msgstr "Data di registrazione"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "# Forms Submitted"
 msgid "Form Submitted"
 msgstr "Modulo inviato"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid "Message received!"
 msgid "Response Received"
 msgstr "Risposta ricevuta"
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Thank you for your feedback! We appreciate it.\n"
-#| "            "
 msgid ""
 "\n"
 "              Thank you. Your response has been submitted.\n"
@@ -17426,10 +17488,6 @@ msgstr ""
 "            "
 
 #: corehq/apps/cloudcare/templates/cloudcare/public_form_submitted.html
-#| msgid ""
-#| "\n"
-#| "              Not Active\n"
-#| "            "
 msgid ""
 "\n"
 "              You can close this page.\n"
@@ -17694,6 +17752,11 @@ msgid "A label is required for each field."
 msgstr "È necessaria un'etichetta per ogni campo."
 
 #: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Labels must be at most %(limit_value)d characters."
+msgstr "Le etichette non possono superare %(limit_value)d caratteri."
+
+#: corehq/apps/custom_data_fields/edit_model.py
 msgid "A property name is required for each field."
 msgstr "È necessario un nome proprietà per ogni campo."
 
@@ -17704,6 +17767,28 @@ msgid ""
 msgstr ""
 "Le proprietà devono iniziare con una lettera e contenere solo lettere, "
 "numeri, underscore o trattini."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Property names must be at most %(limit_value)d characters."
+msgstr ""
+"I nomi delle proprietà non possono superare %(limit_value)d caratteri."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid ""
+"Regular expressions must be at most %(limit_value)d characters (this one has"
+" %(show_value)d)."
+msgstr ""
+"Le espressioni regolari non possono superare %(limit_value)d caratteri "
+"(questa ne ha %(show_value)d)."
+
+#: corehq/apps/custom_data_fields/edit_model.py
+#, python-format
+msgid "Regex error messages must be at most %(limit_value)d characters."
+msgstr ""
+"I messaggi di errore delle espressioni regolari non possono superare "
+"%(limit_value)d caratteri."
 
 #: corehq/apps/custom_data_fields/edit_model.py
 msgid "Not a valid regular expression"
@@ -18956,14 +19041,6 @@ msgstr "Modifiche applicate"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/status/complete.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "    Finished processing changes, updated 1 case.\n"
-#| "  "
-#| msgid_plural ""
-#| "\n"
-#| "    Finished processing changes, updated %(count)s cases.\n"
-#| "  "
 msgid "Finished processing changes, updated %(count)s case."
 msgid_plural "Finished processing changes, updated %(count)s cases."
 msgstr[0] ""
@@ -19056,14 +19133,6 @@ msgstr "Riavvia questa sessione"
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/apply_changes.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      One edit will be applied.\n"
-#| "    "
-#| msgid_plural ""
-#| "\n"
-#| "      A total of %(count)s edits will be applied.\n"
-#| "    "
 msgid "%(count)s edit will be applied."
 msgid_plural "A total of %(count)s edits will be applied."
 msgstr[0] "Verrà applicata %(count)s modifica."
@@ -19081,14 +19150,6 @@ msgstr ""
 
 #: corehq/apps/data_cleaning/templates/data_cleaning/summary/clear_changes.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      One edit will be cleared.\n"
-#| "    "
-#| msgid_plural ""
-#| "\n"
-#| "      A total of %(count)s edits will be cleared.\n"
-#| "    "
 msgid "%(count)s edit will be cleared."
 msgid_plural "A total of %(count)s edits will be cleared."
 msgstr[0] "Verrà cancellata %(count)s modifica."
@@ -20314,10 +20375,6 @@ msgstr "Interrotto"
 msgid "Error"
 msgstr "Errore"
 
-#: corehq/apps/data_interfaces/tasks.py
-msgid "No Forms are supplied"
-msgstr "Nessun modulo fornito"
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap3/auto_update_rules.html
 msgid ""
 "\n"
@@ -20489,7 +20546,7 @@ msgstr "Aggiungi regola di deduplicazione"
 #: corehq/apps/data_interfaces/templates/data_interfaces/bootstrap5/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap3/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/bootstrap5/auto_update_rule_list.html
-#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/forms.py corehq/apps/linked_domain/view_helpers.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
@@ -20991,7 +21048,6 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_copy_status.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_reassign_status.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status.html
 #: corehq/apps/fixtures/templates/fixtures/partials/fixture_upload_status_api.txt
 #: corehq/apps/locations/templates/locations/manage/partials/locations_upload_status.html
@@ -21057,33 +21113,21 @@ msgid "Case Reassignment Failed! Details:"
 msgstr "Riassegnazione del caso non riuscita! Dettagli:"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
-#, python-format
-msgid ""
-"\n"
-"    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
-"  "
-msgstr ""
-"\n"
-"    <span>Torna a <a href=\"%(form_management_url)s\">Gestisci moduli</a> per annullare questa operazione.</span>\n"
-"  "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
 msgid "The job failed. Please try again."
 msgstr "L'operazione non è riuscita. Riprova."
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
-#| msgid "Form processed successfully."
 msgid "%(counter)s form processed successfully"
 msgid_plural "%(counter)s forms processed successfully"
 msgstr[0] "%(counter)s modulo elaborato con successo"
 msgstr[1] "%(counter)s moduli elaborati con successo"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 msgid "Some forms were skipped:"
 msgstr "Alcuni moduli sono stati saltati:"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status_new.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/xform_management_status.html
 #, python-format
 msgid ""
 "\n"
@@ -21121,41 +21165,6 @@ msgstr "Un caso con identificatore '{}' esiste già in questo gruppo."
 #: corehq/apps/data_interfaces/utils.py
 msgid "Case with identifier '{}' has been added to this group."
 msgstr "Il caso con identificatore '{}' è stato aggiunto a questo gruppo."
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not find XForm {form_id}"
-msgstr "Impossibile trovare XForm {form_id}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "XForm {form_id} for domain {domain} by user '{username}'"
-msgstr "XForm {form_id} per il dominio {domain} dall'utente '{username}'"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully archived {form}"
-msgstr "{form} archiviato con successo"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Successfully unarchived {form}"
-msgstr "{form} ripristinato con successo"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not archive {form}"
-msgstr "Impossibile archiviare {form}"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "Could not unarchive {form}"
-msgstr "Impossibile ripristinare {form} dall'archivio"
-
-#: corehq/apps/data_interfaces/utils.py
-#, python-brace-format
-msgid "{success_msg} {count} form(s)"
-msgstr "{success_msg} {count} modulo/i"
 
 #: corehq/apps/data_interfaces/utils.py
 msgid "No payloads specified"
@@ -21437,6 +21446,58 @@ msgstr ""
 #, python-brace-format
 msgid "Rule {name} was not updated, since nothing changed"
 msgstr "La regola {name} non è stata aggiornata, poiché non è cambiato nulla"
+
+#: corehq/apps/document_templates/templates/document_templates/partials/preview_modal_body.html
+msgid "The template does not use any variables."
+msgstr "Il modello non utilizza variabili."
+
+#: corehq/apps/document_templates/templates/document_templates/template_form.html
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/sso/forms.py
+msgid "Slug"
+msgstr "Slug"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#: corehq/apps/document_templates/views.py corehq/tabs/tabclasses.py
+msgid "Document Templates"
+msgstr "Modelli di documento"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "New Document Template"
+msgstr "Nuovo modello di documento"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "Delete Document Template"
+msgstr "Elimina modello di documento"
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+#, python-format
+msgid ""
+"\n"
+"                  Are you sure you want to delete the document template\n"
+"                  \"%(name)s\"? This cannot be undone.\n"
+"                "
+msgstr ""
+"\n"
+"                  Vuoi davvero eliminare il modello di documento\n"
+"                  \"%(name)s\"? L'operazione non può essere annullata.\n"
+"                "
+
+#: corehq/apps/document_templates/templates/document_templates/template_list.html
+msgid "No document templates configured."
+msgstr "Nessun modello di documento configurato."
+
+#: corehq/apps/document_templates/views.py
+msgid "A template with this slug already exists."
+msgstr "Esiste già un modello con questo slug."
+
+#: corehq/apps/document_templates/views.py
+msgid "New Template"
+msgstr "Nuovo modello"
+
+#: corehq/apps/document_templates/views.py
+msgid "Edit Document Template"
+msgstr "Modifica modello di documento"
 
 #: corehq/apps/domain/calculations.py corehq/apps/users/views/mobile/users.py
 msgid "yes"
@@ -21827,6 +21888,17 @@ msgstr ""
 "Outs+-+CommCare\" target=\"_blank\"> Utilizzo aggregato dei dati</a>"
 
 #: corehq/apps/domain/forms.py
+msgid "Opt out of CommCare Companion"
+msgstr "Esci da CommCare Companion"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Hide the CommCare Companion chatbot for all users in this project space"
+msgstr ""
+"Nascondi il chatbot CommCare Companion per tutti gli utenti in questo spazio"
+" di progetto"
+
+#: corehq/apps/domain/forms.py
 msgid "Default timezone"
 msgstr "Fuso orario predefinito"
 
@@ -22093,11 +22165,6 @@ msgstr ""
 "aggiornare questa impostazione."
 
 #: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "Unknown expression {expr}"
-msgstr "Espressione sconosciuta {expr}"
-
-#: corehq/apps/domain/forms.py
 msgid "Please specify a limit for OData feeds."
 msgstr "Specifica un limite per i feed OData."
 
@@ -22216,14 +22283,14 @@ msgstr "Email di contatto del partner"
 #: corehq/apps/domain/forms.py
 msgid ""
 "<p><i class=\"fa fa-info-circle\"></i> The trial will begin as soon as you "
-"hit \"Update\" and end on <span data-bind=\"text: end_date\"></span>.  On "
-"<span data-bind=\"text: end_date\"></span> the project space will be "
-"automatically paused.</p>"
+"hit \"Update\" and end on <span x-text=\"endDate\"></span>.  On <span "
+"x-text=\"endDate\"></span> the project space will be automatically "
+"paused.</p>"
 msgstr ""
 "<p><i class=\"fa fa-info-circle\"></i> La prova inizierà non appena premi "
-"\"Aggiorna\" e terminerà il <span data-bind=\"text: end_date\"></span>.  Il "
-"<span data-bind=\"text: end_date\"></span> lo spazio del progetto verrà "
-"automaticamente messo in pausa.</p>"
+"\"Aggiorna\" e terminerà il <span x-text=\"endDate\"></span>. Il <span "
+"x-text=\"endDate\"></span> lo spazio di progetto verrà automaticamente messo"
+" in pausa.</p>"
 
 #: corehq/apps/domain/forms.py
 msgid "Contracted Partner"
@@ -23830,46 +23897,6 @@ msgstr "Scopri di più sui nostri piani"
 msgid "Change My Plan"
 msgstr "Cambia il mio piano"
 
-#: corehq/apps/domain/templates/domain/bootstrap3/internal_subscription_management.html
-#: corehq/apps/domain/templates/domain/bootstrap5/internal_subscription_management.html
-#, python-format
-msgid ""
-"\n"
-"    <p>\n"
-"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
-"      to set up a subscription for this project space.\n"
-"\n"
-"      Use this tool only for projects that are:\n"
-"    <ul>\n"
-"      <li>an internal test project</li>\n"
-"      <li>part of a contracted project</li>\n"
-"      <li>a short term extended trial for biz dev</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Your project is currently subscribed to %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-msgstr ""
-"\n"
-"    <p>\n"
-"      Questa pagina è visibile solo ai dipendenti Dimagi (hai un indirizzo email @dimagi.com). Puoi utilizzare questa pagina\n"
-"      per configurare un abbonamento per questo spazio di progetto.\n"
-"\n"
-"      Usa questo strumento solo per progetti che sono:\n"
-"    <ul>\n"
-"      <li>un progetto di test interno</li>\n"
-"      <li>parte di un progetto contrattualizzato</li>\n"
-"      <li>una prova estesa a breve termine per lo sviluppo commerciale</li>\n"
-"    </ul>\n"
-"    </p>\n"
-"\n"
-"    <h3>\n"
-"      Il tuo progetto è attualmente abbonato a %(plan_name)s.\n"
-"    </h3>\n"
-"  "
-
 #: corehq/apps/domain/templates/domain/bootstrap3/manage_releases_by_location.html
 #: corehq/apps/domain/templates/domain/bootstrap5/manage_releases_by_location.html
 msgid "Last Activity"
@@ -24569,6 +24596,45 @@ msgstr "Carica TUTTO"
 #: corehq/apps/domain/templates/domain/internal_calculations.html
 msgid "Load Property"
 msgstr "Carica Proprietà"
+
+#: corehq/apps/domain/templates/domain/internal_subscription_management.html
+#, python-format
+msgid ""
+"\n"
+"    <p>\n"
+"      This page is visible to Dimagi employees only (you have an @dimagi.com email address).  You can use this page\n"
+"      to set up a subscription for this project space.\n"
+"\n"
+"      Use this tool only for projects that are:\n"
+"    <ul>\n"
+"      <li>an internal test project</li>\n"
+"      <li>part of a contracted project</li>\n"
+"      <li>a short term extended trial for biz dev</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Your project is currently subscribed to %(plan_name)s.\n"
+"    </h3>\n"
+"  "
+msgstr ""
+"\n"
+"    <p>\n"
+"      Questa pagina è visibile solo ai dipendenti Dimagi (hai un indirizzo email @dimagi.com). Puoi utilizzare questa pagina\n"
+"      per configurare un abbonamento per questo spazio di progetto.\n"
+"\n"
+"      Usa questo strumento solo per progetti che sono:\n"
+"    <ul>\n"
+"      <li>un progetto di test interno</li>\n"
+"      <li>parte di un progetto contrattualizzato</li>\n"
+"      <li>una prova estesa a breve termine per lo sviluppo commerciale</li>\n"
+"    </ul>\n"
+"    </p>\n"
+"\n"
+"    <h3>\n"
+"      Il tuo progetto è attualmente abbonato a %(plan_name)s.\n"
+"    </h3>\n"
+"  "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 msgid "Autopay Terms and Conditions"
@@ -26240,6 +26306,7 @@ msgstr ""
 "    "
 
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/bootstrap5/otp_required.html
+#: corehq/apps/export/templates/export/schema_build_waiting.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap3/file_download.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/bootstrap5/file_download.html
 msgid "Go back"
@@ -26323,14 +26390,6 @@ msgstr ""
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap3/profile.html
 #: corehq/apps/domain/templates/login_and_password/two_factor/profile/bootstrap5/profile.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            You have only one backup token remaining.\n"
-#| "          "
-#| msgid_plural ""
-#| "\n"
-#| "            You have %(counter)s backup tokens remaining.\n"
-#| "          "
 msgid "You have only %(counter)s backup token remaining."
 msgid_plural "You have %(counter)s backup tokens remaining."
 msgstr[0] "Ti rimane solo %(counter)s token di backup."
@@ -26750,11 +26809,6 @@ msgstr ""
 #: corehq/apps/domain/views/base.py
 msgid "Select A Project"
 msgstr "Seleziona un progetto"
-
-#: corehq/apps/domain/views/base.py
-#, python-brace-format
-msgid "You have been added to the \"{invitation.domain}\" project space."
-msgstr "Sei stato aggiunto allo spazio progetto \"{invitation.domain}\"."
 
 #: corehq/apps/domain/views/fixtures.py corehq/tabs/tabclasses.py
 msgid "Location Fixture"
@@ -29394,6 +29448,7 @@ msgstr "Nascondi opzioni"
 
 #: corehq/apps/export/templates/export/partials/new_customize_export_templates.html
 #: corehq/apps/linked_domain/templates/linked_domain/domain_links.html
+#: corehq/motech/dhis2/forms.py
 msgid "Add"
 msgstr "Aggiungi"
 
@@ -29423,6 +29478,14 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/odata_feed_limit_reached_modal.html
 msgid "Ok"
 msgstr "Ok"
+
+#: corehq/apps/export/templates/export/partials/schema_build_failed.html
+msgid "We couldn't load the available columns."
+msgstr "Impossibile caricare le colonne disponibili."
+
+#: corehq/apps/export/templates/export/partials/schema_build_status.html
+msgid "Progress finding columns"
+msgstr "Avanzamento della ricerca delle colonne"
 
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -29802,6 +29865,21 @@ msgstr "Scopri di più sui piani tariffari"
 #: corehq/apps/export/templates/export/paywall.html
 msgid "Change My Subscription"
 msgstr "Cambia il mio abbonamento"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid "Finding available columns…"
+msgstr "Ricerca delle colonne disponibili…"
+
+#: corehq/apps/export/templates/export/schema_build_waiting.html
+msgid ""
+"We're checking your applications for the questions and case properties you "
+"can include. This can take a few minutes for projects with many "
+"applications. Please keep this page open."
+msgstr ""
+"Stiamo controllando le tue applicazioni per individuare le domande e le "
+"proprietà dei casi che puoi includere. Per i progetti con molte "
+"applicazioni, l’operazione potrebbe richiedere alcuni minuti. Tieni aperta "
+"questa pagina."
 
 #: corehq/apps/export/views/download.py
 msgid "You have no submissions in this project."
@@ -30809,7 +30887,6 @@ msgstr ""
 
 #: corehq/apps/fixtures/views.py
 #, python-format
-#| msgid "Table ID must be between 1 and 31 characters."
 msgid "Table ID must be between 1 and %(max_length)s characters."
 msgstr ""
 "L’ID della tabella deve essere compreso tra 1 e %(max_length)s caratteri."
@@ -32361,15 +32438,37 @@ msgstr ""
 "procedura 'Password dimenticata'. Usa questa opzione se si sospetta che la "
 "password sia stata compromessa."
 
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "For example, Agriculture"
+msgstr "Ad esempio, Agricoltura"
+
+#: corehq/apps/hqadmin/manage_template_apps/forms.py
+msgid "A sector with this name already exists."
+msgstr "Esiste già un settore con questo nome."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py corehq/tabs/tabclasses.py
+msgid "Manage Template Apps"
+msgstr "Gestisci app modello"
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label deleted."
+msgstr "Etichetta del settore eliminata."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label saved."
+msgstr "Etichetta del settore salvata."
+
+#: corehq/apps/hqadmin/manage_template_apps/views.py
+msgid "Sector label added."
+msgstr "Etichetta del settore aggiunta."
+
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Disable auto update"
 msgid "Disabled Datadog user {label}"
 msgstr "Utente Datadog {label} disabilitato"
 
 #: corehq/apps/hqadmin/offboarding/clients.py
 #, python-brace-format
-#| msgid "Remove Mobile Workers From Organizations"
 msgid "Removed {label} from the Sentry organization"
 msgstr "{label} rimosso dall’organizzazione Sentry"
 
@@ -32384,7 +32483,6 @@ msgid "Removed HubSpot user {label}"
 msgstr "Utente HubSpot {label} rimosso"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Please enter a valid email address."
 msgid "Enter a valid email address."
 msgstr "Inserisci un indirizzo email valido."
 
@@ -32393,7 +32491,6 @@ msgid "Offboard staff from external platforms"
 msgstr "Rimuovi il personale dalle piattaforme esterne"
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "A send date is required."
 msgid "An email address is required."
 msgstr "È richiesto un indirizzo email."
 
@@ -32402,7 +32499,6 @@ msgid "'{}' is protected and cannot be offboarded with this tool."
 msgstr "'{}' è protetto e non può essere rimosso con questo strumento."
 
 #: corehq/apps/hqadmin/offboarding/views.py
-#| msgid "Unknown command: '{0}'"
 msgid "Unknown platform '{}'."
 msgstr "Piattaforma sconosciuta '{}'."
 
@@ -32561,8 +32657,16 @@ msgid "UCR rebuild restriction status"
 msgstr "Stato restrizione ricostruzione UCR"
 
 #: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction required"
+msgstr "Restrizione di ricostruzione richiesta"
+
+#: corehq/apps/hqadmin/reports.py
 msgid "Rebuild restricted"
 msgstr "Ricostruzione limitata"
+
+#: corehq/apps/hqadmin/reports.py
+msgid "Rebuild restriction not required"
+msgstr "Restrizione di ricostruzione non richiesta"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "No rebuild restriction required"
@@ -32672,6 +32776,45 @@ msgid "Enter a month to download all MALT data as csv for that month"
 msgstr ""
 "Inserisci un mese per scaricare tutti i dati MALT come csv per quel mese"
 
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/manage_template_apps.html
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Manage sectors"
+msgstr "Gestisci settori"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal.html
+msgid "Template Apps"
+msgstr "App modello"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid ""
+"Sector labels are shared across template apps. Renaming a label updates "
+"every template that uses it."
+msgstr ""
+"Le etichette dei settori sono condivise tra le app modello. Rinominare "
+"un'etichetta aggiorna tutti i modelli che la utilizzano."
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "New sector label"
+msgstr "Nuova etichetta del settore"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Add sector"
+msgstr "Aggiungi settore"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Sector label"
+msgstr "Etichetta del settore"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "Templates using it"
+msgstr "Modelli che la utilizzano"
+
+#: corehq/apps/hqadmin/templates/hqadmin/manage_template_apps/sectors/manage_sector_modal_body.html
+msgid "No sector labels yet. Add the first label above."
+msgstr ""
+"Non ci sono ancora etichette di settore. Aggiungi la prima etichetta qui "
+"sopra."
+
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 msgid ""
 "\n"
@@ -32699,12 +32842,10 @@ msgstr ""
 "    "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Email Address"
 msgid "Email address"
 msgstr "Indirizzo email"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Lookup Tables"
 msgid "Look up accounts"
 msgstr "Cerca account"
 
@@ -32735,17 +32876,14 @@ msgstr ""
 "          "
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Select a Form"
 msgid "Select all platforms"
 msgstr "Seleziona tutte le piattaforme"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "form"
 msgid "Platform"
 msgstr "Piattaforma"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "De-activate Alert"
 msgid "Deactivate selected…"
 msgstr "Disattiva selezionati…"
 
@@ -32754,27 +32892,19 @@ msgid "Working…"
 msgstr "Operazione in corso…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "Confirm Plan"
 msgid "Confirm offboarding"
 msgstr "Conferma offboarding"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid "You are about to delete"
 msgid "You are about to:"
 msgstr "Stai per:"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Whenever Possible"
 msgid "irreversible"
 msgstr "irreversibile"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/external_platforms.html
-#| msgid ""
-#| "\n"
-#| "                    List of devices used to access CommCare applications, with\n"
-#| "                    approximate last-use dates.\n"
-#| "                  "
 msgid ""
 "\n"
 "                    This is not a dimagi.com address. Only continue once TechOps\n"
@@ -32788,30 +32918,25 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 msgid "Looking up account…"
-msgstr ""
+msgstr "Ricerca dell’account in corso…"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No endpoints configured."
 msgid "Not configured"
 msgstr "Non configurato"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "FCM is not setup on this environment!"
 msgid "Credentials are not configured on this environment."
 msgstr "Le credenziali non sono configurate in questo ambiente."
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "No transaction found"
 msgid "No account found"
 msgstr "Nessun account trovato"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Only Deactivated"
 msgid "Already deactivated"
 msgstr "Già disattivato"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
-#| msgid "Lookup Table"
 msgid "Lookup failed:"
 msgstr "Ricerca non riuscita:"
 
@@ -32822,7 +32947,6 @@ msgstr "Riprova"
 
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding/partials/platform_row.html
 #, python-format
-#| msgid "Request failed"
 msgid "%(verb)s failed:"
 msgstr "%(verb)s non riuscito/a:"
 
@@ -32975,8 +33099,6 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 #, python-format
-#| msgid "{count} domain membership"
-#| msgid_plural "{count} domain memberships"
 msgid "%(count)s domain membership"
 msgid_plural "%(count)s domain memberships"
 msgstr[0] "%(count)s appartenenza al dominio"
@@ -34536,14 +34658,6 @@ msgstr "Registra applicazione OAuth"
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap3/prepaid_modal.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/bootstrap5/prepaid_modal.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "            Your prepaid credits will run out in 1 week!\n"
-#| "          "
-#| msgid_plural ""
-#| "\n"
-#| "            Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!\n"
-#| "          "
 msgid "Your prepaid credits will run out in %(prepaid_weeks_remaining)s week!"
 msgid_plural ""
 "Your prepaid credits will run out in %(prepaid_weeks_remaining)s weeks!"
@@ -36453,14 +36567,19 @@ msgstr ""
 "supporto se il problema persiste."
 
 #: corehq/apps/integration/payments/const.py
+msgid "Unable to fetch the payment status. It will be retried automatically."
+msgstr ""
+"Impossibile recuperare lo stato del pagamento. Il tentativo verrà ripetuto "
+"automaticamente."
+
+#: corehq/apps/integration/payments/const.py
 msgid "Maximum retry attempts exceeded with request error."
 msgstr ""
 "Numero massimo di tentativi di ripetizione superato con errore di richiesta."
 
 #: corehq/apps/integration/payments/const.py
-msgid "Maximum retry attempts exceeded with pending status"
-msgstr ""
-"Numero massimo di tentativi di ripetizione superato con stato in sospeso"
+msgid "Maximum retry attempts exceeded with pending status."
+msgstr "Numero massimo di tentativi superato con stato in sospeso."
 
 #: corehq/apps/integration/payments/filters.py
 msgid "Payment status"
@@ -36522,8 +36641,17 @@ msgid "Payment request failed"
 msgstr "Richiesta di pagamento non riuscita"
 
 #: corehq/apps/integration/payments/services.py
+#: corehq/apps/public_webforms/tables.py
 msgid "Verification"
 msgstr "Verifica"
+
+#: corehq/apps/integration/payments/services.py
+msgid ""
+"Only payments with users that have KYC status '{}' are eligible for "
+"verification."
+msgstr ""
+"Solo i pagamenti con utenti che hanno lo stato KYC '{}' sono idonei per la "
+"verifica."
 
 #: corehq/apps/integration/payments/services.py
 msgid "Case '{}' not in '{}' project"
@@ -36827,8 +36955,6 @@ msgid "You cannot access this page from your current IP address"
 msgstr "Non puoi accedere a questa pagina dal tuo attuale indirizzo IP"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid ""
-#| "Linking expressions to a remote link is not currently supported"
 msgid ""
 "Linking case search endpoints to a remote link is not currently supported"
 msgstr ""
@@ -36836,14 +36962,12 @@ msgstr ""
 "attualmente supportato"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
-#| msgid "Expression does not exist in the upstream domain"
 msgid ""
 "Endpoint does not exist in the upstream domain. Maybe it has been deleted?"
 msgstr "L'endpoint non esiste nel dominio a monte. Forse è stato eliminato?"
 
 #: corehq/apps/linked_domain/case_search_endpoints.py
 #, python-brace-format
-#| msgid "Profile conflicts with existing data"
 msgid "Endpoint {name} conflicts with an existing endpoint in {domain}"
 msgstr ""
 "L'endpoint {name} è in conflitto con un endpoint esistente in {domain}"
@@ -37757,13 +37881,8 @@ msgstr ""
 "foglio '{type}', all'indice '{i}' - '{er}'"
 
 #: corehq/apps/locations/bulk_management.py
-#, python-brace-format
-msgid ""
-"Cannot delete location type '{deleted_type.code}'. It is referenced by the "
-"type "
-msgstr ""
-"Impossibile eliminare il tipo di località '{deleted_type.code}'. È "
-"referenziato dal tipo "
+msgid " and try again."
+msgstr " e riprova."
 
 #: corehq/apps/locations/bulk_management.py
 msgid "Location Type '{}' refers to a parent which doesn't exist"
@@ -37927,18 +38046,8 @@ msgstr ""
 "disponibili qui</a>."
 
 #: corehq/apps/locations/resources/v0_6.py
-#, python-brace-format
-msgid "Location site code: {site_code}."
-msgstr "Codice sito località: {site_code}."
-
-#: corehq/apps/locations/resources/v0_6.py
 msgid "Could not update: could not find location with"
 msgstr "Impossibile aggiornare: impossibile trovare la posizione con"
-
-#: corehq/apps/locations/resources/v0_6.py
-msgid "Invalid fields were included in request: {list(data.keys())}."
-msgstr ""
-"Sono stati inclusi campi non validi nella richiesta: {list(data.keys())}."
 
 #: corehq/apps/locations/resources/v0_6.py
 msgid "Could not find parent location with the given ID."
@@ -39034,7 +39143,6 @@ msgid "Run"
 msgstr "Esegui"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
-#| msgid "Query"
 msgid "Query plan"
 msgstr "Piano di query"
 
@@ -39045,7 +39153,6 @@ msgstr "Valutato in %(duration)s secondi"
 
 #: corehq/apps/project_db/templates/project_db/partials/query_results.html
 #, python-format
-#| msgid "This report's timezone is %(timezone)s."
 msgid "Datetimes are in %(timezone)s"
 msgstr "Le date e ore sono in %(timezone)s"
 
@@ -39114,28 +39221,66 @@ msgstr ""
 " inviati possono essere utilizzati fino alla loro scadenza."
 
 #: corehq/apps/public_webforms/forms.py
-msgid "How Respondents Receive Their One-time Link"
-msgstr "Come i rispondenti ricevono il loro link monouso"
+#| msgid "How Respondents Open the Form"
+msgid "How Respondents Access the Form"
+msgstr "Modalità di accesso al modulo per chi risponde"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Open to Requests"
-msgstr "Aperto alle richieste"
+msgid "One-time link by email or text message"
+msgstr "Link monouso via email o SMS"
+
+#: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/tables.py
+msgid "Anyone with the link"
+msgstr "Chiunque abbia il link"
 
 #: corehq/apps/public_webforms/forms.py
-msgid "Immediately open this public webform to one-time link requests."
-msgstr ""
-"Apri immediatamente questo modulo web pubblico alle richieste di link "
-"monouso."
-
-#: corehq/apps/public_webforms/forms.py
-msgid "A branded email with a single-use link."
-msgstr "Una email personalizzata con un link monouso."
+msgid "A branded email with a one-time-use link."
+msgstr "Un’email personalizzata con un link monouso."
 
 #: corehq/apps/public_webforms/forms.py
 msgid "A short text with a shortened link. Billed per message sent."
 msgstr ""
 "Un breve messaggio di testo con un link abbreviato. Fatturato per ogni "
 "messaggio inviato."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open to Respondents"
+msgstr "Accesso aperto alle persone che rispondono"
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Open this public webform to respondents."
+msgstr ""
+"Rendi accessibile alle persone che rispondono questo modulo web pubblico."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Verification Method"
+msgstr "Metodo di verifica"
+
+#: corehq/apps/public_webforms/forms.py
+msgid ""
+"To protect your data and project, CommCare runs automated checks on every "
+"respondent who starts the form. If a check flags a respondent, CommCare "
+"sends them a one-time link to open before the form starts. Choose how "
+"CommCare can send that link."
+msgstr ""
+"Per proteggere i tuoi dati e il tuo progetto, CommCare esegue controlli "
+"automatici su ogni persona che avvia il modulo. Se un controllo segnala una "
+"persona, CommCare le invia un link monouso da aprire prima di avviare il "
+"modulo. Scegli come CommCare può inviare il link."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webform must close in the future."
+msgstr "Il modulo web deve chiudersi in una data futura."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Choose at least one verification method."
+msgstr "Scegli almeno un metodo di verifica."
+
+#: corehq/apps/public_webforms/forms.py
+msgid "Webforms open to anyone with the link must close within 90 days."
+msgstr ""
+"I moduli web accessibili a chiunque abbia il link devono chiudersi entro 90 "
+"giorni."
 
 #: corehq/apps/public_webforms/forms.py
 #: corehq/apps/public_webforms/templates/public_webforms/manage.html
@@ -39151,11 +39296,6 @@ msgstr "Crea modulo web pubblico"
 msgid "Please select an application, menu, and form."
 msgstr "Seleziona un'applicazione, un menu e un modulo."
 
-#: corehq/apps/public_webforms/forms.py
-msgid "The selected form can't be used for a public webform."
-msgstr ""
-"Il modulo selezionato non può essere utilizzato per un modulo web pubblico."
-
 #: corehq/apps/public_webforms/forms.py corehq/apps/public_webforms/views.py
 msgid "Edit Public Webform"
 msgstr "Modifica Webform Pubblico"
@@ -39167,6 +39307,12 @@ msgstr "Modifica Webform Pubblico"
 msgid "Save Changes"
 msgstr "Salva modifiche"
 
+#: corehq/apps/public_webforms/forms.py
+msgid "This webform's application has been deleted, so it can't be opened."
+msgstr ""
+"L’applicazione di questo modulo web è stata eliminata, quindi non può essere"
+" aperta."
+
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
 msgid "Your one-time link for {form_name}"
@@ -39174,20 +39320,12 @@ msgstr "Il tuo link monouso per {form_name}"
 
 #: corehq/apps/public_webforms/messaging.py
 #, python-brace-format
-#| msgid "Your one-time link for {form_name} is: {url}"
 msgid ""
 "Your one-time link for {form_name}:\n"
 "{url}"
 msgstr ""
 "Il tuo link monouso per {form_name}:\n"
 "{url}"
-
-#: corehq/apps/public_webforms/models.py
-#: corehq/apps/public_webforms/templates/public_webforms/columns/actions.html
-#: corehq/apps/public_webforms/templates/public_webforms/partials/status_modal.html
-#: corehq/ex-submodules/casexml/apps/case/views.py
-msgid "Open"
-msgstr "Apri"
 
 #: corehq/apps/public_webforms/models.py
 #: corehq/apps/settings/templates/settings/user_api_keys.html
@@ -39223,7 +39361,6 @@ msgid "Enter a valid phone number."
 msgstr "Inserisci un numero di telefono valido."
 
 #: corehq/apps/public_webforms/public/views.py
-#| msgid "Webforms"
 msgid "Webform Request"
 msgstr "Richiesta Webform"
 
@@ -39236,12 +39373,38 @@ msgid "Expires"
 msgstr "Scade"
 
 #: corehq/apps/public_webforms/tables.py
-msgid "Delivery"
-msgstr "Consegna"
+#| msgid "IP Access"
+msgid "Access"
+msgstr "Accesso"
 
 #: corehq/apps/public_webforms/tables.py
 msgid "Public URL"
 msgstr "URL pubblico"
+
+#: corehq/apps/public_webforms/tables.py
+#| msgid "One-Time Link Request"
+msgid "One-time link"
+msgstr "Link monouso"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Email Delivered"
+msgid "Email enabled"
+msgstr "Email abilitata"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "Email disabled"
+msgstr "Email disabilitata"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "Is enabled"
+msgid "SMS enabled"
+msgstr "SMS abilitati"
+
+#: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
+#| msgid "disabled"
+msgid "SMS disabled"
+msgstr "SMS disabilitati"
 
 #: corehq/apps/public_webforms/templates/public_webforms/email/one_time_link.html
 #, python-format
@@ -39377,6 +39540,20 @@ msgstr ""
 "          sono idonei. I moduli che aggiornano casi esistenti non possono essere resi pubblici.\n"
 "        "
 
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid ""
+"\n"
+"    SMS links need messaging, which is turned off for this project.\n"
+"  "
+msgstr ""
+"\n"
+"    I link via SMS richiedono la messaggistica, che è disattivata per questo progetto.\n"
+"  "
+
+#: corehq/apps/public_webforms/templates/public_webforms/partials/enable_messaging.html
+msgid "Enable Messaging"
+msgstr "Attiva la messaggistica"
+
 #: corehq/apps/public_webforms/templates/public_webforms/partials/qr_modal.html
 msgid "Public URL QR Code"
 msgstr "Codice QR dell'URL pubblico"
@@ -39464,7 +39641,6 @@ msgid "Send my link"
 msgstr "Invia il mio link"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
-#| msgid "Webforms"
 msgid "Webform Closed"
 msgstr "Webform chiuso"
 
@@ -39487,21 +39663,39 @@ msgid "Check Your Messages"
 msgstr "Controlla i tuoi messaggi"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
 msgid ""
 "\n"
-"      We sent a link using the contact information you provided.\n"
-"    "
+"        We texted a link to %(masked_phone_number)s.\n"
+"      "
 msgstr ""
 "\n"
-"      Abbiamo inviato un link utilizzando le informazioni di contatto che hai fornito.\n"
-"    "
+"        Abbiamo inviato un link via SMS a %(masked_phone_number)s.\n"
+"      "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
 #, python-format
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
+msgid ""
+"\n"
+"        We emailed a link to %(masked_email)s.\n"
+"      "
+msgstr ""
+"\n"
+"        Abbiamo inviato un link via e-mail a %(masked_email)s.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+msgid ""
+"\n"
+"        We sent a link using the contact information you provided.\n"
+"      "
+msgstr ""
+"\n"
+"        Abbiamo inviato un link utilizzando le informazioni di contatto fornite.\n"
+"      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_sent.html
+#, python-format
 msgid ""
 "\n"
 "      The link expires %(link_lifespan)s after it was created and only works\n"
@@ -39518,20 +39712,14 @@ msgid "Request another link"
 msgstr "Richiedi un altro link"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "Unavailable"
 msgid "Form Link Unavailable"
 msgstr "Link al modulo non disponibile"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid "No longer available"
 msgid "Link No Longer Available"
 msgstr "Link non più disponibile"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      The link expires in %(link_lifespan)s and only works once.\n"
-#| "    "
 msgid ""
 "\n"
 "      One-time links expire after a short time, and can only be used once.\n"
@@ -39542,10 +39730,6 @@ msgstr ""
 "    "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_link_used.html
-#| msgid ""
-#| "\n"
-#| "      Please start a new bulk edit session above.\n"
-#| "    "
 msgid ""
 "\n"
 "      Request a new link to fill out this form.\n"
@@ -39586,6 +39770,13 @@ msgstr "Modulo web pubblico creato."
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform updated."
 msgstr "Webform pubblico aggiornato."
+
+#: corehq/apps/public_webforms/views.py
+msgid ""
+"This public webform's application has been deleted, so it can't be opened."
+msgstr ""
+"L’applicazione di questo modulo web pubblico è stata eliminata, quindi non "
+"può essere aperta."
 
 #: corehq/apps/public_webforms/views.py
 msgid "Public webform closed to new requests."
@@ -40757,9 +40948,8 @@ msgstr ""
 "minuto. Se il problema persiste, contatta il supporto."
 
 #: corehq/apps/registration/views.py
-#, python-brace-format
-msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
-msgstr "Attendi almeno {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+msgid "seconds before requesting again."
+msgstr "secondi prima di poter effettuare una nuova richiesta."
 
 #: corehq/apps/registration/views.py
 msgid "There was a problem with your request"
@@ -41918,6 +42108,10 @@ msgid "Current Indian Financial Year"
 msgstr "Anno finanziario indiano attuale"
 
 #: corehq/apps/reports/display.py
+msgid "public user"
+msgstr "utente pubblico"
+
+#: corehq/apps/reports/display.py
 msgid "No data for username"
 msgstr "Nessun dato per username"
 
@@ -42491,6 +42685,10 @@ msgstr "Utenti web attivi"
 msgid "Deactivated Web Users"
 msgstr "Utenti web disattivati"
 
+#: corehq/apps/reports/models.py
+msgid "Public Users"
+msgstr "Utenti pubblici"
+
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -42793,6 +42991,14 @@ msgstr "Numero di moduli non inviati nel telefono dell'utente"
 msgid "The number of unsent forms in users' phones for {app_info}"
 msgstr ""
 "Il numero di moduli non inviati nei telefoni degli utenti per {app_info}"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...See more"
+msgstr "...Vedi altro"
+
+#: corehq/apps/reports/standard/deployments.py
+msgid "...Collapse"
+msgstr "...Comprimi"
 
 #: corehq/apps/reports/standard/deployments.py
 msgid "Unknown CommCare Version"
@@ -45120,12 +45326,6 @@ msgstr ""
 "Non è possibile archiviare documenti di tipo %s. Come sei arrivato qui??"
 
 #: corehq/apps/reports/views.py
-#, python-brace-format
-msgid "Cannot delete form {instance_id} because it is not archived."
-msgstr ""
-"Impossibile eliminare il modulo {instance_id} perché non è archiviato."
-
-#: corehq/apps/reports/views.py
 msgid "{} (this case)"
 msgstr "{} (questo caso)"
 
@@ -45692,11 +45892,6 @@ msgstr "Copia questo in un luogo sicuro. Non verrà più mostrato."
 #: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr "Tutti gli indirizzi IP"
-
-#: corehq/apps/settings/views.py
-msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-"Esiste già una chiave API con nome \"{create_form.cleaned_data['name']}\"."
 
 #: corehq/apps/sms/api.py
 #, python-brace-format
@@ -46835,6 +47030,10 @@ msgid "Connect user not found for recipient."
 msgstr "Utente Connect non trovato per il destinatario."
 
 #: corehq/apps/sms/models.py
+msgid "Connect Messaging Gateway Error"
+msgstr "Errore del gateway di messaggistica Connect"
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Only Mobile workers with Connect accounts are supported as recipients for "
 "Connect Message and Surveys."
@@ -47629,10 +47828,6 @@ msgstr ""
 #: corehq/apps/sso/forms.py
 msgid "Not needed/generated yet."
 msgstr "Non necessario/generato ancora."
-
-#: corehq/apps/sso/forms.py
-msgid "Slug"
-msgstr "Slug"
 
 #: corehq/apps/sso/forms.py
 msgid ""
@@ -48776,11 +48971,6 @@ msgid "today!"
 msgstr "oggi!"
 
 #: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "on {exp_date:{USER_DATE_FORMAT}}."
-msgstr "il {exp_date:{USER_DATE_FORMAT}}."
-
-#: corehq/apps/sso/utils/context_helpers.py
 #, python-format
 msgid ""
 "CommCare Alert: Certificate for Identity Provider %(idp_name)s expires "
@@ -48788,11 +48978,6 @@ msgid ""
 msgstr ""
 "Avviso CommCare: Il certificato per il provider di identità %(idp_name)s "
 "scade il %(expires_on)s"
-
-#: corehq/apps/sso/utils/context_helpers.py
-#, python-brace-format
-msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
-msgstr "Account Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
 
 #: corehq/apps/sso/utils/context_helpers.py
 msgid ""
@@ -49570,6 +49755,52 @@ msgstr "Domini attivi"
 msgid "Last Usage"
 msgstr "Ultimo utilizzo"
 
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI didn't return a translation."
+msgstr "L’IA non ha restituito una traduzione."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The app didn't accept the AI's translation."
+msgstr "L’app non ha accettato la traduzione dell’IA."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI returned an empty translation."
+msgstr "L’IA ha restituito una traduzione vuota."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI's translation has characters the app can't save."
+msgstr "La traduzione dell’IA contiene caratteri che l’app non può salvare."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed or left out a value inserted from another question."
+msgstr "L’IA ha modificato o omesso un valore inserito da un’altra domanda."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed the formatting, such as bold text or a list."
+msgstr ""
+"L’IA ha modificato la formattazione, ad esempio il testo in grassetto o un "
+"elenco."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The AI changed a web link."
+msgstr "L’IA ha modificato un link web."
+
+#: corehq/apps/translations/app_translations/ai_failed_labels.py
+msgid "The label couldn't be translated."
+msgstr "Non è stato possibile tradurre l’etichetta."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid "Remote apps can't be translated with AI."
+msgstr "Le app remote non possono essere tradotte con IA."
+
+#: corehq/apps/translations/app_translations/ai_translator.py
+msgid ""
+"Only the current version of an app can be translated, not a previous "
+"version."
+msgstr ""
+"Solo la versione corrente di un’app può essere tradotta, non una versione "
+"precedente."
+
 #: corehq/apps/translations/app_translations/ai_translator.py
 #: corehq/apps/translations/app_translations/upload_module.py
 #, python-format
@@ -49812,12 +50043,10 @@ msgstr ""
 "traduzione aggiornata per questa riga."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "The deposit transaction could not be performed."
 msgid "The translation couldn't be queued. Run it again."
 msgstr "La traduzione non è stata messa in coda. Eseguila di nuovo."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Source lang selected not available for the project"
 msgid "AI translation is no longer available for this project."
 msgstr "La traduzione AI non è più disponibile per questo progetto."
 
@@ -49836,38 +50065,20 @@ msgstr ""
 "Eseguila di nuovo."
 
 #: corehq/apps/translations/tasks.py
-#| msgid "Something went wrong. Please reload the page and try again."
 msgid ""
-"Something went wrong while translating the app. Review its translations and "
-"run it again."
+"Something went wrong and the translation didn't finish. Run it again, and "
+"contact support if it keeps failing."
 msgstr ""
-"Si è verificato un errore durante la traduzione dell'app. Controlla le sue "
-"traduzioni ed eseguila di nuovo."
+"Qualcosa è andato storto e la traduzione non è stata completata. Eseguila di"
+" nuovo e contatta il supporto se il problema persiste."
 
 #: corehq/apps/translations/tasks.py
-msgid "No strings could be translated."
-msgstr "Nessuna stringa è stata tradotta."
-
-#: corehq/apps/translations/tasks.py
-#, python-format, python-brace-format
-msgid ""
-"More than {percent}% of translations failed validation and were skipped."
-msgstr ""
-"Più del {percent}% delle traduzioni non ha superato la validazione ed è "
-"stata saltata."
+msgid "No labels could be translated."
+msgstr "Nessuna etichetta è stata tradotta."
 
 #: corehq/apps/translations/validator.py
 msgid "Missing translations for {} in uploaded sheet"
 msgstr "Traduzioni mancanti per {} nel foglio caricato"
-
-#: corehq/apps/translations/validator.py
-#, python-brace-format
-msgid ""
-"Could not find a module or form with ID '{module_or_form_id}' in app "
-"'{self.app.name}'"
-msgstr ""
-"Impossibile trovare un modulo o un form con ID '{module_or_form_id}' "
-"nell'app '{self.app.name}'"
 
 #: corehq/apps/translations/validator.py
 msgid "Could not find column(s) '{}'"
@@ -49901,6 +50112,55 @@ msgstr "Traduzioni UI aggiornate!"
 #: corehq/apps/translations/views.py
 msgid "Please select language to validate."
 msgstr "Seleziona la lingua da validare."
+
+#: corehq/apps/translations/views.py
+msgid "AI translation isn't available for this project."
+msgstr "La traduzione con IA non è disponibile per questo progetto."
+
+#: corehq/apps/translations/views.py
+msgid "This language can't be translated with AI."
+msgstr "Questa lingua non può essere tradotta con IA."
+
+#: corehq/apps/translations/views.py
+msgid "This language is already being translated."
+msgstr "Questa lingua è già in fase di traduzione."
+
+#: corehq/apps/translations/views.py
+msgid "Case list"
+msgstr "Elenco dei casi"
+
+#: corehq/apps/translations/views.py
+msgid "Case detail"
+msgstr "Dettaglio del caso"
+
+#: corehq/apps/translations/views.py
+msgid "Case search"
+msgstr "Ricerca dei casi"
+
+#: corehq/apps/translations/views.py
+msgid "hint"
+msgstr "suggerimento"
+
+#: corehq/apps/translations/views.py
+msgid "help text"
+msgstr "testo di aiuto"
+
+#: corehq/apps/translations/views.py
+msgid "validation message"
+msgstr "messaggio di convalida"
+
+#: corehq/apps/translations/views.py
+msgid "choice"
+msgstr "opzione"
+
+#: corehq/apps/user_importer/exceptions.py
+msgid ""
+"This project has reached the mobile worker limit for its subscription plan. "
+"Deactivate other mobile workers or upgrade the plan to add more."
+msgstr ""
+"Questo progetto ha raggiunto il limite di operatori mobili previsto dal "
+"piano di abbonamento. Disattiva altri operatori mobili o aggiorna il piano "
+"per aggiungerne altri."
 
 #: corehq/apps/user_importer/helpers.py
 msgid "Double Entry for {}"
@@ -49972,11 +50232,6 @@ msgid ""
 msgstr ""
 "L'email è stata respinta per l'invito di questo utente: {}. Riprova con un "
 "nome utente diverso"
-
-#: corehq/apps/user_importer/importer.py
-#, python-brace-format
-msgid "Domain cannot be set to '{self.domain}'"
-msgstr "Il dominio non può essere impostato su '{self.domain}'"
 
 #: corehq/apps/user_importer/importer.py
 #, python-brace-format
@@ -50264,16 +50519,6 @@ msgstr "Ricostruisci"
 #: corehq/apps/userreports/models.py
 msgid "Drop"
 msgstr "Elimina"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "base_item_expression is not allowed for domain {self.domain}"
-msgstr "base_item_expression non è consentito per il dominio {self.domain}"
-
-#: corehq/apps/userreports/models.py
-#, python-brace-format
-msgid "{expr} is not allowed for domain {self.domain}"
-msgstr "{expr} non è consentito per il dominio {self.domain}"
 
 #: corehq/apps/userreports/models.py
 msgid "Report contains invalid referenced_doc_type: {}"
@@ -52096,21 +52341,8 @@ msgid "UCR Expressions"
 msgstr "Espressioni UCR"
 
 #: corehq/apps/userreports/views.py
-msgid ""
-"UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
-"exists."
-msgstr ""
-"L'espressione UCR con nome \"{create_form.cleaned_data['name']}\" esiste "
-"già."
-
-#: corehq/apps/userreports/views.py
 msgid "Edit UCR Expression"
 msgstr "Modifica Espressione UCR"
-
-#: corehq/apps/users/account_confirmation.py
-#, python-brace-format
-msgid "Confirm your CommCare account for {commcare_user.domain}"
-msgstr "Conferma il tuo account CommCare per {commcare_user.domain}"
 
 #: corehq/apps/users/bulk_download.py corehq/apps/users/models.py
 msgid "Unknown Role"
@@ -52532,33 +52764,49 @@ msgstr ""
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                        Are you sure you want to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Are you sure you want to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Are you sure you want to accept the invitation to join\n"
+"                        the CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
-"                        Sei sicurə di voler accettare l'invito\n"
-"                        a unirti a CommCare HQ come %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> come <strong>%(username)s</strong>?\n"
+"                        Confermi di voler accettare l’invito a entrare in\n"
+"                        %(invite_type)s di CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> come\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                        Would you like to accept the invitation\n"
+#| "                        to join the CommCare HQ %(invite_type)s\n"
+#| "                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+#| "                      "
 msgid ""
 "\n"
-"                        Would you like to accept the invitation\n"
-"                        to join the CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> as <strong>%(username)s</strong>?\n"
+"                        Would you like to accept the invitation to join the\n"
+"                        CommCare HQ %(invite_type)s\n"
+"                        <strong>%(invite_to)s</strong> as\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 msgstr ""
 "\n"
-"                        Vuoi accettare l'invito\n"
-"                        a unirti a CommCare HQ come %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> come <strong>%(username)s</strong>?\n"
+"                        Desideri accettare l’invito a entrare in\n"
+"                        %(invite_type)s di CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> come\n"
+"                        <strong>%(username)s</strong>?\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -52593,6 +52841,25 @@ msgstr "crea un account web"
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                      Turn off demo mode to allow this mobile worker to start\n"
+#| "                      sending data to %(hq_name)s again.\n"
+#| "                    "
+msgid ""
+"\n"
+"                    You are signed in as %(username)s, but this invitation was\n"
+"                    sent to %(invited_user)s.\n"
+"                  "
+msgstr ""
+"\n"
+"                    Hai effettuato l’accesso come %(username)s, ma l’invito è stato\n"
+"                    inviato a %(invited_user)s.\n"
+"                  "
+
+#: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
+#: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
+#, python-format
 msgid ""
 "\n"
 "                  Not %(username)s?\n"
@@ -52610,29 +52877,39 @@ msgstr "Cambia account"
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                    Your email is managed by %(idp_name)s.\n"
+#| "                    You will be asked to authenticate with Single Sign-On\n"
+#| "                    in the next step.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    Your email is managed by %(idp_name)s.\n"
-"                    You will be asked to authenticate with Single Sign-On\n"
-"                    in the next step.\n"
+"                    Your email is managed by %(idp_name)s. You will be asked\n"
+"                    to authenticate with Single Sign-On in the next step.\n"
 "                  "
 msgstr ""
 "\n"
-"                    La tua email è gestita da %(idp_name)s.\n"
-"                    Ti verrà richiesto di autenticarti con Single Sign-On\n"
-"                    nel prossimo passaggio.\n"
+"                    La tua email è gestita da %(idp_name)s. Nel passaggio successivo ti verrà chiesto\n"
+"                    di autenticarti tramite Single Sign-On.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+#| "                  "
 msgid ""
 "\n"
-"                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
+"                    To accept this %(invite_type_lower)s invitation, you must\n"
+"                    create an account.\n"
 "                  "
 msgstr ""
 "\n"
-"                    Per accettare questo invito come %(invite_type_lower)s, devi creare un account.\n"
+"                    Per accettare questo invito %(invite_type_lower)s, devi\n"
+"                    creare un account.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -53461,11 +53738,6 @@ msgstr "Nuovi operatori mobili"
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
 msgid "Pending..."
 msgstr "In attesa..."
-
-#: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
-#: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
-msgid "NEW"
-msgstr "NUOVO"
 
 #: corehq/apps/users/templates/users/bootstrap3/mobile_workers.html
 #: corehq/apps/users/templates/users/bootstrap5/mobile_workers.html
@@ -55446,12 +55718,8 @@ msgid "is_active"
 msgstr "è_attivo"
 
 #: corehq/apps/users/views/mobile/users.py
-#, python-brace-format
-msgid ""
-"You have successfully confirmed the {user.raw_username} account. You can now"
-" login"
-msgstr ""
-"Hai confermato con successo l'account {user.raw_username}. Ora puoi accedere"
+msgid "You can now login"
+msgstr "Ora puoi accedere"
 
 #: corehq/apps/users/views/mobile/users.py
 msgid "Successful account confirmation for {}"
@@ -55509,13 +55777,6 @@ msgstr ""
 
 #: corehq/apps/users/views/role.py
 #, python-brace-format
-#| msgid ""
-#| "Unable to delete role '{role}'. It has one user and/or invitation still "
-#| "assigned to it. Remove all users assigned to the role before deleting it."
-#| msgid_plural ""
-#| "Unable to delete role '{role}'. It has {user_count} users and/or invitations"
-#| " still assigned to it. Remove all users assigned to the role before deleting"
-#| " it."
 msgid ""
 "Unable to delete role '{role}'. It has {user_count} user and/or invitation "
 "still assigned to it. Remove all users assigned to the role before deleting "
@@ -58328,11 +58589,6 @@ msgstr ""
 "trimestrale valido nel formato yyyyQn (es. \"2004Q1\" per gennaio-marzo "
 "2004), oppure inserisci una colonna valida."
 
-#: corehq/motech/dhis2/forms.py corehq/motech/repeaters/forms.py
-#, python-brace-format
-msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
-msgstr "<a href=\"{url}\">Aggiungi/Modifica impostazioni di connessione</a>"
-
 #: corehq/motech/dhis2/forms.py
 msgid "User Configurable Report"
 msgstr "Report Configurabile dall'Utente"
@@ -58341,11 +58597,13 @@ msgstr "Report Configurabile dall'Utente"
 msgid ""
 "DataSet Maps map CommCare UCRs to DHIS2 DataSets. <a "
 "href=\"https://github.com/dimagi/commcare-"
-"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"hq/blob/master/corehq/motech/dhis2/README.md#datasets\" target=\"_new\">More"
+" info</a>. "
 msgstr ""
-"Le DataSet Maps associano le UCR di CommCare ai DataSet DHIS2. <a "
+"Le mappe DataSet associano gli UCR di CommCare ai DataSet di DHIS2. <a "
 "href=\"https://github.com/dimagi/commcare-"
 "hq/blob/master/corehq/motech/dhis2/README.md#datasets\" "
+"target=\"_new\">Ulteriori informazioni</a>. "
 
 #: corehq/motech/dhis2/forms.py
 msgid "Data element ID"
@@ -58819,12 +59077,8 @@ msgid "There is an error in your data API validations"
 msgstr "C'è un errore nelle validazioni dei dati API"
 
 #: corehq/motech/models.py
-msgid ""
-"Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
-"the applicable API auth settings for the "
-msgstr ""
-"Impossibile risolvere gli endpoint API {self.api_auth_settings!r}. Seleziona"
-" le impostazioni di autenticazione API applicabili per il "
+msgid "Please select the applicable API auth settings for the "
+msgstr "Seleziona le impostazioni di autenticazione API applicabili per il "
 
 #: corehq/motech/openmrs/atom_feed.py
 msgid ""
@@ -58859,53 +59113,17 @@ msgid "There is an XML syntax error in the OpenMRS Atom feed at "
 msgstr "C'è un errore di sintassi XML nel feed Atom di OpenMRS in "
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"No users found at location \"{repeater.location_id}\" to own patients added "
-"from OpenMRS Atom feed."
-msgstr ""
-"Nessun utente trovato nella località \"{repeater.location_id}\" per "
-"assegnare i pazienti aggiunti dal feed OpenMRS Atom."
+msgid "patients added from OpenMRS Atom feed."
+msgstr "pazienti aggiunti dal feed Atom di OpenMRS."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+msgid "patients from OpenMRS unless only one case type is specified."
 msgstr ""
-"{repeater.domain}: {repeater}: Errore nelle impostazioni: impossibile "
-"aggiornare "
+"pazienti da OpenMRS a meno che non sia specificato un solo tipo di caso."
 
 #: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Patient "
-msgstr ""
-"{repeater.domain}: {repeater}: Errore durante il recupero del Paziente "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: More than one case found "
-msgstr "{repeater.domain}: {repeater}: Trovato più di un caso "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
-msgstr ""
-"{repeater.domain}: {repeater}: Errore durante il recupero dell'Incontro "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid ""
-"{repeater.domain}: {repeater}: More than one case found matching unique "
-"OpenMRS UUID. case external_id: "
-msgstr ""
-"{repeater.domain}: {repeater}: Trovati più casi corrispondenti allo UUID "
-"OpenMRS univoco. external_id del caso: "
-
-#: corehq/motech/openmrs/atom_feed.py
-#, python-brace-format
-msgid "Unable to determine mobile worker to own new \"{case_type}\" "
-msgstr ""
-"Impossibile determinare l'operatore mobile a cui assegnare il nuovo "
-"\"{case_type}\" "
+msgid "matching unique OpenMRS UUID. case external_id: "
+msgstr "UUID OpenMRS univoco corrispondente. external_id del caso: "
 
 #: corehq/motech/openmrs/forms.py
 msgid "Provider UUID"
@@ -59027,6 +59245,20 @@ msgid "e.g. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 msgstr "es. [{\"column\": \"givenName\", \"property\": \"first_name\"}, ...]"
 
 #: corehq/motech/openmrs/forms.py
+msgid "Each column mapping must be an object."
+msgstr "Ogni mappatura di colonna deve essere un oggetto."
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Unknown column mapping keys: %(keys)s"
+msgstr "Chiavi di mappatura delle colonne sconosciute: %(keys)s"
+
+#: corehq/motech/openmrs/forms.py
+#, python-format
+msgid "Each column mapping must have a \"%(key)s\"."
+msgstr "Ogni mappatura di colonna deve contenere \"%(key)s\"."
+
+#: corehq/motech/openmrs/forms.py
 msgid ""
 "Cases at this location and below will be forwarded. Leave empty if this is "
 "the only OpenMRS Forwarder"
@@ -59095,6 +59327,21 @@ msgstr "Importa ora"
 #: corehq/motech/openmrs/templates/openmrs/partials/openmrs_importer_template.html
 msgid "OpenMRS Importer"
 msgstr "Importatore OpenMRS"
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "No OpenMRS Importers were submitted."
+msgstr "Non è stato inviato alcun importatore OpenMRS."
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers are not valid JSON."
+msgstr "Gli importatori OpenMRS non sono in formato JSON valido."
+
+#: corehq/motech/openmrs/views.py
+#| msgid "OpenMRS Importers saved"
+msgid "OpenMRS Importers must be a list of objects."
+msgstr "Gli importatori OpenMRS devono essere un elenco di oggetti."
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -60034,7 +60281,6 @@ msgid "Save to Case"
 msgstr "Salva nel caso"
 
 #: corehq/privileges.py
-#| msgid "App Translations"
 msgid "AI App Translations"
 msgstr "Traduzioni AI dell'app"
 
@@ -60159,8 +60405,8 @@ msgid "WhatsApp Settings"
 msgstr "Impostazioni WhatsApp"
 
 #: corehq/tabs/tabclasses.py
-msgid "Connect Messsaging"
-msgstr "Connetti Messaggistica"
+msgid "Connect Messaging"
+msgstr "Messaggistica Connect"
 
 #: corehq/tabs/tabclasses.py
 msgid "Create and manage users for CommCare and CloudCare."
@@ -61026,6 +61272,481 @@ msgstr "Le colonne obbligatorie sono {column_names}"
 msgid "Enter valid JSON"
 msgstr "Inserisci un JSON valido"
 
+#~ msgid ""
+#~ "\n"
+#~ "      By clicking this button, you agree to Dimagi's\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      Facendo clic su questo pulsante, accetti i\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Termini di servizio</a> e la\n"
+#~ "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a> di Dimagi.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "Problem loading suite file from profile file. Is your profile file correct?"
+#~ msgstr ""
+#~ "Problema nel caricamento del file suite dal file profilo. Il tuo file "
+#~ "profilo è corretto?"
+
+#~ msgid "Delivery"
+#~ msgstr "Consegna"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "            Enable messaging for %(domain_name)s\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Attiva la messaggistica per %(domain_name)s\n"
+#~ "          "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "              %(billing_account)s\n"
+#~ "              will be charged for every SMS this project sends and receives.\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "              A %(billing_account)s\n"
+#~ "              verrà addebitato ogni SMS inviato e ricevuto da questo progetto.\n"
+#~ "            "
+
+#~ msgid ""
+#~ "\n"
+#~ "                A public webform with SMS turned on sends a text to any phone\n"
+#~ "                number a respondent enters, and each text is charged.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                Un modulo web pubblico con gli SMS attivati invia un messaggio a qualsiasi numero di telefono\n"
+#~ "                inserito da chi risponde; ogni messaggio comporta un addebito.\n"
+#~ "              "
+
+#~ msgid "Action is required to enable messaging."
+#~ msgstr "È necessario intervenire per attivare la messaggistica."
+
+#~ msgid "How to Enable Messaging"
+#~ msgstr "Come attivare la messaggistica"
+
+#~ msgid ""
+#~ "\n"
+#~ "        To enable messaging features for this project space, please do at least\n"
+#~ "        <strong>one</strong> of the following:\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Per attivare le funzionalità di messaggistica per questo spazio di progetto, esegui almeno\n"
+#~ "        <strong>una</strong> delle seguenti operazioni:\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Save a payment card</a> to your user\n"
+#~ "          account.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Salva una carta di pagamento</a> nel tuo\n"
+#~ "          account utente.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Enable automatic payments</a>\n"
+#~ "          for this project space.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(billing_info_url)s\">Attiva i pagamenti automatici</a>\n"
+#~ "          per questo spazio di progetto.\n"
+#~ "        "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">Pay invoices</a>\n"
+#~ "          or\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">purchase prepaid credits</a>\n"
+#~ "          totaling %(self_enable_payment_threshold)s or more.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          <a href=\"%(pay_invoices_url)s\">Paga le fatture</a>\n"
+#~ "          oppure\n"
+#~ "          <a href=\"%(purchase_credits_url)s\">acquista crediti prepagati</a>\n"
+#~ "          per un importo totale pari o superiore a %(self_enable_payment_threshold)s.\n"
+#~ "        "
+
+#~ msgid ""
+#~ "\n"
+#~ "        Then, return to this page to enable messaging. This helps us ensure SMS\n"
+#~ "        charges can be billed correctly.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Quindi torna a questa pagina per attivare la messaggistica. Questo ci aiuta a garantire che gli addebiti per gli SMS\n"
+#~ "        possano essere fatturati correttamente.\n"
+#~ "      "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        If none of these options are available for you, please email\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+#~ "        to request access to messaging features. Include your full name and the\n"
+#~ "        name of the organization you work for.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        Se nessuna di queste opzioni è disponibile, invia un'email a\n"
+#~ "        <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+#~ "        per richiedere l'accesso alle funzionalità di messaggistica. Includi il tuo nome completo e il\n"
+#~ "        nome dell'organizzazione per cui lavori.\n"
+#~ "      "
+
+#~ msgid "Back to Home"
+#~ msgstr "Torna alla home"
+
+#~ msgid "Turning on messaging will cost this project money."
+#~ msgstr "Attivare la messaggistica comporterà dei costi per questo progetto."
+
+#~ msgid ""
+#~ "\n"
+#~ "      This project is charged for every SMS it sends and receives. The price of\n"
+#~ "      each SMS depends on the country of the phone number. Charges appear on the\n"
+#~ "      project's monthly CommCare invoice.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "      A questo progetto viene addebitato ogni SMS inviato e ricevuto. Il prezzo di\n"
+#~ "      ogni SMS dipende dal Paese del numero di telefono. Gli addebiti compaiono sulla\n"
+#~ "      fattura mensile di CommCare del progetto.\n"
+#~ "    "
+
+#~ msgid "See SMS prices by country"
+#~ msgstr "Consulta i prezzi degli SMS per Paese"
+
+#~ msgid "Who is Charged"
+#~ msgstr "A chi vengono addebitati i costi"
+
+#~ msgid "Invoices Emailed to"
+#~ msgstr "Fatture inviate via email a"
+
+#~ msgid ""
+#~ "\n"
+#~ "        Messaging lets this project send and receive SMS, including one-time\n"
+#~ "        links for public webforms, broadcasts, and conditional alerts.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        La messaggistica consente a questo progetto di inviare e ricevere SMS, inclusi link monouso\n"
+#~ "        per moduli web pubblici, messaggi broadcast e avvisi condizionali.\n"
+#~ "      "
+
+#~ msgid "Messaging is currently disabled for this project space."
+#~ msgstr ""
+#~ "La messaggistica è attualmente disattivata per questo spazio di progetto."
+
+#~ msgid ""
+#~ "\n"
+#~ "            Please contact your project administrator to enable messaging.\n"
+#~ "          "
+#~ msgstr ""
+#~ "\n"
+#~ "            Contatta l'amministratore del progetto per attivare la messaggistica.\n"
+#~ "          "
+
+#~ msgid "Messaging enabled successfully."
+#~ msgstr "Messaggistica attivata correttamente."
+
+#~ msgid "Messaging cannot be enabled right now."
+#~ msgstr "Al momento non è possibile attivare la messaggistica."
+
+#~ msgid ""
+#~ "Subscription Payment for CommCare Invoice {context['invoice_number']} was "
+#~ "declined"
+#~ msgstr ""
+#~ "Il pagamento dell'abbonamento per la fattura CommCare "
+#~ "{context['invoice_number']} è stato rifiutato"
+
+#~ msgid "Invalid parameter(s): {', '.join(invalid_params)}"
+#~ msgstr "Parametro/i non valido/i: {', '.join(invalid_params)}"
+
+#~ msgid "Reverted to version {log.info['version']}"
+#~ msgstr "Ripristinato alla versione {log.info['version']}"
+
+#, python-brace-format
+#~ msgid "Case imports can contain a maximum of {MAX_CASE_IMPORTER_ROWS} rows. "
+#~ msgstr ""
+#~ "Le importazioni di casi possono contenere un massimo di "
+#~ "{MAX_CASE_IMPORTER_ROWS} righe. "
+
+#, python-brace-format
+#~ msgid ""
+#~ "The case name cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr ""
+#~ "Il nome del caso non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The external id cannot be longer than {STANDARD_CHARFIELD_LENGTH} characters"
+#~ msgstr "L'id esterno non può superare {STANDARD_CHARFIELD_LENGTH} caratteri"
+
+#~ msgid "Invalid operator \"{criteria[\"operator\"]}\". Allowed values are "
+#~ msgstr "Operatore non valido \"{criteria[\"operator\"]}\". I valori consentiti sono "
+
+#, python-brace-format
+#~ msgid "{node.name} is not supported with ancestor-exists"
+#~ msgstr "{node.name} non è supportato con ancestor-exists"
+
+#, python-brace-format
+#~ msgid "{value} is not a correctly formatted date or datetime."
+#~ msgstr "{value} non è una data o data/ora formattata correttamente."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid date."
+#~ msgstr "{value} non è una data valida."
+
+#, python-brace-format
+#~ msgid "{value} is an invalid datetime."
+#~ msgstr "{value} non è una data/ora valida."
+
+#, python-brace-format
+#~ msgid "The second argument to '{node.name}' must be valid coordinates"
+#~ msgstr ""
+#~ "Il secondo argomento di '{node.name}' deve essere un insieme di coordinate "
+#~ "valide"
+
+#, python-brace-format
+#~ msgid "The third argument to '{node.name}' must be a number, got '{distance}'"
+#~ msgstr ""
+#~ "Il terzo argomento di '{node.name}' deve essere un numero, ricevuto "
+#~ "'{distance}'"
+
+#~ msgid ""
+#~ "'{unit}' is not a valid distance unit. Expected one of {', "
+#~ "'.join(DISTANCE_UNITS)}"
+#~ msgstr ""
+#~ "'{unit}' non è un'unità di distanza valida. Atteso uno tra {', "
+#~ "'.join(DISTANCE_UNITS)}"
+
+#, python-brace-format
+#~ msgid "'{value}' is not a valid date. Expected 'YYYY-MM-DD"
+#~ msgstr "'{value}' non è una data valida. Atteso 'AAAA-MM-GG"
+
+#, python-brace-format
+#~ msgid "The first argument to '{node.name}' must be a valid case property name"
+#~ msgstr ""
+#~ "Il primo argomento di '{node.name}' deve essere un nome di proprietà del "
+#~ "caso valido"
+
+#, python-brace-format
+#~ msgid ""
+#~ "The '{node.name}' function accepts exactly {expected} arguments, got "
+#~ "{actual}"
+#~ msgstr ""
+#~ "La funzione '{node.name}' accetta esattamente {expected} argomenti, ricevuti"
+#~ " {actual}"
+
+#, python-brace-format
+#~ msgid "Unknown expression {expr}"
+#~ msgstr "Espressione sconosciuta {expr}"
+
+#, python-brace-format
+#~ msgid "You have been added to the \"{invitation.domain}\" project space."
+#~ msgstr "Sei stato aggiunto allo spazio progetto \"{invitation.domain}\"."
+
+#, python-brace-format
+#~ msgid ""
+#~ "Cannot delete location type '{deleted_type.code}'. It is referenced by the "
+#~ "type "
+#~ msgstr ""
+#~ "Impossibile eliminare il tipo di località '{deleted_type.code}'. È "
+#~ "referenziato dal tipo "
+
+#, python-brace-format
+#~ msgid "Location site code: {site_code}."
+#~ msgstr "Codice sito località: {site_code}."
+
+#~ msgid "Invalid fields were included in request: {list(data.keys())}."
+#~ msgstr ""
+#~ "Sono stati inclusi campi non validi nella richiesta: {list(data.keys())}."
+
+#~ msgid "Choose at least one way for respondents to receive one-time links."
+#~ msgstr ""
+#~ "Scegli almeno un modo per consentire a chi risponde di ricevere link "
+#~ "monouso."
+
+#, python-brace-format
+#~ msgid "Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+#~ msgstr "Attendi almeno {CONFIRMATION_RESEND_LIMIT_SECONDS} "
+
+#, python-brace-format
+#~ msgid "Cannot delete form {instance_id} because it is not archived."
+#~ msgstr ""
+#~ "Impossibile eliminare il modulo {instance_id} perché non è archiviato."
+
+#~ msgid "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
+#~ msgstr ""
+#~ "Esiste già una chiave API con nome \"{create_form.cleaned_data['name']}\"."
+
+#, python-brace-format
+#~ msgid "on {exp_date:{USER_DATE_FORMAT}}."
+#~ msgstr "il {exp_date:{USER_DATE_FORMAT}}."
+
+#, python-brace-format
+#~ msgid "Dimagi CommCare Accounts <{settings.ACCOUNTS_EMAIL}>"
+#~ msgstr "Account Dimagi CommCare <{settings.ACCOUNTS_EMAIL}>"
+
+#, python-brace-format
+#~ msgid ""
+#~ "Could not find a module or form with ID '{module_or_form_id}' in app "
+#~ "'{self.app.name}'"
+#~ msgstr ""
+#~ "Impossibile trovare un modulo o un form con ID '{module_or_form_id}' "
+#~ "nell'app '{self.app.name}'"
+
+#, python-brace-format
+#~ msgid "Domain cannot be set to '{self.domain}'"
+#~ msgstr "Il dominio non può essere impostato su '{self.domain}'"
+
+#, python-brace-format
+#~ msgid "base_item_expression is not allowed for domain {self.domain}"
+#~ msgstr "base_item_expression non è consentito per il dominio {self.domain}"
+
+#, python-brace-format
+#~ msgid "{expr} is not allowed for domain {self.domain}"
+#~ msgstr "{expr} non è consentito per il dominio {self.domain}"
+
+#~ msgid ""
+#~ "UCR Expression with name \"{create_form.cleaned_data['name']}\" already "
+#~ "exists."
+#~ msgstr ""
+#~ "L'espressione UCR con nome \"{create_form.cleaned_data['name']}\" esiste "
+#~ "già."
+
+#, python-brace-format
+#~ msgid "Confirm your CommCare account for {commcare_user.domain}"
+#~ msgstr "Conferma il tuo account CommCare per {commcare_user.domain}"
+
+#, python-brace-format
+#~ msgid ""
+#~ "You have successfully confirmed the {user.raw_username} account. You can now"
+#~ " login"
+#~ msgstr ""
+#~ "Hai confermato con successo l'account {user.raw_username}. Ora puoi accedere"
+
+#, python-brace-format
+#~ msgid "<a href=\"{url}\">Add/Edit Connections Settings</a>"
+#~ msgstr "<a href=\"{url}\">Aggiungi/Modifica impostazioni di connessione</a>"
+
+#~ msgid ""
+#~ "Unable to resolve API endpoints {self.api_auth_settings!r}. Please select "
+#~ "the applicable API auth settings for the "
+#~ msgstr ""
+#~ "Impossibile risolvere gli endpoint API {self.api_auth_settings!r}. Seleziona"
+#~ " le impostazioni di autenticazione API applicabili per il "
+
+#, python-brace-format
+#~ msgid ""
+#~ "No users found at location \"{repeater.location_id}\" to own patients added "
+#~ "from OpenMRS Atom feed."
+#~ msgstr ""
+#~ "Nessun utente trovato nella località \"{repeater.location_id}\" per "
+#~ "assegnare i pazienti aggiunti dal feed OpenMRS Atom."
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error in settings: Unable to update "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Errore nelle impostazioni: impossibile "
+#~ "aggiornare "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Patient "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Errore durante il recupero del Paziente "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: More than one case found "
+#~ msgstr "{repeater.domain}: {repeater}: Trovato più di un caso "
+
+#, python-brace-format
+#~ msgid "{repeater.domain}: {repeater}: Error fetching Encounter "
+#~ msgstr ""
+#~ "{repeater.domain}: {repeater}: Errore durante il recupero dell'Incontro "
+
+#, python-brace-format
+#~ msgid "Unable to determine mobile worker to own new \"{case_type}\" "
+#~ msgstr ""
+#~ "Impossibile determinare l'operatore mobile a cui assegnare il nuovo "
+#~ "\"{case_type}\" "
+
+#~ msgid "The selected form can't be used for a public webform."
+#~ msgstr ""
+#~ "Il modulo selezionato non può essere utilizzato per un modulo web pubblico."
+
+#, python-format, python-brace-format
+#~ msgid ""
+#~ "More than {percent}% of translations failed validation and were skipped."
+#~ msgstr ""
+#~ "Più del {percent}% delle traduzioni non ha superato la validazione ed è "
+#~ "stata saltata."
+
+#~ msgid "Space-separated list of privilege strings from corehq.privileges"
+#~ msgstr ""
+#~ "Elenco di stringhe di privilegi separati da spazi dalla corehq.privileges"
+
+#~ msgid "Version History"
+#~ msgstr "Cronologia delle versioni"
+
+#~ msgid "No Forms are supplied"
+#~ msgstr "Nessun modulo fornito"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "    <span>Return to <a href=\"%(form_management_url)s\">Manage Forms</a> to reverse this.</span>\n"
+#~ "  "
+#~ msgstr ""
+#~ "\n"
+#~ "    <span>Torna a <a href=\"%(form_management_url)s\">Gestisci moduli</a> per annullare questa operazione.</span>\n"
+#~ "  "
+
+#, python-brace-format
+#~ msgid "Could not find XForm {form_id}"
+#~ msgstr "Impossibile trovare XForm {form_id}"
+
+#, python-brace-format
+#~ msgid "XForm {form_id} for domain {domain} by user '{username}'"
+#~ msgstr "XForm {form_id} per il dominio {domain} dall'utente '{username}'"
+
+#, python-brace-format
+#~ msgid "Successfully archived {form}"
+#~ msgstr "{form} archiviato con successo"
+
+#, python-brace-format
+#~ msgid "Successfully unarchived {form}"
+#~ msgstr "{form} ripristinato con successo"
+
+#, python-brace-format
+#~ msgid "Could not archive {form}"
+#~ msgstr "Impossibile archiviare {form}"
+
+#, python-brace-format
+#~ msgid "Could not unarchive {form}"
+#~ msgstr "Impossibile ripristinare {form} dall'archivio"
+
+#, python-brace-format
+#~ msgid "{success_msg} {count} form(s)"
+#~ msgstr "{success_msg} {count} modulo/i"
+
 #, python-format
 #~ msgid ""
 #~ "\n"
@@ -61085,9 +61806,6 @@ msgstr "Inserisci un JSON valido"
 #~ "\n"
 #~ "        Trovate %(matched_count)s corrispondenze.\n"
 #~ "      "
-
-#~ msgid "One-Time Link Request"
-#~ msgstr "Richiesta Link Monouso"
 
 #~ msgid "Case list used by Select Parent First in '{}' not found"
 #~ msgstr ""
@@ -63727,9 +64445,6 @@ msgstr "Inserisci un JSON valido"
 #~ msgid "Printing"
 #~ msgstr "Stampa"
 
-#~ msgid "Document Template"
-#~ msgstr "Modello Documento"
-
 #~ msgid "Opens file in new tab."
 #~ msgstr "Apre il file in una nuova scheda."
 
@@ -64193,39 +64908,8 @@ msgstr "Inserisci un JSON valido"
 #~ "      incluso nel tuo piano, ti verrà addebitato secondo i termini del piano.\n"
 #~ "    "
 
-#~ msgid ", "
-#~ msgstr ", "
-
 #~ msgid "Workflow:"
 #~ msgstr "Workflow:"
-
-#~ msgid "Rebuild restriction required"
-#~ msgstr "Restrizione di ricostruzione richiesta"
-
-#~ msgid "Rebuild restriction not required"
-#~ msgstr "Restrizione di ricostruzione non richiesta"
-
-#~ msgid " and try again."
-#~ msgstr " e riprova."
-
-#~ msgid "seconds before requesting again."
-#~ msgstr "secondi prima di poter effettuare una nuova richiesta."
-
-#~ msgid "...See more"
-#~ msgstr "...Vedi altro"
-
-#~ msgid "...Collapse"
-#~ msgstr "...Comprimi"
-
-#~ msgid "Please select the applicable API auth settings for the "
-#~ msgstr "Seleziona le impostazioni di autenticazione API applicabili per il "
-
-#~ msgid "patients added from OpenMRS Atom feed."
-#~ msgstr "pazienti aggiunti dal feed Atom di OpenMRS."
-
-#~ msgid "patients from OpenMRS unless only one case type is specified."
-#~ msgstr ""
-#~ "pazienti da OpenMRS a meno che non sia specificato un solo tipo di caso."
 
 #~ msgid "Data cleaning action"
 #~ msgstr "Azione di pulizia dati"

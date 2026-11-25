@@ -1,4 +1,5 @@
 import json
+import re
 from collections import namedtuple
 from datetime import date
 
@@ -25,6 +26,7 @@ from sqlagg.columns import (
     YearColumn,
 )
 from sqlalchemy import bindparam
+from sqlalchemy.dialects import postgresql
 
 from couchforms.geopoint import GeoPoint
 from dimagi.ext.jsonobject import (
@@ -64,6 +66,13 @@ SQLAGG_COLUMN_MAP = {
     const.AGGGREGATION_TYPE_YEAR: YearColumn,
     const.AGGGREGATION_TYPE_NONZERO_SUM: NonzeroSumColumn,
 }
+
+COLUMN_NAME_REGEX = re.compile(r'[\w\-]+')
+
+
+def _check_column_name(value):
+    if not COLUMN_NAME_REGEX.fullmatch(value):
+        raise BadValueError("Invalid column name: '{}'".format(value))
 
 
 class BaseReportColumn(JsonObject):
@@ -338,7 +347,7 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
     """Used for grouping by SQL conditionals"""
     type = TypeProperty('integer_buckets')
     _agg_column_type = ConditionalAggregation
-    field = StringProperty(required=True)
+    field = StringProperty(required=True, validators=_check_column_name)
     ranges = DictProperty()
 
     def get_whens(self):
@@ -354,7 +363,8 @@ class IntegerBucketsColumn(_CaseExpressionColumn):
         return whens
 
     def _base_expression(self, bounds):
-        return "{} between {} and {}".format(self.field, bounds[0], bounds[1])
+        field = postgresql.dialect().identifier_preparer.quote_identifier(self.field)
+        return '{} between {} and {}'.format(field, bounds[0], bounds[1])
 
 
 class SumWhenColumn(_CaseExpressionColumn):

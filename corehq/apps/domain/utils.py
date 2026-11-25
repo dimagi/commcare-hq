@@ -186,6 +186,11 @@ def encrypt_account_confirmation_info(commcare_user):
     return b64_aes_cbc_encrypt(json.dumps(data))
 
 
+def is_domain_active(domain_name):
+    domain_obj = Domain.get_by_name(domain_name)
+    return bool(domain_obj and domain_obj.is_active)
+
+
 def is_domain_in_use(domain_name):
     domain_obj = Domain.get_by_name(domain_name)
     return domain_obj and not domain_obj.doc_type.endswith('-Deleted')

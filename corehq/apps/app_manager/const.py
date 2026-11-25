@@ -135,3 +135,17 @@ NON_BUILD_APP_KEYS = (
     'short_odk_media_url',
     'recipients',
 )
+
+
+def get_template_app_plan_choices():
+    from corehq.apps.accounting.models import SoftwarePlanEdition
+    excluded = {
+        SoftwarePlanEdition.PAUSED,
+        SoftwarePlanEdition.ENTERPRISE,
+        SoftwarePlanEdition.RESELLER,
+        SoftwarePlanEdition.MANAGED_HOSTING,
+    }
+    return [
+        choice for choice in SoftwarePlanEdition.CHOICES
+        if choice[0] not in excluded
+    ]

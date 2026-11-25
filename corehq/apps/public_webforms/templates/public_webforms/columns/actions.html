@@ -13,7 +13,7 @@
     class="btn btn-sm btn-outline-success fw-normal"
     data-bs-toggle="modal"
     data-bs-target="#confirm-status-{{ record.id }}"
-    {% if record.is_expired %}disabled{% endif %}
+    {% if record.is_expired or is_app_deleted %}disabled{% endif %}
   >
     <i class="fa fa-play"></i>
     {% trans "Open" %}

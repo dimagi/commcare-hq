@@ -1,4 +1,5 @@
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
+from pillowtop.reindexer.reindexer import supports_clean
 
 from corehq.pillows.app_submission_tracker import (
     SqlAppFormSubmissionTrackerReindexerFactory,
@@ -134,7 +135,21 @@ class Command(SubCommand):
         factory = FACTORIES_BY_SLUG[self.subcommand](**options)
         reindexer = factory.build()
 
-        if cleanup and (noinput or confirm()):
-            reindexer.clean()
+        if cleanup:
+            if not supports_clean(reindexer):
+                raise CommandError(
+                    f"The {self.subcommand} reindexer does not support "
+                    "--cleanup. Run it without --cleanup to reindex without "
+                    "cleaning."
+                )
+            elif reindexer.partial:
+                raise CommandError(
+                    f"The {self.subcommand} reindexer cannot --cleanup when "
+                    "limited to part of the index (e.g. with --domain or "
+                    "--limit-to-db). Cleaning would delete documents that "
+                    "this reindex would not restore."
+                )
+            elif noinput or confirm():
+                reindexer.clean()
 
         reindexer.reindex()

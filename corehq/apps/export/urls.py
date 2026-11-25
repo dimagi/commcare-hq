@@ -62,6 +62,7 @@ from corehq.apps.export.views.utils import (
     DashboardFeedPaywall,
     DataFileDownloadDetail,
     DataFileDownloadList,
+    ExportSchemaBuildStatusView,
     GenerateSchemaFromAllBuildsView,
 )
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -216,6 +217,10 @@ urlpatterns = [
     url(r"^daily_saved/paywall/$",
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
+
+    url(r"^schema_build_status/(?P<download_id>[\w\-.]+)/$",
+        ExportSchemaBuildStatusView.as_view(),
+        name=ExportSchemaBuildStatusView.urlname),
 
     url(r"^build_full_schema/$",
         GenerateSchemaFromAllBuildsView.as_view(),
