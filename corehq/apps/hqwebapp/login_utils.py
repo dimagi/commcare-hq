@@ -21,10 +21,16 @@ def get_custom_login_page(host):
                 return template_name
 
 
-def is_logged_in(user):
+def is_logged_in(request):
     """
-    Determine if user is fully logged in, taking into consideration 2FA
-    If 2FA is enabled, the user needs to be verified in order to return True rather than just authenticated
-    :param user: django user (django.contrib.auth.models.User)
+    Determine if the requesting user is fully logged in, taking 2FA into
+    consideration.
+
+    A user with 2FA enabled must also be verified.
     """
-    return user.is_verified() if default_device(user) else user.is_authenticated
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    if not default_device(user):
+        return True
+    return user.is_verified()

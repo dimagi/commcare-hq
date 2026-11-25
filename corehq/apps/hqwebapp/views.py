@@ -417,7 +417,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
-    if is_logged_in(req.user) and req.method == "GET":
+    if is_logged_in(req) and req.method == "GET":
         if not domain_name:
             default_url = reverse('homepage')
         else:
