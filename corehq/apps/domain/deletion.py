@@ -524,6 +524,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'AppReleaseModeSetting', 'domain'),
     ModelDeletion('domain', 'ChatbotDomainSettings', 'domain'),
+    ModelDeletion('domain', 'ChatbotDomainUsage', 'domain'),
     ModelDeletion('domain', 'AppManagerDomainSettings', 'domain'),
     ModelDeletion('geospatial', 'GeoConfig', 'domain'),
     ModelDeletion('email', 'EmailSettings', 'domain'),

@@ -221,6 +221,9 @@ DOMAIN_METRICS_TO_PROPERTIES_MAP = {
     'users_with_web_apps_submission_in_last_30_days': 'cp_n_users_submitted_web_apps_30_days',
     'web_users': 'cp_n_web_users',
     'web_users_accessed_in_last_30_days': 'cp_n_web_users_accessed_in_30_days',
+    'chatbot_active_users_in_last_30_days': 'cp_n_chatbot_active_users_30_days',
+    'chatbot_users_near_quota_in_last_30_days': 'cp_n_chatbot_users_near_quota_30_days',
+    'chatbot_users_at_quota_in_last_30_days': 'cp_n_chatbot_users_at_quota_30_days',
     # Feature Usage Metrics
     'has_multimedia': 'cp_has_multimedia',
     'has_case_management': 'cp_has_case_management',
@@ -280,6 +283,9 @@ class DomainMetrics(models.Model):
     web_users_accessed_in_last_30_days = models.IntegerField()
     users_with_submission = models.IntegerField()
     users_with_web_apps_submission_in_last_30_days = models.IntegerField()
+    chatbot_active_users_in_last_30_days = models.IntegerField(null=True)
+    chatbot_users_near_quota_in_last_30_days = models.IntegerField(null=True)
+    chatbot_users_at_quota_in_last_30_days = models.IntegerField(null=True)
     active_mobile_workers = models.IntegerField()
     active_mobile_workers_in_last_365_days = models.IntegerField()
     case_sharing_groups = models.IntegerField()

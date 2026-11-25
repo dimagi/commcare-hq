@@ -27,6 +27,7 @@ from corehq.apps.domain.calculations import (
     sms_in_last_bool,
     sms_out_in_last,
 )
+from corehq.apps.domain.models import ChatbotDomainUsage
 from corehq.apps.es import filters
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
@@ -34,6 +35,7 @@ from corehq.apps.export.dbaccessors import get_export_count_by_domain
 from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
+from corehq.apps.hqwebapp.models import ChatbotQuotaPressure
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import LocationType
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
@@ -115,6 +117,34 @@ def _calc_web_users_accessed_30d(ctx):
         ):
             count += 1
     return count
+
+
+def _thirty_days_ago():
+    return datetime.utcnow() - timedelta(days=30)
+
+
+def _calc_chatbot_active_users_30d(ctx):
+    return ChatbotDomainUsage.objects.filter(
+        domain=ctx.domain,
+        last_message_at__gte=_thirty_days_ago(),
+    ).count()
+
+
+def _count_members_under_chatbot_quota_pressure(ctx, timestamp_field):
+    """Count active web users of the domain under quota pressure, wherever they chatted."""
+    member_ids = list(UserES().domain(ctx.domain).web_users().scroll_ids())
+    return ChatbotQuotaPressure.objects.filter(
+        user_id__in=member_ids,
+        **{f'{timestamp_field}__gte': _thirty_days_ago()},
+    ).count()
+
+
+def _calc_chatbot_users_near_quota_30d(ctx):
+    return _count_members_under_chatbot_quota_pressure(ctx, 'last_quota_warning_at')
+
+
+def _calc_chatbot_users_at_quota_30d(ctx):
+    return _count_members_under_chatbot_quota_pressure(ctx, 'last_quota_limit_at')
 
 
 def _calc_inactive_cases(ctx):
@@ -348,6 +378,12 @@ DAILY_METRICS = [
               _calc_users_with_submission, is_boolean=False, schedule='daily'),
     MetricDef('users_with_web_apps_submission_in_last_30_days', 'cp_n_users_submitted_web_apps_30_days',
               _calc_users_with_web_apps_submission_30d, is_boolean=False, schedule='daily'),
+    MetricDef('chatbot_active_users_in_last_30_days', 'cp_n_chatbot_active_users_30_days',
+              _calc_chatbot_active_users_30d, is_boolean=False, schedule='daily'),
+    MetricDef('chatbot_users_near_quota_in_last_30_days', 'cp_n_chatbot_users_near_quota_30_days',
+              _calc_chatbot_users_near_quota_30d, is_boolean=False, schedule='daily'),
+    MetricDef('chatbot_users_at_quota_in_last_30_days', 'cp_n_chatbot_users_at_quota_30_days',
+              _calc_chatbot_users_at_quota_30d, is_boolean=False, schedule='daily'),
     MetricDef('custom_roles', 'cp_n_custom_roles',
               _calc_custom_roles, is_boolean=False, schedule='daily'),
     MetricDef('has_users_with_location', 'cp_using_locations',

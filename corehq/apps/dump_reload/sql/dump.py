@@ -263,6 +263,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('hqwebapp.Alert', SimpleFilter('created_by_domain')),
     FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.ChatbotDomainSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.ChatbotDomainUsage', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.AppManagerDomainSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('geospatial.GeoConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('email.EmailSettings', SimpleFilter('domain')),

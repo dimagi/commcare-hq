@@ -78,6 +78,7 @@ IGNORE_MODELS = {
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
     "hqadmin.PlatformDeactivationLog",
+    "hqwebapp.ChatbotQuotaPressure",
     "hqwebapp.HQOauthApplication",
     "hqwebapp.UserAccessLog",
     "hqwebapp.UserAgent",

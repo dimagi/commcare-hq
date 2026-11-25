@@ -5,14 +5,19 @@ from django.test import TestCase
 from time_machine import travel
 
 from corehq.apps.cloudcare.const import DEVICE_ID
+from corehq.apps.domain.models import ChatbotDomainUsage, Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.hqwebapp.models import ChatbotQuotaPressure
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 
 from ..daily_calcs import (
+    _calc_chatbot_active_users_30d,
+    _calc_chatbot_users_at_quota_30d,
+    _calc_chatbot_users_near_quota_30d,
     _calc_users_with_web_apps_submission_30d,
     _calc_web_users_accessed_30d,
 )
@@ -145,3 +150,70 @@ class TestCalcUsersWithWebAppsSubmission30d(TestCase):
         web_apps_user = self._make_user('webapps')
         save_to_es_analytics_db(self.domain, thirty_one_days_ago, 'app', DEVICE_ID, web_apps_user.user_id)
         assert _calc_users_with_web_apps_submission_30d(DomainContext(self.domain_obj)) == 0
+
+
+@travel('2026-11-20', tick=False)
+class TestCalcChatbotActiveUsers30d(TestCase):
+    domain = 'chatbot-active-users-test'
+
+    def _chatted(self, user_id, days_ago, domain=None):
+        ChatbotDomainUsage.objects.create(
+            domain=domain or self.domain,
+            user_id=user_id,
+            last_message_at=datetime.now() - timedelta(days=days_ago),
+        )
+
+    def _calc(self):
+        return _calc_chatbot_active_users_30d(DomainContext(Domain(name=self.domain)))
+
+    def test_counts_users_who_chatted_recently(self):
+        self._chatted('alice', days_ago=0)
+        self._chatted('bob', days_ago=5)
+        assert self._calc() == 2
+
+    def test_counts_users_who_chatted_30_days_ago(self):
+        self._chatted('alice', days_ago=30)
+        assert self._calc() == 1
+
+    def test_excludes_users_who_chatted_31_days_ago(self):
+        self._chatted('alice', days_ago=31)
+        assert self._calc() == 0
+
+    def test_excludes_users_who_only_chatted_in_other_domain(self):
+        self._chatted('alice', days_ago=0, domain='other-domain')
+        assert self._calc() == 0
+
+
+@es_test(requires=[user_adapter])
+@travel('2026-11-20', tick=False)
+class TestCalcChatbotUsersUnderQuotaPressure30d(TestCase):
+    domain = 'chatbot-quota-test'
+
+    def _web_user_under_pressure(self, name, domain, days_ago, at_limit=True):
+        user = WebUser(
+            _id=f'{name}-id',
+            username=f'{name}@example.com',
+            domain_memberships=[DomainMembership(domain=domain)],
+            is_active=True,
+        )
+        user_adapter.index(user, refresh=True)
+        timestamp = datetime.now() - timedelta(days=days_ago)
+        ChatbotQuotaPressure.objects.create(
+            user_id=user.user_id,
+            last_quota_warning_at=timestamp,
+            last_quota_limit_at=timestamp if at_limit else None,
+        )
+
+    def _near_and_at_quota_counts(self):
+        ctx = DomainContext(Domain(name=self.domain))
+        return _calc_chatbot_users_near_quota_30d(ctx), _calc_chatbot_users_at_quota_30d(ctx)
+
+    def test_counts_domain_web_users_under_pressure_in_last_30_days(self):
+        self._web_user_under_pressure('alice', self.domain, days_ago=30)
+        self._web_user_under_pressure('bob', self.domain, days_ago=31)
+        self._web_user_under_pressure('carol', 'other-domain', days_ago=0)
+        assert self._near_and_at_quota_counts() == (1, 1)
+
+    def test_warning_only_does_not_count_as_at_quota(self):
+        self._web_user_under_pressure('alice', self.domain, days_ago=0, at_limit=False)
+        assert self._near_and_at_quota_counts() == (1, 0)
