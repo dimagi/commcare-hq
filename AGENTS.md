@@ -63,7 +63,7 @@
   commit, so that the changes are clear.
 
 - When creating PRs, always create them as drafts, and always use the
-  GitHub PR template.
+  GitHub PR template (`.github/PULL_REQUEST_TEMPLATE.md`).
 
 - When adding PR descriptions, avoid restating the code diff. Focus on
   useful context for the reviewer.
