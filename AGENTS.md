@@ -140,7 +140,6 @@ uv run pytest --reusedb=1 path/to/test.py
 uv run pytest --reusedb=migrate path/to/test.py
 ```
 
-Use `pytest-unmagic` for explicit test fixtures (see `CODE_STANDARDS.md`).
 Notable markers: `es_test` (Elasticsearch), `sharded` (shard DBs), `slow`.
 
 ### Linting
