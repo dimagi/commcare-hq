@@ -43,6 +43,10 @@ class TestIsLoggedIn(TestCase):
     def test_returns_false_if_user_is_not_authenticated(self):
         self.assertFalse(is_logged_in(self.make_request(AnonymousUser())))
 
+    def test_returns_false_if_sso_session_is_not_authenticated(self):
+        request = self.make_request(AnonymousUser(), session={'samlSessionIndex': '_abc123'})
+        self.assertFalse(is_logged_in(request))
+
     def test_returns_true_if_user_with_2fa_is_authenticated_and_verified(self):
         user = self.create_user(has_device=True, is_verified=True)
         self.assertTrue(is_logged_in(self.make_request(user)))
@@ -50,6 +54,16 @@ class TestIsLoggedIn(TestCase):
     def test_returns_false_if_user_with_2fa_is_authenticated_but_not_verified(self):
         user = self.create_user(has_device=True, is_verified=False)
         self.assertFalse(is_logged_in(self.make_request(user)))
+
+    def test_returns_true_if_user_with_2fa_is_not_verified_but_using_saml(self):
+        user = self.create_user(has_device=True, is_verified=False)
+        request = self.make_request(user, session={'samlSessionIndex': '_abc123'})
+        self.assertTrue(is_logged_in(request))
+
+    def test_returns_true_if_user_with_2fa_is_not_verified_but_using_oidc(self):
+        user = self.create_user(has_device=True, is_verified=False)
+        request = self.make_request(user, session={'oidc_state': 'abc123'})
+        self.assertTrue(is_logged_in(request))
 
     @staticmethod
     def create_user(has_device=False, is_verified=False):
