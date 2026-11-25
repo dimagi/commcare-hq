@@ -45,6 +45,7 @@ export default {
     GROUP_BORDER: 'group-border',
     HINT_AS_PLACEHOLDER: 'hint-as-placeholder',
     RECEIVER_FIELD_INDEXED: 'indexed',
+    RENDER_DOCUMENT: 'render-document',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,

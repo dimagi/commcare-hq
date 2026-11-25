@@ -1,15 +1,18 @@
 """
-Renders document templates to PDF for the preview in the document template editor.
+Renders document templates to PDF.
 
+A template's areas (``{name: Area}``) hold author-written Jinja. A
+:class:`Document` holds the same areas with the variables rendered.
 Rendering takes two steps:
 
-1. :func:`_render_areas` renders the Jinja variables (``{{ first_name }}``) in the
-   markdown of each area with a context of values for those variables.
-   Area text is author-written, so it runs in a sandbox. Context
+1. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
+   in the markdown areas of a template with a context of values for those
+   variables. Area text is author-written, so it runs in a sandbox. Context
    values are escaped, so they cannot add markup of their own.
-2. :func:`render_pdf` lays the markdown out on the page with reportlab.
-   The markdown is converted to HTML and then to reportlab flowables.
-   HTML in the markdown is not supported: it is escaped and shown as text.
+2. :func:`render_pdf` lays the markdown of one or more documents out on the
+   page with reportlab. The markdown is converted to HTML and then to
+   reportlab flowables. HTML in the markdown is not supported: it is escaped
+   and shown as text.
 
 The layout lives in a single function (:func:`_us_letter`) so that another
 can be added next to it.
@@ -19,6 +22,7 @@ import re
 from io import BytesIO
 from xml.sax.saxutils import escape, quoteattr
 
+import attrs
 import markdown
 from bs4 import BeautifulSoup
 from jinja2 import (
@@ -107,25 +111,42 @@ def _markdown_to_html(value):
     return md.convert(value)
 
 
-def get_variable_names(area_values):
-    """Each variable the areas use, in order of first use"""
+def get_variable_names(areas):
+    """Each variable the markdown areas use, in order of first use
+
+    :param areas: ``{name: Area}``
+    """
     names = {}
-    for area_name, text in area_values.items():
-        _check_area_length(area_name, text)
+    for name, area in areas.items():
+        if area.type != 'markdown':
+            continue
+        _check_area_length(name, area.value)
         try:
-            names.update(dict.fromkeys(_parse_variable_names(text)))
+            names.update(dict.fromkeys(_parse_variable_names(area.value)))
         except TemplateSyntaxError as error:
-            raise DocumentRenderError(_syntax_error_message(area_name, error))
+            raise DocumentRenderError(_syntax_error_message(name, error))
     return list(names)
 
 
-def _render_areas(area_values, context):
-    """Render the Jinja in the text of each area
+@attrs.define
+class Document:
+    """A template's areas with the variables rendered, ready for :func:`render_pdf`"""
+    areas = attrs.field()  # {name: Area}
 
-    :param area_values: ``{area name: markdown text}``
-    :returns: ``{area name: markdown text}``
+
+def generate_document(areas, context):
+    """Render the Jinja in the markdown areas of a template; other area types are kept as they are
+
+    :param areas: ``{name: Area}``
+    :param context: values for the variables the areas use
+    :returns: a :class:`Document`
+    :raises DocumentRenderError: if an area is invalid or fails to render
     """
-    return {name: _render_area(name, text, context) for name, text in area_values.items()}
+    return Document({
+        name: attrs.evolve(area, value=_render_area(name, area.value, context))
+        if area.type == 'markdown' else area
+        for name, area in areas.items()
+    })
 
 
 def _check_area_length(name, text):
@@ -152,17 +173,10 @@ def _syntax_error_message(area_name, error):
     return f'Template syntax error in {area_name}, line {error.lineno}: {error.message}'
 
 
-def render_preview(area_values, context):
-    """:returns: PDF bytes of the document template with ``area_values`` (markdown) and ``context``"""
-    rendered = _render_areas(area_values, context)
-    return render_pdf([{name: {'type': 'markdown', 'value': text} for name, text in rendered.items()}])
-
-
 def render_pdf(documents):
     """One PDF with each document starting on a new page
 
-    :param documents: ``[{area: {'type': 'markdown', 'value': ...}}]`` with an
-        entry for each area
+    :param documents: ``[Document]``
     """
     templates = []
     flowables = []
@@ -201,7 +215,7 @@ def _us_letter(n, document):
         )
 
     def draw(canvas, area_name, top, height):
-        frame(top, height).addFromList(_area_flowables(document.get(area_name)), canvas)
+        frame(top, height).addFromList(_area_flowables(document.areas.get(area_name)), canvas)
 
     def draw_footer(canvas):
         draw(canvas, 'footer', top=page_height - margin - footer_height, height=footer_height)
@@ -221,17 +235,17 @@ def _us_letter(n, document):
         PageTemplate(id=f'{n}-first', frames=[body_frame(body_top)], onPage=draw_first_page),
         PageTemplate(id=f'{n}-later', frames=[body_frame(margin)], onPage=draw_later_page),
     ]
-    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.get('body'))]
+    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.areas.get('body'))]
     return templates, flowables
 
 
 def _area_flowables(area):
-    """:param area: ``{'type': 'markdown', 'value': ...}`` or ``None``"""
+    """:param area: an :class:`Area` or ``None``"""
     if not area:
         return []
-    if area['type'] == 'markdown':
-        return _markdown_to_flowables(area['value'])
-    raise ValueError(f'Unknown area type: {area["type"]!r}')
+    if area.type == 'markdown':
+        return _markdown_to_flowables(area.value)
+    raise ValueError(f'Unknown area type: {area.type!r}')
 
 
 def _markdown_to_flowables(text):
