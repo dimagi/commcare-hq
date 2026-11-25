@@ -23,6 +23,29 @@
 
 - **Bootstrap 3 is legacy** — Prefer Bootstrap 5; both coexist in the codebase
 
+- **One `--reusedb` test run at a time** — Concurrent pytest runs, or a run
+  killed mid-flight, leave the shared test databases dirty. Couch has no
+  rollback, so leaked documents cause failures in unrelated tests. Recover
+  with `uv run pytest --reusedb=reset` on a test that uses the damaged
+  database.
+
+- **Couch `_design` 404s in tests** — If tests fail with "missing" errors for
+  `_design/...` views, resync them with
+  `CCHQ_TESTING=1 uv run ./manage.py sync_couch_views`.
+
+- **Sharded tests** — CI runs the main suite unpartitioned, and runs
+  `-m sharded` tests separately with `USE_PARTITIONED_DATABASE=yes` (see
+  `docker/run.sh`). Running non-sharded tests against a partitioned database
+  causes failures that CI never sees.
+
+- **Warnings are errors** — `corehq/warnings.py` turns warnings into errors
+  only when `PYTHONWARNINGS` is unset. If your shell sets it, reproduce CI
+  failures with `env -u PYTHONWARNINGS uv run pytest ...`.
+
+- **`build_bootstrap5_diffs` auto-commits** — It runs `git add -A` and
+  commits, sweeping in untracked files and uncommitted work. Commit or stash
+  first, and check `git show --stat HEAD` afterwards.
+
 ## Version Control
 
 - Always commit on a branch, never directly on master.
