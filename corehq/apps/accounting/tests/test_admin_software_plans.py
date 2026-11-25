@@ -120,35 +120,33 @@ class TestUpgradeSoftwarePlanToLatestVersion(BaseAccountingTest):
 
         new_subscription1 = Subscription.get_active_subscription_by_domain(self.domain1)
         assert new_subscription1.plan_version == self.newest_version
-        assert get_preserved_fields(new_subscription1) == get_preserved_fields(old_subscription1)
+        assert self._get_preserved_fields(new_subscription1) == self._get_preserved_fields(old_subscription1)
 
         new_subscription2 = Subscription.get_active_subscription_by_domain(self.domain2)
         assert new_subscription2.plan_version == self.newest_version
-        assert get_preserved_fields(new_subscription2) == get_preserved_fields(old_subscription2)
+        assert self._get_preserved_fields(new_subscription2) == self._get_preserved_fields(old_subscription2)
 
-
-# Fields that upgrading to the latest plan version must carry over unchanged
-PRESERVED_FIELDS = [
-    'salesforce_contract_id',
-    'date_end',
-    'do_not_invoice',
-    'no_invoice_reason',
-    'do_not_email_invoice',
-    'do_not_email_reminder',
-    'auto_generate_credits',
-    'skip_invoicing_if_no_feature_charges',
-    'service_type',
-    'pro_bono_status',
-    'funding_source',
-    'skip_auto_downgrade',
-    'skip_auto_downgrade_reason',
-    'skip_auto_downgrade_until',
-    'auto_renew',
-]
-
-
-def get_preserved_fields(subscription):
-    return {field: getattr(subscription, field) for field in PRESERVED_FIELDS}
+    @staticmethod
+    def _get_preserved_fields(subscription):
+        # Fields that upgrading to the latest plan version must carry over unchanged
+        preserved_fields = [
+            'salesforce_contract_id',
+            'date_end',
+            'do_not_invoice',
+            'no_invoice_reason',
+            'do_not_email_invoice',
+            'do_not_email_reminder',
+            'auto_generate_credits',
+            'skip_invoicing_if_no_feature_charges',
+            'service_type',
+            'pro_bono_status',
+            'funding_source',
+            'skip_auto_downgrade',
+            'skip_auto_downgrade_reason',
+            'skip_auto_downgrade_until',
+            'auto_renew',
+        ]
+        return {field: getattr(subscription, field) for field in preserved_fields}
 
 
 class TestKeepSoftwarePlanConsistentManagementCommand(BaseAccountingTest):
