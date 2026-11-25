@@ -9,6 +9,7 @@ from casexml.apps.phone.data_providers.case.livequery import (
 )
 from django.utils.translation import gettext as _
 
+from corehq.apps.document_templates.images import ImageError, load_images
 from corehq.apps.document_templates.models import Template
 from corehq.apps.document_templates.rendering import (
     DocumentRenderError,
@@ -42,18 +43,29 @@ def render_case_documents(domain, case_ids, couch_user):
         raise CaseDocumentError(_('At most {max} cases can be rendered at once').format(max=MAX_CASES))
 
     cases_by_id = _get_cases(domain, case_ids, couch_user)
-    templates = _get_templates(domain, cases_by_id.values())
+    areas_by_slug = _load_areas(domain, _get_templates(domain, cases_by_id.values()))
     documents = []
     for case_id in case_ids:
         case = cases_by_id[case_id]
         try:
             documents.append(generate_document(
-                templates[case.get_case_property(SLUG_PROPERTY)].areas,
+                areas_by_slug[case.get_case_property(SLUG_PROPERTY)],
                 {**case.get_properties_in_api_format(), 'case_id': case_id},
             ))
         except DocumentRenderError as error:
             raise CaseDocumentError(_('Case {case_id}: {error}').format(case_id=case_id, error=error))
     return render_pdf(documents)
+
+
+def _load_areas(domain, templates):
+    """The areas of each template by slug, with the images loaded once for all the cases"""
+    areas_by_slug = {}
+    for slug, template in templates.items():
+        try:
+            areas_by_slug[slug] = load_images(domain, template.areas)
+        except ImageError as error:
+            raise CaseDocumentError(_('Template {slug}: {error}').format(slug=slug, error=error))
+    return areas_by_slug
 
 
 def _get_cases(domain, case_ids, couch_user):

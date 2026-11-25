@@ -1,18 +1,21 @@
 """
 Renders document templates to PDF.
 
-A template's areas (``{name: Area}``) hold author-written Jinja. A
-:class:`Document` holds the same areas with the variables rendered.
-Rendering takes two steps:
+A template's areas (``{name: Area}``) hold author-written Jinja or the key
+of an image. Rendering takes three steps:
 
-1. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
-   in the markdown areas of a template with a context of values for those
-   variables. Area text is author-written, so it runs in a sandbox. Context
-   values are escaped, so they cannot add markup of their own.
-2. :func:`render_pdf` lays the markdown of one or more documents out on the
-   page with reportlab. The markdown is converted to HTML and then to
-   reportlab flowables. HTML in the markdown is not supported: it is escaped
-   and shown as text.
+1. :func:`~corehq.apps.document_templates.images.load_images` replaces each
+   image area with an :class:`ImageContent`. It is done once per template,
+   however many documents are rendered from it.
+2. :func:`generate_document` renders the Jinja variables (``{{ first_name }}``)
+   in the markdown areas with a context of values for those variables, giving
+   a :class:`Document` of :class:`MarkdownContent` and :class:`ImageContent`.
+   Area text is author-written, so it runs in a sandbox. Context values are
+   escaped, so they cannot add markup of their own.
+3. :func:`render_pdf` lays the content of one or more documents out on the
+   page with reportlab. Markdown is converted to HTML and then to reportlab
+   flowables. HTML in the markdown is not supported: it is escaped and shown
+   as text.
 
 The layout lives in a single function (:func:`_us_letter`) so that another
 can be added next to it.
@@ -24,7 +27,9 @@ from xml.sax.saxutils import escape, quoteattr
 
 import attrs
 import markdown
+from attrs import define
 from bs4 import BeautifulSoup
+from django.utils.translation import gettext
 from jinja2 import (
     StrictUndefined,
     TemplateError,
@@ -37,9 +42,11 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
+    Image,
     ListFlowable,
     ListItem,
     NextPageTemplate,
@@ -49,7 +56,18 @@ from reportlab.platypus import (
     Table,
 )
 
-_US_LETTER_AREAS = ('header', 'address', 'body', 'footer')
+from corehq.apps.document_templates.models import Area, AreaType
+
+# The US letter layout, see :func:`_us_letter`. Distances from the top edge of the page are in points.
+_MARGIN = 0.75 * inch
+_PAGE_HEIGHT = letter[1]
+_AREA_WIDTH = letter[0] - 2 * _MARGIN
+_HEADER_HEIGHT = 1 * inch
+_ADDRESS_TOP = 2.25 * inch
+_BODY_TOP = 3.5 * inch
+_FOOTER_HEIGHT = 1 * inch
+_BODY_HEIGHT = _PAGE_HEIGHT - 2 * _MARGIN - _FOOTER_HEIGHT  # on the pages after the first
+_ALIGNMENT = {'header': 'CENTER', 'address': 'LEFT', 'body': 'LEFT', 'footer': 'CENTER'}
 
 _sheet = getSampleStyleSheet()
 BODY = _sheet['BodyText']
@@ -91,8 +109,43 @@ class DocumentRenderError(Exception):
     pass
 
 
+@define(frozen=True)
+class AreaDefinition:
+    """An area of a document template, and where it is on the page
+
+    :param description: its size and position, for the author
+    """
+    name: str
+    label: str
+    description: str
+
+
+def get_area_definitions():
+    def area(name, label, where, height=None):
+        width = _AREA_WIDTH / inch
+        if height:
+            size = gettext('{width:g} x {height:g} in').format(width=width, height=height / inch)
+        else:
+            size = gettext('{width:g} in wide').format(width=width)
+        if _ALIGNMENT[name] == 'CENTER':
+            image = gettext('An image is centered.')
+        else:
+            image = gettext('An image is left-aligned.')
+        return AreaDefinition(name, label, f'{size}, {where} {image}')
+
+    return [
+        area('header', gettext('Header'), gettext('at the top of the first page.'), _HEADER_HEIGHT),
+        area(
+            'address', gettext('Address'), gettext('below the header on the first page.'),
+            _BODY_TOP - _ADDRESS_TOP,
+        ),
+        area('body', gettext('Body'), gettext('below the address and over the pages that follow.')),
+        area('footer', gettext('Footer'), gettext('at the bottom of every page.'), _FOOTER_HEIGHT),
+    ]
+
+
 def get_area_names():
-    return list(_US_LETTER_AREAS)
+    return [area.name for area in get_area_definitions()]
 
 
 def _parse_variable_names(text):
@@ -118,7 +171,7 @@ def get_variable_names(areas):
     """
     names = {}
     for name, area in areas.items():
-        if area.type != 'markdown':
+        if not isinstance(area, Area) or area.type != AreaType.MARKDOWN:
             continue
         _check_area_length(name, area.value)
         try:
@@ -128,25 +181,65 @@ def get_variable_names(areas):
     return list(names)
 
 
+@define(frozen=True)
+class MarkdownContent:
+    """The markdown of an area with the variables rendered"""
+    text: str
+
+    def flowables(self, width, height, alignment):
+        return _markdown_to_flowables(self.text)
+
+
+@define(frozen=True)
+class ImageContent:
+    """The image of an area, ready to draw
+
+    :param size: ``(width, height)`` in pixels
+    """
+    data: bytes
+    size: tuple
+
+    @classmethod
+    def from_data(cls, data):
+        """:raises DocumentRenderError: if reportlab cannot read ``data``"""
+        try:
+            size = ImageReader(BytesIO(data)).getSize()
+        except Exception:
+            raise DocumentRenderError(gettext('The image cannot be read.'))
+        return cls(data, size)
+
+    def flowables(self, width, height, alignment):
+        """The image scaled down to fit within ``width`` and ``height``, with a pixel as a point"""
+        image_width, image_height = self.size
+        scale = min(width / image_width, height / image_height, 1)
+        image = Image(BytesIO(self.data), image_width * scale, image_height * scale, hAlign=alignment, mask='auto')
+        return [image]
+
+
 @attrs.define
 class Document:
     """A template's areas with the variables rendered, ready for :func:`render_pdf`"""
-    areas = attrs.field()  # {name: Area}
+    areas = attrs.field()  # {name: MarkdownContent | ImageContent}
 
 
 def generate_document(areas, context):
-    """Render the Jinja in the markdown areas of a template; other area types are kept as they are
+    """Render the Jinja in the markdown areas of a template
 
-    :param areas: ``{name: Area}``
+    :param areas: ``{name: Area | ImageContent}`` as
+        :func:`~corehq.apps.document_templates.images.load_images` returns them
     :param context: values for the variables the areas use
     :returns: a :class:`Document`
     :raises DocumentRenderError: if an area is invalid or fails to render
     """
-    return Document({
-        name: attrs.evolve(area, value=_render_area(name, area.value, context))
-        if area.type == 'markdown' else area
-        for name, area in areas.items()
-    })
+    return Document({name: _generate_area(name, area, context) for name, area in areas.items()})
+
+
+def _generate_area(name, area, context):
+    if isinstance(area, ImageContent):
+        return area
+    if area.type == AreaType.MARKDOWN:
+        return MarkdownContent(_render_area(name, area.value, context))
+    raise TypeError(f'{name}: an area of type {area.type!r} cannot be rendered; are its images loaded?')
 
 
 def _check_area_length(name, text):
@@ -198,54 +291,43 @@ def _us_letter(n, document):
     Header, address and footer are clipped to their area. The body flows
     between the address (first page) or the top margin and the footer.
 
+    An image is scaled down to fit its area, never up. It is centered in the
+    header and footer and left-aligned in the address and body.
+
     :returns: ``(page templates, flowables)`` for ``document``, the ``n``-th in the PDF
     """
-    margin = 0.75 * inch
-    page_height = letter[1]
-    width = letter[0] - 2 * margin
-    header_height = 1 * inch
-    address_top = 2.25 * inch  # distances from the top edge of the page
-    body_top = 3.5 * inch
-    footer_height = 1 * inch
-
     def frame(top, height, **kwargs):
         return Frame(
-            margin, page_height - top - height, width, height,
+            _MARGIN, _PAGE_HEIGHT - top - height, _AREA_WIDTH, height,
             leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0, **kwargs,
         )
 
+    def flowables(area_name, height):
+        content = document.areas.get(area_name)
+        return content.flowables(_AREA_WIDTH, height, _ALIGNMENT[area_name]) if content else []
+
     def draw(canvas, area_name, top, height):
-        frame(top, height).addFromList(_area_flowables(document.areas.get(area_name)), canvas)
+        frame(top, height).addFromList(flowables(area_name, height), canvas)
 
     def draw_footer(canvas):
-        draw(canvas, 'footer', top=page_height - margin - footer_height, height=footer_height)
+        draw(canvas, 'footer', top=_PAGE_HEIGHT - _MARGIN - _FOOTER_HEIGHT, height=_FOOTER_HEIGHT)
 
     def draw_first_page(canvas, doc):
-        draw(canvas, 'header', top=margin, height=header_height)
-        draw(canvas, 'address', top=address_top, height=body_top - address_top)
+        draw(canvas, 'header', top=_MARGIN, height=_HEADER_HEIGHT)
+        draw(canvas, 'address', top=_ADDRESS_TOP, height=_BODY_TOP - _ADDRESS_TOP)
         draw_footer(canvas)
 
     def draw_later_page(canvas, doc):
         draw_footer(canvas)
 
     def body_frame(top):
-        return frame(top, page_height - top - margin - footer_height, id='body')
+        return frame(top, _PAGE_HEIGHT - top - _MARGIN - _FOOTER_HEIGHT, id='body')
 
     templates = [
-        PageTemplate(id=f'{n}-first', frames=[body_frame(body_top)], onPage=draw_first_page),
-        PageTemplate(id=f'{n}-later', frames=[body_frame(margin)], onPage=draw_later_page),
+        PageTemplate(id=f'{n}-first', frames=[body_frame(_BODY_TOP)], onPage=draw_first_page),
+        PageTemplate(id=f'{n}-later', frames=[body_frame(_MARGIN)], onPage=draw_later_page),
     ]
-    flowables = [NextPageTemplate(f'{n}-later'), *_area_flowables(document.areas.get('body'))]
-    return templates, flowables
-
-
-def _area_flowables(area):
-    """:param area: an :class:`Area` or ``None``"""
-    if not area:
-        return []
-    if area.type == 'markdown':
-        return _markdown_to_flowables(area.value)
-    raise ValueError(f'Unknown area type: {area.type!r}')
+    return templates, [NextPageTemplate(f'{n}-later'), *flowables('body', _BODY_HEIGHT)]
 
 
 def _markdown_to_flowables(text):

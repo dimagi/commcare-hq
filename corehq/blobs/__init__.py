@@ -90,6 +90,7 @@ class CODES:
     email_multimedia = 17    # email images and attachments
     bulk_async_job = 18  # requested/skipped ids payload for a BulkAsyncJob
     ai_translation_failed_labels = 19  # labels an AI translation run couldn't translate
+    document_template_image = 20  # image of document templates
 
 
 CODES.name_of = {code: name
