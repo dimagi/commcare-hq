@@ -3,7 +3,8 @@ from datetime import datetime
 from unittest.mock import patch
 from uuid import uuid4
 
-from django.test import TestCase
+from couchdbkit.exceptions import ResourceConflict
+from django.test import TestCase, override_settings
 from django.urls.base import reverse
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -12,7 +13,7 @@ from corehq.apps.app_manager.tests.util import (
     patch_validate_xform,
 )
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserReportingMetadataStaging
 from corehq.apps.users.tasks import process_reporting_metadata_staging
 
 from ..models import DeviceLogRequest
@@ -91,6 +92,16 @@ class HeartbeatTests(TestCase):
         self.assertEqual(app_meta.num_unsent_forms, 2)
         self.assertEqual(app_meta.num_quarantined_forms, 3)
         self.assertIsNotNone(app_meta.last_sync)
+
+    @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=False)
+    def test_conflict_retries_with_a_fresh_user(self):
+        with patch.object(UserReportingMetadataStaging, 'process_record',
+                          side_effect=[ResourceConflict(), None]) as process_record:
+            self._do_request(self.user, device_id='456456')
+
+        first_user, retried_user = (call.args[0] for call in process_record.call_args_list)
+        assert retried_user is not first_user
+        assert isinstance(retried_user, CommCareUser)
 
     def test_blank_last_sync(self):
         self._do_request(

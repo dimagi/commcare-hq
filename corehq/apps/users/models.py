@@ -1476,6 +1476,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             'FakeUser': FakeUser,
         }[doc_type].wrap(source)
 
+    @classmethod
+    def get(cls, docid):
+        """
+        Fetch a user by id, wrapped as the subclass its ``doc_type``
+        names regardless of which class this is called on, including
+        retired users.
+
+        Raises ``AccountTypeError`` when called on a subclass the doc
+        does not belong to, and ``KeyError`` when the doc is not a user.
+        """
+        user = cls.wrap_correctly(cls.get_db().get(docid), allow_deleted_doc_types=True)
+        if not isinstance(user, cls):
+            raise cls.AccountTypeError()
+        return user
+
     def wrapped_correctly(self):
         if not isinstance(self, (CommCareUser, WebUser)):
             return self.wrap_correctly(self.to_json())
