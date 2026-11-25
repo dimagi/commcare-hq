@@ -100,6 +100,7 @@ from .reports.factory import (
 )
 from .reports.filters.factory import ReportFilterFactory
 from .reports.filters.specs import FilterSpec
+from .reports.filters.values import check_sql_param_names
 from .specs import EvaluationContext, FactoryContext
 from .sql import get_indicator_table
 from .sql.util import decode_column_name
@@ -1029,6 +1030,15 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
             [column_id for c in self.report_columns for column_id in c.get_column_ids()],
             'Columns cannot contain duplicate column_ids: {}',
         )
+
+        # Reject SQL-unsafe filter slugs / ancestor fields and column fields at
+        # save time. These are also enforced when the query is built; they are
+        # not enforced at wrap time so existing non-conforming reports stay
+        # loadable and fixable in the editor.
+        for filter_spec in self.filters:
+            check_sql_param_names(filter_spec)
+        for column in self.report_columns:
+            column.validate_db_safe()
 
         # these calls all implicitly do validation
         ConfigurableReportDataSource.from_spec(self)

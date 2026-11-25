@@ -1,5 +1,4 @@
 from jsonobject.base import DefaultProperty
-from jsonobject.exceptions import BadValueError
 
 from dimagi.ext.jsonobject import (
     BooleanProperty,
@@ -22,14 +21,8 @@ from corehq.apps.userreports.reports.filters.values import (
     NumericFilterValue,
     PreFilterValue,
     QuarterFilterValue,
-    is_valid_sql_param_name,
 )
 from corehq.apps.userreports.specs import TypeProperty
-
-
-def _check_slug(value):
-    if not is_valid_sql_param_name(value):
-        raise BadValueError("Invalid filter slug: '{}'".format(value))
 
 
 class FilterValueFactory:
@@ -74,8 +67,10 @@ class FilterSpec(JsonObject):
             'village_choice_list'
         ]
     )
-    # this shows up as the ID in the filter HTML.
-    slug = StringProperty(required=True, validators=_check_slug)
+    # this shows up as the ID in the filter HTML. Validated for SQL safety at
+    # save time in ReportConfiguration.validate() and at query-build time in
+    # FilterValue, but not here, so existing reports stay loadable and fixable.
+    slug = StringProperty(required=True)
     field = StringProperty(required=True)  # this is the actual column that is queried
     display = DefaultProperty()
     datatype = DataTypeProperty(default='string')

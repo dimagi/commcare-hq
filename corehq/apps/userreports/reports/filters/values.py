@@ -45,8 +45,9 @@ NONE_CHOICE = "\u2400"
 CHOICE_DELIMITER = "\u001f"
 
 # Filter slugs and ancestor expression fields are used as SQL bind
-# parameter names, which SQLAlchemy 1.3 does not escape
-SQL_PARAM_NAME_REGEX = re.compile(r'[\w.\-]+')
+# parameter names, which SQLAlchemy 1.3 does not escape. ``@`` is allowed
+# because it appears in metadata column names such as ``@case_id``.
+SQL_PARAM_NAME_REGEX = re.compile(r'[\w.\-@]+')
 
 
 def is_valid_sql_param_name(name):
