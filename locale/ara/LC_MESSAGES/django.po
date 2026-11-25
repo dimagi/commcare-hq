@@ -3448,10 +3448,19 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      Our records indicate that you have not added an autopay card to your\n"
+#| "      account. Providing an autopay method is a requirement for all monthly\n"
+#| "      subscriptions. If an autopay card is not added by\n"
+#| "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
+#| "      Billing Statement remains unpaid, we will automatically pause your\n"
+#| "      subscription.\n"
+#| "    "
 msgid ""
 "\n"
 "      Our records indicate that you have not added an autopay card to your\n"
-"      account. Providing an autopay method is a requirement for all monthly\n"
+"      account. Providing an autopay method is a requirement for all\n"
 "      subscriptions. If an autopay card is not added by\n"
 "      %(overdue_invoice_limit_days)s days beyond %(date_due)s and the\n"
 "      Billing Statement remains unpaid, we will automatically pause your\n"
@@ -3459,7 +3468,11 @@ msgid ""
 "    "
 msgstr ""
 "\n"
-"      تشير سجلاتنا إلى أنك لم تضف بطاقة دفع تلقائي إلى حسابك. توفير وسيلة دفع تلقائي هو شرط لجميع الاشتراكات الشهرية. إذا لم تتم إضافة بطاقة دفع تلقائي خلال %(overdue_invoice_limit_days)s يومًا بعد %(date_due)s وبقي كشف الفواتير غير مدفوع، سنقوم بإيقاف اشتراكك مؤقتًا تلقائيًا.\n"
+"      تشير سجلاتنا إلى أنك لم تضف بطاقة للدفع التلقائي إلى\n"
+"      حسابك. يُعد توفير وسيلة للدفع التلقائي شرطًا لجميع\n"
+"      الاشتراكات. إذا لم تُضَف بطاقة للدفع التلقائي خلال\n"
+"      %(overdue_invoice_limit_days)s يومًا بعد %(date_due)s وظل\n"
+"      كشف الفوترة غير مدفوع، فسنوقف اشتراكك تلقائيًا.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3506,35 +3519,53 @@ msgstr "يمكنك أيضًا دفع هذه الفاتورة في وقت أقر�
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "      To pay by credit card, please go to your\n"
+#| "      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
+#| "      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
+#| "      and fill in the amount you want to pay as well as your credit card\n"
+#| "      details.\n"
+#| "    "
 msgid ""
 "\n"
 "      To pay by credit card, please go to your\n"
-"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on\n"
-"      the green \"Make Payment\" button in front of your unpaid invoice(s),\n"
-"      and fill in the amount you want to pay as well as your credit card\n"
-"      details.\n"
+"      <a href=\"%(statements_url)s\">Billing Statements</a> page, click on the\n"
+"      green \"Make Payment\" button in front of your unpaid invoice(s), and fill\n"
+"      in the amount you want to pay as well as your credit card details.\n"
 "    "
 msgstr ""
 "\n"
-"      للدفع ببطاقة الائتمان، يرجى الذهاب إلى صفحة\n"
-"      <a href=\"%(statements_url)s\">كشوف الفواتير</a>، ثم الضغط على زر \"إجراء الدفع\" الأخضر أمام الفواتير غير المدفوعة،\n"
-"      وملء المبلغ الذي ترغب في دفعه بالإضافة إلى تفاصيل بطاقة الائتمان الخاصة بك.\n"
+"      للدفع ببطاقة ائتمان، يُرجى الانتقال إلى صفحة\n"
+"      <a href=\"%(statements_url)s\">كشوف الفوترة</a>، والنقر على الزر الأخضر\n"
+"      \"إجراء الدفع\" أمام الفاتورة أو الفواتير غير المدفوعة، وإدخال\n"
+"      المبلغ الذي تريد دفعه وبيانات بطاقة الائتمان.\n"
 "    "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "        - To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#| "          Please include the invoice number in your wire payment and make sure to\n"
+#| "          send an email to %(accounts_email)s after you have made the payment,\n"
+#| "          mentioning the date of the payment, the amount, the invoice number, and\n"
+#| "          the project space.\n"
+#| "      "
 msgid ""
 "\n"
 "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
-"        Please include the invoice number in your wire payment and make sure\n"
-"        to send an email to %(accounts_email)s after you have made the\n"
-"        payment, mentioning the date of the payment, the amount, the invoice\n"
-"        number, and the project space.\n"
+"        Please include the invoice number in your wire payment and make sure to\n"
+"        send an email to %(accounts_email)s after you have made the payment,\n"
+"        mentioning the date of the payment, the amount, the invoice number, and\n"
+"        the project space.\n"
 "      "
 msgstr ""
 "\n"
-"        للدفع عن طريق التحويل البنكي، يمكنك العثور على تفاصيل حساب بنك Dimagi في فاتورتك.\n"
-"        يرجى تضمين رقم الفاتورة في تحويلك البنكي والتأكد من إرسال بريد إلكتروني إلى %(accounts_email)s بعد إتمام الدفع، مع ذكر تاريخ الدفع، والمبلغ، ورقم الفاتورة، ومساحة المشروع.\n"
+"        للدفع عن طريق التحويل المصرفي، ابحث عن تفاصيل الحساب المصرفي لشركة Dimagi في فاتورتك.\n"
+"        يُرجى تضمين رقم الفاتورة في التحويل المصرفي، والتأكد من إرسال\n"
+"        رسالة بريد إلكتروني إلى %(accounts_email)s بعد إتمام الدفع، مع ذكر تاريخ الدفع\n"
+"        والمبلغ ورقم الفاتورة ومساحة المشروع.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.html
@@ -3584,16 +3615,27 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
+#| msgid ""
+#| "\n"
+#| "  Our records indicate that you have not added an autopay card to your\n"
+#| "  account. Providing an autopay method is a requirement for all monthly\n"
+#| "  subscriptions. If an autopay card is not added by\n"
+#| "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
+#| "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgid ""
 "\n"
 "  Our records indicate that you have not added an autopay card to your\n"
-"  account. Providing an autopay method is a requirement for all monthly\n"
+"  account. Providing an autopay method is a requirement for all\n"
 "  subscriptions. If an autopay card is not added by\n"
 "  %(overdue_invoice_limit_days)s days beyond %(date_due)s and the Billing\n"
 "  Statement remains unpaid, we will automatically pause your subscription.\n"
 msgstr ""
 "\n"
-"  تشير سجلاتنا إلى أنك لم تضف بطاقة دفع تلقائي إلى حسابك. توفير وسيلة دفع تلقائي هو شرط لجميع الاشتراكات الشهرية. إذا لم تتم إضافة بطاقة دفع تلقائي خلال %(overdue_invoice_limit_days)s يومًا بعد %(date_due)s وبقي كشف الفواتير غير مدفوع، سنقوم بإيقاف اشتراكك مؤقتًا تلقائيًا.\n"
+"  تشير سجلاتنا إلى أنك لم تضف بطاقة للدفع التلقائي إلى\n"
+"  حسابك. يُعد توفير وسيلة للدفع التلقائي شرطًا لجميع\n"
+"  الاشتراكات. إذا لم تُضَف بطاقة للدفع التلقائي خلال\n"
+"  %(overdue_invoice_limit_days)s يومًا بعد %(date_due)s وظل كشف الفوترة\n"
+"  غير مدفوع، فسنوقف اشتراكك تلقائيًا.\n"
 
 #: corehq/apps/accounting/templates/accounting/email/invoice_reminder.txt
 #, python-format
@@ -4639,10 +4681,22 @@ msgstr ""
 "        "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
+#| msgid ""
+#| "\n"
+#| "        In case you incur any on-demand fees for excess users or SMS, you\n"
+#| "        will receive invoices for these charges on a monthly basis. See\n"
+#| "        <a\n"
+#| "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
+#| "          >here</a\n"
+#| "        >\n"
+#| "        for more information about payment, cancellation, and refunds.\n"
+#| "      "
 msgid ""
 "\n"
-"        In case you incur any on-demand fees for excess users or SMS, you\n"
-"        will receive invoices for these charges on a monthly basis. See\n"
+"        In case you incur any on-demand fees for excess users or SMS, you will\n"
+"        receive invoices for these charges on a monthly basis. A credit card\n"
+"        must be added to the account for automatic payment of these invoices.\n"
+"        See\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >here</a\n"
@@ -4651,13 +4705,14 @@ msgid ""
 "      "
 msgstr ""
 "\n"
-"        في حال تكبدت أي رسوم عند الطلب للمستخدمين أو رسائل SMS الزائدة،\n"
-"        ستتلقى فواتير بهذه الرسوم شهريًا. راجع\n"
+"        إذا ترتبت عليك أي رسوم حسب الاستخدام بسبب زيادة عدد المستخدمين أو رسائل SMS، فستتلقى\n"
+"        فواتير بهذه الرسوم شهريًا. يجب إضافة بطاقة ائتمان إلى الحساب للدفع التلقائي لهذه الفواتير.\n"
+"        راجع\n"
 "        <a\n"
 "          href=\"https://dimagi.atlassian.net/wiki/spaces/commcarepublic/pages/2143955299/Subscription+Management+Billing#Pay-Annually-Subscription\"\n"
 "          >هنا</a\n"
 "        >\n"
-"        لمزيد من المعلومات حول الدفع، الإلغاء، والاسترداد.\n"
+"        لمزيد من المعلومات حول الدفع والإلغاء واسترداد الأموال.\n"
 "      "
 
 #: corehq/apps/accounting/templates/accounting/partials/confirm_plan_summary.html
@@ -5335,12 +5390,6 @@ msgstr ""
 
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap3/hubspot_cta_form.html
 #: corehq/apps/analytics/templates/analytics/forms/bootstrap5/hubspot_cta_form.html
-#| msgid ""
-#| "\n"
-#| "      By clicking Submit Request, you agree to Dimagi's\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of Service</a> and\n"
-#| "      <a href=\"http://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">Privacy Policy</a>.\n"
-#| "    "
 msgid ""
 "By clicking Submit Request, I agree to Dimagi's <a "
 "href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">Terms of"
@@ -5722,7 +5771,6 @@ msgid "Please log in to the app to check for an update."
 msgstr "يرجى تسجيل الدخول إلى التطبيق للتحقق من وجود تحديث."
 
 #: corehq/apps/app_manager/exceptions.py
-#| msgid "Remote apps are not supported"
 msgid "RemoteApps are no longer supported"
 msgstr "لم يعد RemoteApps مدعومًا"
 
@@ -23956,13 +24004,20 @@ msgstr ""
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
+#, python-format
 msgid ""
 "\n"
-"                Please provide an autopay card before continuing.\n"
+"                Please provide an autopay card before continuing. If you are\n"
+"                unable to add a payment card, contact\n"
+"                <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"                for other options.\n"
 "              "
 msgstr ""
 "\n"
-"                يرجى تقديم بطاقة دفع تلقائي قبل المتابعة.\n"
+"                يُرجى إضافة بطاقة للدفع التلقائي قبل المتابعة. إذا تعذر عليك\n"
+"                إضافة بطاقة دفع، فتواصل مع\n"
+"                <a href=\"mailto:%(ACCOUNTS_EMAIL)s\">%(ACCOUNTS_EMAIL)s</a>\n"
+"                لمعرفة الخيارات الأخرى.\n"
 "              "
 
 #: corehq/apps/domain/templates/domain/confirm_billing_info.html
@@ -24004,39 +24059,6 @@ msgstr ""
 "\n"
 "                    سيتم إصدار فاتورة سنوية منفصلة لتكلفة المنتج\n"
 "                    وإرسالها إلى عناوين البريد الإلكتروني المذكورة أعلاه. يجب دفع هذه الفاتورة خلال %(days_date_due_annual)s يومًا وإلا سيتم إيقاف الاشتراك مؤقتًا. لن يتم خصم هذه الفاتورة تلقائيًا من بطاقة الدفع التلقائي المختارة&mdash;يجب دفعها مباشرة.\n"
-"                  "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-#, python-format
-msgid ""
-"\n"
-"                  By subscribing to this <strong>annual subscription</strong>,\n"
-"                  you acknowledge that you understand an annual invoice for the\n"
-"                  product cost will be generated and sent to the contact emails\n"
-"                  above. This invoice must be paid within\n"
-"                  %(days_date_due_annual)s days or the subscription will be\n"
-"                  paused.\n"
-"                "
-msgstr ""
-"\n"
-"                  باشتراكك في <strong>الاشتراك السنوي</strong> هذا،\n"
-"                  فإنك تقر بأنك تدرك أنه سيتم إصدار فاتورة سنوية لتكلفة المنتج\n"
-"                  وإرسالها إلى عناوين البريد الإلكتروني المذكورة أعلاه. يجب دفع هذه الفاتورة خلال\n"
-"                  %(days_date_due_annual)s يومًا وإلا سيتم إيقاف الاشتراك مؤقتًا.\n"
-"                "
-
-#: corehq/apps/domain/templates/domain/confirm_billing_info.html
-msgid ""
-"\n"
-"                    You also acknowledge that by not selecting an autopay card,\n"
-"                    you must manually pay for any on-demand fees (excess users,\n"
-"                    SMS) on a monthly basis or the subscription will be paused.\n"
-"                  "
-msgstr ""
-"\n"
-"                    كما تقر بأنه بعدم اختيار بطاقة دفع تلقائي،\n"
-"                    يجب عليك دفع أي رسوم عند الطلب (المستخدمين الزائدين، الرسائل القصيرة)\n"
-"                    يدويًا شهريًا وإلا سيتم إيقاف الاشتراك مؤقتًا.\n"
 "                  "
 
 #: corehq/apps/domain/templates/domain/email/bootstrap3/domain_invite.html
@@ -24612,18 +24634,26 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
 #, python-format
+#| msgid ""
+#| "\n"
+#| "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
+#| "              by removing your autopay card from your\n"
+#| "              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
+#| "                >project billing information</a\n"
+#| "              >\n"
+#| "              at least 5 business days before your next scheduled Autopay date.\n"
+#| "            "
 msgid ""
 "\n"
 "              If you are on a Pay Annually software plan, you may cancel Autopay\n"
-"              by removing your autopay card from your\n"
-"              <a href=\"%(billing_info_url)s\" target=\"_blank\"\n"
-"                >project billing information</a\n"
-"              >\n"
-"              at least 5 business days before your next scheduled Autopay date.\n"
+"              by emailing %(ACCOUNTS_EMAIL)s at least 5 business days before\n"
+"              your next scheduled Autopay date.\n"
 "            "
 msgstr ""
 "\n"
-"              إذا كنت على خطة برامج سنوية الدفع، يمكنك إلغاء الدفع التلقائي عن طريق إزالة بطاقة الدفع التلقائي من <a href=\"%(billing_info_url)s\" target=\"_blank\">معلومات الفوترة الخاصة بالمشروع</a> قبل 5 أيام عمل على الأقل من تاريخ الدفع التلقائي المجدول التالي.\n"
+"              إذا كنت مشتركًا في خطة البرامج ذات الدفع السنوي، يمكنك إلغاء الدفع التلقائي\n"
+"              عبر مراسلة %(ACCOUNTS_EMAIL)s بالبريد الإلكتروني قبل 5 أيام عمل على الأقل\n"
+"              من موعد الدفع التلقائي التالي المقرر.\n"
 "            "
 
 #: corehq/apps/domain/templates/domain/partials/autopay_terms.html
@@ -25360,30 +25390,18 @@ msgstr ""
 "      "
 
 #: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid "Remove autopay method"
-msgstr "إزالة طريقة الدفع التلقائي"
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
+#| msgid ""
+#| "\n"
+#| "          Please add an autopay card before subscribing.\n"
+#| "        "
 msgid ""
 "\n"
-"          Please add an autopay card before subscribing.\n"
-"        "
+"        Please add an autopay card before subscribing.\n"
+"      "
 msgstr ""
 "\n"
-"          يرجى إضافة بطاقة دفع تلقائي قبل الاشتراك.\n"
-"        "
-
-#: corehq/apps/domain/templates/domain/partials/select_autopay_method.html
-msgid ""
-"\n"
-"          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
-"          pausing your subscription due to unpaid on-demand fees.\n"
-"        "
-msgstr ""
-"\n"
-"          الدفع التلقائي غير مطلوب للحسابات السنوية في الوقت الحالي، ولكن تفعيل الدفع التلقائي يقلل من خطر\n"
-"          إيقاف اشتراكك مؤقتًا بسبب الرسوم غير المدفوعة عند الطلب.\n"
-"        "
+"        يُرجى إضافة بطاقة للدفع التلقائي قبل الاشتراك.\n"
+"      "
 
 #: corehq/apps/domain/templates/domain/update_billing_contact_info.html
 msgid "Billing Details"
@@ -26349,10 +26367,6 @@ msgid ""
 msgstr ""
 "لقد قمت بالفعل بجدولة تخفيض إلى خطة البرمجيات %(software_plan_name)s في "
 "%(downgrade_date)s. إذا كان هذا خطأ، يرجى التواصل مع %(contact_email)s."
-
-#: corehq/apps/domain/views/accounting.py
-msgid "Unknown error unsetting autopay method. Please contact Support."
-msgstr "خطأ غير معروف عند إزالة طريقة الدفع التلقائي. يرجى التواصل مع الدعم."
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Unknown error setting autopay method. Please contact Support."
@@ -38580,7 +38594,6 @@ msgstr ""
 " تم إرسالها بالفعل حتى تنتهي صلاحيتها."
 
 #: corehq/apps/public_webforms/forms.py
-#| msgid "How Respondents Open the Form"
 msgid "How Respondents Access the Form"
 msgstr "كيفية وصول المستجيبين إلى النموذج"
 
@@ -38727,7 +38740,6 @@ msgid "Expires"
 msgstr "تاريخ الانتهاء"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "IP Access"
 msgid "Access"
 msgstr "الوصول"
 
@@ -38736,27 +38748,22 @@ msgid "Public URL"
 msgstr "رابط عام"
 
 #: corehq/apps/public_webforms/tables.py
-#| msgid "One-Time Link Request"
 msgid "One-time link"
 msgstr "رابط لمرة واحدة"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Email Delivered"
 msgid "Email enabled"
 msgstr "البريد الإلكتروني مفعّل"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "Email disabled"
 msgstr "البريد الإلكتروني غير مفعّل"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "Is enabled"
 msgid "SMS enabled"
 msgstr "الرسائل النصية القصيرة مفعّلة"
 
 #: corehq/apps/public_webforms/templates/public_webforms/columns/delivery.html
-#| msgid "disabled"
 msgid "SMS disabled"
 msgstr "الرسائل النصية القصيرة غير مفعّلة"
 
@@ -38956,34 +38963,51 @@ msgstr ""
 "            "
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
-msgid ""
-"\n"
-"      Information you submit will be used in accordance with Dimagi's\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
-"        >Privacy Policy</a\n"
-"      >,\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
-"        >Terms of Service</a\n"
-"      >, and\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
-"        >Business Agreement</a\n"
-"      >.\n"
-"    "
-msgstr ""
-"\n"
-"      سيتم استخدام المعلومات التي تقدمها وفقًا لـ <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\">سياسة الخصوصية</a>،\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\">شروط الخدمة</a>، و\n"
-"      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\">اتفاقية العمل</a>\n"
-"      الخاصة بـ Dimagi.\n"
-"    "
-
-#: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Message and data rates may apply."
 msgstr "قد يتم تطبيق رسوم على الرسائل والبيانات."
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/partials/link_request_form.html
 msgid "Send my link"
 msgstr "أرسل رابط لي"
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/partials/terms_notice.html
+#| msgid ""
+#| "\n"
+#| "      Information you submit will be used in accordance with Dimagi's\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+#| "        >Privacy Policy</a\n"
+#| "      >,\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+#| "        >Terms of Service</a\n"
+#| "      >, and\n"
+#| "      <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+#| "        >Business Agreement</a\n"
+#| "      >.\n"
+#| "    "
+msgid ""
+"\n"
+"  Information you submit will be used in accordance with Dimagi's\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >Privacy Policy</a\n"
+"  >,\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >Terms of Service</a\n"
+"  >, and\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >Business Agreement</a\n"
+"  >.\n"
+msgstr ""
+"\n"
+"  ستُستخدم المعلومات التي تقدمها وفقًا لـ\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/privacy/\" target=\"_blank\"\n"
+"    >سياسة الخصوصية</a\n"
+"  > و\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/tos/\" target=\"_blank\"\n"
+"    >شروط الخدمة</a\n"
+"  > و\n"
+"  <a href=\"https://www.dimagi.com/terms/latest/ba/\" target=\"_blank\"\n"
+"    >اتفاقية الأعمال</a\n"
+"  > الخاصة بشركة Dimagi.\n"
 
 #: corehq/apps/public_webforms/templates/public_webforms/public/webform_closed.html
 msgid "Webform Closed"
@@ -39093,6 +39117,21 @@ msgstr ""
 "\n"
 "        سنرسل رابطًا خاصًا للاستخدام مرة واحدة لإكمال النموذج باستخدام معلومات الاتصال التي تقدمها أدناه.\n"
 "      "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+msgid ""
+"\n"
+"      Fill out this form in your browser. You don't need an account.\n"
+"    "
+msgstr ""
+"\n"
+"      املأ هذا النموذج في متصفحك. لا تحتاج إلى حساب.\n"
+"    "
+
+#: corehq/apps/public_webforms/templates/public_webforms/public/webform_start.html
+#| msgid "Start Time"
+msgid "Start form"
+msgstr "بدء النموذج"
 
 #: corehq/apps/public_webforms/templates/public_webforms/tables/public_webform.html
 msgid "No public webforms match these filters."
@@ -49774,6 +49813,10 @@ msgid "Expected {} binds in sum_when_template {}, found {}"
 msgstr "متوقع {} روابط في sum_when_template {}، تم العثور على {}"
 
 #: corehq/apps/userreports/reports/filters/factory.py
+msgid "Invalid 'ancestor_expression' field: '{}'"
+msgstr "حقل 'ancestor_expression' غير صالح: '{}'"
+
+#: corehq/apps/userreports/reports/filters/factory.py
 msgid ""
 "'ancestor_expression' must be empty dictionary or have 'field', "
 "'location_type' keys"
@@ -51805,7 +51848,7 @@ msgstr ""
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Are you sure you want to accept the invitation\n"
@@ -51821,14 +51864,15 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        هل أنت متأكد أنك تريد قبول الدعوة\n"
-"                        للانضمام إلى CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> كـ <strong>%(username)s</strong>؟\n"
+"                        هل أنت متأكد من رغبتك في قبول الدعوة للانضمام إلى\n"
+"                        %(invite_type)s في CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> بصفتك\n"
+"                        <strong>%(username)s</strong>؟\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                        Would you like to accept the invitation\n"
@@ -51844,9 +51888,10 @@ msgid ""
 "                      "
 msgstr ""
 "\n"
-"                        هل ترغب في قبول الدعوة\n"
-"                        للانضمام إلى CommCare HQ %(invite_type)s\n"
-"                        <strong>%(invite_to)s</strong> كـ <strong>%(username)s</strong>؟\n"
+"                        هل ترغب في قبول الدعوة للانضمام إلى\n"
+"                        %(invite_type)s في CommCare HQ\n"
+"                        <strong>%(invite_to)s</strong> بصفتك\n"
+"                        <strong>%(username)s</strong>؟\n"
 "                      "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -51880,7 +51925,7 @@ msgstr "إنشاء حساب ويب"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                      Turn off demo mode to allow this mobile worker to start\n"
@@ -51893,8 +51938,9 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                      أوقف وضع العرض التجريبي للسماح لهذا العامل بإرسال البيانات إلى %(hq_name)s مرة أخرى.\n"
-"                    "
+"                    لقد سجلت الدخول باسم %(username)s، لكن هذه الدعوة\n"
+"                    أُرسلت إلى %(invited_user)s.\n"
+"                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
@@ -51915,7 +51961,7 @@ msgstr "تبديل الحسابات"
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    Your email is managed by %(idp_name)s.\n"
@@ -51929,14 +51975,13 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    بريدك الإلكتروني مدار من قبل %(idp_name)s.\n"
-"                    سيتم طلب المصادقة باستخدام تسجيل الدخول الموحد\n"
-"                    في الخطوة التالية.\n"
+"                    تتم إدارة بريدك الإلكتروني بواسطة %(idp_name)s. سيُطلب منك\n"
+"                    المصادقة باستخدام تسجيل الدخول الأحادي في الخطوة التالية.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
 #: corehq/apps/users/templates/users/bootstrap5/accept_invite.html
-#, fuzzy, python-format
+#, python-format
 #| msgid ""
 #| "\n"
 #| "                    To accept this %(invite_type_lower)s invitation, you must create an account.\n"
@@ -51948,7 +51993,8 @@ msgid ""
 "                  "
 msgstr ""
 "\n"
-"                    لقبول هذه الدعوة %(invite_type_lower)s، يجب عليك إنشاء حساب.\n"
+"                    لقبول دعوة %(invite_type_lower)s هذه، يجب\n"
+"                    إنشاء حساب.\n"
 "                  "
 
 #: corehq/apps/users/templates/users/bootstrap3/accept_invite.html
@@ -58154,17 +58200,17 @@ msgstr "مثال: [{\"column\": \"givenName\", \"property\": \"first_name\"}, ..
 
 #: corehq/motech/openmrs/forms.py
 msgid "Each column mapping must be an object."
-msgstr ""
+msgstr "يجب أن يكون كل تعيين للأعمدة كائنًا."
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Unknown column mapping keys: %(keys)s"
-msgstr ""
+msgstr "مفاتيح تعيين الأعمدة غير معروفة: %(keys)s"
 
 #: corehq/motech/openmrs/forms.py
 #, python-format
 msgid "Each column mapping must have a \"%(key)s\"."
-msgstr ""
+msgstr "يجب أن يتضمن كل تعيين للأعمدة \"%(key)s\"."
 
 #: corehq/motech/openmrs/forms.py
 msgid ""
@@ -58235,22 +58281,19 @@ msgid "OpenMRS Importer"
 msgstr "مستورد OpenMRS"
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "No OpenMRS Importers were submitted."
-msgstr "تم حفظ مستوردي OpenMRS"
+msgstr "لم يتم تقديم أي مستوردات OpenMRS."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers are not valid JSON."
-msgstr "تم حفظ مستوردي OpenMRS"
+msgstr "مستوردات OpenMRS ليست بتنسيق JSON صالح."
 
 #: corehq/motech/openmrs/views.py
-#, fuzzy
 #| msgid "OpenMRS Importers saved"
 msgid "OpenMRS Importers must be a list of objects."
-msgstr "تم حفظ مستوردي OpenMRS"
+msgstr "يجب أن تكون مستوردات OpenMRS قائمة من الكائنات."
 
 #: corehq/motech/openmrs/views.py
 msgid "OpenMRS Importers"
@@ -60149,6 +60192,78 @@ msgstr "الأعمدة المطلوبة هي {column_names}"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "أدخل JSON صالحًا"
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "        To pay by wire, find Dimagi's bank account details on your invoice.\n"
+#~ "        Please include the invoice number in your wire payment and make sure\n"
+#~ "        to send an email to %(accounts_email)s after you have made the\n"
+#~ "        payment, mentioning the date of the payment, the amount, the invoice\n"
+#~ "        number, and the project space.\n"
+#~ "      "
+#~ msgstr ""
+#~ "\n"
+#~ "        للدفع عن طريق التحويل البنكي، يمكنك العثور على تفاصيل حساب بنك Dimagi في فاتورتك.\n"
+#~ "        يرجى تضمين رقم الفاتورة في تحويلك البنكي والتأكد من إرسال بريد إلكتروني إلى %(accounts_email)s بعد إتمام الدفع، مع ذكر تاريخ الدفع، والمبلغ، ورقم الفاتورة، ومساحة المشروع.\n"
+#~ "      "
+
+#~ msgid ""
+#~ "\n"
+#~ "                Please provide an autopay card before continuing.\n"
+#~ "              "
+#~ msgstr ""
+#~ "\n"
+#~ "                يرجى تقديم بطاقة دفع تلقائي قبل المتابعة.\n"
+#~ "              "
+
+#, python-format
+#~ msgid ""
+#~ "\n"
+#~ "                  By subscribing to this <strong>annual subscription</strong>,\n"
+#~ "                  you acknowledge that you understand an annual invoice for the\n"
+#~ "                  product cost will be generated and sent to the contact emails\n"
+#~ "                  above. This invoice must be paid within\n"
+#~ "                  %(days_date_due_annual)s days or the subscription will be\n"
+#~ "                  paused.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                  باشتراكك في <strong>الاشتراك السنوي</strong> هذا،\n"
+#~ "                  فإنك تقر بأنك تدرك أنه سيتم إصدار فاتورة سنوية لتكلفة المنتج\n"
+#~ "                  وإرسالها إلى عناوين البريد الإلكتروني المذكورة أعلاه. يجب دفع هذه الفاتورة خلال\n"
+#~ "                  %(days_date_due_annual)s يومًا وإلا سيتم إيقاف الاشتراك مؤقتًا.\n"
+#~ "                "
+
+#~ msgid ""
+#~ "\n"
+#~ "                    You also acknowledge that by not selecting an autopay card,\n"
+#~ "                    you must manually pay for any on-demand fees (excess users,\n"
+#~ "                    SMS) on a monthly basis or the subscription will be paused.\n"
+#~ "                  "
+#~ msgstr ""
+#~ "\n"
+#~ "                    كما تقر بأنه بعدم اختيار بطاقة دفع تلقائي،\n"
+#~ "                    يجب عليك دفع أي رسوم عند الطلب (المستخدمين الزائدين، الرسائل القصيرة)\n"
+#~ "                    يدويًا شهريًا وإلا سيتم إيقاف الاشتراك مؤقتًا.\n"
+#~ "                  "
+
+#~ msgid "Remove autopay method"
+#~ msgstr "إزالة طريقة الدفع التلقائي"
+
+#~ msgid ""
+#~ "\n"
+#~ "          Autopay is not required for annual accounts at this time, but having autopay enabled reduces the risk of\n"
+#~ "          pausing your subscription due to unpaid on-demand fees.\n"
+#~ "        "
+#~ msgstr ""
+#~ "\n"
+#~ "          الدفع التلقائي غير مطلوب للحسابات السنوية في الوقت الحالي، ولكن تفعيل الدفع التلقائي يقلل من خطر\n"
+#~ "          إيقاف اشتراكك مؤقتًا بسبب الرسوم غير المدفوعة عند الطلب.\n"
+#~ "        "
+
+#~ msgid "Unknown error unsetting autopay method. Please contact Support."
+#~ msgstr "خطأ غير معروف عند إزالة طريقة الدفع التلقائي. يرجى التواصل مع الدعم."
 
 #~ msgid ""
 #~ "\n"
