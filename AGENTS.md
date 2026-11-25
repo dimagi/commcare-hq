@@ -2,20 +2,19 @@
 
 ## Gotchas
 
-- **migrations.lock** — If you wrote a migration instead of generating one,
-  run `uv run ./manage.py makemigrations --lock-update` to update the lock file.
+- **migrations.lock** — If you wrote a migration instead of generating one, run
+  `uv run ./manage.py makemigrations --lock-update` to update the lock file.
   Check it as CI does with `uv run ./manage.py makemigrations --lock-check`.
 
 - **New domain-scoped models** — Any new model with a `domain` field (or
   reachable via FK to a domain) must be registered in two places or CI will
   fail:
-  - `corehq/apps/dump_reload/sql/dump.py` — add a
-    `FilteredModelIteratorBuilder` entry so the model is included in domain
-    data exports.
-  - `corehq/apps/domain/deletion.py` — add a `ModelDeletion` entry so the
-    model is cleaned up when a domain is deleted.
-  Use `SimpleFilter('domain')` for direct domain fields, or
-  `SimpleFilter('parent__domain')` for FK traversal.
+
+  - `corehq/apps/dump_reload/sql/dump.py` — add a `FilteredModelIteratorBuilder`
+    entry so the model is included in domain data exports.
+  - `corehq/apps/domain/deletion.py` — add a `ModelDeletion` entry so the model
+    is cleaned up when a domain is deleted. Use `SimpleFilter('domain')` for
+    direct domain fields, or `SimpleFilter('parent__domain')` for FK traversal.
 
 - **CouchDB is legacy** — Use PostgreSQL for new data models
 
@@ -25,9 +24,8 @@
 
 - **One `--reusedb` test run at a time** — Concurrent pytest runs, or a run
   killed mid-flight, leave the shared test databases dirty. Couch has no
-  rollback, so leaked documents cause failures in unrelated tests. Recover
-  with `uv run pytest --reusedb=reset` on a test that uses the damaged
-  database.
+  rollback, so leaked documents cause failures in unrelated tests. Recover with
+  `uv run pytest --reusedb=reset` on a test that uses the damaged database.
 
 - **Couch `_design` 404s in tests** — If tests fail with "missing" errors for
   `_design/...` views, resync them with
@@ -38,105 +36,103 @@
   `docker/run.sh`). Running non-sharded tests against a partitioned database
   causes failures that CI never sees.
 
-- **Warnings are errors** — `corehq/warnings.py` turns warnings into errors
-  only when `PYTHONWARNINGS` is unset. If your shell sets it, reproduce CI
-  failures with `env -u PYTHONWARNINGS uv run pytest ...`.
+- **Warnings are errors** — `corehq/warnings.py` turns warnings into errors only
+  when `PYTHONWARNINGS` is unset. If your shell sets it, reproduce CI failures
+  with `env -u PYTHONWARNINGS uv run pytest ...`.
 
-- **`build_bootstrap5_diffs` auto-commits** — It runs `git add -A` and
-  commits, sweeping in untracked files and uncommitted work. Commit or stash
-  first, and check `git show --stat HEAD` afterwards.
+- **`build_bootstrap5_diffs` auto-commits** — It runs `git add -A` and commits,
+  sweeping in untracked files and uncommitted work. Commit or stash first, and
+  check `git show --stat HEAD` afterwards.
 
 ## Version Control
 
 - Always commit on a branch, never directly on master.
 
-- When creating a new branch, each author has a prefix they use. Use the
-  prefix the author has used most on local git branches, or else their
-  initials (from `git config user.name`).
+- When creating a new branch, each author has a prefix they use. Use the prefix
+  the author has used most on local git branches, or else their initials (from
+  `git config user.name`).
 
 - Commit work in logical chunks rather than one large commit. Group related
-  changes together (e.g. a new module with its tests, a migration with its
-  model changes) so that each commit is self-contained and reviewable.
+  changes together (e.g. a new module with its tests, a migration with its model
+  changes) so that each commit is self-contained and reviewable.
 
-- Whenever code is moved and changed, or a file is renamed and changed,
-  do the move or the rename in one commit and make the changes in another
-  commit, so that the changes are clear.
+- Whenever code is moved and changed, or a file is renamed and changed, do the
+  move or the rename in one commit and make the changes in another commit, so
+  that the changes are clear.
 
-- When creating PRs, always create them as drafts, and always use the
-  GitHub PR template (`.github/PULL_REQUEST_TEMPLATE.md`).
+- When creating PRs, always create them as drafts, and always use the GitHub PR
+  template (`.github/PULL_REQUEST_TEMPLATE.md`).
 
-- When adding PR descriptions, avoid restating the code diff. Focus on
-  useful context for the reviewer.
+- When adding PR descriptions, avoid restating the code diff. Focus on useful
+  context for the reviewer.
 
-- This repository is public. Never name customer domains or projects in
-  commit messages, PR titles or PR descriptions. Link the Jira ticket and
-  refer to "the affected domain" instead.
+- This repository is public. Never name customer domains or projects in commit
+  messages, PR titles or PR descriptions. Link the Jira ticket and refer to "the
+  affected domain" instead.
 
 ## Testing
 
-- **Coverage**: Changes must be covered by appropriate tests. Tests need
-  to cover edge cases and failure scenarios.
+- **Coverage**: Changes must be covered by appropriate tests. Tests need to
+  cover edge cases and failure scenarios.
 
-- **pytest conventions**: Use pytest features like Pythonic `assert`
-  statements and parametrized tests for repetitive test cases.
+- **pytest conventions**: Use pytest features like Pythonic `assert` statements
+  and parametrized tests for repetitive test cases.
 
-- **Class-based vs function-based tests**: Both styles are fine. Pick
-  whichever is more readable and maintainable for the situation —
-  there's no project-wide preference. Class-based tests (e.g.
-  `TestCase`, `SimpleTestCase`) suit shared expensive setup and
-  related test groupings; function-based tests suit standalone cases
-  and pair well with parametrization and explicit fixtures.
+- **Class-based vs function-based tests**: Both styles are fine. Pick whichever
+  is more readable and maintainable for the situation — there's no project-wide
+  preference. Class-based tests (e.g. `TestCase`, `SimpleTestCase`) suit shared
+  expensive setup and related test groupings; function-based tests suit
+  standalone cases and pair well with parametrization and explicit fixtures.
 
-- **Explicit fixtures**: Use [pytest-unmagic](https://github.com/dimagi/pytest-unmagic/)
-  for explicit test fixtures.
+- **Explicit fixtures**: Use
+  [pytest-unmagic](https://github.com/dimagi/pytest-unmagic/) for explicit test
+  fixtures.
 
 - **Test doctests**: Doctests should be tested:
+
   ```python
   def test_doctests():
       results = doctest.testmod(some_module)
       assert results.failed == 0
   ```
 
-- **Structure code to be testable**: Extract complex logic into helper
-  functions that can be tested directly at a narrow scope.
+- **Structure code to be testable**: Extract complex logic into helper functions
+  that can be tested directly at a narrow scope.
 
-- **Tests should be simple**: Tests that require a lot of patching or
-  mocking are often an indicator that the code they cover needs to be
-  simplified.
+- **Tests should be simple**: Tests that require a lot of patching or mocking
+  are often an indicator that the code they cover needs to be simplified.
 
-- **Prefer narrow, focused tests**: Cover the full range of inputs
-  against the helper that owns the logic. Tests of the calling code
-  can then stay minimal and avoid duplicating that coverage.
+- **Prefer narrow, focused tests**: Cover the full range of inputs against the
+  helper that owns the logic. Tests of the calling code can then stay minimal
+  and avoid duplicating that coverage.
 
-- **Run tests before completing**: Run the tests that cover the changes
-  before considering any changes complete.
+- **Run tests before completing**: Run the tests that cover the changes before
+  considering any changes complete.
 
 ## Security
 
-- **Prefer safe actions**: Where a destructive action, like deleting an
-  instance of an important class, could have strong negative
-  consequences, rather choose a less permanent action, like disabling
-  the instance instead.
+- **Prefer safe actions**: Where a destructive action, like deleting an instance
+  of an important class, could have strong negative consequences, rather choose
+  a less permanent action, like disabling the instance instead.
 
 ## Performance
 
-- **Database queries**: For database operations, queries should be
-  optimized. In rare instances this could require testing the
-  performance of the query in an environment similar to production. If
-  you're writing code and believe this would be beneficial, **alert the
-  developer**.
+- **Database queries**: For database operations, queries should be optimized. In
+  rare instances this could require testing the performance of the query in an
+  environment similar to production. If you're writing code and believe this
+  would be beneficial, **alert the developer**.
 
 ## Documentation
 
-- **Docstrings for modules and classes**: Use docstrings to give the
-  purpose of a module or class. Avoid docstrings on methods or functions
-  where their purpose is clear from the name.
+- **Docstrings for modules and classes**: Use docstrings to give the purpose of
+  a module or class. Avoid docstrings on methods or functions where their
+  purpose is clear from the name.
 
-- **Use reStructuredText format**: Follow reStructuredText conventions
-  in docstrings.
+- **Use reStructuredText format**: Follow reStructuredText conventions in
+  docstrings.
 
-- **Keep documentation in sync**: Update comments and docstrings when
-  code changes are made. Keep module README files up to date.
+- **Keep documentation in sync**: Update comments and docstrings when code
+  changes are made. Keep module README files up to date.
 
 ## Common Commands
 
@@ -186,8 +182,8 @@ npx prettier --write path/to/template.html
 npx prettier --write path/to/file.md
 ```
 
-Automated formatting and import-sorting changes should be committed
-separately from logic changes to keep diffs reviewable.
+Automated formatting and import-sorting changes should be committed separately
+from logic changes to keep diffs reviewable.
 
 ### JavaScript
 
@@ -203,9 +199,9 @@ Refer to the `docs/js-guide/` directory for the JavaScript Guide
 
 ### Frontend Style
 
-Refer to the `corehq/apps/styleguide/` app (run locally at `/a/styleguide/`) for the
-UI Style Guide — Bootstrap 5 conventions, button patterns, accessibility requirements,
-and HTML/template guidelines for new frontend code.
+Refer to the `corehq/apps/styleguide/` app (run locally at `/a/styleguide/`) for
+the UI Style Guide — Bootstrap 5 conventions, button patterns, accessibility
+requirements, and HTML/template guidelines for new frontend code.
 
 ### Debugging
 
@@ -234,5 +230,6 @@ scripts/pr-failures.sh [pr_number]  # uses current branch if omitted
 - `corehq/apps/` — primary Django app directory; most feature work lives here
 - `corehq/ex-submodules/` — internal packages added to the Python path
 - `submodules/` — git submodules also on the Python path
-- `localsettings.py` — local dev configuration (copy from `localsettings.example.py`)
+- `localsettings.py` — local dev configuration (copy from
+  `localsettings.example.py`)
 - `testsettings.py` — Django settings module used by pytest
