@@ -104,7 +104,7 @@ from corehq.apps.hqwebapp.forms import (
     HQAuthenticationTokenForm,
     HQBackupTokenForm,
 )
-from corehq.apps.hqwebapp.login_utils import get_custom_login_page
+from corehq.apps.hqwebapp.login_utils import get_custom_login_page, is_logged_in
 from corehq.apps.hqwebapp.models import ServerLocation
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.hqwebapp.utils.bootstrap import (
@@ -424,7 +424,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, custom_login_page, extra_context=None):
     extra_context = extra_context or {}
-    if req.user.is_authenticated and req.method == "GET":
+    if is_logged_in(req) and req.method == "GET":
         if not domain_name:
             default_url = reverse('homepage')
         else:
