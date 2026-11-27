@@ -1,5 +1,9 @@
 from django.conf import settings
 
+from two_factor.utils import default_device
+
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
+
 
 def get_custom_login_page(host):
     """
@@ -17,3 +21,19 @@ def get_custom_login_page(host):
                 return custom_landing_page.get('default')
             else:
                 return template_name
+
+
+def is_logged_in(request):
+    """
+    Determine if the requesting user is fully logged in, taking 2FA into
+    consideration.
+
+    A user with 2FA enabled must also be verified, unless they logged in
+    via SSO, in which case the Identity Provider manages 2FA.
+    """
+    user = request.user
+    if not user.is_authenticated:
+        return False
+    if is_request_using_sso(request) or not default_device(user):
+        return True
+    return user.is_verified()
