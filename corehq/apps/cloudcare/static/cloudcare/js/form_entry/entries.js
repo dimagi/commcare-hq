@@ -1474,6 +1474,15 @@ function select2ify(entry, additionalOptions, isMulti) {
     }, additionalOptions));
 
     applySelect2Labelledby(entry.entryId, isMulti);
+
+    // Close before removal: select2 unbinds its scroll lock via $container.parents(),
+    // which is empty once the element is detached.
+    ko.utils.domNodeDisposal.addDisposeCallback($input[0], function () {
+        if ($input.data('select2')) {
+            $input.select2('close');
+            $input.select2('destroy');
+        }
+    });
 }
 
 /**

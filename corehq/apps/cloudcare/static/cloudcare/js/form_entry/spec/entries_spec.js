@@ -1,4 +1,5 @@
 import _ from "underscore";
+import ko from "knockout";
 import sinon from "sinon";
 import moment from "moment";
 import initialPageData from "hqwebapp/js/initial_page_data";
@@ -100,6 +101,25 @@ describe('Entries', function () {
         entry.rawAnswer(2);
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
+    });
+
+    it('Should release select2 scroll lock when dropdown is removed while open', function () {
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.MINIMAL };
+        questionJSON.choices = ['a', 'b'];
+        var entry = formUI.Question(questionJSON).entry;
+
+        var $scroller = $('<div style="overflow: auto; height: 50px;"></div>').appendTo('body');
+        var $wrapper = $('<div style="height: 500px;"></div>').appendTo($scroller);
+        $('<select>').attr('id', entry.entryId).appendTo($wrapper);
+        entry.afterRender();
+        $('#' + entry.entryId).select2('open');
+        assert.isDefined($._data($scroller[0], 'events').scroll);
+
+        ko.removeNode($wrapper[0]);
+
+        assert.isUndefined(($._data($scroller[0], 'events') || {}).scroll);
+        $scroller.remove();
     });
 
     it('Should return MultiDropdownEntry', function () {
