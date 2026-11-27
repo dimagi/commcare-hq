@@ -18,6 +18,7 @@ from corehq.apps.public_webforms.rate_limiter import (
     access_requests_per_contact,
     access_requests_per_domain,
     access_requests_per_ip,
+    is_soft_rate_limited,
     rate_limit_access_request,
     rate_limit_session_request,
     requests_per_session,
@@ -193,6 +194,22 @@ def test_soft_status_names_the_soft_limit_reached(limiter, status, scope):
             'project', '198.51.100.7') == status
 
     assert exceeded.call_args.args == scope
+
+
+@use('db', limiter_on)
+def test_soft_limit_check_is_true_once_a_soft_limit_is_reached():
+    with _exhausted(soft_access_requests_per_ip) as exceeded:
+        assert is_soft_rate_limited(_a_domain()) is True
+
+    assert exceeded.call_args.args == ('ip:203.0.113.7',)
+
+
+@use('db', limiter_on)
+def test_soft_limit_check_does_not_count_toward_soft_limits():
+    with mock.patch.object(soft_access_requests_per_ip, 'report_usage') as per_ip:
+        is_soft_rate_limited(_a_domain())
+
+    assert not per_ip.called
 
 
 @use('db')
